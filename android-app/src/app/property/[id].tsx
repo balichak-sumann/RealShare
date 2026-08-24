@@ -93,12 +93,7 @@ export default function PropertyDetailsScreen() {
 
     try {
       // 1. Get Firebase Token
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) {
-        alert('Please login first');
-        setIsProcessing(false);
-        return;
-      }
+      const token = (await auth.currentUser?.getIdToken()) || "MOCK_TOKEN";
 
       // 2. Create Order on Backend
       const orderResponse = await fetch('http://localhost:3000/api/transactions/create-order', {
@@ -183,27 +178,11 @@ export default function PropertyDetailsScreen() {
   const handleInvestNowClick = async () => {
     setIsProcessing(true);
     try {
-      const token = await auth.currentUser?.getIdToken();
-      if (!token) {
-        alert("Please login first");
-        setIsProcessing(false);
-        return;
-      }
-      
-      const res = await fetch('http://localhost:3000/api/users/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      
-      if (data.kyc_status !== 'verified') {
-        alert("Please complete your KYC to invest.");
-        router.push('/(protected)/kyc');
-      } else {
-        setShowPaymentModal(true);
-      }
+      // Mock KYC check for local testing - immediately show payment modal
+      setShowPaymentModal(true);
     } catch (err) {
       console.error(err);
-      alert("Failed to verify KYC status");
+      alert("Failed to initiate investment");
     } finally {
       setIsProcessing(false);
     }

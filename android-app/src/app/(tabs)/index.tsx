@@ -10,13 +10,25 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { auth } from '@/lib/firebase';
 
 export default function HomeScreen() {
   const router = useRouter();
   const [featuredProperties, setFeaturedProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState('Investor');
 
   useEffect(() => {
+    // Get user's first name
+    const currentUser = auth.currentUser;
+    if (currentUser && currentUser.displayName) {
+      const firstName = currentUser.displayName.split(' ')[0];
+      setUserName(firstName);
+    } else if (currentUser && currentUser.email) {
+      const nameFromEmail = currentUser.email.split('@')[0];
+      setUserName(nameFromEmail.charAt(0).toUpperCase() + nameFromEmail.slice(1));
+    }
+
     // In production, this would point to the deployed Next.js API or backend URL
     fetch('http://localhost:3000/api/properties?featured=true')
       .then(res => res.json())
@@ -56,7 +68,7 @@ export default function HomeScreen() {
         
         {/* Welcome Section */}
         <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Hi, Rahul 👋</Text>
+          <Text style={styles.welcomeTitle}>Hi, {userName} 👋</Text>
           <Text style={styles.welcomeSubtitle}>Smart investments, Stronger Future</Text>
         </View>
 

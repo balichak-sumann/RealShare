@@ -8,10 +8,11 @@ import {
   Image,
   ActivityIndicator
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 
 export default function PortfolioScreen() {
   const router = useRouter();
+  const params = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('All');
   const [portfolio, setPortfolio] = useState<any[]>([]);
   const [user, setUser] = useState<any>(null);
@@ -31,12 +32,30 @@ export default function PortfolioScreen() {
       });
   }, []);
 
+  const handleBack = () => {
+    if (params?.from === 'profile') {
+      router.push('/profile' as any);
+    } else {
+      router.back();
+    }
+  };
+
   const filteredPortfolio = portfolio.filter(item => {
     if (activeTab === 'All') return true;
     return item.status.toLowerCase() === activeTab.toLowerCase();
   });
 
   const totalInvestment = portfolio.reduce((acc, curr) => acc + Number(curr.total_amount || 0), 0);
+  
+  // Calculate ROI and Earnings from property data
+  const totalEstimatedROI = portfolio.reduce((acc, curr) => {
+    const yield_pct = Number(curr.property?.assured_yield || 12);
+    return acc + (Number(curr.total_amount || 0) * yield_pct / 100);
+  }, 0);
+
+  const avgROI = portfolio.length > 0
+    ? portfolio.reduce((acc, curr) => acc + Number(curr.property?.assured_yield || 12), 0) / portfolio.length
+    : 0;
 
   if (loading) {
     return (
@@ -50,7 +69,7 @@ export default function PortfolioScreen() {
     <View style={styles.container}>
       {/* Top Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.headerIconBtn} onPress={handleBack}>
           <Text style={styles.headerIconText}>&lt;</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Investments</Text>
@@ -59,15 +78,60 @@ export default function PortfolioScreen() {
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         
-        {/* Top Summary Cards */}
+        {/* Top Summary Cards - Row 1 */}
         <View style={styles.summaryRow}>
           <View style={styles.summaryCard}>
-            <Text style={styles.summaryLabel}>Total investment</Text>
+            <Text style={styles.summaryLabel}>Total Investment</Text>
             <Text style={styles.summaryValue}>₹ {totalInvestment.toLocaleString('en-IN')}</Text>
           </View>
           <View style={styles.summaryCard}>
             <Text style={styles.summaryLabel}>Wallet Balance</Text>
             <Text style={styles.summaryValue}>₹ {Number(user?.wallet_balance || 0).toLocaleString('en-IN')}</Text>
+          </View>
+        </View>
+
+        {/* Summary Cards - Row 2: ROI & Earnings */}
+        <View style={[styles.summaryRow, { paddingTop: 0 }]}>
+          <View style={[styles.summaryCard, { backgroundColor: '#D1FAE5', borderColor: '#A7F3D0' }]}>
+            <Text style={styles.summaryLabel}>Average ROI</Text>
+            <Text style={[styles.summaryValue, { color: '#059669' }]}>{avgROI.toFixed(1)}%</Text>
+          </View>
+          <View style={[styles.summaryCard, { backgroundColor: '#FEF3C7', borderColor: '#FDE68A' }]}>
+            <Text style={styles.summaryLabel}>Est. Annual Earnings</Text>
+            <Text style={[styles.summaryValue, { color: '#D97706' }]}>₹ {totalEstimatedROI.toLocaleString('en-IN')}</Text>
+          </View>
+        </View>
+
+        {/* Earnings Report Section */}
+        <View style={styles.earningsSection}>
+          <Text style={styles.earningsSectionTitle}>📊 Earnings Report</Text>
+          <View style={styles.earningsCard}>
+            <View style={styles.earningsRow}>
+              <Text style={styles.earningsLabel}>Total Properties</Text>
+              <Text style={styles.earningsValue}>{portfolio.length}</Text>
+            </View>
+            <View style={styles.earningsDivider} />
+            <View style={styles.earningsRow}>
+              <Text style={styles.earningsLabel}>Active Investments</Text>
+              <Text style={[styles.earningsValue, { color: '#059669' }]}>
+                {portfolio.filter(i => i.status === 'completed' || i.status === 'active').length}
+              </Text>
+            </View>
+            <View style={styles.earningsDivider} />
+            <View style={styles.earningsRow}>
+              <Text style={styles.earningsLabel}>Total Invested</Text>
+              <Text style={styles.earningsValue}>₹ {totalInvestment.toLocaleString('en-IN')}</Text>
+            </View>
+            <View style={styles.earningsDivider} />
+            <View style={styles.earningsRow}>
+              <Text style={styles.earningsLabel}>Est. Monthly Income</Text>
+              <Text style={[styles.earningsValue, { color: '#1A56DB' }]}>₹ {Math.round(totalEstimatedROI / 12).toLocaleString('en-IN')}</Text>
+            </View>
+            <View style={styles.earningsDivider} />
+            <View style={styles.earningsRow}>
+              <Text style={styles.earningsLabel}>Est. Annual Income</Text>
+              <Text style={[styles.earningsValue, { color: '#D97706' }]}>₹ {totalEstimatedROI.toLocaleString('en-IN')}</Text>
+            </View>
           </View>
         </View>
 
@@ -89,26 +153,43 @@ export default function PortfolioScreen() {
           {filteredPortfolio.length === 0 && (
             <Text style={{ textAlign: 'center', marginTop: 40, color: '#6B7280', width: '100%' }}>No investments found.</Text>
           )}
-          {filteredPortfolio.map((item) => (
-            <TouchableOpacity key={item.id} style={styles.card} onPress={() => router.push(`/property/${item.property?.id}` as any)}>
-              <Image source={{ uri: item.property?.images?.[0]?.image_url || 'https://via.placeholder.com/200' }} style={styles.cardImage} />
-              <View style={styles.cardContent}>
-                <Text style={styles.cardTitle}>{item.property?.title}</Text>
-                <Text style={styles.cardLocation}>{item.property?.locality || item.property?.district}, {item.property?.state}</Text>
-                
-                <View style={styles.cardStats}>
-                  <View style={styles.statBox}>
-                    <Text style={styles.statLabel}>Invested</Text>
-                    <Text style={styles.statValue}>₹ {Number(item.total_amount).toLocaleString('en-IN')}</Text>
+          {filteredPortfolio.map((item) => {
+            const propertyROI = Number(item.property?.assured_yield || 12);
+            const estimatedEarning = Number(item.total_amount || 0) * propertyROI / 100;
+
+            return (
+              <TouchableOpacity key={item.id} style={styles.card} onPress={() => router.push(`/property/${item.property?.id}` as any)}>
+                <Image source={{ uri: item.property?.images?.[0]?.image_url || 'https://via.placeholder.com/200' }} style={styles.cardImage} />
+                <View style={styles.cardContent}>
+                  <Text style={styles.cardTitle}>{item.property?.title}</Text>
+                  <Text style={styles.cardLocation}>{item.property?.locality || item.property?.district}, {item.property?.state}</Text>
+                  
+                  <View style={styles.cardStats}>
+                    <View style={styles.statBox}>
+                      <Text style={styles.statLabel}>Invested</Text>
+                      <Text style={styles.statValue}>₹ {Number(item.total_amount).toLocaleString('en-IN')}</Text>
+                    </View>
+                    <View style={styles.statBox}>
+                      <Text style={styles.statLabel}>ROI</Text>
+                      <Text style={[styles.statValue, { color: '#059669' }]}>{propertyROI}%</Text>
+                    </View>
+                    <View style={[styles.statBox, { alignItems: 'flex-end' }]}>
+                      <Text style={styles.statLabel}>Earnings/yr</Text>
+                      <Text style={[styles.statValue, { color: '#D97706' }]}>₹ {estimatedEarning.toLocaleString('en-IN')}</Text>
+                    </View>
                   </View>
-                  <View style={[styles.statBox, { alignItems: 'flex-end' }]}>
-                    <Text style={styles.statLabel}>Ownership</Text>
-                    <Text style={styles.statValue}>{Number(item.ownership_percentage).toFixed(2)}%</Text>
+
+                  {/* Ownership Bar */}
+                  <View style={styles.ownershipRow}>
+                    <Text style={styles.ownershipLabel}>Ownership: {Number(item.ownership_percentage).toFixed(2)}%</Text>
+                    <View style={styles.ownershipBarBg}>
+                      <View style={[styles.ownershipBarFill, { width: `${Math.min(Number(item.ownership_percentage), 100)}%` }]} />
+                    </View>
                   </View>
                 </View>
-              </View>
-            </TouchableOpacity>
-          ))}
+              </TouchableOpacity>
+            );
+          })}
         </View>
       </ScrollView>
 
@@ -246,6 +327,68 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#111827',
+  },
+  ownershipRow: {
+    marginTop: 10,
+  },
+  ownershipLabel: {
+    fontSize: 11,
+    color: '#6B7280',
+    marginBottom: 4,
+  },
+  ownershipBarBg: {
+    height: 6,
+    backgroundColor: '#E5E7EB',
+    borderRadius: 3,
+    overflow: 'hidden',
+  },
+  ownershipBarFill: {
+    height: 6,
+    backgroundColor: '#1A56DB',
+    borderRadius: 3,
+  },
+  earningsSection: {
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  earningsSectionTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 12,
+  },
+  earningsCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 4,
+    borderWidth: 1,
+    borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  earningsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+  },
+  earningsLabel: {
+    fontSize: 14,
+    color: '#4B5563',
+  },
+  earningsValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  earningsDivider: {
+    height: 1,
+    backgroundColor: '#F3F4F6',
+    marginHorizontal: 16,
   },
   bottomTab: {
     position: 'absolute',

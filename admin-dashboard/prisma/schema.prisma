@@ -1,0 +1,167 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Profile {
+  id                   String        @id @default(uuid()) @db.Uuid
+  full_name            String
+  email                String?       @unique
+  phone_number         String?
+  role                 String        @default("investor")
+  avatar_url           String?
+  wallet_balance       Decimal       @default(0.00) @db.Decimal(15, 2)
+  kyc_status           String        @default("not_submitted")
+  kyc_rejection_reason String?
+  referral_code        String?       @unique
+  referred_by_code     String?
+  is_active            Boolean       @default(true)
+  is_banned            Boolean       @default(false)
+  created_at           DateTime      @default(now()) @db.Timestamptz(6)
+  updated_at           DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  kyc_documents             KycDocument[]
+  posted_properties         Property[]
+  investments               Investment[]
+  transactions              Transaction[] @relation("UserTransactions")
+  verified_kyc_docs         KycDocument[] @relation("VerifiedByProfile")
+  agent_commissions         AgentCommission[] @relation("AgentCommissions")
+  investor_commissions      AgentCommission[] @relation("InvestorCommissions")
+
+  @@map("profiles")
+}
+
+model KycDocument {
+  id                  String    @id @default(uuid()) @db.Uuid
+  user_id             String    @db.Uuid
+  document_type       String
+  document_number     String
+  document_front_url  String
+  document_back_url   String?
+  verification_status String    @default("pending")
+  rejection_reason    String?
+  verified_by         String?   @db.Uuid
+  verified_at         DateTime? @db.Timestamptz(6)
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+
+  // Relations
+  profile          Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  verified_by_user Profile? @relation("VerifiedByProfile", fields: [verified_by], references: [id])
+
+  @@map("kyc_documents")
+}
+
+model Property {
+  id                  String    @id @default(uuid()) @db.Uuid
+  title               String
+  description         String?
+  property_type       String
+  total_fractions     Int
+  available_fractions Int
+  sold_fractions      Int       @default(0)
+  price_per_fraction  Decimal   @db.Decimal(12, 2)
+  booking_amount      Decimal   @default(50000.00) @db.Decimal(12, 2)
+  assured_yield       Decimal?  @db.Decimal(5, 2)
+  target_irr          Decimal?  @db.Decimal(5, 2)
+  state               String
+  district            String
+  locality            String
+  full_address        String?
+  lat                 Decimal?  @db.Decimal(10, 6)
+  lng                 Decimal?  @db.Decimal(10, 6)
+  video_url           String?
+  brochure_url        String?
+  posted_by           String?   @db.Uuid
+  approval_status     String    @default("pending_approval")
+  rejection_notes     String?
+  featured            Boolean   @default(false)
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  updated_at          DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+
+  // Relations
+  profile           Profile?          @relation(fields: [posted_by], references: [id])
+  images            PropertyImage[]
+  investments       Investment[]
+  transactions      Transaction[]
+  agent_commissions AgentCommission[]
+
+  @@map("properties")
+}
+
+model PropertyImage {
+  id          String   @id @default(uuid()) @db.Uuid
+  property_id String   @db.Uuid
+  image_url   String
+  is_primary  Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
+
+  @@map("property_images")
+}
+
+model Investment {
+  id                  String   @id @default(uuid()) @db.Uuid
+  user_id             String   @db.Uuid
+  property_id         String   @db.Uuid
+  fractions_bought    Int
+  total_amount        Decimal  @db.Decimal(15, 2)
+  booking_amount_paid Decimal  @db.Decimal(15, 2)
+  ownership_percentage Decimal @db.Decimal(6, 3)
+  certificate_number  String?  @unique
+  status              String   @default("completed")
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+
+  profile           Profile           @relation(fields: [user_id], references: [id])
+  property          Property          @relation(fields: [property_id], references: [id])
+  transactions      Transaction[]
+  agent_commissions AgentCommission[]
+
+  @@map("investments")
+}
+
+model Transaction {
+  id               String   @id @default(uuid()) @db.Uuid
+  user_id          String   @db.Uuid
+  property_id      String?  @db.Uuid
+  investment_id    String?  @db.Uuid
+  transaction_type String
+  amount           Decimal  @db.Decimal(15, 2)
+  currency         String   @default("INR")
+  payment_gateway  String?  @default("Razorpay")
+  gateway_txn_id   String?
+  payment_method   String?
+  payment_status   String   @default("pending")
+  metadata         Json?
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  profile    Profile     @relation("UserTransactions", fields: [user_id], references: [id])
+  property   Property?   @relation(fields: [property_id], references: [id])
+  investment Investment? @relation(fields: [investment_id], references: [id])
+
+  @@map("transactions")
+}
+
+model AgentCommission {
+  id                    String   @id @default(uuid()) @db.Uuid
+  agent_id              String   @db.Uuid
+  investor_id           String   @db.Uuid
+  property_id           String   @db.Uuid
+  investment_id         String   @db.Uuid
+  commission_percentage Decimal  @default(2.00) @db.Decimal(5, 2)
+  commission_amount     Decimal  @db.Decimal(15, 2)
+  status                String   @default("pending_clearance")
+  paid_at               DateTime? @db.Timestamptz(6)
+  created_at            DateTime @default(now()) @db.Timestamptz(6)
+
+  agent      Profile    @relation("AgentCommissions", fields: [agent_id], references: [id])
+  investor   Profile    @relation("InvestorCommissions", fields: [investor_id], references: [id])
+  property   Property   @relation(fields: [property_id], references: [id])
+  investment Investment @relation(fields: [investment_id], references: [id])
+
+  @@map("agent_commissions")
+}

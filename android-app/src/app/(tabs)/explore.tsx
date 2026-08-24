@@ -6,9 +6,29 @@ export default function ExploreScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
   const [searchQuery, setSearchQuery] = useState('');
-  const [activeFilter, setActiveFilter] = useState('All');
+  
+  // Filtering States
+  const [activeLocation, setActiveLocation] = useState('Location');
+  const [activeType, setActiveType] = useState('Property Type');
+  const [activePrice, setActivePrice] = useState('Price Range');
+  const [openDropdown, setOpenDropdown] = useState<string | null>(null);
+  
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [imageIndices, setImageIndices] = useState<Record<string, number>>({});
+
+  const goToImage = (propertyId: string, direction: 'prev' | 'next', totalImages: number) => {
+    setImageIndices(prev => {
+      const current = prev[propertyId] || 0;
+      let next;
+      if (direction === 'next') {
+        next = current < totalImages - 1 ? current + 1 : 0;
+      } else {
+        next = current > 0 ? current - 1 : totalImages - 1;
+      }
+      return { ...prev, [propertyId]: next };
+    });
+  };
 
   useEffect(() => {
     fetch('http://localhost:3000/api/properties')
@@ -28,11 +48,16 @@ export default function ExploreScreen() {
                           prop.district.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           prop.state.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesFilter = activeFilter === 'All' || 
-                          prop.property_type === activeFilter.toLowerCase() || 
-                          prop.state === activeFilter;
+    const matchesLocation = activeLocation === 'Location' || prop.state === activeLocation;
+    const matchesType = activeType === 'Property Type' || prop.property_type === activeType;
+    
+    let matchesPrice = true;
+    const price = Number(prop.price_per_fraction);
+    if (activePrice === 'Under ₹5L') matchesPrice = price < 500000;
+    if (activePrice === '₹5L - ₹10L') matchesPrice = price >= 500000 && price <= 1000000;
+    if (activePrice === 'Above ₹10L') matchesPrice = price > 1000000;
                           
-    return matchesSearch && matchesFilter;
+    return matchesSearch && matchesLocation && matchesType && matchesPrice;
   });
 
   const generateMapHtml = (properties: any[]) => `
@@ -140,7 +165,7 @@ export default function ExploreScreen() {
         <Text style={styles.headerTitle}>Explore Properties</Text>
       </View>
 
-      <View style={styles.filterSection}>
+      <View style={[styles.filterSection, { zIndex: 100, elevation: 100 }]}>
         <View style={styles.searchRow}>
           <TextInput 
             style={styles.searchInput} 
@@ -155,19 +180,104 @@ export default function ExploreScreen() {
         </View>
         <View style={styles.pillScroll}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {['All', 'Commercial', 'Holiday', 'Residential'].map(filter => (
+            {/* Location Filter */}
+            <TouchableOpacity 
+              style={[styles.pill, activeLocation !== 'Location' && styles.pillActive]}
+              onPress={() => setOpenDropdown(openDropdown === 'Location' ? null : 'Location')}
+            >
+              <Text style={activeLocation !== 'Location' ? styles.pillTextActive : styles.pillText}>
+                {activeLocation} ▾
+              </Text>
+            </TouchableOpacity>
+
+            {/* Property Type Filter */}
+            <TouchableOpacity 
+              style={[styles.pill, activeType !== 'Property Type' && styles.pillActive]}
+              onPress={() => setOpenDropdown(openDropdown === 'Property Type' ? null : 'Property Type')}
+            >
+              <Text style={activeType !== 'Property Type' ? styles.pillTextActive : styles.pillText}>
+                {activeType === 'Property Type' ? activeType : activeType.charAt(0).toUpperCase() + activeType.slice(1)} ▾
+              </Text>
+            </TouchableOpacity>
+
+            {/* Price Range Filter */}
+            <TouchableOpacity 
+              style={[styles.pill, activePrice !== 'Price Range' && styles.pillActive]}
+              onPress={() => setOpenDropdown(openDropdown === 'Price Range' ? null : 'Price Range')}
+            >
+              <Text style={activePrice !== 'Price Range' ? styles.pillTextActive : styles.pillText}>
+                {activePrice} ▾
+              </Text>
+            </TouchableOpacity>
+            
+            {/* Clear Filters Button */}
+            {(activeLocation !== 'Location' || activeType !== 'Property Type' || activePrice !== 'Price Range') && (
               <TouchableOpacity 
-                key={filter}
-                style={[styles.pill, activeFilter === filter && styles.pillActive]}
-                onPress={() => setActiveFilter(filter)}
+                style={[styles.pill, { backgroundColor: '#FEE2E2', borderColor: '#FCA5A5' }]}
+                onPress={() => {
+                  setActiveLocation('Location');
+                  setActiveType('Property Type');
+                  setActivePrice('Price Range');
+                }}
               >
-                <Text style={activeFilter === filter ? styles.pillTextActive : styles.pillText}>
-                  {filter}
-                </Text>
+                <Text style={[styles.pillText, { color: '#DC2626' }]}>Clear All ✕</Text>
               </TouchableOpacity>
-            ))}
+            )}
           </ScrollView>
         </View>
+
+        {/* Dropdown Selection Area */}
+        {openDropdown !== null && (
+          <>
+            {/* Invisible fixed overlay to catch clicks ANYWHERE outside */}
+            <TouchableOpacity 
+              style={{
+                position: Platform.OS === 'web' ? 'fixed' as any : 'absolute',
+                top: -500, bottom: -1000, left: -500, right: -500,
+                zIndex: 90,
+                elevation: 90,
+                backgroundColor: 'transparent'
+              }} 
+              activeOpacity={1} 
+              onPress={() => setOpenDropdown(null)} 
+            />
+
+            {/* Dropdown Content */}
+            <View style={{ zIndex: 100, elevation: 100, position: 'relative' }}>
+              {openDropdown === 'Location' && (
+                <ScrollView style={[styles.dropdownList, { maxHeight: 250 }]}>
+                  {['Location', ...Array.from(new Set(properties.map(p => p.state)))].map(loc => (
+                    <TouchableOpacity key={loc as string} style={styles.dropdownItem} onPress={() => { setActiveLocation(loc as string); setOpenDropdown(null); }}>
+                      <Text style={activeLocation === loc ? styles.dropdownTextActive : styles.dropdownText}>{loc as string}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+
+              {openDropdown === 'Property Type' && (
+                <ScrollView style={[styles.dropdownList, { maxHeight: 250 }]}>
+                  {['Property Type', 'commercial', 'holiday', 'residential'].map(type => (
+                    <TouchableOpacity key={type} style={styles.dropdownItem} onPress={() => { setActiveType(type); setOpenDropdown(null); }}>
+                      <Text style={activeType === type ? styles.dropdownTextActive : styles.dropdownText}>
+                        {type === 'Property Type' ? type : type.charAt(0).toUpperCase() + type.slice(1)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+
+              {openDropdown === 'Price Range' && (
+                <ScrollView style={[styles.dropdownList, { maxHeight: 250 }]}>
+                  {['Price Range', 'Under ₹5L', '₹5L - ₹10L', 'Above ₹10L'].map(price => (
+                    <TouchableOpacity key={price} style={styles.dropdownItem} onPress={() => { setActivePrice(price); setOpenDropdown(null); }}>
+                      <Text style={activePrice === price ? styles.dropdownTextActive : styles.dropdownText}>{price}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+            </View>
+          </>
+        )}
       </View>
 
       <View style={{ flex: 1, flexDirection: isDesktop ? 'row' : 'column' }}>
@@ -193,11 +303,33 @@ export default function ExploreScreen() {
               <Text style={{ textAlign: 'center', marginTop: 40, color: '#6B7280', width: '100%' }}>No properties found.</Text>
             )}
             {filteredProperties.map((prop) => (
-              <Link href={`/property/${prop.id}`} asChild key={prop.id}>
-                <TouchableOpacity style={styles.card}>
-                  <Image source={{ uri: prop.images?.[0]?.image_url || 'https://via.placeholder.com/300' }} style={styles.cardImage} />
-                  <View style={styles.cardBadge}>
-                     <Text style={styles.badgeText}>NEW LAUNCH</Text>
+              <View key={prop.id} style={styles.card}>
+                  <View style={{ position: 'relative' }}>
+                    <Image source={{ uri: prop.images?.[(imageIndices[prop.id] || 0)]?.image_url || 'https://via.placeholder.com/300' }} style={styles.cardImage} />
+                    {prop.images && prop.images.length > 1 && (
+                      <>
+                        <TouchableOpacity
+                          style={[styles.sliderArrow, styles.sliderArrowLeft]}
+                          onPress={() => goToImage(prop.id, 'prev', prop.images.length)}
+                        >
+                          <Text style={styles.sliderArrowText}>‹</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={[styles.sliderArrow, styles.sliderArrowRight]}
+                          onPress={() => goToImage(prop.id, 'next', prop.images.length)}
+                        >
+                          <Text style={styles.sliderArrowText}>›</Text>
+                        </TouchableOpacity>
+                        <View style={styles.dotContainer}>
+                          {prop.images.map((_: any, idx: number) => (
+                            <View key={idx} style={[styles.dot, (imageIndices[prop.id] || 0) === idx && styles.dotActive]} />
+                          ))}
+                        </View>
+                      </>
+                    )}
+                    <View style={styles.cardBadge}>
+                       <Text style={styles.badgeText}>NEW LAUNCH</Text>
+                    </View>
                   </View>
                   <View style={styles.cardContent}>
                     
@@ -216,13 +348,14 @@ export default function ExploreScreen() {
                       </View>
                     </View>
 
-                    <View style={styles.cardBtn}>
-                      <Text style={styles.cardBtnText}>View Details</Text>
-                    </View>
+                    <Link href={`/property/${prop.id}`} asChild>
+                      <TouchableOpacity style={styles.cardBtn}>
+                        <Text style={styles.cardBtnText}>View Details</Text>
+                      </TouchableOpacity>
+                    </Link>
 
                   </View>
-                </TouchableOpacity>
-              </Link>
+              </View>
             ))}
           </View>
         </ScrollView>
@@ -305,9 +438,40 @@ const styles = StyleSheet.create({
     fontSize: 13,
   },
   pillTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '600',
+    color: '#1A56DB',
+    fontWeight: '700',
     fontSize: 13,
+  },
+  dropdownList: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    marginHorizontal: 20,
+    marginTop: 4,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+    overflow: 'hidden',
+  },
+  dropdownItem: {
+    paddingVertical: 12,
+    paddingHorizontal: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: '#F3F4F6',
+  },
+  dropdownText: {
+    color: '#4B5563',
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  dropdownTextActive: {
+    color: '#1A56DB',
+    fontSize: 14,
+    fontWeight: '700',
   },
   mapContainer: {
     height: 300,
@@ -355,6 +519,50 @@ const styles = StyleSheet.create({
   cardImage: {
     width: '100%',
     height: 200,
+  },
+  sliderArrow: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -18,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  sliderArrowLeft: {
+    left: 10,
+  },
+  sliderArrowRight: {
+    right: 10,
+  },
+  sliderArrowText: {
+    color: '#FFFFFF',
+    fontSize: 22,
+    fontWeight: '700',
+    lineHeight: 24,
+  },
+  dotContainer: {
+    position: 'absolute',
+    bottom: 10,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  dot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  dotActive: {
+    backgroundColor: '#FFFFFF',
+    width: 20,
+    borderRadius: 4,
   },
   cardBadge: {
     position: 'absolute',

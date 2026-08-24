@@ -34,6 +34,7 @@ export default function PropertyDetailsScreen() {
       });
   }, [id]);
 
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [fractionsToBuy, setFractionsToBuy] = useState(1);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card' | 'netbanking' | 'wallet'>('upi');
@@ -212,7 +213,7 @@ export default function PropertyDetailsScreen() {
     <View style={styles.container}>
       {/* Top Header - Mockup style */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/explore' as any)}>
           <Text style={styles.headerIconText}>&lt;</Text>
         </TouchableOpacity>
         
@@ -224,10 +225,26 @@ export default function PropertyDetailsScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        {/* Header Image Gallery */}
-        <View style={styles.imageContainer}>
-          <Image source={{ uri: property.images?.[0]?.image_url || 'https://via.placeholder.com/300' }} style={styles.image} />
-        </View>
+        {/* Top Header Map */}
+        {property.lat && property.lng ? (
+          <View style={[styles.imageContainer, { height: 300 }]}>
+            {Platform.OS === 'web' ? (
+              <div style={{ width: '100%', height: '100%' }}
+                dangerouslySetInnerHTML={{ __html: 
+                  `<iframe width="100%" height="100%" frameborder="0" style="border:0;" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q=${parseFloat(property.lat)},${parseFloat(property.lng)}&z=15&output=embed"></iframe>`
+                }}
+              />
+            ) : (
+              <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#E5E7EB' }}>
+                <Text style={{ color: '#6B7280' }}>Map view available on web</Text>
+              </View>
+            )}
+          </View>
+        ) : (
+          <View style={[styles.imageContainer, { height: 300, justifyContent: 'center', alignItems: 'center' }]}>
+            <Text style={{ color: '#6B7280' }}>Location not available</Text>
+          </View>
+        )}
 
         {/* Property Overview */}
         <View style={styles.content}>
@@ -242,6 +259,9 @@ export default function PropertyDetailsScreen() {
             <View style={styles.badge}>
               <Text style={styles.badgeText}>NEW LAUNCH</Text>
             </View>
+            <View style={[styles.badge, { backgroundColor: '#D1FAE5', marginLeft: 8 }]}>
+              <Text style={[styles.badgeText, { color: '#059669' }]}>{property.property_type?.toUpperCase()}</Text>
+            </View>
           </View>
 
           {/* Price & ROI */}
@@ -251,7 +271,7 @@ export default function PropertyDetailsScreen() {
               <Text style={styles.priceLabel}>Min. Investment ₹ {Number(property.booking_amount).toLocaleString('en-IN')}</Text>
             </View>
             <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.roiValue}>{property.assured_yield}%</Text>
+              <Text style={styles.roiValue}>{Number(property.assured_yield)}%</Text>
               <Text style={styles.roiLabel}>Expected ROI</Text>
             </View>
           </View>
@@ -288,6 +308,25 @@ export default function PropertyDetailsScreen() {
             <Text style={styles.sectionTitle}>About Property</Text>
             <Text style={styles.description}>{property.description}</Text>
           </View>
+
+
+
+          {/* Video Section */}
+          {property.video_url && (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>🎬 Property Video Tour</Text>
+              {Platform.OS === 'web' ? (
+                <TouchableOpacity
+                  style={styles.videoBtn}
+                  onPress={() => { window.open(property.video_url, '_blank'); }}
+                >
+                  <Text style={styles.videoBtnText}>▶  Watch Property Video</Text>
+                </TouchableOpacity>
+              ) : (
+                <Text style={{ color: '#6B7280', fontSize: 14 }}>Video available on web</Text>
+              )}
+            </View>
+          )}
         </View>
       </ScrollView>
 
@@ -421,11 +460,70 @@ const styles = StyleSheet.create({
   imageContainer: {
     width: '100%',
     backgroundColor: '#F3F4F6',
+    position: 'relative',
   },
   image: {
     width: '100%',
-    height: 250,
+    height: 280,
     resizeMode: 'cover',
+  },
+  imgArrow: {
+    position: 'absolute',
+    top: '50%',
+    marginTop: -20,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.45)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
+  imgArrowLeft: {
+    left: 12,
+  },
+  imgArrowRight: {
+    right: 12,
+  },
+  imgArrowText: {
+    color: '#FFFFFF',
+    fontSize: 24,
+    fontWeight: '700',
+    lineHeight: 26,
+  },
+  imgDotRow: {
+    position: 'absolute',
+    bottom: 14,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  imgDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: 'rgba(255,255,255,0.5)',
+  },
+  imgDotActive: {
+    backgroundColor: '#FFFFFF',
+    width: 22,
+    borderRadius: 4,
+  },
+  imgCounter: {
+    position: 'absolute',
+    top: 14,
+    right: 14,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  imgCounterText: {
+    color: '#FFFFFF',
+    fontSize: 12,
+    fontWeight: '600',
   },
   content: {
     padding: 20,
@@ -530,6 +628,30 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#4B5563',
     lineHeight: 22,
+  },
+  mapAddress: {
+    fontSize: 13,
+    color: '#6B7280',
+    marginBottom: 12,
+    lineHeight: 20,
+  },
+  mapBox: {
+    width: '100%',
+    height: 300,
+    borderRadius: 12,
+    overflow: 'hidden',
+    backgroundColor: '#E5E7EB',
+  },
+  videoBtn: {
+    backgroundColor: '#111827',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  videoBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 15,
   },
   fabContainer: {
     position: 'absolute',

@@ -1,4 +1,3 @@
-import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   View,
@@ -8,59 +7,32 @@ import {
   Image,
   ActivityIndicator,
   Platform,
+  Alert,
+  Modal,
+  TextInput,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import { auth } from '@/lib/firebase';
+import React, { useState, useEffect, useRef } from 'react';
+import { auth, app } from '@/lib/firebase';
+import { PhoneAuthProvider, linkWithCredential, verifyBeforeUpdateEmail, RecaptchaVerifier } from 'firebase/auth';
+import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+import { useUser } from '@/contexts/UserContext';
 
 export default function ProfileScreen() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [kycDocs, setKycDocs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchProfile();
-  }, []);
-
-  const fetchProfile = async () => {
-    try {
-      const token = (await auth.currentUser?.getIdToken()) || 'MOCK_TOKEN';
-      const res = await fetch('http://localhost:3000/api/users/me', {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      const data = await res.json();
-      if (data && !data.error) {
-        setUser(data);
-      } else {
-        // Fallback mock user for local testing
-        setUser({
-          full_name: auth.currentUser?.displayName || 'Rahul Sharma',
-          email: auth.currentUser?.email || 'rahul@example.com',
-          phone_number: '+91 98765 43210',
-          avatar_url: null,
-          wallet_balance: 0,
-          kyc_status: 'not_submitted',
-          role: 'investor',
-          created_at: new Date().toISOString(),
-        });
-      }
-    } catch (err) {
-      // Fallback mock user
-      setUser({
-        full_name: auth.currentUser?.displayName || 'Rahul Sharma',
-        email: auth.currentUser?.email || 'rahul@example.com',
-        phone_number: '+91 98765 43210',
-        avatar_url: null,
-        wallet_balance: 0,
-        kyc_status: 'not_submitted',
-        role: 'investor',
-        created_at: new Date().toISOString(),
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { profile: user, setProfile } = useUser();
+  const [loading, setLoading] = useState(false);
+  
+  // OTP Verification States
+  const [isOtpModalVisible, setOtpModalVisible] = useState(false);
+  const [otpType, setOtpType] = useState<'phone' | 'email'>('phone');
+  const [otpStep, setOtpStep] = useState<'input' | 'code'>('input');
+  const [inputValue, setInputValue] = useState('');
+  const [codeInput, setCodeInput] = useState('');
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [verificationId, setVerificationId] = useState('');
+  const recaptchaVerifier = useRef(null);
 
   const handleAvatarEdit = async () => {
     try {
@@ -73,7 +45,9 @@ export default function ProfileScreen() {
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
         const imageUri = result.assets[0].uri;
-        setUser({ ...user, avatar_url: imageUri });
+        if (user) {
+          setProfile({ ...user, avatar_url: imageUri });
+        }
         // In a real app, we would upload this to Firebase Storage/S3 here
       }
     } catch (error) {
@@ -87,6 +61,96 @@ export default function ProfileScreen() {
       router.replace('/sign-in' as any);
     } catch (err) {
       console.error('Logout failed:', err);
+    }
+  };
+
+  const handleSendOtp = async () => {
+    if (otpType === 'phone' && inputValue.length < 10) {
+      Alert.alert('Invalid Number', 'Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    if (otpType === 'email' && !inputValue.includes('@')) {
+      Alert.alert('Invalid Email', 'Please enter a valid email address.');
+      return;
+    }
+    
+    setIsVerifying(true);
+    
+    try {
+      if (otpType === 'phone') {
+        let appVerifier: any;
+        
+        if (Platform.OS === 'web') {
+          // On Web, use Firebase's native RecaptchaVerifier
+          if (!(window as any).recaptchaVerifier) {
+            (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
+              size: 'invisible'
+            });
+          }
+          appVerifier = (window as any).recaptchaVerifier;
+        } else {
+          // On Native, use the Expo modal
+          appVerifier = recaptchaVerifier.current!;
+        }
+
+        const phoneProvider = new PhoneAuthProvider(auth);
+        const vId = await phoneProvider.verifyPhoneNumber(`+91${inputValue}`, appVerifier);
+        setVerificationId(vId);
+        setOtpStep('code');
+      } else {
+        if (auth.currentUser) {
+          await verifyBeforeUpdateEmail(auth.currentUser, inputValue);
+          Alert.alert('Email Sent', `A verification link has been sent to ${inputValue}. Please check your inbox and verify before continuing.`);
+          setOtpModalVisible(false);
+          setOtpStep('input');
+          setInputValue('');
+        }
+      }
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert('Error', err.message || 'Failed to send verification.');
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  const handleVerifyOtp = async () => {
+    if (codeInput.length < 6) {
+      Alert.alert('Invalid Code', 'Please enter the 6-digit OTP code.');
+      return;
+    }
+    setIsVerifying(true);
+    
+    try {
+      if (otpType === 'phone' && auth.currentUser) {
+        const credential = PhoneAuthProvider.credential(verificationId, codeInput);
+        await linkWithCredential(auth.currentUser, credential);
+        
+        // Sync with backend
+        const token = await auth.currentUser.getIdToken();
+        await fetch('http://192.168.1.4:3000/api/users/sync', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+
+        if (user) {
+          setProfile({ ...user, phone_number: `+91 ${inputValue}` });
+        }
+        
+        setOtpModalVisible(false);
+        Alert.alert('Success', 'Mobile number verified successfully!');
+        
+        setTimeout(() => {
+          setOtpStep('input');
+          setInputValue('');
+          setCodeInput('');
+        }, 500);
+      }
+    } catch (err: any) {
+      console.error(err);
+      Alert.alert('Verification Failed', err.message || 'Invalid code.');
+    } finally {
+      setIsVerifying(false);
     }
   };
 
@@ -118,6 +182,20 @@ export default function ProfileScreen() {
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+        
+        {/* Firebase Recaptcha for Native */}
+        {Platform.OS !== 'web' && (
+          <FirebaseRecaptchaVerifierModal
+            ref={recaptchaVerifier}
+            firebaseConfig={app.options}
+            attemptInvisibleVerification={true}
+          />
+        )}
+
+        {/* Firebase Recaptcha Container for Web */}
+        {Platform.OS === 'web' && (
+          <View nativeID="recaptcha-container" />
+        )}
 
         {/* Profile Card */}
         <View style={styles.profileCard}>
@@ -148,27 +226,61 @@ export default function ProfileScreen() {
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
           <View style={styles.infoCard}>
-            <View style={styles.infoRow}>
+            <TouchableOpacity 
+              style={styles.infoRow}
+              onPress={() => {
+                if (!user?.email) {
+                  setOtpType('email');
+                  setOtpStep('input');
+                  setOtpModalVisible(true);
+                }
+              }}
+              activeOpacity={user?.email ? 1 : 0.7}
+            >
               <View style={styles.infoIconBox}>
                 <Text style={styles.infoIcon}>📧</Text>
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Email Address</Text>
-                <Text style={styles.infoValue}>{user?.email || 'Not provided'}</Text>
+                {user?.email ? (
+                  <Text style={styles.infoValue}>{user.email}</Text>
+                ) : (
+                  <Text style={[styles.infoValue, { color: '#D97706' }]}>Pending - Tap to Verify</Text>
+                )}
               </View>
-            </View>
+              {!user?.email && (
+                <Text style={styles.verifyArrow}>›</Text>
+              )}
+            </TouchableOpacity>
 
             <View style={styles.divider} />
 
-            <View style={styles.infoRow}>
+            <TouchableOpacity 
+              style={styles.infoRow}
+              onPress={() => {
+                if (!user?.phone_number) {
+                  setOtpType('phone');
+                  setOtpStep('input');
+                  setOtpModalVisible(true);
+                }
+              }}
+              activeOpacity={user?.phone_number ? 1 : 0.7}
+            >
               <View style={styles.infoIconBox}>
                 <Text style={styles.infoIcon}>📱</Text>
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Mobile Number</Text>
-                <Text style={styles.infoValue}>{user?.phone_number || 'Not provided'}</Text>
+                {user?.phone_number ? (
+                  <Text style={styles.infoValue}>{user.phone_number}</Text>
+                ) : (
+                  <Text style={[styles.infoValue, { color: '#D97706' }]}>Pending - Tap to Verify</Text>
+                )}
               </View>
-            </View>
+              {!user?.phone_number && (
+                <Text style={styles.verifyArrow}>›</Text>
+              )}
+            </TouchableOpacity>
 
             <View style={styles.divider} />
 
@@ -248,7 +360,7 @@ export default function ProfileScreen() {
               <Text style={styles.walletLabel}>Available Balance</Text>
               <Text style={styles.walletAmount}>₹ {Number(user?.wallet_balance || 0).toLocaleString('en-IN')}</Text>
             </View>
-            <TouchableOpacity style={styles.walletBtn}>
+            <TouchableOpacity style={styles.walletBtn} onPress={() => Alert.alert('Coming Soon', 'Payment Gateway Integration is pending.')}>
               <Text style={styles.walletBtnText}>+ Add Money</Text>
             </TouchableOpacity>
           </View>
@@ -262,14 +374,18 @@ export default function ProfileScreen() {
               { icon: '📈', label: 'My Investments', route: '/portfolio?from=profile' },
               { icon: '🔍', label: 'Explore Properties', route: '/explore?from=profile' },
               { icon: '📄', label: 'Transaction History', route: '/portfolio?from=profile' },
-              { icon: '❓', label: 'Help & Support', route: '/support' },
-              { icon: '⚙️', label: 'Settings', route: '/settings' },
+              { icon: '❓', label: 'Help & Support', route: 'alert_support' },
+              { icon: '⚙️', label: 'Settings', route: 'alert_settings' },
             ].map((link, idx) => (
               <React.Fragment key={link.label}>
                 {idx > 0 && <View style={styles.divider} />}
                 <TouchableOpacity
                   style={styles.linkRow}
-                  onPress={() => link.route ? router.push(link.route as any) : null}
+                  onPress={() => {
+                    if (link.route === 'alert_support') Alert.alert('Support', 'Help Center coming soon.');
+                    else if (link.route === 'alert_settings') Alert.alert('Settings', 'Settings screen coming soon.');
+                    else router.push(link.route as any);
+                  }}
                 >
                   <View style={styles.linkIconBox}>
                     <Text style={styles.linkIcon}>{link.icon}</Text>
@@ -290,6 +406,110 @@ export default function ProfileScreen() {
         </View>
 
       </ScrollView>
+
+      {/* OTP Verification Modal */}
+      <Modal
+        visible={isOtpModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setOtpModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContainer}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>
+                {otpStep === 'input' 
+                  ? `Verify ${otpType === 'phone' ? 'Mobile Number' : 'Email Address'}` 
+                  : 'Enter Verification Code'}
+              </Text>
+              <TouchableOpacity onPress={() => setOtpModalVisible(false)} style={styles.closeBtn}>
+                <Text style={styles.closeBtnText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.modalBody}>
+              {otpStep === 'input' ? (
+                <>
+                  <Text style={styles.modalSubtitle}>
+                    Please enter your {otpType === 'phone' ? 'mobile number' : 'email address'} to receive a one-time verification code (OTP).
+                  </Text>
+                  
+                  {otpType === 'phone' ? (
+                    <View style={styles.phoneInputContainer}>
+                      <Text style={styles.countryCode}>+91</Text>
+                      <TextInput
+                        style={styles.phoneInput}
+                        placeholder="10-digit mobile number"
+                        keyboardType="numeric"
+                        maxLength={10}
+                        value={inputValue}
+                        onChangeText={setInputValue}
+                      />
+                    </View>
+                  ) : (
+                    <View style={styles.phoneInputContainer}>
+                      <TextInput
+                        style={styles.phoneInput}
+                        placeholder="your@email.com"
+                        keyboardType="email-address"
+                        autoCapitalize="none"
+                        value={inputValue}
+                        onChangeText={setInputValue}
+                      />
+                    </View>
+                  )}
+
+                  <TouchableOpacity 
+                    style={[styles.primaryBtn, inputValue.length < 5 && styles.disabledBtn]} 
+                    onPress={handleSendOtp}
+                    disabled={isVerifying || inputValue.length < 5}
+                  >
+                    {isVerifying ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.primaryBtnText}>Send OTP</Text>
+                    )}
+                  </TouchableOpacity>
+                </>
+              ) : (
+                <>
+                  <Text style={styles.modalSubtitle}>
+                    We've sent a 6-digit verification code to {otpType === 'phone' ? '+91 ' : ''}{inputValue}.
+                  </Text>
+                  <TextInput
+                    style={styles.otpInput}
+                    placeholder="------"
+                    keyboardType="numeric"
+                    maxLength={6}
+                    value={codeInput}
+                    onChangeText={setCodeInput}
+                    textAlign="center"
+                  />
+                  <TouchableOpacity 
+                    style={[styles.primaryBtn, codeInput.length < 6 && styles.disabledBtn]} 
+                    onPress={handleVerifyOtp}
+                    disabled={isVerifying || codeInput.length < 6}
+                  >
+                    {isVerifying ? (
+                      <ActivityIndicator color="#FFFFFF" />
+                    ) : (
+                      <Text style={styles.primaryBtnText}>Verify OTP</Text>
+                    )}
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.textBtn} 
+                    onPress={() => setOtpStep('input')}
+                    disabled={isVerifying}
+                  >
+                    <Text style={styles.textBtnLabel}>Change {otpType === 'phone' ? 'Phone Number' : 'Email'}</Text>
+                  </TouchableOpacity>
+                </>
+              )}
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -608,4 +828,122 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     fontSize: 15,
   },
+  verifyArrow: {
+    fontSize: 22,
+    color: '#9CA3AF',
+    fontWeight: '300',
+    marginLeft: 8,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContainer: {
+    backgroundColor: '#FFFFFF',
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    minHeight: 320,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  closeBtn: {
+    padding: 8,
+    backgroundColor: '#F3F4F6',
+    borderRadius: 20,
+  },
+  closeBtnText: {
+    fontSize: 16,
+    color: '#6B7280',
+    fontWeight: '700',
+  },
+  modalBody: {
+    flex: 1,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: '#6B7280',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  phoneInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 56,
+    marginBottom: 24,
+    backgroundColor: '#F9FAFB',
+  },
+  countryCode: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#111827',
+    marginRight: 12,
+    borderRightWidth: 1,
+    borderRightColor: '#E5E7EB',
+    paddingRight: 12,
+  },
+  phoneInput: {
+    flex: 1,
+    fontSize: 16,
+    color: '#111827',
+  },
+  otpInput: {
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    height: 64,
+    marginBottom: 24,
+    backgroundColor: '#F9FAFB',
+    fontSize: 24,
+    fontWeight: '700',
+    letterSpacing: 8,
+  },
+  primaryBtn: {
+    backgroundColor: '#1A56DB',
+    height: 56,
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#1A56DB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  disabledBtn: {
+    backgroundColor: '#9CA3AF',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  primaryBtnText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '700',
+  },
+  textBtn: {
+    marginTop: 16,
+    alignItems: 'center',
+    padding: 8,
+  },
+  textBtnLabel: {
+    color: '#1A56DB',
+    fontWeight: '600',
+    fontSize: 14,
+  },
 });
+

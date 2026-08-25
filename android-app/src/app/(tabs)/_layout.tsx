@@ -1,11 +1,11 @@
 import { Tabs } from 'expo-router';
 import { Text, View } from 'react-native';
 import KycBanner from '../../components/KycBanner';
+import { useUser } from '@/contexts/UserContext';
 
 export default function TabLayout() {
-  // In production, this would come from user auth context / Supabase profile
-  // For demo, simulate a "not_submitted" state. Change to 'verified' to hide banner.
-  const kycStatus: 'not_submitted' | 'pending' | 'verified' | 'rejected' = 'not_submitted';
+  const { profile } = useUser();
+  const kycStatus = profile?.kyc_status as 'not_submitted' | 'pending' | 'verified' | 'rejected' || 'not_submitted';
 
   return (
     <View style={{ flex: 1 }}>

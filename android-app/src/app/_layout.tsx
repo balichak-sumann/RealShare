@@ -42,6 +42,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { UserProvider, useUser } from '@/contexts/UserContext';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -50,6 +51,7 @@ function RootLayoutNav() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
+  const { setProfile } = useUser();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -77,14 +79,21 @@ function RootLayoutNav() {
           } catch(e) {
             console.log(e);
           }
-          fetch('http://localhost:3000/api/users/sync', {
+          fetch('http://192.168.1.4:3000/api/users/sync', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({ expo_push_token: pushToken })
-          }).catch(err => console.error('Failed to sync user:', err));
+          })
+          .then(res => res.json())
+          .then(data => {
+            if (data.success && data.profile) {
+              setProfile(data.profile);
+            }
+          })
+          .catch(err => console.error('Failed to sync user:', err));
         });
 
         if (inAuthGroup && !isVerifyScreen) router.replace('/');
@@ -108,8 +117,11 @@ export default function TabLayout() {
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <RootLayoutNav />
+      <UserProvider>
+        <AnimatedSplashOverlay />
+        <RootLayoutNav />
+      </UserProvider>
     </ThemeProvider>
   );
 }
+

@@ -12,11 +12,13 @@ import {
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { LineChart } from 'react-native-chart-kit';
+import { useUser } from '@/contexts/UserContext';
 
 const screenWidth = Dimensions.get('window').width;
 
 export default function AgentPortalScreen() {
   const router = useRouter();
+  const { profile } = useUser();
 
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -24,8 +26,12 @@ export default function AgentPortalScreen() {
   const [dashboardData, setDashboardData] = useState<any>(null);
 
   useEffect(() => {
+    if (profile && profile.role !== 'agent' && profile.role !== 'admin') {
+      router.replace('/');
+      return;
+    }
     fetchDashboardData();
-  }, []);
+  }, [profile]);
 
   const fetchDashboardData = async () => {
     try {
@@ -37,7 +43,7 @@ export default function AgentPortalScreen() {
       }
 
       const token = await user.getIdToken();
-      const res = await fetch('http://localhost:3000/api/agents/dashboard', {
+      const res = await fetch('http://192.168.1.4:3000/api/agents/dashboard', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -64,6 +70,10 @@ export default function AgentPortalScreen() {
   };
 
   const clientLeads = dashboardData?.clientLeads || [];
+
+  if (profile && profile.role !== 'agent' && profile.role !== 'admin') {
+    return null;
+  }
 
   if (loading) {
     return (
@@ -416,3 +426,4 @@ const styles = StyleSheet.create({
     color: '#64748B',
   },
 });
+

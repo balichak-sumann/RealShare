@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,8 +7,12 @@ import {
   TouchableOpacity,
   TextInput,
   Image,
+  ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useUser } from '@/contexts/UserContext';
+import { auth } from '@/lib/firebase';
+import { Modal } from 'react-native';
 
 interface BuilderProperty {
   id: string;
@@ -24,34 +28,51 @@ interface BuilderProperty {
 
 export default function BuilderPortalScreen() {
   const router = useRouter();
+  const { profile } = useUser();
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (profile && profile.role !== 'builder' && profile.role !== 'admin') {
+      router.replace('/');
+    } else {
+      setLoading(false);
+    }
+  }, [profile]);
 
   const [activeTab, setActiveTab] = useState<'my_properties' | 'post_new'>('my_properties');
-  const [properties, setProperties] = useState<BuilderProperty[]>([
-    {
-      id: 'BLD-101',
-      title: 'Aparna Zenith Premium Suites',
-      location: 'Nallagandla, Hyderabad',
-      type: 'Residential',
-      totalFractions: 50,
-      pricePerFraction: '₹4,00,000',
-      yield: '7.8%',
-      status: 'Pending Admin Approval',
-      image: 'https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=400&fit=crop',
-    },
-    {
-      id: 'BLD-102',
-      title: 'Prestige High Fields Tower',
-      location: 'Gachibowli Financial District, Hyderabad',
-      type: 'Commercial',
-      totalFractions: 60,
-      pricePerFraction: '₹8,00,000',
-      yield: '9.0%',
-      status: 'Pending Admin Approval',
-      image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&fit=crop',
-    },
-  ]);
+  const [properties, setProperties] = useState<BuilderProperty[]>([]);
+  const [editingProp, setEditingProp] = useState<any>(null);
 
-  // Form State
+  useEffect(() => {
+    fetchProperties();
+  }, []);
+
+  const fetchProperties = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const token = await user.getIdToken();
+      const res = await fetch('http://192.168.1.4:3000/api/properties/builder', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      const data = await res.json();
+      const mapped = data.map((d: any) => ({
+        id: d.id,
+        title: d.title,
+        location: `${d.locality}, ${d.district}`,
+        type: d.property_type,
+        totalFractions: d.total_fractions,
+        pricePerFraction: `₹${Number(d.price_per_fraction).toLocaleString('en-IN')}`,
+        yield: `${d.assured_yield}%`,
+        status: d.approval_status === 'approved' ? 'Live & Listed' : (d.approval_status === 'rejected' ? 'Rejected' : 'Pending Admin Approval'),
+        image: d.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=400&fit=crop'
+      }));
+      setProperties(mapped);
+    } catch(e) {
+      console.log('Error fetching properties', e);
+    }
+  };
+
   const [title, setTitle] = useState('');
   const [locality, setLocality] = useState('');
   const [type, setType] = useState('Commercial');
@@ -60,34 +81,87 @@ export default function BuilderPortalScreen() {
   const [yieldVal, setYieldVal] = useState('8.5');
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
 
-  const handlePostProperty = () => {
+  const handlePostProperty = async () => {
     if (!title || !locality) {
       alert('Please fill in property title and location.');
       return;
     }
-    const newProp: BuilderProperty = {
-      id: `BLD-${Math.floor(100 + Math.random() * 900)}`,
-      title,
-      location: `${locality}, Hyderabad`,
-      type,
-      totalFractions: Number(fractions),
-      pricePerFraction: `₹${Number(price).toLocaleString('en-IN')}`,
-      yield: `${yieldVal}%`,
-      status: 'Pending Admin Approval',
-      image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&fit=crop',
-    };
-
-    setProperties([newProp, ...properties]);
-    setTitle('');
-    setLocality('');
-    setActiveTab('my_properties');
-    setSuccessNotice(`Property "${newProp.title}" submitted to RealShare Admin for approval.`);
-    setTimeout(() => setSuccessNotice(null), 4000);
+    try {
+      const user = auth.currentUser;
+      const token = await user?.getIdToken();
+      const res = await fetch('http://192.168.1.4:3000/api/properties', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title,
+          locality,
+          district: 'Hyderabad',
+          state: 'Telangana',
+          property_type: type.toLowerCase(),
+          total_fractions: Number(fractions),
+          available_fractions: Number(fractions),
+          price_per_fraction: Number(price),
+          booking_amount: Number(price) * 0.1,
+          assured_yield: Number(yieldVal),
+          target_irr: 15.0,
+        })
+      });
+      if (res.ok) {
+        setTitle('');
+        setLocality('');
+        setActiveTab('my_properties');
+        setSuccessNotice(`Property "${title}" submitted to RealShare Admin for approval.`);
+        setTimeout(() => setSuccessNotice(null), 4000);
+        fetchProperties();
+      } else {
+        alert("Failed to submit property.");
+      }
+    } catch(e) {
+      alert("Error connecting to server.");
+    }
   };
+
+  const handleUpdateProperty = async () => {
+    if (!editingProp) return;
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      await fetch(`http://192.168.1.4:3000/api/properties/${editingProp.id}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          title: editingProp.title,
+          locality: editingProp.locality || editingProp.location.split(',')[0],
+          property_type: editingProp.type.toLowerCase(),
+          total_fractions: Number(editingProp.totalFractions),
+          price_per_fraction: Number(editingProp.pricePerFraction.replace(/[^0-9]/g, '')),
+          assured_yield: Number(editingProp.yield.replace(/[^0-9.]/g, '')),
+        })
+      });
+      setSuccessNotice(`Property "${editingProp.title}" updated successfully.`);
+      setTimeout(() => setSuccessNotice(null), 4000);
+      setEditingProp(null);
+      fetchProperties();
+    } catch(e) {
+      alert("Error updating property.");
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#1A56DB" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
-      {/* Header */}
       <View style={styles.header}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>← Back</Text>
@@ -163,7 +237,7 @@ export default function BuilderPortalScreen() {
                   </View>
 
                   <View style={styles.propActions}>
-                    <TouchableOpacity style={styles.editBtn}>
+                    <TouchableOpacity style={styles.editBtn} onPress={() => setEditingProp(prop)}>
                       <Text style={styles.editBtnText}>✏️ Edit Listing Details</Text>
                     </TouchableOpacity>
                   </View>
@@ -241,6 +315,53 @@ export default function BuilderPortalScreen() {
           </View>
         )}
       </View>
+
+      {/* Edit Property Modal */}
+      <Modal visible={!!editingProp} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <Text style={styles.formTitle}>Edit Property Details</Text>
+
+            <Text style={styles.label}>Title</Text>
+            <TextInput
+              style={styles.input}
+              value={editingProp?.title}
+              onChangeText={(text) => setEditingProp({ ...editingProp, title: text })}
+            />
+
+            <View style={styles.rowInputs}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Total Fractions</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={String(editingProp?.totalFractions || '')}
+                  onChangeText={(text) => setEditingProp({ ...editingProp, totalFractions: text })}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.label}>Price / Frac</Text>
+                <TextInput
+                  style={styles.input}
+                  keyboardType="numeric"
+                  value={String(editingProp?.pricePerFraction || '').replace(/[^0-9]/g, '')}
+                  onChangeText={(text) => setEditingProp({ ...editingProp, pricePerFraction: text })}
+                />
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 12, marginTop: 10 }}>
+              <TouchableOpacity style={[styles.submitBtn, { flex: 1, backgroundColor: '#E2E8F0' }]} onPress={() => setEditingProp(null)}>
+                <Text style={[styles.submitBtnText, { color: '#475569' }]}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.submitBtn, { flex: 1 }]} onPress={handleUpdateProperty}>
+                <Text style={styles.submitBtnText}>Save Changes</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
     </ScrollView>
   );
 }
@@ -456,4 +577,16 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     fontSize: 13,
   },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    backgroundColor: '#fff',
+    borderRadius: 14,
+    padding: 20,
+  },
 });
+

@@ -8,15 +8,19 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Alert,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
+import { useUser } from '@/contexts/UserContext';
 
 export default function HomeScreen() {
   const router = useRouter();
   const [featuredProperties, setFeaturedProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState('Investor');
+  const [searchQuery, setSearchQuery] = useState('');
+  const { profile } = useUser();
 
   useEffect(() => {
     // Get user's first name
@@ -30,7 +34,7 @@ export default function HomeScreen() {
     }
 
     // In production, this would point to the deployed Next.js API or backend URL
-    fetch('http://localhost:3000/api/properties?featured=true')
+    fetch('http://192.168.1.4:3000/api/properties?featured=true')
       .then(res => res.json())
       .then(data => {
         setFeaturedProperties(data);
@@ -42,11 +46,17 @@ export default function HomeScreen() {
       });
   }, []);
 
+  const filteredProperties = featuredProperties.filter(prop => 
+    prop.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    prop.locality?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    prop.district?.toLowerCase().includes(searchQuery.toLowerCase())
+  );
+
   return (
     <View style={styles.container}>
-      {/* Top Header - Mockup style */}
+      {/* Top Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerIconBtn}>
+        <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/profile' as any)}>
           <Text style={styles.headerIconText}>☰</Text>
         </TouchableOpacity>
         
@@ -59,7 +69,7 @@ export default function HomeScreen() {
           </Text>
         </View>
 
-        <TouchableOpacity style={styles.headerIconBtn}>
+        <TouchableOpacity style={styles.headerIconBtn} onPress={() => Alert.alert('Notifications', 'No new notifications right now.')}>
           <Text style={styles.headerIconText}>🔔</Text>
         </TouchableOpacity>
       </View>
@@ -79,6 +89,8 @@ export default function HomeScreen() {
             style={styles.searchInput}
             placeholder="Search properties, locations..."
             placeholderTextColor="#9CA3AF"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
           />
         </View>
 
@@ -96,35 +108,53 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* 4 Icon Grid Actions */}
+        {/* 4 Icon Grid Actions - Role Based */}
         <View style={styles.actionGrid}>
-          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/explore' as any)}>
-            <View style={styles.actionIconBox}>
-              <Text style={styles.actionIcon}>🏢</Text>
-            </View>
-            <Text style={styles.actionText}>Browse{'\n'}Properties</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/portfolio' as any)}>
-            <View style={styles.actionIconBox}>
-              <Text style={styles.actionIcon}>📈</Text>
-            </View>
-            <Text style={styles.actionText}>My{'\n'}Investments</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/agent-portal' as any)}>
-            <View style={styles.actionIconBox}>
-              <Text style={styles.actionIcon}>💰</Text>
-            </View>
-            <Text style={styles.actionText}>Earnings{'\n'}Report</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/kyc' as any)}>
-            <View style={styles.actionIconBox}>
-              <Text style={styles.actionIcon}>💳</Text>
-            </View>
-            <Text style={styles.actionText}>Transactions</Text>
-          </TouchableOpacity>
+          {/* Investor Specific Tools */}
+          {(!profile || profile.role === 'investor' || profile.role === 'admin') && (
+            <>
+              <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/explore' as any)}>
+                <View style={styles.actionIconBox}>
+                  <Text style={styles.actionIcon}>🏢</Text>
+                </View>
+                <Text style={styles.actionText}>Browse{'\n'}Properties</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/portfolio' as any)}>
+                <View style={styles.actionIconBox}>
+                  <Text style={styles.actionIcon}>📈</Text>
+                </View>
+                <Text style={styles.actionText}>My{'\n'}Investments</Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/kyc' as any)}>
+                <View style={styles.actionIconBox}>
+                  <Text style={styles.actionIcon}>💳</Text>
+                </View>
+                <Text style={styles.actionText}>Transactions</Text>
+              </TouchableOpacity>
+            </>
+          )}
+
+          {/* Agent Specific Tools */}
+          {profile?.role === 'agent' && (
+            <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/agent-portal' as any)}>
+              <View style={[styles.actionIconBox, { borderColor: '#D4AF37', borderWidth: 2 }]}>
+                <Text style={styles.actionIcon}>💰</Text>
+              </View>
+              <Text style={styles.actionText}>Agent{'\n'}Earnings</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Builder Specific Tools */}
+          {profile?.role === 'builder' && (
+            <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/builder-portal' as any)}>
+              <View style={[styles.actionIconBox, { borderColor: '#1A56DB', borderWidth: 2 }]}>
+                <Text style={styles.actionIcon}>🏗️</Text>
+              </View>
+              <Text style={styles.actionText}>Builder{'\n'}Portal</Text>
+            </TouchableOpacity>
+          )}
         </View>
 
         {/* Featured Properties */}
@@ -141,8 +171,12 @@ export default function HomeScreen() {
               <View style={{ width: 280, height: 140, justifyContent: 'center', alignItems: 'center' }}>
                 <ActivityIndicator size="large" color="#1A56DB" />
               </View>
+            ) : filteredProperties.length === 0 ? (
+              <View style={{ width: 280, height: 140, justifyContent: 'center', alignItems: 'flex-start' }}>
+                <Text style={{ color: '#6B7280' }}>No properties found.</Text>
+              </View>
             ) : (
-              featuredProperties.map((prop) => (
+              filteredProperties.map((prop) => (
                 <TouchableOpacity
                   key={prop.id}
                   style={styles.card}
@@ -171,15 +205,7 @@ export default function HomeScreen() {
           </ScrollView>
         </View>
 
-        {/* Developer Shortcut to other portals */}
-        <View style={styles.devShortcuts}>
-          <Text style={{textAlign: 'center', color: '#6B7280', marginBottom: 10, fontSize: 12}}>Developer Workspaces</Text>
-          <View style={{flexDirection: 'row', justifyContent: 'center', gap: 10, flexWrap: 'wrap'}}>
-            <TouchableOpacity onPress={() => router.push('/builder-portal' as any)}><Text style={{color: '#1A56DB', fontWeight: '600'}}>Builder Portal</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/employee-portal' as any)}><Text style={{color: '#1A56DB', fontWeight: '600'}}>Employee Desk</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/services' as any)}><Text style={{color: '#1A56DB', fontWeight: '600'}}>Services</Text></TouchableOpacity>
-          </View>
-        </View>
+        {/* Developer Shortcut to other portals - Removed for Production */}
 
       </ScrollView>
 
@@ -466,3 +492,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   }
 });
+

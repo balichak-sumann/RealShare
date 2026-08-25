@@ -19,7 +19,7 @@ export default function PortfolioScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/portfolio')
+    fetch('http://192.168.1.4:3000/api/portfolio')
       .then(res => res.json())
       .then(data => {
         if (data.investments) setPortfolio(data.investments);
@@ -419,3 +419,4 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   }
 });
+

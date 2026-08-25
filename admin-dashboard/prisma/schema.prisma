@@ -7,7 +7,7 @@ datasource db {
 }
 
 model Profile {
-  id                   String        @id @default(uuid()) @db.Uuid
+  id                   String        @id
   full_name            String
   email                String?       @unique
   phone_number         String?
@@ -38,14 +38,14 @@ model Profile {
 
 model KycDocument {
   id                  String    @id @default(uuid()) @db.Uuid
-  user_id             String    @db.Uuid
+  user_id             String
   document_type       String
   document_number     String
   document_front_url  String
   document_back_url   String?
   verification_status String    @default("pending")
   rejection_reason    String?
-  verified_by         String?   @db.Uuid
+  verified_by         String?
   verified_at         DateTime? @db.Timestamptz(6)
   created_at          DateTime  @default(now()) @db.Timestamptz(6)
 
@@ -76,7 +76,7 @@ model Property {
   lng                 Decimal?  @db.Decimal(10, 6)
   video_url           String?
   brochure_url        String?
-  posted_by           String?   @db.Uuid
+  posted_by           String?
   approval_status     String    @default("pending_approval")
   rejection_notes     String?
   featured            Boolean   @default(false)
@@ -107,7 +107,7 @@ model PropertyImage {
 
 model Investment {
   id                  String   @id @default(uuid()) @db.Uuid
-  user_id             String   @db.Uuid
+  user_id             String
   property_id         String   @db.Uuid
   fractions_bought    Int
   total_amount        Decimal  @db.Decimal(15, 2)
@@ -127,7 +127,7 @@ model Investment {
 
 model Transaction {
   id               String   @id @default(uuid()) @db.Uuid
-  user_id          String   @db.Uuid
+  user_id          String
   property_id      String?  @db.Uuid
   investment_id    String?  @db.Uuid
   transaction_type String
@@ -149,8 +149,8 @@ model Transaction {
 
 model AgentCommission {
   id                    String   @id @default(uuid()) @db.Uuid
-  agent_id              String   @db.Uuid
-  investor_id           String   @db.Uuid
+  agent_id              String
+  investor_id           String
   property_id           String   @db.Uuid
   investment_id         String   @db.Uuid
   commission_percentage Decimal  @default(2.00) @db.Decimal(5, 2)

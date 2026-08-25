@@ -60,7 +60,7 @@ export default function KYCScreen() {
       const frontUrl = await uploadImageAsync(frontImage, 'front');
       const backUrl = backImage ? await uploadImageAsync(backImage, 'back') : null;
 
-      const res = await fetch('http://localhost:3000/api/kyc/submit', {
+      const res = await fetch('http://192.168.1.4:3000/api/kyc/submit', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -307,3 +307,4 @@ const styles = StyleSheet.create({
     lineHeight: 24,
   }
 });
+

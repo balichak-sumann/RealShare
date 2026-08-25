@@ -68,24 +68,46 @@ export default function PropertiesPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const handleApproveProperty = (id: string) => {
-    setProperties((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: "Active" } : p))
-    );
-    showToast(`Property ${id} approved and listed live on Web & Mobile Apps!`);
+  const handleApproveProperty = async (id: string) => {
+    try {
+      const res = await fetch(`/api/properties/${id}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer MOCK_TOKEN', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approval_status: 'approved' })
+      });
+      if (res.ok) {
+        setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, approval_status: "approved" } : p)));
+        showToast(`Property ${id} approved and listed live on Web & Mobile Apps!`);
+      }
+    } catch(e) {}
   };
 
-  const handleRejectProperty = (id: string) => {
-    setProperties((prev) =>
-      prev.map((p) => (p.id === id ? { ...p, status: "Rejected" } : p))
-    );
-    showToast(`Property ${id} submission rejected.`);
+  const handleRejectProperty = async (id: string) => {
+    try {
+      const res = await fetch(`/api/properties/${id}`, {
+        method: 'PATCH',
+        headers: { 'Authorization': 'Bearer MOCK_TOKEN', 'Content-Type': 'application/json' },
+        body: JSON.stringify({ approval_status: 'rejected' })
+      });
+      if (res.ok) {
+        setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, approval_status: "rejected" } : p)));
+        showToast(`Property ${id} submission rejected.`);
+      }
+    } catch(e) {}
   };
 
-  const handleDeleteProperty = (id: string) => {
+  const handleDeleteProperty = async (id: string) => {
     if (confirm("Are you sure you want to delete this property listing? This action cannot be undone.")) {
-      setProperties((prev) => prev.filter((p) => p.id !== id));
-      showToast(`Property ${id} removed successfully by Admin.`);
+      try {
+        const res = await fetch(`/api/properties/${id}`, {
+          method: 'DELETE',
+          headers: { 'Authorization': 'Bearer MOCK_TOKEN' }
+        });
+        if (res.ok) {
+          setProperties((prev) => prev.filter((p) => p.id !== id));
+          showToast(`Property ${id} removed successfully by Admin.`);
+        }
+      } catch(e) {}
     }
   };
 

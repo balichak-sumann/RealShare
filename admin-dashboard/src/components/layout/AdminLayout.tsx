@@ -3,6 +3,7 @@
 import React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/contexts/AuthContext";
 import styles from "./AdminLayout.module.css";
 
 interface AdminLayoutProps {
@@ -12,6 +13,7 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const pathname = usePathname();
+  const { user, logout } = useAuth();
 
   const navItems = [
     { name: "Overview", path: "/", icon: "📊" },
@@ -51,12 +53,15 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         </nav>
         <div className={styles.sidebarFooter}>
           <div className={styles.adminInfo}>
-            <div className={styles.adminAvatar}>RS</div>
+            <div className={styles.adminAvatar}>{user?.email?.[0].toUpperCase() || "A"}</div>
             <div>
-              <div className={styles.adminName}>Super Admin</div>
-              <div className={styles.adminRole}>Hyderabad HQ (Nizampet)</div>
+              <div className={styles.adminName}>{user?.email?.split('@')[0] || "Admin"}</div>
+              <div className={styles.adminRole}>Administrator</div>
             </div>
           </div>
+          <button onClick={logout} style={{ marginTop: '12px', width: '100%', padding: '8px', background: 'transparent', color: '#EF4444', border: '1px solid #EF4444', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>
+            Logout
+          </button>
         </div>
       </aside>
 
@@ -77,7 +82,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
               🔔<span className={styles.notifDot} />
             </Link>
             <div className={styles.userProfile}>
-              <div className={styles.avatar}>A</div>
+              <div className={styles.avatar}>{user?.email?.[0].toUpperCase() || "A"}</div>
             </div>
           </div>
         </header>

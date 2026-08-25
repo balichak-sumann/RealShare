@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'http://192.168.1.4:3000/api';
 
 type KycStep = 'intro' | 'pan' | 'pan_verified' | 'aadhaar' | 'aadhaar_otp' | 'complete';
 
@@ -400,3 +400,4 @@ const styles = StyleSheet.create({
   verifiedLabel: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
   verifiedValue: { fontSize: 12, color: '#64748B', marginTop: 2 },
 });
+

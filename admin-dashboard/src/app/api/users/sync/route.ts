@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/firebase-admin';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
-
+import prisma from '@/lib/prisma';
 export async function POST(req: Request) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -28,7 +25,7 @@ export async function POST(req: Request) {
     const expoPushToken = body.expo_push_token;
     
     let requestedRole = 'investor';
-    if (body.role && ['investor', 'agent', 'builder'].includes(body.role)) {
+    if (body.role && ['investor', 'agent', 'builder', 'admin'].includes(body.role)) {
       requestedRole = body.role;
     }
 

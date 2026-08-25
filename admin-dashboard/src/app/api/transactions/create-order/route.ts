@@ -1,10 +1,8 @@
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
-import { PrismaClient } from '@prisma/client';
 import { auth } from '@/lib/firebase-admin';
 
-const prisma = new PrismaClient();
-
+import prisma from '@/lib/prisma';
 let razorpay: any = null;
 if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET) {
   try {

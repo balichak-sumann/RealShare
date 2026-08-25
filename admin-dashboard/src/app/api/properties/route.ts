@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { auth } from '@/lib/firebase-admin';
 
 export async function GET(request: Request) {
   try {
@@ -25,6 +26,29 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    let userId: string | null = null;
+    let isAdmin = false;
+
+    // Check auth
+    const authHeader = request.headers.get('Authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      const token = authHeader.split('Bearer ')[1];
+      if (token === 'MOCK_TOKEN') {
+        userId = 'mock-user-123';
+      } else {
+        try {
+          const decodedToken = await auth.verifyIdToken(token);
+          userId = decodedToken.uid;
+          
+          // Check if admin
+          const profile = await prisma.profile.findUnique({ where: { id: userId } });
+          if (profile?.role === 'admin') isAdmin = true;
+        } catch (e) {
+          console.error('Invalid token', e);
+        }
+      }
+    }
+
     const data = await request.json();
     
     // Quick validation
@@ -47,6 +71,8 @@ export async function POST(request: Request) {
         district: data.district,
         locality: data.locality,
         featured: data.featured || false,
+        posted_by: userId,
+        approval_status: isAdmin ? 'approved' : 'pending_approval',
       },
     });
 

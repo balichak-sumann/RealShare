@@ -22,7 +22,7 @@ export default function PropertyDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`http://localhost:3000/api/properties/${id}`)
+    fetch(`http://192.168.1.4:3000/api/properties/${id}`)
       .then(res => res.json())
       .then(data => {
         setProperty(data);
@@ -96,7 +96,7 @@ export default function PropertyDetailsScreen() {
       const token = (await auth.currentUser?.getIdToken()) || "MOCK_TOKEN";
 
       // 2. Create Order on Backend
-      const orderResponse = await fetch('http://localhost:3000/api/transactions/create-order', {
+      const orderResponse = await fetch('http://192.168.1.4:3000/api/transactions/create-order', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ export default function PropertyDetailsScreen() {
           order_id: orderData.orderId,
           handler: async function (response: any) {
             // 4. Verify Payment on Backend
-            const verifyRes = await fetch('http://localhost:3000/api/transactions/verify-payment', {
+            const verifyRes = await fetch('http://192.168.1.4:3000/api/transactions/verify-payment', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

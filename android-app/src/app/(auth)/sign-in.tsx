@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
+
+// Premium dark luxury real estate background
+const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2000&auto=format&fit=crop';
 
 export default function SignInScreen() {
   const router = useRouter();
@@ -27,131 +30,178 @@ export default function SignInScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Welcome Back</Text>
-        <Text style={styles.subtitle}>Log in to your RealShare account</Text>
+    <ImageBackground source={{ uri: BG_IMAGE }} style={styles.backgroundImage} resizeMode="cover">
+      <View style={styles.overlay}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
+          <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+            
+            <View style={styles.glassContainer}>
+              <View style={styles.header}>
+                <Text style={styles.brandTitle}>RealShare</Text>
+                <Text style={styles.title}>Welcome Back</Text>
+                <Text style={styles.subtitle}>Log in to access your premium portfolio</Text>
+              </View>
+
+              {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+              <View style={styles.form}>
+                <Text style={styles.label}>Email Address or Phone</Text>
+                <TextInput
+                  autoCapitalize="none"
+                  value={emailAddress}
+                  placeholder="john@example.com"
+                  placeholderTextColor="#94A3B8"
+                  onChangeText={(email) => setEmailAddress(email)}
+                  style={styles.input}
+                />
+                
+                <Text style={styles.label}>Password</Text>
+                <TextInput
+                  value={password}
+                  placeholder="••••••••"
+                  placeholderTextColor="#94A3B8"
+                  secureTextEntry={true}
+                  onChangeText={(password) => setPassword(password)}
+                  style={styles.input}
+                />
+
+                <TouchableOpacity style={styles.primaryButton} onPress={onSignInPress} disabled={loading}>
+                  {loading ? <ActivityIndicator color="#0F172A" /> : <Text style={styles.primaryButtonText}>Sign In to Portfolio</Text>}
+                </TouchableOpacity>
+
+                <View style={styles.dividerContainer}>
+                  <View style={styles.dividerLine} />
+                  <Text style={styles.dividerText}>OR</Text>
+                  <View style={styles.dividerLine} />
+                </View>
+
+                <TouchableOpacity style={styles.googleButton} onPress={async () => {
+                  setLoading(true);
+                  try {
+                    if (Platform.OS === 'web') {
+                      const { signInWithPopup } = await import('firebase/auth');
+                      const { googleProvider } = await import('@/lib/firebase');
+                      await signInWithPopup(auth, googleProvider);
+                    } else {
+                      alert("Google Sign in on native requires Expo AuthSession");
+                    }
+                  } catch (err: any) {
+                    setError(err.message || "Google sign in failed");
+                  } finally {
+                    setLoading(false);
+                  }
+                }} disabled={loading}>
+                  <Text style={styles.googleButtonText}>Continue with Google</Text>
+                </TouchableOpacity>
+
+                <View style={styles.footer}>
+                  <Text style={styles.footerText}>New to RealShare? </Text>
+                  <TouchableOpacity onPress={() => router.replace('/(auth)/sign-up')}>
+                    <Text style={styles.linkText}>Create an Account</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            </View>
+
+          </ScrollView>
+        </KeyboardAvoidingView>
       </View>
-
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
-
-      <View style={styles.form}>
-        <Text style={styles.label}>Email Address or Phone Number</Text>
-        <TextInput
-          autoCapitalize="none"
-          value={emailAddress}
-          placeholder="john@example.com or +1234567890"
-          placeholderTextColor="#9CA3AF"
-          onChangeText={(email) => setEmailAddress(email)}
-          style={styles.input}
-        />
-        <Text style={styles.label}>Password</Text>
-        <TextInput
-          value={password}
-          placeholder="********"
-          placeholderTextColor="#9CA3AF"
-          secureTextEntry={true}
-          onChangeText={(password) => setPassword(password)}
-          style={styles.input}
-        />
-
-        <TouchableOpacity style={styles.primaryButton} onPress={onSignInPress} disabled={loading}>
-          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Log In</Text>}
-        </TouchableOpacity>
-
-        <View style={styles.dividerContainer}>
-          <View style={styles.dividerLine} />
-          <Text style={styles.dividerText}>OR</Text>
-          <View style={styles.dividerLine} />
-        </View>
-
-        <TouchableOpacity style={styles.googleButton} onPress={async () => {
-          setLoading(true);
-          try {
-            if (Platform.OS === 'web') {
-              const { signInWithPopup } = await import('firebase/auth');
-              const { googleProvider } = await import('@/lib/firebase');
-              await signInWithPopup(auth, googleProvider);
-            } else {
-              alert("Google Sign in on native requires Expo AuthSession");
-            }
-          } catch (err: any) {
-            setError(err.message || "Google sign in failed");
-          } finally {
-            setLoading(false);
-          }
-        }} disabled={loading}>
-          <Text style={styles.googleButtonText}>Continue with Google</Text>
-        </TouchableOpacity>
-
-        <View style={styles.footer}>
-          <Text style={styles.footerText}>Don't have an account? </Text>
-          <TouchableOpacity onPress={() => router.replace('/(auth)/sign-up')}>
-            <Text style={styles.linkText}>Sign Up</Text>
-          </TouchableOpacity>
-        </View>
-      </View>
-    </View>
+    </ImageBackground>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  backgroundImage: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
-    paddingHorizontal: 24,
+    width: '100%',
+    height: '100%',
+  },
+  overlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.65)', // Dark overlay for text readability
+  },
+  scrollContainer: {
+    flexGrow: 1,
     justifyContent: 'center',
+    padding: 24,
+  },
+  glassContainer: {
+    backgroundColor: 'rgba(15, 23, 42, 0.75)', // Deep slate with opacity
+    borderRadius: 24,
+    padding: 32,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(16px)' } : {}),
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 10,
+    maxWidth: 500,
+    width: '100%',
+    alignSelf: 'center',
   },
   header: {
-    marginBottom: 40,
+    marginBottom: 32,
     alignItems: 'center',
+  },
+  brandTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#D4AF37', // Gold accent
+    letterSpacing: 2,
+    textTransform: 'uppercase',
+    marginBottom: 12,
   },
   title: {
     fontSize: 32,
     fontWeight: '800',
-    color: '#1A56DB',
+    color: '#FFFFFF',
     marginBottom: 8,
   },
   subtitle: {
-    fontSize: 16,
-    color: '#6B7280',
+    fontSize: 15,
+    color: '#94A3B8',
   },
   form: {
     width: '100%',
   },
   label: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: '600',
-    color: '#374151',
+    color: '#E2E8F0',
     marginBottom: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   input: {
-    backgroundColor: '#F3F4F6',
+    backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: '#111827',
+    color: '#FFFFFF',
     marginBottom: 20,
   },
   primaryButton: {
-    backgroundColor: '#1A56DB',
+    backgroundColor: '#D4AF37', // Luxury Gold
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
     marginTop: 10,
-    shadowColor: '#1A56DB',
+    shadowColor: '#D4AF37',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
     elevation: 4,
   },
   primaryButtonText: {
-    color: '#FFFFFF',
+    color: '#0F172A',
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '800',
+    letterSpacing: 0.5,
   },
   footer: {
     flexDirection: 'row',
@@ -159,21 +209,24 @@ const styles = StyleSheet.create({
     marginTop: 32,
   },
   footerText: {
-    color: '#6B7280',
-    fontSize: 15,
+    color: '#94A3B8',
+    fontSize: 14,
   },
   linkText: {
-    color: '#1A56DB',
-    fontSize: 15,
-    fontWeight: '600',
+    color: '#D4AF37',
+    fontSize: 14,
+    fontWeight: '700',
   },
   errorText: {
-    color: '#DC2626',
-    marginBottom: 16,
+    color: '#FCA5A5',
+    marginBottom: 20,
     textAlign: 'center',
-    backgroundColor: '#FEF2F2',
+    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
     padding: 12,
     borderRadius: 8,
+    fontSize: 14,
   },
   dividerContainer: {
     flexDirection: 'row',
@@ -183,24 +236,24 @@ const styles = StyleSheet.create({
   dividerLine: {
     flex: 1,
     height: 1,
-    backgroundColor: '#E5E7EB',
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
   },
   dividerText: {
-    marginHorizontal: 10,
-    color: '#9CA3AF',
-    fontSize: 14,
+    marginHorizontal: 12,
+    color: '#64748B',
+    fontSize: 13,
     fontWeight: '600',
   },
   googleButton: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(255, 255, 255, 0.15)',
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
   },
   googleButtonText: {
-    color: '#374151',
+    color: '#FFFFFF',
     fontSize: 16,
     fontWeight: '600',
   }

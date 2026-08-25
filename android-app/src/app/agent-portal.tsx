@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -6,26 +6,83 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
+  ActivityIndicator,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { auth } from '@/lib/firebase';
+import { LineChart } from 'react-native-chart-kit';
+
+const screenWidth = Dimensions.get('window').width;
 
 export default function AgentPortalScreen() {
   const router = useRouter();
 
   const [copied, setCopied] = useState(false);
-  const referralLink = "https://realshare.in/ref/RS-VIKRAM-2026";
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [dashboardData, setDashboardData] = useState<any>(null);
+
+  useEffect(() => {
+    fetchDashboardData();
+  }, []);
+
+  const fetchDashboardData = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        setError('Not authenticated');
+        setLoading(false);
+        return;
+      }
+
+      const token = await user.getIdToken();
+      const res = await fetch('http://localhost:3000/api/agents/dashboard', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to fetch dashboard data');
+      }
+
+      const data = await res.json();
+      setDashboardData(data);
+    } catch (err: any) {
+      setError(err.message || 'An error occurred');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const referralLink = `https://realshare.in/ref/${dashboardData?.referralCode || ''}`;
 
   const handleCopy = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 3000);
   };
 
-  const clientLeads = [
-    { name: 'Arjun Kumar', property: 'Goa Beachfront Villa', fractions: 10, commission: '₹37,500', status: 'Commission Paid' },
-    { name: 'Priya Sharma', property: 'Cyber Pearl Tech Park', fractions: 4, commission: '₹10,000', status: 'Commission Paid' },
-    { name: 'Rohan Mehta', property: 'Marina Bay Luxury Condo', fractions: 2, commission: '₹1,25,000', status: 'Pending Payout' },
-    { name: 'Ananya Roy', property: 'Mountain View Alpine Lodge', fractions: 1, commission: '₹30,000', status: 'Under Verification' },
-  ];
+  const clientLeads = dashboardData?.clientLeads || [];
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
+        <ActivityIndicator size="large" color="#2563EB" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
+        <Text style={{ color: 'red', textAlign: 'center' }}>{error}</Text>
+        <TouchableOpacity style={{ marginTop: 20 }} onPress={() => router.back()}>
+          <Text style={{ color: '#2563EB', fontWeight: 'bold' }}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
@@ -41,12 +98,14 @@ export default function AgentPortalScreen() {
         {/* Agent Profile Summary */}
         <View style={styles.profileCard}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>VR</Text>
+            <Text style={styles.avatarText}>
+              {dashboardData?.agentName ? dashboardData.agentName.substring(0, 2).toUpperCase() : 'AG'}
+            </Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.agentName}>Vikramaditya Rao</Text>
-            <Text style={styles.agencyName}>Hyderabad Prime Real Estate</Text>
-            <Text style={styles.commissionRateBadge}>⚡ Custom Commission: 2.5% per Sale</Text>
+            <Text style={styles.agentName}>{dashboardData?.agentName || 'Agent'}</Text>
+            <Text style={styles.agencyName}>{dashboardData?.agencyName || 'RealShare Agent'}</Text>
+            <Text style={styles.commissionRateBadge}>⚡ {dashboardData?.commissionRate || 'Custom Commission'}</Text>
           </View>
         </View>
 
@@ -54,16 +113,53 @@ export default function AgentPortalScreen() {
         <View style={styles.kpiRow}>
           <View style={styles.kpiBox}>
             <Text style={styles.kpiLabel}>Total Earned</Text>
-            <Text style={[styles.kpiValue, { color: '#16A34A' }]}>₹2,02,500</Text>
+            <Text style={[styles.kpiValue, { color: '#16A34A' }]}>{dashboardData?.totalEarned || '₹0'}</Text>
             <Text style={styles.kpiSub}>Transferred to Bank</Text>
           </View>
 
           <View style={styles.kpiBox}>
             <Text style={styles.kpiLabel}>Pending Payout</Text>
-            <Text style={[styles.kpiValue, { color: '#D97706' }]}>₹1,25,000</Text>
+            <Text style={[styles.kpiValue, { color: '#D97706' }]}>{dashboardData?.pendingPayout || '₹0'}</Text>
             <Text style={styles.kpiSub}>Ready for Payout</Text>
           </View>
         </View>
+
+        {/* Sales Analytics Chart */}
+        {dashboardData?.monthlyTrends && (
+          <View style={styles.chartCard}>
+            <Text style={[styles.sectionTitle, { alignSelf: 'flex-start' }]}>Sales Trends (Commission)</Text>
+            <LineChart
+              data={{
+                labels: dashboardData.monthlyTrends.labels,
+                datasets: [
+                  {
+                    data: dashboardData.monthlyTrends.data
+                  }
+                ]
+              }}
+              width={screenWidth - 72} // Subtracting padding
+              height={220}
+              chartConfig={{
+                backgroundColor: '#ffffff',
+                backgroundGradientFrom: '#ffffff',
+                backgroundGradientTo: '#ffffff',
+                decimalPlaces: 0,
+                color: (opacity = 1) => `rgba(37, 99, 235, ${opacity})`,
+                labelColor: (opacity = 1) => `rgba(100, 116, 139, ${opacity})`,
+                propsForDots: {
+                  r: "4",
+                  strokeWidth: "2",
+                  stroke: "#1E3A8A"
+                }
+              }}
+              bezier
+              style={{
+                marginVertical: 8,
+                borderRadius: 14
+              }}
+            />
+          </View>
+        )}
 
         {/* Referral Link Generator */}
         <View style={styles.referralCard}>
@@ -209,6 +305,15 @@ const styles = StyleSheet.create({
   kpiSub: {
     fontSize: 10,
     color: '#64748B',
+  },
+  chartCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 14,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 20,
+    alignItems: 'center'
   },
   referralCard: {
     backgroundColor: '#EFF6FF',

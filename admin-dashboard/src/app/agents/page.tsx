@@ -27,21 +27,32 @@ export default function AgentsPage() {
     fetch('/api/agents')
       .then(res => res.json())
       .then(data => {
-        const mapped = data.map((d: any) => ({
-          id: d.id,
-          name: d.full_name,
-          agency: 'Independent',
-          email: d.email || '',
-          phone: d.phone_number || '',
-          referralCode: d.referral_code || '',
-          commissionRatePct: 2.0,
-          totalInvestorsReferred: 0,
-          totalSalesVolume: "₹0",
-          commissionEarned: "₹0",
-          commissionPending: "₹0",
-          status: d.is_active ? "Active" : "Suspended",
-          joinedDate: new Date(d.created_at).toLocaleDateString()
-        }));
+        const mapped = data.map((d: any) => {
+          let earned = 0;
+          let pending = 0;
+          const commissions = d.agent_commissions || [];
+          commissions.forEach((c: any) => {
+             const amt = Number(c.commission_amount);
+             if (c.status === 'paid') earned += amt;
+             else if (c.status === 'pending_clearance') pending += amt;
+          });
+
+          return {
+            id: d.id,
+            name: d.full_name,
+            agency: 'Independent',
+            email: d.email || '',
+            phone: d.phone_number || '',
+            referralCode: d.referral_code || '',
+            commissionRatePct: 2.5,
+            totalInvestorsReferred: commissions.length,
+            totalSalesVolume: `₹${(earned * 40 + pending * 40).toLocaleString('en-IN')}`,
+            commissionEarned: `₹${earned.toLocaleString('en-IN')}`,
+            commissionPending: `₹${pending.toLocaleString('en-IN')}`,
+            status: d.is_active ? "Active" : "Suspended",
+            joinedDate: new Date(d.created_at).toLocaleDateString()
+          };
+        });
         setAgents(mapped);
         setLoading(false);
       })
@@ -78,22 +89,31 @@ export default function AgentsPage() {
     showToast(`Custom commission rate updated to ${editCommissionRate}% for ${selectedAgent.name}`);
   };
 
-  const handleDisburseCommission = (id: string) => {
-    setAgents((prev) =>
-      prev.map((a) =>
-        a.id === id
-          ? {
-              ...a,
-              commissionEarned: `₹${(
-                parseInt(a.commissionEarned.replace(/[^0-9]/g, "")) +
-                parseInt(a.commissionPending.replace(/[^0-9]/g, ""))
-              ).toLocaleString("en-IN")}`,
-              commissionPending: "₹0",
-            }
-          : a
-      )
-    );
-    showToast(`Pending commission paid and ledger updated for Agent ${id}!`);
+  const handleDisburseCommission = async (id: string) => {
+    try {
+      const res = await fetch(`/api/agents/${id}/disburse`, { method: 'POST' });
+      if (res.ok) {
+        setAgents((prev) =>
+          prev.map((a) =>
+            a.id === id
+              ? {
+                  ...a,
+                  commissionEarned: `₹${(
+                    parseInt(a.commissionEarned.replace(/[^0-9]/g, "")) +
+                    parseInt(a.commissionPending.replace(/[^0-9]/g, ""))
+                  ).toLocaleString("en-IN")}`,
+                  commissionPending: "₹0",
+                }
+              : a
+          )
+        );
+        showToast(`Pending commission paid and ledger updated for Agent ${id}!`);
+      } else {
+        showToast(`Failed to disburse commission for Agent ${id}`);
+      }
+    } catch (e) {
+      showToast(`Error disbursing commission`);
+    }
   };
 
   const filtered = agents.filter(

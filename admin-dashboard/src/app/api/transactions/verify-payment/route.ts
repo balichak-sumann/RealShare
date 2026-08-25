@@ -73,6 +73,53 @@ export async function POST(req: Request) {
       }
     });
 
+    // Commission Logic
+    const investor = await prisma.profile.findUnique({
+      where: { id: userId }
+    });
+
+    if (investor && investor.referred_by_code) {
+      const agent = await prisma.profile.findUnique({
+        where: { referral_code: investor.referred_by_code }
+      });
+
+      if (agent && agent.role === 'agent') {
+        const commissionAmount = Number(transaction.amount) * 0.025;
+        
+        await prisma.agentCommission.create({
+          data: {
+            agent_id: agent.id,
+            investor_id: investor.id,
+            property_id: transaction.property_id!,
+            investment_id: investment.id,
+            commission_percentage: 2.50,
+            commission_amount: commissionAmount,
+            status: 'pending_clearance'
+          }
+        });
+
+        if (agent.expo_push_token) {
+          try {
+            await fetch('https://exp.host/--/api/v2/push/send', {
+              method: 'POST',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                to: agent.expo_push_token,
+                sound: 'default',
+                title: 'New Commission Earned! 🎉',
+                body: `You just earned ₹${commissionAmount.toLocaleString('en-IN')} from a referral!`,
+              })
+            });
+          } catch (e) {
+            console.error('Failed to send push notification', e);
+          }
+        }
+      }
+    }
+
     await prisma.transaction.update({
       where: { id: transactionId },
       data: {

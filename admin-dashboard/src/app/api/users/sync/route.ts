@@ -14,6 +14,24 @@ export async function POST(req: Request) {
     const token = authHeader.split('Bearer ')[1];
     const decodedToken = await auth.verifyIdToken(token);
     
+    let body: any = {};
+    try {
+      const bodyText = await req.text();
+      if (bodyText) {
+        body = JSON.parse(bodyText);
+      }
+    } catch (e) {
+      // Ignore parsing errors for empty bodies
+    }
+
+    const referredByCode = body.referred_by_code;
+    const expoPushToken = body.expo_push_token;
+    
+    let requestedRole = 'investor';
+    if (body.role && ['investor', 'agent', 'builder'].includes(body.role)) {
+      requestedRole = body.role;
+    }
+
     // Create or update the user in the database
     const profile = await prisma.profile.upsert({
       where: {
@@ -24,6 +42,8 @@ export async function POST(req: Request) {
         phone_number: decodedToken.phone_number || null,
         full_name: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
         avatar_url: decodedToken.picture || null,
+        ...(referredByCode ? { referred_by_code: referredByCode } : {}),
+        ...(expoPushToken ? { expo_push_token: expoPushToken } : {}),
       },
       create: {
         id: decodedToken.uid,
@@ -31,7 +51,9 @@ export async function POST(req: Request) {
         phone_number: decodedToken.phone_number || null,
         full_name: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
         avatar_url: decodedToken.picture || null,
-        role: 'investor',
+        role: requestedRole,
+        referred_by_code: referredByCode || null,
+        expo_push_token: expoPushToken || null,
       },
     });
 

@@ -12,6 +12,8 @@ export default function SignUpScreen() {
   const [pendingVerification, setPendingVerification] = useState(false);
   const [authStrategy, setAuthStrategy] = useState<'email' | 'phone'>('email');
   const [code, setCode] = useState('');
+  const [referralCode, setReferralCode] = useState('');
+  const [role, setRole] = useState<'investor' | 'agent' | 'builder'>('investor');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
@@ -39,6 +41,33 @@ export default function SignUpScreen() {
       if (isEmail) {
         // Firebase Email Auth automatically signs the user in on creation
         const userCredential = await createUserWithEmailAndPassword(auth, identifier, password);
+        
+        try {
+          if (referralCode) {
+            const token = await userCredential.user.getIdToken();
+            await fetch('http://localhost:3000/api/users/sync', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ referred_by_code: referralCode, role })
+            });
+          } else if (role !== 'investor') {
+            const token = await userCredential.user.getIdToken();
+            await fetch('http://localhost:3000/api/users/sync', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({ role })
+            });
+          }
+        } catch (e) {
+          console.error("Failed to sync role/referral code", e);
+        }
+
         await sendEmailVerification(userCredential.user);
         // onAuthStateChanged in _layout.tsx will redirect to verify-email
       } else {
@@ -65,7 +94,34 @@ export default function SignUpScreen() {
     setError('');
 
     try {
-      await confirmationResult.confirm(code);
+      const userCredential = await confirmationResult.confirm(code);
+      
+      try {
+        if (referralCode && userCredential.user) {
+          const token = await userCredential.user.getIdToken();
+          await fetch('http://localhost:3000/api/users/sync', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ referred_by_code: referralCode, role })
+          });
+        } else if (role !== 'investor' && userCredential.user) {
+          const token = await userCredential.user.getIdToken();
+          await fetch('http://localhost:3000/api/users/sync', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${token}`,
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ role })
+          });
+        }
+      } catch (e) {
+        console.error("Failed to sync role/referral code", e);
+      }
+
       // onAuthStateChanged in _layout.tsx will redirect
     } catch (err: any) {
       setError(err.message || 'Invalid code');
@@ -85,6 +141,21 @@ export default function SignUpScreen() {
 
       {!pendingVerification && (
         <View style={styles.form}>
+          <Text style={styles.label}>I want to join as a:</Text>
+          <View style={styles.roleRow}>
+            {['investor', 'agent', 'builder'].map((r) => (
+              <TouchableOpacity
+                key={r}
+                style={[styles.rolePill, role === r && styles.rolePillActive]}
+                onPress={() => setRole(r as any)}
+              >
+                <Text style={[styles.roleText, role === r && styles.roleTextActive]}>
+                  {r.charAt(0).toUpperCase() + r.slice(1)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
           <Text style={styles.label}>Email or Phone Number</Text>
           <TextInput
             autoCapitalize="none"
@@ -109,6 +180,16 @@ export default function SignUpScreen() {
               />
             </>
           )}
+
+          <Text style={styles.label}>Referral Code (Optional)</Text>
+          <TextInput
+            value={referralCode}
+            placeholder="e.g. RS-VIKRAM-2026"
+            placeholderTextColor="#9CA3AF"
+            autoCapitalize="characters"
+            onChangeText={(text) => setReferralCode(text)}
+            style={styles.input}
+          />
 
           <TouchableOpacity style={styles.primaryButton} onPress={onSignUpPress} disabled={loading}>
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryButtonText}>Sign Up</Text>}
@@ -283,5 +364,31 @@ const styles = StyleSheet.create({
     color: '#374151',
     fontSize: 16,
     fontWeight: '600',
+  },
+  roleRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 20,
+  },
+  rolePill: {
+    flex: 1,
+    paddingVertical: 10,
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  rolePillActive: {
+    backgroundColor: '#1A56DB',
+    borderColor: '#1A56DB',
+  },
+  roleText: {
+    color: '#4B5563',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  roleTextActive: {
+    color: '#FFFFFF',
   }
 });

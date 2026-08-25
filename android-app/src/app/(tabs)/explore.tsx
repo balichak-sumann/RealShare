@@ -11,6 +11,7 @@ export default function ExploreScreen() {
   const [activeLocation, setActiveLocation] = useState('Location');
   const [activeType, setActiveType] = useState('Property Type');
   const [activePrice, setActivePrice] = useState('Price Range');
+  const [activeYield, setActiveYield] = useState('Investment Demand');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   
   const [properties, setProperties] = useState<any[]>([]);
@@ -56,8 +57,13 @@ export default function ExploreScreen() {
     if (activePrice === 'Under ₹5L') matchesPrice = price < 500000;
     if (activePrice === '₹5L - ₹10L') matchesPrice = price >= 500000 && price <= 1000000;
     if (activePrice === 'Above ₹10L') matchesPrice = price > 1000000;
+    
+    let matchesYield = true;
+    const propYield = Number(prop.assured_yield);
+    if (activeYield === 'High Yield (>9%)') matchesYield = propYield > 9;
+    if (activeYield === 'Standard Yield (7-9%)') matchesYield = propYield >= 7 && propYield <= 9;
                           
-    return matchesSearch && matchesLocation && matchesType && matchesPrice;
+    return matchesSearch && matchesLocation && matchesType && matchesPrice && matchesYield;
   });
 
   const generateMapHtml = (properties: any[]) => `
@@ -209,15 +215,26 @@ export default function ExploreScreen() {
                 {activePrice} ▾
               </Text>
             </TouchableOpacity>
+
+            {/* Yield / Investment Demand Filter */}
+            <TouchableOpacity 
+              style={[styles.pill, activeYield !== 'Investment Demand' && styles.pillActive]}
+              onPress={() => setOpenDropdown(openDropdown === 'Investment Demand' ? null : 'Investment Demand')}
+            >
+              <Text style={activeYield !== 'Investment Demand' ? styles.pillTextActive : styles.pillText}>
+                {activeYield} ▾
+              </Text>
+            </TouchableOpacity>
             
             {/* Clear Filters Button */}
-            {(activeLocation !== 'Location' || activeType !== 'Property Type' || activePrice !== 'Price Range') && (
+            {(activeLocation !== 'Location' || activeType !== 'Property Type' || activePrice !== 'Price Range' || activeYield !== 'Investment Demand') && (
               <TouchableOpacity 
                 style={[styles.pill, { backgroundColor: '#FEE2E2', borderColor: '#FCA5A5' }]}
                 onPress={() => {
                   setActiveLocation('Location');
                   setActiveType('Property Type');
                   setActivePrice('Price Range');
+                  setActiveYield('Investment Demand');
                 }}
               >
                 <Text style={[styles.pillText, { color: '#DC2626' }]}>Clear All ✕</Text>
@@ -271,6 +288,16 @@ export default function ExploreScreen() {
                   {['Price Range', 'Under ₹5L', '₹5L - ₹10L', 'Above ₹10L'].map(price => (
                     <TouchableOpacity key={price} style={styles.dropdownItem} onPress={() => { setActivePrice(price); setOpenDropdown(null); }}>
                       <Text style={activePrice === price ? styles.dropdownTextActive : styles.dropdownText}>{price}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
+
+              {openDropdown === 'Investment Demand' && (
+                <ScrollView style={[styles.dropdownList, { maxHeight: 250 }]}>
+                  {['Investment Demand', 'Standard Yield (7-9%)', 'High Yield (>9%)'].map(yieldOpt => (
+                    <TouchableOpacity key={yieldOpt} style={styles.dropdownItem} onPress={() => { setActiveYield(yieldOpt); setOpenDropdown(null); }}>
+                      <Text style={activeYield === yieldOpt ? styles.dropdownTextActive : styles.dropdownText}>{yieldOpt}</Text>
                     </TouchableOpacity>
                   ))}
                 </ScrollView>

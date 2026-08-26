@@ -1,9 +1,20 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import dynamic from "next/dynamic";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "./Properties.module.css";
+
+// Dynamic import to avoid SSR issues with Leaflet
+const LocationPicker = dynamic(() => import("@/components/LocationPicker"), {
+  ssr: false,
+  loading: () => (
+    <div style={{ height: "280px", borderRadius: "12px", background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8" }}>
+      Loading map...
+    </div>
+  ),
+});
 
 interface Property {
   id: string;
@@ -63,8 +74,31 @@ export default function PropertiesPage() {
     irr: 15.0,
     postedBy: "Admin" as const,
   });
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  // Helper to extract lat/lng from a Google Maps share link
+  const parseGoogleMapsUrl = (url: string) => {
+    try {
+      // Examples:
+      // https://www.google.com/maps/@17.385,78.4867,15z
+      // https://www.google.com/maps/place/.../@17.385,78.4867,17z
+      const match = url.match(/@([-\d.]+),([-\d.]+)[,/]?/);
+      if (match) {
+        return { lat: parseFloat(match[1]), lng: parseFloat(match[2]) };
+      }
+      // Fallback: look for "q=lat,lng"
+      const qMatch = url.match(/[?&]q=([-\d.]+),([-\d.]+)/);
+      if (qMatch) {
+        return { lat: parseFloat(qMatch[1]), lng: parseFloat(qMatch[2]) };
+      }
+    } catch (e) {
+      console.error(e);
+    }
+    return null;
+  };
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [mapLat, setMapLat] = useState(17.385);
+  const [mapLng, setMapLng] = useState(78.4867);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -122,13 +156,28 @@ export default function PropertiesPage() {
     }
     
     setIsUploading(true);
-    let finalImageUrl = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=250&fit=crop";
+    const uploadedImageUrls: string[] = [];
+    let videoUrl = "";
 
     try {
-      if (selectedFile) {
-        const storageRef = ref(storage, `properties/${Date.now()}_${selectedFile.name}`);
-        await uploadBytes(storageRef, selectedFile);
-        finalImageUrl = await getDownloadURL(storageRef);
+      // Upload all selected images
+      if (selectedFiles.length > 0) {
+        for (const file of selectedFiles) {
+          const storageRef = ref(storage, `properties/${Date.now()}_${file.name}`);
+          await uploadBytes(storageRef, file);
+          const url = await getDownloadURL(storageRef);
+          uploadedImageUrls.push(url);
+        }
+      }
+      if (uploadedImageUrls.length === 0) {
+        uploadedImageUrls.push("https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=250&fit=crop");
+      }
+
+      // Upload video if selected
+      if (selectedVideo) {
+        const videoRef = ref(storage, `properties/videos/${Date.now()}_${selectedVideo.name}`);
+        await uploadBytes(videoRef, selectedVideo);
+        videoUrl = await getDownloadURL(videoRef);
       }
 
       const created: any = {
@@ -137,27 +186,29 @@ export default function PropertiesPage() {
         state: newProp.state,
         district: newProp.district,
         locality: newProp.locality,
-        type: newProp.type,
-        totalFractions: Number(newProp.totalFractions),
-        soldFractions: 0,
-        availableFractions: Number(newProp.totalFractions),
-        price: Number(newProp.price),
-        bookingAmount: Math.round(Number(newProp.price) * 0.1),
-        yield: Number(newProp.yield),
-        irr: Number(newProp.irr),
-        image: finalImageUrl,
-        status: "Active",
+        property_type: newProp.type.toLowerCase(),
+        total_fractions: Number(newProp.totalFractions),
+        sold_fractions: 0,
+        available_fractions: Number(newProp.totalFractions),
+        price_per_fraction: Number(newProp.price),
+        booking_amount: Math.round(Number(newProp.price) * 0.1),
+        assured_yield: Number(newProp.yield),
+        target_irr: Number(newProp.irr),
+        images: uploadedImageUrls.map(url => ({ image_url: url })),
+        approval_status: "approved",
         postedBy: newProp.postedBy,
+        videoUrl: videoUrl || undefined,
         raised: "₹0",
       };
       setProperties([created, ...properties]);
       setShowAddModal(false);
-      setSelectedFile(null);
+      setSelectedFiles([]);
+      setSelectedVideo(null);
       setNewProp({ ...newProp, title: "", locality: "" });
-      showToast(`Property "${created.title}" successfully added and published.`);
+      showToast(`Property "${created.title}" successfully added with ${uploadedImageUrls.length} images${videoUrl ? ' and 1 video' : ''}.`);
     } catch (error) {
-      console.error("Error uploading property image:", error);
-      showToast("Failed to upload image. Please try again.");
+      console.error("Error uploading property media:", error);
+      showToast("Failed to upload media. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -649,6 +700,83 @@ export default function PropertiesPage() {
                 </div>
               </div>
 
+              {/* Interactive Map Location Picker */}
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569", marginBottom: "8px", display: "block" }}>
+                  📍 Pin Property Location on Map
+                </label>
+                <div style={{ fontSize: "0.75rem", color: "#94A3B8", marginBottom: "8px" }}>
+                  Search for an address or click directly on the map to drop a pin
+                </div>
+                <LocationPicker
+                  lat={mapLat}
+                  lng={mapLng}
+                  onLocationChange={(lat, lng, address) => {
+                    setMapLat(lat);
+                    setMapLng(lng);
+                    // Auto-fill locality from reverse geocode if available
+                    if (address) {
+                      const parts = address.split(",").map((s: string) => s.trim());
+                      if (parts.length >= 3) {
+                        setNewProp(prev => ({
+                          ...prev,
+                          locality: parts[0] + (parts[1] ? ", " + parts[1] : ""),
+                        }));
+                      }
+                    }
+                  }}
+                />
+                {/* Google Maps link importer */}
+                <div style={{ marginTop: "12px", display: "flex", gap: "8px", alignItems: "center" }}>
+                  <input
+                    type="text"
+                    placeholder="Paste Google Maps share link"
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        const url = (e.target as HTMLInputElement).value.trim();
+                        const parsed = parseGoogleMapsUrl(url);
+                        if (parsed) {
+                          setMapLat(parsed.lat);
+                          setMapLng(parsed.lng);
+                        } else {
+                          alert("Could not extract coordinates from the link.");
+                        }
+                      }
+                    }}
+                    style={{ flex: 1, padding: "6px 10px", borderRadius: "6px", border: "1px solid #E2E8F0", fontSize: "0.85rem" }}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const link = `https://www.google.com/maps/search/?api=1&query=${mapLat},${mapLng}`;
+                      window.open(link, "_blank");
+                    }}
+                    style={{ padding: "6px 12px", background: "#2563EB", color: "#fff", border: "none", borderRadius: "6px", cursor: "pointer" }}
+                  >
+                    Open in Google Maps
+                  </button>
+                </div>
+                <div style={{ display: "flex", gap: "12px", marginTop: "8px" }}>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "#94A3B8" }}>Latitude</label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={mapLat.toFixed(6)}
+                      style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid #E2E8F0", fontSize: "0.8rem", color: "#475569", background: "#F8FAFC" }}
+                    />
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <label style={{ fontSize: "0.7rem", fontWeight: 600, color: "#94A3B8" }}>Longitude</label>
+                    <input
+                      type="text"
+                      readOnly
+                      value={mapLng.toFixed(6)}
+                      style={{ width: "100%", padding: "6px 10px", borderRadius: "6px", border: "1px solid #E2E8F0", fontSize: "0.8rem", color: "#475569", background: "#F8FAFC" }}
+                    />
+                  </div>
+                </div>              </div>
+
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Property Type</label>
@@ -712,18 +840,122 @@ export default function PropertiesPage() {
                 </div>
               </div>
 
+              {/* Property Images - Bulk Upload */}
               <div>
-                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Cover Image</label>
-                <input
-                  type="file"
-                  accept="image/*"
-                  onChange={(e) => {
-                    if (e.target.files && e.target.files[0]) {
-                      setSelectedFile(e.target.files[0]);
-                    }
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569", marginBottom: "6px", display: "block" }}>Property Images</label>
+                <div
+                  style={{
+                    border: "2px dashed #CBD5E1",
+                    borderRadius: "12px",
+                    padding: "20px",
+                    textAlign: "center",
+                    background: "#F8FAFC",
+                    cursor: "pointer",
+                    transition: "border-color 0.2s",
                   }}
-                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
-                />
+                  onClick={() => document.getElementById('multi-image-input')?.click()}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#2563EB'; }}
+                  onDragLeave={(e) => { e.currentTarget.style.borderColor = '#CBD5E1'; }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.currentTarget.style.borderColor = '#CBD5E1';
+                    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+                    setSelectedFiles(prev => [...prev, ...files]);
+                  }}
+                >
+                  <div style={{ fontSize: "2rem", marginBottom: "6px" }}>📸</div>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569" }}>Click or drag & drop to upload images</div>
+                  <div style={{ fontSize: "0.75rem", color: "#94A3B8", marginTop: "4px" }}>Supports JPG, PNG, WEBP • Upload multiple at once</div>
+                  <input
+                    id="multi-image-input"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      if (e.target.files) {
+                        setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                      }
+                    }}
+                  />
+                </div>
+                {/* Preview thumbnails */}
+                {selectedFiles.length > 0 && (
+                  <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginTop: "12px" }}>
+                    {selectedFiles.map((file, idx) => (
+                      <div key={idx} style={{ position: "relative", width: "80px", height: "80px", borderRadius: "8px", overflow: "hidden", border: "2px solid #E2E8F0" }}>
+                        <img
+                          src={URL.createObjectURL(file)}
+                          alt={`Preview ${idx + 1}`}
+                          style={{ width: "100%", height: "100%", objectFit: "cover" }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
+                          style={{
+                            position: "absolute", top: "2px", right: "2px",
+                            width: "20px", height: "20px", borderRadius: "50%",
+                            background: "rgba(220, 38, 38, 0.9)", color: "#fff",
+                            border: "none", cursor: "pointer", fontSize: "12px",
+                            display: "flex", alignItems: "center", justifyContent: "center",
+                            lineHeight: 1,
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: "6px" }}>
+                  {selectedFiles.length} image{selectedFiles.length !== 1 ? 's' : ''} selected
+                </div>
+              </div>
+
+              {/* Video Upload */}
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569", marginBottom: "6px", display: "block" }}>Property Video (Optional)</label>
+                <div
+                  style={{
+                    border: "2px dashed #CBD5E1",
+                    borderRadius: "12px",
+                    padding: "16px",
+                    textAlign: "center",
+                    background: "#F8FAFC",
+                    cursor: "pointer",
+                    transition: "border-color 0.2s",
+                  }}
+                  onClick={() => document.getElementById('video-input')?.click()}
+                >
+                  <div style={{ fontSize: "1.5rem", marginBottom: "4px" }}>🎬</div>
+                  <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "#475569" }}>
+                    {selectedVideo ? selectedVideo.name : "Click to upload a walkthrough video"}
+                  </div>
+                  <div style={{ fontSize: "0.75rem", color: "#94A3B8", marginTop: "4px" }}>Supports MP4, MOV, WEBM • Max 100MB</div>
+                  <input
+                    id="video-input"
+                    type="file"
+                    accept="video/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => {
+                      if (e.target.files && e.target.files[0]) {
+                        setSelectedVideo(e.target.files[0]);
+                      }
+                    }}
+                  />
+                </div>
+                {selectedVideo && (
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", marginTop: "8px" }}>
+                    <span style={{ fontSize: "0.8rem", color: "#16A34A", fontWeight: 600 }}>✓ {selectedVideo.name} ({(selectedVideo.size / 1024 / 1024).toFixed(1)} MB)</span>
+                    <button
+                      type="button"
+                      onClick={() => setSelectedVideo(null)}
+                      style={{ background: "none", border: "none", color: "#DC2626", cursor: "pointer", fontWeight: 700, fontSize: "0.8rem" }}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "12px" }}>
@@ -739,7 +971,7 @@ export default function PropertiesPage() {
                   disabled={isUploading}
                   style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: isUploading ? "not-allowed" : "pointer", fontWeight: 700 }}
                 >
-                  {isUploading ? "Uploading..." : "Publish Property Listing"}
+                  {isUploading ? `Uploading ${selectedFiles.length} image${selectedFiles.length !== 1 ? 's' : ''}${selectedVideo ? ' + video' : ''}...` : "Publish Property Listing"}
                 </button>
               </div>
             </form>

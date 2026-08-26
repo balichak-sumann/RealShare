@@ -97,7 +97,7 @@ export default function SignInScreen() {
 
                 <View style={styles.footer}>
                   <Text style={styles.footerText}>New to RealShare? </Text>
-                  <TouchableOpacity onPress={() => router.replace('/(auth)/sign-up')}>
+                  <TouchableOpacity onPress={() => router.replace('/sign-up')}>
                     <Text style={styles.linkText}>Create an Account</Text>
                   </TouchableOpacity>
                 </View>

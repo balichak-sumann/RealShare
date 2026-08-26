@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView, Image } from 'react-native';
 import { createUserWithEmailAndPassword, signInWithPhoneNumber, RecaptchaVerifier, ConfirmationResult, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
@@ -206,7 +206,16 @@ export default function SignUpScreen() {
                       if (Platform.OS === 'web') {
                         const { signInWithPopup } = await import('firebase/auth');
                         const { googleProvider } = await import('@/lib/firebase');
-                        await signInWithPopup(auth, googleProvider);
+                        const userCred = await signInWithPopup(auth, googleProvider);
+                        const token = await userCred.user.getIdToken();
+                        await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
+                          method: 'POST',
+                          headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                          },
+                          body: JSON.stringify({ referred_by_code: referralCode, role })
+                        });
                       } else {
                         alert("Google Sign in on native requires Expo AuthSession");
                       }
@@ -221,7 +230,7 @@ export default function SignUpScreen() {
 
                   <View style={styles.footer}>
                     <Text style={styles.footerText}>Already have an account? </Text>
-                    <TouchableOpacity onPress={() => router.replace('/(auth)/sign-in')}>
+                    <TouchableOpacity onPress={() => router.replace('/sign-in')}>
                       <Text style={styles.linkText}>Log in</Text>
                     </TouchableOpacity>
                   </View>

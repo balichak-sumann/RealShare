@@ -8,11 +8,13 @@ import {
   TextInput,
   Image,
   ActivityIndicator,
+  Modal
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '@/contexts/UserContext';
-import { auth } from '@/lib/firebase';
-import { Modal } from 'react-native';
+import { auth, storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import * as ImagePicker from 'expo-image-picker';
 
 interface BuilderProperty {
   id: string;
@@ -79,16 +81,43 @@ export default function BuilderPortalScreen() {
   const [fractions, setFractions] = useState('50');
   const [price, setPrice] = useState('500000');
   const [yieldVal, setYieldVal] = useState('8.5');
+  const [imageUri, setImageUri] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
 
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 0.8,
+    });
+    if (!result.canceled) {
+      setImageUri(result.assets[0].uri);
+    }
+  };
+
   const handlePostProperty = async () => {
-    if (!title || !locality) {
-      alert('Please fill in property title and location.');
+    if (!title || !locality || !imageUri) {
+      alert('Please fill in property title, location, and select a cover photo.');
       return;
     }
+    
+    setIsUploading(true);
+    
     try {
       const user = auth.currentUser;
       const token = await user?.getIdToken();
+      
+      // Upload Image
+      const response = await fetch(imageUri);
+      const blob = await response.blob();
+      const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
+      const storageRef = ref(storage, `builder_properties/${Date.now()}_${filename}`);
+      
+      await uploadBytes(storageRef, blob);
+      const finalImageUrl = await getDownloadURL(storageRef);
+
       const res = await fetch('http://localhost:3000/api/properties', {
         method: 'POST',
         headers: {
@@ -107,11 +136,13 @@ export default function BuilderPortalScreen() {
           booking_amount: Number(price) * 0.1,
           assured_yield: Number(yieldVal),
           target_irr: 15.0,
+          image_url: finalImageUrl,
         })
       });
       if (res.ok) {
         setTitle('');
         setLocality('');
+        setImageUri(null);
         setActiveTab('my_properties');
         setSuccessNotice(`Property "${title}" submitted to RealShare Admin for approval.`);
         setTimeout(() => setSuccessNotice(null), 4000);
@@ -121,6 +152,8 @@ export default function BuilderPortalScreen() {
       }
     } catch(e) {
       alert("Error connecting to server.");
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -279,6 +312,15 @@ export default function BuilderPortalScreen() {
               ))}
             </View>
 
+            <Text style={styles.label}>Cover Photo</Text>
+            <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
+              {imageUri ? (
+                <Image source={{ uri: imageUri }} style={styles.uploadedImagePreview} />
+              ) : (
+                <Text style={styles.uploadText}>📸 Tap to Upload Photo from Gallery</Text>
+              )}
+            </TouchableOpacity>
+
             <View style={styles.rowInputs}>
               <View style={{ flex: 1 }}>
                 <Text style={styles.label}>Total Fractions</Text>
@@ -309,8 +351,8 @@ export default function BuilderPortalScreen() {
               </View>
             </View>
 
-            <TouchableOpacity style={styles.submitBtn} onPress={handlePostProperty}>
-              <Text style={styles.submitBtnText}>Submit for Admin Verification</Text>
+            <TouchableOpacity style={[styles.submitBtn, isUploading && { opacity: 0.7 }]} onPress={handlePostProperty} disabled={isUploading}>
+              <Text style={styles.submitBtnText}>{isUploading ? 'Uploading & Submitting...' : 'Submit for Admin Verification'}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -576,6 +618,28 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 13,
+  },
+  uploadBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+    borderStyle: 'dashed',
+    height: 120,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+    overflow: 'hidden',
+  },
+  uploadText: {
+    fontSize: 12,
+    color: '#64748B',
+    fontWeight: '600',
+  },
+  uploadedImagePreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
   },
   modalOverlay: {
     flex: 1,

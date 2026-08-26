@@ -9,6 +9,7 @@ import {
   ActivityIndicator
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
+import { auth } from '@/lib/firebase';
 
 export default function PortfolioScreen() {
   const router = useRouter();
@@ -19,17 +20,24 @@ export default function PortfolioScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('http://localhost:3000/api/portfolio')
-      .then(res => res.json())
-      .then(data => {
+    const fetchPortfolio = async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        const token = await user.getIdToken();
+        const res = await fetch('http://localhost:3000/api/portfolio', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
         if (data.investments) setPortfolio(data.investments);
         if (data.user) setUser(data.user);
-        setLoading(false);
-      })
-      .catch(err => {
+      } catch (err) {
         console.error('Failed to fetch portfolio:', err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    fetchPortfolio();
   }, []);
 
   const handleBack = () => {

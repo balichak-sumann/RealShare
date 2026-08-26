@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/firebase-admin';
 import crypto from 'crypto';
+import { sendInvestmentSuccessEmail } from '@/lib/mailer';
 
 import prisma from '@/lib/prisma';
 export async function POST(req: Request) {
@@ -65,9 +66,18 @@ export async function POST(req: Request) {
         fractions_bought: fractionsBought,
         total_amount: transaction.amount,
         booking_amount_paid: transaction.amount,
-        ownership_percentage: 0.1, // Mock ownership, should be dynamic
+        ownership_percentage: fractionsBought, // In a real app this might be (fractionsBought / total_fractions) * 100
         certificate_number: certificateId,
         status: 'completed',
+      }
+    });
+
+    // Update Property fractions
+    await prisma.property.update({
+      where: { id: transaction.property_id! },
+      data: {
+        available_fractions: { decrement: fractionsBought },
+        sold_fractions: { increment: fractionsBought },
       }
     });
 
@@ -125,6 +135,21 @@ export async function POST(req: Request) {
         investment_id: investment.id,
       }
     });
+
+    const property = await prisma.property.findUnique({
+      where: { id: transaction.property_id! }
+    });
+
+    if (investor && investor.email && property) {
+      await sendInvestmentSuccessEmail({
+        to: investor.email,
+        userName: investor.full_name,
+        propertyName: property.title,
+        fractionsBought: fractionsBought,
+        certificateId: certificateId,
+        amount: Number(transaction.amount)
+      });
+    }
 
     return NextResponse.json({ success: true, certificateId, investmentId: investment.id });
   } catch (error: any) {

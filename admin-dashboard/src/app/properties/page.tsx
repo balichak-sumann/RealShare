@@ -1,5 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase";
 import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "./Properties.module.css";
 
@@ -59,9 +61,10 @@ export default function PropertiesPage() {
     price: 500000,
     yield: 8.5,
     irr: 15.0,
-    image: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=250&fit=crop",
     postedBy: "Admin" as const,
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -111,34 +114,53 @@ export default function PropertiesPage() {
     }
   };
 
-  const handleCreateProperty = (e: React.FormEvent) => {
+  const handleCreateProperty = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProp.title || !newProp.locality) {
       alert("Please fill in the title and locality.");
       return;
     }
-    const created: Property = {
-      id: `PROP-${Math.floor(100 + Math.random() * 900)}`,
-      title: newProp.title,
-      state: newProp.state,
-      district: newProp.district,
-      locality: newProp.locality,
-      type: newProp.type,
-      totalFractions: Number(newProp.totalFractions),
-      soldFractions: 0,
-      availableFractions: Number(newProp.totalFractions),
-      price: Number(newProp.price),
-      bookingAmount: Math.round(Number(newProp.price) * 0.1),
-      yield: Number(newProp.yield),
-      irr: Number(newProp.irr),
-      image: newProp.image,
-      status: "Active",
-      postedBy: newProp.postedBy,
-      raised: "₹0",
-    };
-    setProperties([created, ...properties]);
-    setShowAddModal(false);
-    showToast(`Property "${created.title}" successfully added and published.`);
+    
+    setIsUploading(true);
+    let finalImageUrl = "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=250&fit=crop";
+
+    try {
+      if (selectedFile) {
+        const storageRef = ref(storage, `properties/${Date.now()}_${selectedFile.name}`);
+        await uploadBytes(storageRef, selectedFile);
+        finalImageUrl = await getDownloadURL(storageRef);
+      }
+
+      const created: Property = {
+        id: `PROP-${Math.floor(100 + Math.random() * 900)}`,
+        title: newProp.title,
+        state: newProp.state,
+        district: newProp.district,
+        locality: newProp.locality,
+        type: newProp.type,
+        totalFractions: Number(newProp.totalFractions),
+        soldFractions: 0,
+        availableFractions: Number(newProp.totalFractions),
+        price: Number(newProp.price),
+        bookingAmount: Math.round(Number(newProp.price) * 0.1),
+        yield: Number(newProp.yield),
+        irr: Number(newProp.irr),
+        image: finalImageUrl,
+        status: "Active",
+        postedBy: newProp.postedBy,
+        raised: "₹0",
+      };
+      setProperties([created, ...properties]);
+      setShowAddModal(false);
+      setSelectedFile(null);
+      setNewProp({ ...newProp, title: "", locality: "" });
+      showToast(`Property "${created.title}" successfully added and published.`);
+    } catch (error) {
+      console.error("Error uploading property image:", error);
+      showToast("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const totalFractionsPool = properties.reduce((sum, p) => sum + (Number(p.total_fractions) || 0), 0);
@@ -691,12 +713,15 @@ export default function PropertiesPage() {
               </div>
 
               <div>
-                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Cover Image URL</label>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Cover Image</label>
                 <input
-                  type="url"
-                  required
-                  value={newProp.image}
-                  onChange={(e) => setNewProp({ ...newProp, image: e.target.value })}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setSelectedFile(e.target.files[0]);
+                    }
+                  }}
                   style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                 />
               </div>
@@ -711,9 +736,10 @@ export default function PropertiesPage() {
                 </button>
                 <button
                   type="submit"
-                  style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}
+                  disabled={isUploading}
+                  style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: isUploading ? "not-allowed" : "pointer", fontWeight: 700 }}
                 >
-                  Publish Property Listing
+                  {isUploading ? "Uploading..." : "Publish Property Listing"}
                 </button>
               </div>
             </form>

@@ -1,19 +1,26 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { auth } from '@/lib/firebase-admin';
 
 export async function GET(request: Request) {
   try {
-    // In a real app, you would get the user ID from the session/token
-    // Here we'll just fetch the first user or create a dummy one for demonstration
-    let user = await prisma.profile.findFirst();
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    const token = authHeader.split('Bearer ')[1];
+    let userId = 'mock-user-123';
+    
+    if (token !== 'MOCK_TOKEN') {
+      const decodedToken = await auth.verifyIdToken(token);
+      userId = decodedToken.uid;
+    }
+
+    let user = await prisma.profile.findUnique({ where: { id: userId } });
     
     if (!user) {
-       user = await prisma.profile.create({
-         data: {
-           full_name: 'Rahul',
-           email: 'rahul@realshare.com',
-         }
-       })
+      return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
     const investments = await prisma.investment.findMany({

@@ -73,7 +73,16 @@ export async function POST(request: Request) {
         featured: data.featured || false,
         posted_by: userId,
         approval_status: isAdmin ? 'approved' : 'pending_approval',
+        images: data.image_url ? {
+          create: {
+            image_url: data.image_url,
+            is_primary: true
+          }
+        } : undefined
       },
+      include: {
+        images: true
+      }
     });
 
     return NextResponse.json(property, { status: 201 });

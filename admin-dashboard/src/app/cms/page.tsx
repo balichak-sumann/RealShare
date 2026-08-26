@@ -1,5 +1,7 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
+import { storage } from "@/lib/firebase";
 import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "../properties/Properties.module.css";
 
@@ -56,9 +58,10 @@ export default function CMSPage() {
     title: "",
     subtitle: "",
     badge: "Special Promo",
-    imageUrl: "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=280&fit=crop",
     targetLink: "/properties",
   });
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -72,24 +75,42 @@ export default function CMSPage() {
     showToast("Banner visibility toggled.");
   };
 
-  const handleAddBanner = (e: React.FormEvent) => {
+  const handleAddBanner = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBan.title) return;
+    
+    setIsUploading(true);
+    let finalImageUrl = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=280&fit=crop";
 
-    const created: Banner = {
-      id: `BAN-${Math.floor(10 + Math.random() * 90)}`,
-      title: newBan.title,
-      subtitle: newBan.subtitle,
-      badge: newBan.badge,
-      imageUrl: newBan.imageUrl,
-      targetLink: newBan.targetLink,
-      isActive: true,
-      order: banners.length + 1,
-    };
+    try {
+      if (selectedFile) {
+        const storageRef = ref(storage, `banners/${Date.now()}_${selectedFile.name}`);
+        await uploadBytes(storageRef, selectedFile);
+        finalImageUrl = await getDownloadURL(storageRef);
+      }
 
-    setBanners([...banners, created]);
-    setShowAddBanner(false);
-    showToast(`Banner "${created.title}" published to Mobile App & Web hero carousels!`);
+      const created: Banner = {
+        id: `BAN-${Math.floor(10 + Math.random() * 90)}`,
+        title: newBan.title,
+        subtitle: newBan.subtitle,
+        badge: newBan.badge,
+        imageUrl: finalImageUrl,
+        targetLink: newBan.targetLink,
+        isActive: true,
+        order: banners.length + 1,
+      };
+
+      setBanners([...banners, created]);
+      setShowAddBanner(false);
+      setSelectedFile(null);
+      setNewBan({ ...newBan, title: "", subtitle: "" });
+      showToast(`Banner "${created.title}" published to Mobile App & Web hero carousels!`);
+    } catch (error) {
+      console.error("Error uploading banner image:", error);
+      showToast("Failed to upload image. Please try again.");
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   return (
@@ -332,12 +353,15 @@ export default function CMSPage() {
               </div>
 
               <div>
-                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Banner Image URL</label>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Banner Image</label>
                 <input
-                  type="url"
-                  required
-                  value={newBan.imageUrl}
-                  onChange={(e) => setNewBan({ ...newBan, imageUrl: e.target.value })}
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setSelectedFile(e.target.files[0]);
+                    }
+                  }}
                   style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                 />
               </div>
@@ -352,9 +376,10 @@ export default function CMSPage() {
                 </button>
                 <button
                   type="submit"
-                  style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}
+                  disabled={isUploading}
+                  style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: isUploading ? "not-allowed" : "pointer", fontWeight: 700 }}
                 >
-                  Publish Banner
+                  {isUploading ? "Uploading..." : "Publish Banner"}
                 </button>
               </div>
             </form>

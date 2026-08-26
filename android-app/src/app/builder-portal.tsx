@@ -52,7 +52,7 @@ export default function BuilderPortalScreen() {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch('http://192.168.1.4:3000/api/properties/builder', {
+      const res = await fetch('http://localhost:3000/api/properties/builder', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -89,7 +89,7 @@ export default function BuilderPortalScreen() {
     try {
       const user = auth.currentUser;
       const token = await user?.getIdToken();
-      const res = await fetch('http://192.168.1.4:3000/api/properties', {
+      const res = await fetch('http://localhost:3000/api/properties', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -128,7 +128,7 @@ export default function BuilderPortalScreen() {
     if (!editingProp) return;
     try {
       const token = await auth.currentUser?.getIdToken();
-      await fetch(`http://192.168.1.4:3000/api/properties/${editingProp.id}`, {
+      await fetch(`http://localhost:3000/api/properties/${editingProp.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

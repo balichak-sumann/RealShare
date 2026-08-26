@@ -2,7 +2,8 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export type UserProfile = {
   id: string;
-  role: 'investor' | 'agent' | 'builder' | 'admin';
+  role: 'investor' | 'agent' | 'builder' | 'admin' | 'employee';
+  employee_department?: string | null;
   full_name: string;
   email: string | null;
   phone_number?: string | null;

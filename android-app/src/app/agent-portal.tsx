@@ -43,7 +43,7 @@ export default function AgentPortalScreen() {
       }
 
       const token = await user.getIdToken();
-      const res = await fetch('http://192.168.1.4:3000/api/agents/dashboard', {
+      const res = await fetch('http://localhost:3000/api/agents/dashboard', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

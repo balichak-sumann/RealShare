@@ -43,7 +43,7 @@ export default function SignUpScreen() {
         try {
           if (referralCode) {
             const token = await userCredential.user.getIdToken();
-            await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.4:3000'}/api/users/sync`, {
+            await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/users/sync`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -53,7 +53,7 @@ export default function SignUpScreen() {
             });
           } else if (role !== 'investor') {
             const token = await userCredential.user.getIdToken();
-            await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.4:3000'}/api/users/sync`, {
+            await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/users/sync`, {
               method: 'POST',
               headers: {
                 'Authorization': `Bearer ${token}`,
@@ -95,7 +95,7 @@ export default function SignUpScreen() {
       try {
         if (referralCode && userCredential.user) {
           const token = await userCredential.user.getIdToken();
-          await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.4:3000'}/api/users/sync`, {
+          await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/users/sync`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
@@ -105,7 +105,7 @@ export default function SignUpScreen() {
           });
         } else if (role !== 'investor' && userCredential.user) {
           const token = await userCredential.user.getIdToken();
-          await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://192.168.1.4:3000'}/api/users/sync`, {
+          await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/users/sync`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,

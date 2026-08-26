@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView, Image } from 'react-native';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
@@ -91,7 +91,8 @@ export default function SignInScreen() {
                     setLoading(false);
                   }
                 }} disabled={loading}>
-                  <Text style={styles.googleButtonText}>Continue with Google</Text>
+                  <Image source={{ uri: 'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png' }} style={{ width: 20, height: 20, marginRight: 12 }} />
+                  <Text style={styles.googleButtonText}>Sign in with Google</Text>
                 </TouchableOpacity>
 
                 <View style={styles.footer}>
@@ -245,16 +246,18 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   googleButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: '#FFFFFF',
     borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 12,
-    paddingVertical: 16,
+    borderColor: '#E2E8F0',
+    borderRadius: 8,
+    paddingVertical: 12,
+    flexDirection: 'row',
+    justifyContent: 'center',
     alignItems: 'center',
   },
   googleButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
+    color: '#475569',
+    fontSize: 15,
     fontWeight: '600',
   }
 });

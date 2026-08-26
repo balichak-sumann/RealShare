@@ -32,7 +32,7 @@ export default function ExploreScreen() {
   };
 
   useEffect(() => {
-    fetch('http://192.168.1.4:3000/api/properties')
+    fetch('http://localhost:3000/api/properties')
       .then(res => res.json())
       .then(data => {
         setProperties(data);

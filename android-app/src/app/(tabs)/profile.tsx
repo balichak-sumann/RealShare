@@ -128,7 +128,7 @@ export default function ProfileScreen() {
         
         // Sync with backend
         const token = await auth.currentUser.getIdToken();
-        await fetch('http://192.168.1.4:3000/api/users/sync', {
+        await fetch('http://localhost:3000/api/users/sync', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` }
         });

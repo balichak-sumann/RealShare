@@ -79,7 +79,7 @@ function RootLayoutNav() {
           } catch(e) {
             console.log(e);
           }
-          fetch('http://192.168.1.4:3000/api/users/sync', {
+          fetch('http://localhost:3000/api/users/sync', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,

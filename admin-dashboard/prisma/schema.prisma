@@ -12,6 +12,7 @@ model Profile {
   email                String?       @unique
   phone_number         String?
   role                 String        @default("investor")
+  employee_department  String?       // "sales", "support", or "accounts"
   avatar_url           String?
   wallet_balance       Decimal       @default(0.00) @db.Decimal(15, 2)
   kyc_status           String        @default("not_submitted")

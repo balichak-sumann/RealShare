@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "../properties/Properties.module.css";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface Employee {
   id: string;
@@ -86,11 +87,14 @@ const initialEmployees: Employee[] = [
 ];
 
 export default function EmployeesPage() {
+  const { user } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [deptFilter, setDeptFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [toastType, setToastType] = useState<"success" | "error" | "info">("success");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Form State
   const [newEmp, setNewEmp] = useState({
@@ -103,9 +107,10 @@ export default function EmployeesPage() {
     monthlyTarget: "₹1.00 Cr",
   });
 
-  const showToast = (msg: string) => {
+  const showToast = (msg: string, type: "success" | "error" | "info" = "success") => {
     setToastMsg(msg);
-    setTimeout(() => setToastMsg(null), 4000);
+    setToastType(type);
+    setTimeout(() => setToastMsg(null), 6000);
   };
 
   const handleToggleStatus = (id: string) => {
@@ -119,27 +124,82 @@ export default function EmployeesPage() {
     showToast("Employee status updated successfully.");
   };
 
-  const handleAddEmployee = (e: React.FormEvent) => {
+  const handleAddEmployee = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newEmp.name || !newEmp.email) return;
 
-    const created: Employee = {
-      id: `EMP-${Math.floor(200 + Math.random() * 800)}`,
-      name: newEmp.name,
-      email: newEmp.email,
-      phone: newEmp.phone || "+91 98000 00000",
-      department: newEmp.department,
-      employeeCode: newEmp.employeeCode,
-      incentiveRatePct: Number(newEmp.incentiveRatePct),
-      monthlyTarget: newEmp.monthlyTarget,
-      currentMonthSales: "₹0",
-      status: "Active",
-      assignedClientsCount: 0,
-    };
+    setIsSubmitting(true);
 
-    setEmployees([created, ...employees]);
-    setShowAddModal(false);
-    showToast(`Employee "${created.name}" created with incentive code ${created.employeeCode}`);
+    try {
+      // Get the admin's auth token
+      const token = await user?.getIdToken();
+
+      const response = await fetch('/api/admin/employees', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          full_name: newEmp.name,
+          email: newEmp.email,
+          phone_number: newEmp.phone || undefined,
+          department: newEmp.department.toLowerCase(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        showToast(`❌ ${data.error || 'Failed to create employee'}`, "error");
+        return;
+      }
+
+      // Add to local state
+      const created: Employee = {
+        id: data.employee.id,
+        name: data.employee.full_name,
+        email: data.employee.email,
+        phone: data.employee.phone_number || "+91 00000 00000",
+        department: newEmp.department,
+        employeeCode: data.employee.employeeCode,
+        incentiveRatePct: Number(newEmp.incentiveRatePct),
+        monthlyTarget: newEmp.monthlyTarget,
+        currentMonthSales: "₹0",
+        status: "Active",
+        assignedClientsCount: 0,
+      };
+
+      setEmployees([created, ...employees]);
+      setShowAddModal(false);
+
+      if (data.emailSent) {
+        showToast(
+          `✅ Employee "${created.name}" created! Welcome email sent to ${created.email}. Temp Password: ${data.tempPassword}`,
+          "success"
+        );
+      } else {
+        showToast(
+          `✅ Employee "${created.name}" created! ⚠️ Email not sent. Temp Password: ${data.tempPassword}`,
+          "info"
+        );
+      }
+
+      // Reset form
+      setNewEmp({
+        name: "",
+        email: "",
+        phone: "",
+        department: "Sales",
+        employeeCode: `RS-EMP-${Math.floor(10 + Math.random() * 90)}`,
+        incentiveRatePct: 0.5,
+        monthlyTarget: "₹1.00 Cr",
+      });
+    } catch (error: any) {
+      showToast(`❌ Error: ${error.message || 'Something went wrong'}`, "error");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const filtered = employees.filter((emp) => {
@@ -157,7 +217,11 @@ export default function EmployeesPage() {
       {toastMsg && (
         <div
           style={{
-            background: "linear-gradient(135deg, #059669, #10B981)",
+            background: toastType === "error"
+              ? "linear-gradient(135deg, #DC2626, #EF4444)"
+              : toastType === "info"
+                ? "linear-gradient(135deg, #D97706, #F59E0B)"
+                : "linear-gradient(135deg, #059669, #10B981)",
             color: "#fff",
             padding: "14px 20px",
             borderRadius: "10px",
@@ -327,14 +391,14 @@ export default function EmployeesPage() {
                         emp.department === "Sales"
                           ? "#EFF6FF"
                           : emp.department === "Support"
-                          ? "#FEF3C7"
-                          : "#ECFDF5",
+                            ? "#FEF3C7"
+                            : "#ECFDF5",
                       color:
                         emp.department === "Sales"
                           ? "#2563EB"
                           : emp.department === "Support"
-                          ? "#D97706"
-                          : "#059669",
+                            ? "#D97706"
+                            : "#059669",
                     }}
                   >
                     {emp.department}
@@ -543,9 +607,10 @@ export default function EmployeesPage() {
                 </button>
                 <button
                   type="submit"
-                  style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}
+                  disabled={isSubmitting}
+                  style={{ padding: "10px 24px", borderRadius: "8px", background: isSubmitting ? "#94A3B8" : "#2563EB", color: "#fff", border: "none", cursor: isSubmitting ? "not-allowed" : "pointer", fontWeight: 700, display: "flex", alignItems: "center", gap: "8px" }}
                 >
-                  Create Account
+                  {isSubmitting ? "Creating & Sending Email..." : "Create Account & Send Welcome Email"}
                 </button>
               </div>
             </form>

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,13 @@ import {
   TouchableOpacity,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useUser } from '../contexts/UserContext';
 
 export default function EmployeePortalScreen() {
   const router = useRouter();
+  const { profile } = useUser();
 
-  const [selectedRole, setSelectedRole] = useState<'sales' | 'support' | 'accounts'>('sales');
+  const selectedRole = profile?.employee_department || 'sales';
 
   const salesClients = [
     { name: 'Arjun Kumar', phone: '+91 98765 43210', property: 'Goa Beachfront Villa', fractions: 10, value: '₹1.50 Cr', status: 'Active Investor' },
@@ -35,8 +37,8 @@ export default function EmployeePortalScreen() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>← Back</Text>
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/')}>
+          <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>Logout</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>RealShare Employee Portal</Text>
       </View>
@@ -45,43 +47,12 @@ export default function EmployeePortalScreen() {
         {/* Employee ID Banner */}
         <View style={styles.employeeCard}>
           <View style={styles.empAvatar}>
-            <Text style={styles.empAvatarText}>RS</Text>
+            <Text style={styles.empAvatarText}>{profile?.full_name?.charAt(0) || 'E'}</Text>
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={styles.empName}>Suresh Varma (Code: RS-SALES-01)</Text>
-            <Text style={styles.empRole}>Sales Incentive: 0.75% • Monthly Target: ₹1.50 Cr</Text>
+            <Text style={styles.empName}>{profile?.full_name || 'Employee'}</Text>
+            <Text style={styles.empRole}>Department: {selectedRole.toUpperCase()}</Text>
           </View>
-        </View>
-
-        {/* Role Scoped Switcher (Work Order Scope 3.1) */}
-        <Text style={styles.sectionHeaderLabel}>Role-Based Scoped Permissions Matrix:</Text>
-        <View style={styles.roleTabs}>
-          <TouchableOpacity
-            style={[styles.roleTab, selectedRole === 'sales' && styles.roleTabActive]}
-            onPress={() => setSelectedRole('sales')}
-          >
-            <Text style={[styles.roleTabText, selectedRole === 'sales' && styles.roleTabTextActive]}>
-              💼 Sales Rep
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.roleTab, selectedRole === 'support' && styles.roleTabActive]}
-            onPress={() => setSelectedRole('support')}
-          >
-            <Text style={[styles.roleTabText, selectedRole === 'support' && styles.roleTabTextActive]}>
-              🎧 Support Desk
-            </Text>
-          </TouchableOpacity>
-
-          <TouchableOpacity
-            style={[styles.roleTab, selectedRole === 'accounts' && styles.roleTabActive]}
-            onPress={() => setSelectedRole('accounts')}
-          >
-            <Text style={[styles.roleTabText, selectedRole === 'accounts' && styles.roleTabTextActive]}>
-              🧾 Accounts Team
-            </Text>
-          </TouchableOpacity>
         </View>
 
         {/* Sales Person View */}

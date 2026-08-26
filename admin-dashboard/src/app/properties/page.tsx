@@ -131,7 +131,7 @@ export default function PropertiesPage() {
         finalImageUrl = await getDownloadURL(storageRef);
       }
 
-      const created: Property = {
+      const created: any = {
         id: `PROP-${Math.floor(100 + Math.random() * 900)}`,
         title: newProp.title,
         state: newProp.state,

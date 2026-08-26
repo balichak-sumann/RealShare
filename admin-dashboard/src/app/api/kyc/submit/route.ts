@@ -34,7 +34,7 @@ export async function POST(req: Request) {
 
     // Update User Profile KYC Status
     await prisma.profile.update({
-      where: { user_id: userId },
+      where: { id: userId },
       data: { kyc_status: 'verified' }
     });
 

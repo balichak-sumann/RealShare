@@ -140,7 +140,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Send welcome email (non-blocking — don't let email failure block the response)
-    let emailResult = { success: false, error: 'Email not configured' };
+    let emailResult: { success: boolean, error?: string, messageId?: string } = { success: false, error: 'Email not configured' };
     if (process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD) {
       emailResult = await sendWelcomeEmail({
         to: email,

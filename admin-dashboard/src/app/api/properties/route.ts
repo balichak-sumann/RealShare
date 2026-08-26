@@ -26,7 +26,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    let userId: string | null = null;
+    let userId: string | undefined = undefined;
     let isAdmin = false;
 
     // Check auth

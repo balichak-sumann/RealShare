@@ -13,7 +13,7 @@ export async function GET(req: Request) {
     const userId = decodedToken.uid;
 
     const profile = await prisma.profile.findUnique({
-      where: { user_id: userId }
+      where: { id: userId }
     });
 
     if (!profile) {

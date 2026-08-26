@@ -30,21 +30,31 @@ export async function POST(req: Request) {
     }
 
     // Store verified PAN in DB
-    await prisma.kycDocument.upsert({
-      where: { user_id_document_type: { user_id: userId, document_type: 'pan' } },
-      create: {
-        user_id: userId,
-        document_type: 'pan',
-        document_number: pan_number.toUpperCase(),
-        verification_status: 'verified',
-        verified_at: new Date(),
-      },
-      update: {
-        document_number: pan_number.toUpperCase(),
-        verification_status: 'verified',
-        verified_at: new Date(),
-      },
+    const existingKyc = await prisma.kycDocument.findFirst({
+      where: { user_id: userId, document_type: 'pan' },
     });
+
+    if (existingKyc) {
+      await prisma.kycDocument.update({
+        where: { id: existingKyc.id },
+        data: {
+          document_number: pan_number.toUpperCase(),
+          verification_status: 'verified',
+          verified_at: new Date(),
+        }
+      });
+    } else {
+      await prisma.kycDocument.create({
+        data: {
+          user_id: userId,
+          document_type: 'pan',
+          document_number: pan_number.toUpperCase(),
+          document_front_url: '',
+          verification_status: 'verified',
+          verified_at: new Date(),
+        }
+      });
+    }
 
     return NextResponse.json({
       success: true,

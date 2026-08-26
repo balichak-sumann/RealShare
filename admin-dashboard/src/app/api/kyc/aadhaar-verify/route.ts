@@ -28,21 +28,31 @@ export async function POST(req: Request) {
     }
 
     // Store verified Aadhaar in DB
-    await prisma.kycDocument.upsert({
-      where: { user_id_document_type: { user_id: userId, document_type: 'aadhaar' } },
-      create: {
-        user_id: userId,
-        document_type: 'aadhaar',
-        document_number: result.data?.aadhaar_number || '',
-        verification_status: 'verified',
-        verified_at: new Date(),
-      },
-      update: {
-        document_number: result.data?.aadhaar_number || '',
-        verification_status: 'verified',
-        verified_at: new Date(),
-      },
+    const existingKyc = await prisma.kycDocument.findFirst({
+      where: { user_id: userId, document_type: 'aadhaar' },
     });
+
+    if (existingKyc) {
+      await prisma.kycDocument.update({
+        where: { id: existingKyc.id },
+        data: {
+          document_number: result.data?.aadhaar_number || '',
+          verification_status: 'verified',
+          verified_at: new Date(),
+        }
+      });
+    } else {
+      await prisma.kycDocument.create({
+        data: {
+          user_id: userId,
+          document_type: 'aadhaar',
+          document_number: result.data?.aadhaar_number || '',
+          document_front_url: '',
+          verification_status: 'verified',
+          verified_at: new Date(),
+        }
+      });
+    }
 
     // Check if PAN is also verified — if yes, mark full KYC as verified
     const panDoc = await prisma.kycDocument.findFirst({
@@ -51,12 +61,12 @@ export async function POST(req: Request) {
 
     if (panDoc) {
       await prisma.profile.update({
-        where: { user_id: userId },
+        where: { id: userId },
         data: { kyc_status: 'verified' },
       });
     } else {
       await prisma.profile.update({
-        where: { user_id: userId },
+        where: { id: userId },
         data: { kyc_status: 'pending' },
       });
     }

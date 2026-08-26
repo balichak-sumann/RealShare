@@ -68,36 +68,32 @@ function RootLayoutNav() {
     const isVerifyScreen = segments[1] === 'verify-email';
 
     if (user) {
-      if (user.email && !user.emailVerified) {
-        if (!isVerifyScreen) router.replace('/(auth)/verify-email');
-      } else {
-        // Sync user to DB
-        user.getIdToken().then(async token => {
-          let pushToken = null;
-          try {
-            pushToken = await registerForPushNotificationsAsync();
-          } catch(e) {
-            console.log(e);
+      // Sync user to DB (bypassing email verification requirement for demo)
+      user.getIdToken().then(async token => {
+        let pushToken = null;
+        try {
+          pushToken = await registerForPushNotificationsAsync();
+        } catch(e) {
+          console.log(e);
+        }
+        fetch('https://realshare-5l24.onrender.com/api/users/sync', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ expo_push_token: pushToken })
+        })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success && data.profile) {
+            setProfile(data.profile);
           }
-          fetch('https://realshare-5l24.onrender.com/api/users/sync', {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ expo_push_token: pushToken })
-          })
-          .then(res => res.json())
-          .then(data => {
-            if (data.success && data.profile) {
-              setProfile(data.profile);
-            }
-          })
-          .catch(err => console.error('Failed to sync user:', err));
-        });
+        })
+        .catch(err => console.error('Failed to sync user:', err));
+      });
 
-        if (inAuthGroup && !isVerifyScreen) router.replace('/');
-      }
+      if (inAuthGroup) router.replace('/');
     } else {
       if (!inAuthGroup) router.replace('/(auth)/sign-in');
     }

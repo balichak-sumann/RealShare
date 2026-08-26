@@ -28,14 +28,14 @@ interface BuilderProperty {
   image: string;
 }
 
-export default function BuilderPortalScreen() {
+export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded?: boolean } = {}) {
   const router = useRouter();
   const { profile } = useUser();
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (profile && profile.role !== 'builder' && profile.role !== 'admin') {
-      router.replace('/');
+      if (!isEmbedded) router.replace('/');
     } else {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export default function BuilderPortalScreen() {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
-      const mapped = data.map((d: any) => ({
+      let mapped = data.map((d: any) => ({
         id: d.id,
         title: d.title,
         location: `${d.locality}, ${d.district}`,
@@ -69,6 +69,34 @@ export default function BuilderPortalScreen() {
         status: d.approval_status === 'approved' ? 'Live & Listed' : (d.approval_status === 'rejected' ? 'Rejected' : 'Pending Admin Approval'),
         image: d.images?.[0]?.image_url || 'https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=400&fit=crop'
       }));
+      
+      if (mapped.length === 0) {
+        mapped = [
+          {
+            id: 'mock-1',
+            title: 'The Skyview Corporate Park',
+            location: 'HITEC City, Hyderabad',
+            type: 'commercial',
+            totalFractions: 100,
+            pricePerFraction: '₹10,00,000',
+            yield: '9.2%',
+            status: 'Live & Listed',
+            image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop'
+          },
+          {
+            id: 'mock-2',
+            title: 'Lakeside Retail Hub',
+            location: 'Kondapur, Hyderabad',
+            type: 'retail',
+            totalFractions: 50,
+            pricePerFraction: '₹5,00,000',
+            yield: '8.5%',
+            status: 'Pending Admin Approval',
+            image: 'https://images.unsplash.com/photo-1519419691348-3b3433c4c20e?q=80&w=2070&auto=format&fit=crop'
+          }
+        ];
+      }
+      
       setProperties(mapped);
     } catch(e) {
       console.log('Error fetching properties', e);
@@ -160,6 +188,14 @@ export default function BuilderPortalScreen() {
   const handleUpdateProperty = async () => {
     if (!editingProp) return;
     try {
+      if (editingProp.id.toString().startsWith('mock')) {
+        // Simulate success for demo mock data
+        setSuccessNotice(`Property "${editingProp.title}" updated successfully (Demo Mode).`);
+        setTimeout(() => setSuccessNotice(null), 4000);
+        setEditingProp(null);
+        return;
+      }
+      
       const token = await auth.currentUser?.getIdToken();
       await fetch(`https://realshare-5l24.onrender.com/api/properties/${editingProp.id}`, {
         method: 'PUT',
@@ -196,9 +232,11 @@ export default function BuilderPortalScreen() {
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>← Back</Text>
-        </TouchableOpacity>
+        {!isEmbedded && (
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>← Back</Text>
+          </TouchableOpacity>
+        )}
         <Text style={styles.headerTitle}>Builder & Developer Console</Text>
       </View>
 

@@ -22,6 +22,7 @@ export default function TabLayout() {
           name="explore" 
           options={{ 
             title: 'Explore', 
+            href: (profile?.role === 'builder' || profile?.role === 'employee') ? null : undefined,
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🔍</Text> 
           }} 
         />
@@ -29,6 +30,7 @@ export default function TabLayout() {
           name="portfolio" 
           options={{ 
             title: 'Investments', 
+            href: (profile?.role === 'agent' || profile?.role === 'builder' || profile?.role === 'employee') ? null : undefined,
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📈</Text> 
           }} 
         />
@@ -36,6 +38,7 @@ export default function TabLayout() {
           name="kyc" 
           options={{ 
             title: 'KYC', 
+            href: (profile?.role === 'agent' || profile?.role === 'builder' || profile?.role === 'employee') ? null : undefined,
             tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🪪</Text> 
           }} 
         />

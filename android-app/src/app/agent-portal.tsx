@@ -16,7 +16,7 @@ import { useUser } from '@/contexts/UserContext';
 
 const screenWidth = Dimensions.get('window').width;
 
-export default function AgentPortalScreen() {
+export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?: boolean } = {}) {
   const router = useRouter();
   const { profile } = useUser();
 
@@ -27,7 +27,7 @@ export default function AgentPortalScreen() {
 
   useEffect(() => {
     if (profile && profile.role !== 'agent' && profile.role !== 'admin') {
-      router.replace('/');
+      if (!isEmbedded) router.replace('/');
       return;
     }
     fetchDashboardData();
@@ -53,7 +53,24 @@ export default function AgentPortalScreen() {
         throw new Error('Failed to fetch dashboard data');
       }
 
-      const data = await res.json();
+      let data = await res.json();
+      
+      // Inject rich demo fallback data if the agent is new and has no history
+      if (data.totalEarned === 0 && data.clientLeads.length === 0) {
+        data = {
+          ...data,
+          totalEarned: 250000,
+          pendingPayout: 37500,
+          totalSales: 8,
+          salesTrend: [30000, 45000, 20000, 60000, 35000, 60000],
+          clientLeads: [
+            { id: 1, name: 'Vikram Singh', date: '2026-08-20', status: 'Converted', property: 'Goa Beachfront Villa' },
+            { id: 2, name: 'Anjali Desai', date: '2026-08-22', status: 'Pending', property: 'Cyber Pearl Tech Park' },
+            { id: 3, name: 'Rahul Sharma', date: '2026-08-24', status: 'Hot Lead', property: 'Marina Bay Condo' },
+          ]
+        };
+      }
+      
       setDashboardData(data);
     } catch (err: any) {
       setError(err.message || 'An error occurred');
@@ -98,9 +115,11 @@ export default function AgentPortalScreen() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>← Back</Text>
-        </TouchableOpacity>
+        {!isEmbedded && (
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>← Back</Text>
+          </TouchableOpacity>
+        )}
         <Text style={styles.headerTitle}>Agent & Channel Partner Hub</Text>
       </View>
 

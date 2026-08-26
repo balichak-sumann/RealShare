@@ -13,6 +13,9 @@ import {
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
+import AgentPortalScreen from '../agent-portal';
+import BuilderPortalScreen from '../builder-portal';
+import EmployeePortalScreen from '../employee-portal';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -21,6 +24,8 @@ export default function HomeScreen() {
   const [userName, setUserName] = useState('Investor');
   const [searchQuery, setSearchQuery] = useState('');
   const { profile } = useUser();
+
+
 
   useEffect(() => {
     // Get user's first name
@@ -51,6 +56,16 @@ export default function HomeScreen() {
     prop.locality?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     prop.district?.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  if (profile?.role === 'agent') {
+    return <AgentPortalScreen isEmbedded={true} />;
+  }
+  if (profile?.role === 'builder') {
+    return <BuilderPortalScreen isEmbedded={true} />;
+  }
+  if (profile?.role === 'employee' || profile?.role === 'admin') {
+    return <EmployeePortalScreen isEmbedded={true} />;
+  }
 
   return (
     <View style={styles.container}>

@@ -352,28 +352,32 @@ export default function ProfileScreen() {
           )}
         </View>
 
-        {/* Wallet */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Wallet</Text>
-          <View style={styles.walletCard}>
-            <View>
-              <Text style={styles.walletLabel}>Available Balance</Text>
-              <Text style={styles.walletAmount}>₹ {Number(user?.wallet_balance || 0).toLocaleString('en-IN')}</Text>
+        {/* Wallet (Investor Only) */}
+        {(!user?.role || user?.role === 'investor' || user?.role === 'admin') && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Wallet</Text>
+            <View style={styles.walletCard}>
+              <View>
+                <Text style={styles.walletLabel}>Available Balance</Text>
+                <Text style={styles.walletAmount}>₹ {Number(user?.wallet_balance || 0).toLocaleString('en-IN')}</Text>
+              </View>
+              <TouchableOpacity style={styles.walletBtn} onPress={() => Alert.alert('Coming Soon', 'Payment Gateway Integration is pending.')}>
+                <Text style={styles.walletBtnText}>+ Add Money</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity style={styles.walletBtn} onPress={() => Alert.alert('Coming Soon', 'Payment Gateway Integration is pending.')}>
-              <Text style={styles.walletBtnText}>+ Add Money</Text>
-            </TouchableOpacity>
           </View>
-        </View>
+        )}
 
         {/* Quick Links */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Quick Links</Text>
           <View style={styles.linksCard}>
             {[
-              { icon: '📈', label: 'My Investments', route: '/portfolio?from=profile' },
-              { icon: '🔍', label: 'Explore Properties', route: '/explore?from=profile' },
-              { icon: '📄', label: 'Transaction History', route: '/portfolio?from=profile' },
+              ...((!user?.role || user?.role === 'investor' || user?.role === 'admin') ? [
+                { icon: '📈', label: 'My Investments', route: '/portfolio?from=profile' },
+                { icon: '🔍', label: 'Explore Properties', route: '/explore?from=profile' },
+                { icon: '📄', label: 'Transaction History', route: '/portfolio?from=profile' },
+              ] : []),
               { icon: '❓', label: 'Help & Support', route: 'alert_support' },
               { icon: '⚙️', label: 'Settings', route: 'alert_settings' },
             ].map((link, idx) => (

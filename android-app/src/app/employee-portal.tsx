@@ -9,7 +9,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useUser } from '../contexts/UserContext';
 
-export default function EmployeePortalScreen() {
+export default function EmployeePortalScreen({ isEmbedded = false }: { isEmbedded?: boolean } = {}) {
   const router = useRouter();
   const { profile } = useUser();
 
@@ -37,9 +37,11 @@ export default function EmployeePortalScreen() {
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
       {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/')}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>Logout</Text>
-        </TouchableOpacity>
+        {!isEmbedded && (
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.replace('/')}>
+            <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>Logout</Text>
+          </TouchableOpacity>
+        )}
         <Text style={styles.headerTitle}>RealShare Employee Portal</Text>
       </View>
 

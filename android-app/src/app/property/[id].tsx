@@ -22,7 +22,7 @@ export default function PropertyDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`https://realshare-5l24.onrender.com/api/properties/${id}`)
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties/${id}`)
       .then(res => res.json())
       .then(data => {
         setProperty(data);
@@ -96,7 +96,7 @@ export default function PropertyDetailsScreen() {
       const token = (await auth.currentUser?.getIdToken()) || "MOCK_TOKEN";
 
       // 2. Create Order on Backend
-      const orderResponse = await fetch('https://realshare-5l24.onrender.com/api/transactions/create-order', {
+      const orderResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/transactions/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,7 +125,7 @@ export default function PropertyDetailsScreen() {
           order_id: orderData.orderId,
           handler: async function (response: any) {
             // 4. Verify Payment on Backend
-            const verifyRes = await fetch('https://realshare-5l24.onrender.com/api/transactions/verify-payment', {
+            const verifyRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/transactions/verify-payment`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

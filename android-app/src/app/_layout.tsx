@@ -76,7 +76,7 @@ function RootLayoutNav() {
         } catch(e) {
           console.log(e);
         }
-        fetch('https://realshare-5l24.onrender.com/api/users/sync', {
+        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

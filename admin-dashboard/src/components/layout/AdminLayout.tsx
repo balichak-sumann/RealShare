@@ -21,6 +21,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     { name: "Investors & KYC", path: "/investors", icon: "👥" },
     { name: "Employees (RBAC)", path: "/employees", icon: "👔" },
     { name: "Agents & Commissions", path: "/agents", icon: "🤝" },
+    { name: "Referral Tracking", path: "/referrals", icon: "🔗" },
     { name: "Financial Ledger", path: "/ledger", icon: "💰" },
     { name: "Additional Services", path: "/services", icon: "🛎️" },
     { name: "Notifications Hub", path: "/notifications", icon: "📢" },

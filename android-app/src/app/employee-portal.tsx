@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '../contexts/UserContext';
+import { auth } from '../lib/firebase';
 
 export default function EmployeePortalScreen({ isEmbedded = false }: { isEmbedded?: boolean } = {}) {
   const router = useRouter();
@@ -15,23 +16,38 @@ export default function EmployeePortalScreen({ isEmbedded = false }: { isEmbedde
 
   const selectedRole = profile?.employee_department || 'sales';
 
-  const salesClients = [
-    { name: 'Arjun Kumar', phone: '+91 98765 43210', property: 'Goa Beachfront Villa', fractions: 10, value: '₹1.50 Cr', status: 'Active Investor' },
-    { name: 'Priya Sharma', phone: '+91 87654 32109', property: 'Cyber Pearl Tech Park', fractions: 4, value: '₹20,00,000', status: 'Active Investor' },
-    { name: 'Rohan Mehta', phone: '+91 76543 21098', property: 'Marina Bay Luxury Condo', fractions: 2, value: '₹50,00,000', status: 'Booked' },
-  ];
+  const [salesClients, setSalesClients] = React.useState<any[]>([]);
+  const [supportTickets, setSupportTickets] = React.useState<any[]>([]);
+  const [accountsLedger, setAccountsLedger] = React.useState<any[]>([]);
+  const [loading, setLoading] = React.useState(true);
 
-  const supportTickets = [
-    { ticketId: 'TCK-101', user: 'Vikram Singh', query: 'Aadhaar upload failing due to blur image', priority: 'High', status: 'Open' },
-    { ticketId: 'TCK-102', user: 'Anjali Desai', query: 'Question regarding rental yield distribution bank account', priority: 'Medium', status: 'In Progress' },
-    { ticketId: 'TCK-103', user: 'Meera Nair', query: 'Request for digital share certificate duplicate', priority: 'Low', status: 'Resolved' },
-  ];
+  React.useEffect(() => {
+    async function fetchData() {
+      try {
+        const token = await auth.currentUser?.getIdToken();
+        if (!token) return;
 
-  const accountsLedger = [
-    { ref: 'TXN-8821', user: 'Arjun Kumar', type: 'Fraction Booking Token', amount: '₹50,000', verified: true },
-    { ref: 'TXN-8822', user: '45 Active Investors', type: 'Q3 Rental Yield Disbursed', amount: '₹81,250', verified: true },
-    { ref: 'TXN-8823', user: 'Agent Vikramaditya', type: 'Commission Payout', amount: '₹37,500', verified: true },
-  ];
+        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/employees/dashboard`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (selectedRole === 'sales' && data.salesClients) {
+          setSalesClients(data.salesClients);
+        } else if (selectedRole === 'support' && data.supportTickets) {
+          setSupportTickets(data.supportTickets);
+        } else if (selectedRole === 'accounts' && data.accountsLedger) {
+          setAccountsLedger(data.accountsLedger);
+        }
+      } catch (err) {
+        console.error('Failed to fetch employee dashboard data', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    
+    fetchData();
+  }, [selectedRole]);
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>

@@ -32,7 +32,7 @@ export default function ExploreScreen() {
   };
 
   useEffect(() => {
-    fetch('https://realshare-5l24.onrender.com/api/properties')
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
       .then(res => res.json())
       .then(data => {
         setProperties(data);

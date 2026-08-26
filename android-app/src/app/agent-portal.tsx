@@ -43,7 +43,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
       }
 
       const token = await user.getIdToken();
-      const res = await fetch('https://realshare-5l24.onrender.com/api/agents/dashboard', {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

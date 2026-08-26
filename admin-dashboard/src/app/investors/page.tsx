@@ -412,7 +412,18 @@ export default function InvestorsPage() {
               </button>
             ))}
           </div>
-          <button className={styles.addButton}>📥 Export KYC Ledger</button>
+          <button className={styles.addButton} onClick={() => {
+            const headers = ["Name", "Email", "Phone", "KYC Status", "Account Status", "Fractions", "Total Invested", "Joined Date"];
+            const rows = filtered.map(inv => [inv.name, inv.email, inv.phone, inv.kyc, inv.status, inv.fractions, inv.totalInvested, inv.joinDate]);
+            const csvContent = [headers, ...rows].map(row => row.join(",")).join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `investor_kyc_report_${new Date().toISOString().split("T")[0]}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}>📥 Export KYC Ledger</button>
         </div>
       </div>
 

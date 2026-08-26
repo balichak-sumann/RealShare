@@ -25,7 +25,7 @@ export default function PortfolioScreen() {
         const user = auth.currentUser;
         if (!user) return;
         const token = await user.getIdToken();
-        const res = await fetch('https://realshare-5l24.onrender.com/api/portfolio', {
+        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/portfolio`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();

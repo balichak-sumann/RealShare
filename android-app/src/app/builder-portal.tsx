@@ -54,7 +54,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch('https://realshare-5l24.onrender.com/api/properties/builder', {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties/builder`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -146,7 +146,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
       await uploadBytes(storageRef, blob);
       const finalImageUrl = await getDownloadURL(storageRef);
 
-      const res = await fetch('https://realshare-5l24.onrender.com/api/properties', {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -197,7 +197,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
       }
       
       const token = await auth.currentUser?.getIdToken();
-      await fetch(`https://realshare-5l24.onrender.com/api/properties/${editingProp.id}`, {
+      await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties/${editingProp.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

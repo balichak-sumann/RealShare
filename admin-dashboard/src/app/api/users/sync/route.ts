@@ -41,6 +41,7 @@ export async function POST(req: Request) {
         avatar_url: decodedToken.picture || null,
         ...(referredByCode ? { referred_by_code: referredByCode } : {}),
         ...(expoPushToken ? { expo_push_token: expoPushToken } : {}),
+        ...(body.role && ['investor', 'agent', 'builder', 'admin'].includes(body.role) ? { role: body.role } : {}),
       },
       create: {
         id: decodedToken.uid,

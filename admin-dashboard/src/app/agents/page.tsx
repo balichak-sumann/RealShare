@@ -236,7 +236,18 @@ export default function AgentsPage() {
       <div className={styles.header}>
         <div className={styles.title}>All Real Estate Agents & Affiliates ({filtered.length})</div>
         <div className={styles.headerRight}>
-          <button className={styles.addButton}>📥 Export Agent Commission Report</button>
+          <button className={styles.addButton} onClick={() => {
+            const headers = ["Agent Name", "Agency", "Email", "Phone", "Referral Code", "Commission Rate (%)", "Investors Referred", "Sales Volume", "Commission Earned", "Commission Pending", "Status", "Joined"];
+            const rows = filtered.map(a => [a.name, a.agency, a.email, a.phone, a.referralCode, a.commissionRatePct, a.totalInvestorsReferred, a.totalSalesVolume, a.commissionEarned, a.commissionPending, a.status, a.joinedDate]);
+            const csvContent = [headers, ...rows].map(row => row.join(",")).join("\n");
+            const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = `agent_commission_report_${new Date().toISOString().split("T")[0]}.csv`;
+            link.click();
+            URL.revokeObjectURL(url);
+          }}>📥 Export Agent Commission Report</button>
         </div>
       </div>
 

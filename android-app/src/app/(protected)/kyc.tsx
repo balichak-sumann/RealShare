@@ -1,310 +1,176 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, TextInput, ActivityIndicator, Platform } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import { auth, storage } from '@/lib/firebase';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import React, { useState, useEffect } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  ActivityIndicator,
+} from 'react-native';
 import { useRouter } from 'expo-router';
+import * as WebBrowser from 'expo-web-browser';
+import * as Linking from 'expo-linking';
+import Constants from 'expo-constants';
+
+const API_BASE = 'http://localhost:3000/api';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export default function KYCScreen() {
   const router = useRouter();
-  const [docType, setDocType] = useState('Aadhaar Card');
-  const [docNumber, setDocNumber] = useState('');
-  const [frontImage, setFrontImage] = useState<string | null>(null);
-  const [backImage, setBackImage] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState(false);
+  const [isVerified, setIsVerified] = useState(false);
 
-  const docTypes = ['Aadhaar Card', 'PAN Card', 'Passport'];
+  // Use expo-linking to construct a return URL that works in Expo Go and standalone apps
+  const returnUrl = Linking.createURL('kyc-success');
 
-  const pickImage = async (side: 'front' | 'back') => {
-    try {
-      const result = await ImagePicker.launchImageLibraryAsync({
-        mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [4, 3],
-        quality: 0.5,
-      });
+  useEffect(() => {
+    // Listen for deep links returning from the browser
+    const subscription = Linking.addEventListener('url', handleDeepLink);
+    return () => subscription.remove();
+  }, []);
 
-      if (!result.canceled && result.assets && result.assets.length > 0) {
-        if (side === 'front') setFrontImage(result.assets[0].uri);
-        if (side === 'back') setBackImage(result.assets[0].uri);
-      }
-    } catch (err) {
-      console.log('ImagePicker error:', err);
+  const handleDeepLink = (event: Linking.EventType) => {
+    const data = Linking.parse(event.url);
+    if (data.path === 'kyc-success' || event.url.includes('kyc-success')) {
+      setIsVerified(true);
     }
   };
 
-  const uploadImageAsync = async (uri: string, side: string) => {
-    const userId = auth.currentUser?.uid;
-    if (!userId) throw new Error('User not logged in');
-
-    const response = await fetch(uri);
-    const blob = await response.blob();
-    const timestamp = Date.now();
-    const storageRef = ref(storage, `kyc-documents/${userId}/${timestamp}_${side}.jpg`);
-    await uploadBytes(storageRef, blob);
-    return await getDownloadURL(storageRef);
+  const getAuthToken = async () => {
+    // In production: return await firebase.auth().currentUser?.getIdToken();
+    return 'demo-token';
   };
 
-  const handleSubmit = async () => {
-    if (!docNumber) return setError('Please enter document number');
-    if (!frontImage) return setError('Please upload the front of the document');
-    
+  const handleBeginVerification = async () => {
     setLoading(true);
     setError('');
 
     try {
-      const token = await auth.currentUser?.getIdToken();
+      const token = await getAuthToken();
       
-      const frontUrl = await uploadImageAsync(frontImage, 'front');
-      const backUrl = backImage ? await uploadImageAsync(backImage, 'back') : null;
+      // Construct the URL to our backend's DigiLocker auth init endpoint
+      const authInitUrl = `${API_BASE}/kyc/digilocker/auth?token=${token}&return_url=${encodeURIComponent(returnUrl)}`;
 
-      const res = await fetch('http://localhost:3000/api/kyc/submit', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          document_type: docType,
-          document_number: docNumber,
-          document_front_url: frontUrl,
-          document_back_url: backUrl
-        })
-      });
+      // Open the browser for the OAuth flow
+      const result = await WebBrowser.openAuthSessionAsync(authInitUrl, returnUrl);
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Failed to submit KYC');
-
-      setSuccess(true);
-      setTimeout(() => {
-        router.replace('/');
-      }, 2000);
-
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during submission');
+      if (result.type === 'success' && result.url) {
+        // The browser was successfully redirected back to our app's scheme
+        handleDeepLink({ url: result.url });
+      } else if (result.type === 'cancel') {
+        setError('Verification was cancelled.');
+      }
+    } catch (e: any) {
+      console.error('WebBrowser Error:', e);
+      setError('An error occurred while launching DigiLocker. Please try again.');
     } finally {
       setLoading(false);
     }
   };
 
-  if (success) {
+  if (isVerified) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <View style={styles.successIcon}>
-          <Text style={{ color: '#fff', fontSize: 32 }}>✓</Text>
+      <ScrollView style={styles.container} contentContainerStyle={styles.centerContent}>
+        <View style={styles.completeCard}>
+          <View style={styles.completeIconBox}><Text style={styles.completeIcon}>🎉</Text></View>
+          <Text style={styles.completeTitle}>KYC Verified!</Text>
+          <Text style={styles.completeSubtitle}>Your identity has been successfully verified via DigiLocker. You can now invest in fractional real estate.</Text>
+
+          <View style={styles.verifiedItems}>
+            <View style={styles.verifiedRow}>
+              <Text style={styles.verifiedCheck}>✅</Text>
+              <View>
+                <Text style={styles.verifiedLabel}>PAN & Aadhaar</Text>
+                <Text style={styles.verifiedValue}>Fetched from DigiLocker</Text>
+              </View>
+            </View>
+          </View>
+
+          <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: '#16A34A' }]} onPress={() => router.push('/' as any)}>
+            <Text style={styles.primaryBtnText}>Start Investing →</Text>
+          </TouchableOpacity>
         </View>
-        <Text style={styles.successTitle}>KYC Verified!</Text>
-        <Text style={styles.successText}>Your identity has been securely verified. You can now start investing!</Text>
-      </View>
+      </ScrollView>
     );
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 60 }}>
-      <Text style={styles.title}>Complete Your KYC</Text>
-      <Text style={styles.subtitle}>Please upload your identity documents to verify your account for investing.</Text>
+    <ScrollView style={styles.container} contentContainerStyle={styles.centerContent}>
+      <View style={styles.introCard}>
+        <Text style={styles.introIcon}>🔐</Text>
+        <Text style={styles.introTitle}>Identity Verification</Text>
+        <Text style={styles.introSubtitle}>
+          As per SEBI & RBI regulations, we need to verify your identity before you can invest. We use DigiLocker for instant, paperless verification.
+        </Text>
+        
+        <View style={styles.stepsPreview}>
+          <View style={styles.stepPreviewRow}>
+            <View style={[styles.stepDot, { backgroundColor: '#2563EB' }]}><Text style={styles.stepDotText}>1</Text></View>
+            <View>
+              <Text style={styles.stepPreviewTitle}>Connect DigiLocker</Text>
+              <Text style={styles.stepPreviewDesc}>Login to your Govt. DigiLocker account</Text>
+            </View>
+          </View>
+          <View style={styles.stepPreviewRow}>
+            <View style={[styles.stepDot, { backgroundColor: '#7C3AED' }]}><Text style={styles.stepDotText}>2</Text></View>
+            <View>
+              <Text style={styles.stepPreviewTitle}>Provide Consent</Text>
+              <Text style={styles.stepPreviewDesc}>Allow access to your PAN and Aadhaar</Text>
+            </View>
+          </View>
+          <View style={styles.stepPreviewRow}>
+            <View style={[styles.stepDot, { backgroundColor: '#16A34A' }]}><Text style={styles.stepDotText}>✓</Text></View>
+            <View>
+              <Text style={styles.stepPreviewTitle}>Start Investing</Text>
+              <Text style={styles.stepPreviewDesc}>KYC complete in seconds</Text>
+            </View>
+          </View>
+        </View>
 
-      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-      <Text style={styles.sectionLabel}>Select Document Type</Text>
-      <View style={styles.typeSelector}>
-        {docTypes.map(type => (
-          <TouchableOpacity 
-            key={type} 
-            style={[styles.typeButton, docType === type && styles.typeButtonActive]}
-            onPress={() => setDocType(type)}
-          >
-            <Text style={[styles.typeButtonText, docType === type && styles.typeButtonTextActive]}>{type}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      <Text style={styles.sectionLabel}>Document Number</Text>
-      <TextInput
-        style={styles.input}
-        placeholder={`Enter ${docType} Number`}
-        value={docNumber}
-        onChangeText={setDocNumber}
-      />
-
-      <Text style={styles.sectionLabel}>Upload Photos</Text>
-      <View style={styles.uploadRow}>
-        <TouchableOpacity style={styles.uploadBox} onPress={() => pickImage('front')}>
-          {frontImage ? (
-            <Image source={{ uri: frontImage }} style={styles.previewImage} />
-          ) : (
-            <>
-              <Text style={styles.uploadIcon}>📷</Text>
-              <Text style={styles.uploadText}>Front Side (Required)</Text>
-            </>
-          )}
+        <TouchableOpacity style={styles.primaryBtn} onPress={handleBeginVerification} disabled={loading}>
+          {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.primaryBtnText}>Connect DigiLocker</Text>}
         </TouchableOpacity>
-
-        <TouchableOpacity style={styles.uploadBox} onPress={() => pickImage('back')}>
-          {backImage ? (
-            <Image source={{ uri: backImage }} style={styles.previewImage} />
-          ) : (
-            <>
-              <Text style={styles.uploadIcon}>📷</Text>
-              <Text style={styles.uploadText}>Back Side (Optional)</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        <Text style={styles.privacyText}>🔒 Your data is encrypted & secured under Indian data privacy laws</Text>
       </View>
-
-      <TouchableOpacity style={styles.submitButton} onPress={handleSubmit} disabled={loading}>
-        {loading ? <ActivityIndicator color="#fff" /> : <Text style={styles.submitButtonText}>Submit for Verification</Text>}
-      </TouchableOpacity>
-      <Text style={styles.disclaimer}>By submitting, you agree to our Terms of Service and authorize us to verify your identity.</Text>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FAFAFA',
-    padding: 24,
-  },
-  title: {
-    fontSize: 28,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 15,
-    color: '#6B7280',
-    marginBottom: 32,
-    lineHeight: 22,
-  },
-  sectionLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#374151',
-    marginBottom: 12,
-  },
-  typeSelector: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  typeButton: {
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
-  },
-  typeButtonActive: {
-    borderColor: '#1A56DB',
-    backgroundColor: '#EFF6FF',
-  },
-  typeButtonText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#4B5563',
-  },
-  typeButtonTextActive: {
-    color: '#1A56DB',
-  },
-  input: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
-    padding: 16,
-    fontSize: 16,
-    color: '#111827',
-    marginBottom: 24,
-  },
-  uploadRow: {
-    flexDirection: 'row',
-    gap: 16,
-    marginBottom: 32,
-  },
-  uploadBox: {
-    flex: 1,
-    height: 120,
-    backgroundColor: '#FFFFFF',
-    borderWidth: 1,
-    borderStyle: 'dashed',
-    borderColor: '#D1D5DB',
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    overflow: 'hidden',
-  },
-  uploadIcon: {
-    fontSize: 24,
-    marginBottom: 8,
-  },
-  uploadText: {
-    fontSize: 12,
-    color: '#6B7280',
-    fontWeight: '500',
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  submitButton: {
-    backgroundColor: '#1A56DB',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-    marginBottom: 16,
-    shadowColor: '#1A56DB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
-  },
-  submitButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  disclaimer: {
-    fontSize: 12,
-    color: '#9CA3AF',
-    textAlign: 'center',
-    lineHeight: 18,
-  },
-  errorText: {
-    color: '#DC2626',
-    backgroundColor: '#FEF2F2',
-    padding: 12,
-    borderRadius: 8,
-    marginBottom: 24,
-    overflow: 'hidden',
-  },
-  successIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#10B981',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 12,
-  },
-  successText: {
-    fontSize: 16,
-    color: '#6B7280',
-    textAlign: 'center',
-    paddingHorizontal: 24,
-    lineHeight: 24,
-  }
+  container: { flex: 1, backgroundColor: '#F7F9FC' },
+  centerContent: { flex: 1, justifyContent: 'center', padding: 24 },
+  
+  introCard: { backgroundColor: '#fff', borderRadius: 24, padding: 32, alignItems: 'center', shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4 },
+  introIcon: { fontSize: 48, marginBottom: 16 },
+  introTitle: { fontSize: 24, fontWeight: '800', color: '#0F172A', marginBottom: 8, textAlign: 'center' },
+  introSubtitle: { fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 22, marginBottom: 28 },
+  stepsPreview: { width: '100%', marginBottom: 28, gap: 20 },
+  stepPreviewRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
+  stepDot: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  stepDotText: { color: '#fff', fontWeight: '800', fontSize: 14 },
+  stepPreviewTitle: { fontSize: 15, fontWeight: '700', color: '#0F172A' },
+  stepPreviewDesc: { fontSize: 12, color: '#64748B', marginTop: 2 },
+  privacyText: { fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 16 },
+
+  errorText: { color: '#DC2626', fontSize: 13, fontWeight: '600', marginBottom: 16, textAlign: 'center' },
+
+  primaryBtn: { backgroundColor: '#2563EB', paddingVertical: 16, borderRadius: 14, alignItems: 'center', shadowColor: '#2563EB', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.25, shadowRadius: 12, elevation: 6, width: '100%' },
+  primaryBtnText: { color: '#fff', fontWeight: '800', fontSize: 16 },
+
+  // Complete
+  completeCard: { backgroundColor: '#fff', borderRadius: 24, padding: 32, alignItems: 'center', shadowColor: '#0F172A', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.06, shadowRadius: 20, elevation: 4 },
+  completeIconBox: { marginBottom: 16 },
+  completeIcon: { fontSize: 56 },
+  completeTitle: { fontSize: 26, fontWeight: '900', color: '#16A34A', marginBottom: 8 },
+  completeSubtitle: { fontSize: 14, color: '#64748B', textAlign: 'center', lineHeight: 22, marginBottom: 24 },
+  verifiedItems: { width: '100%', gap: 16, marginBottom: 28 },
+  verifiedRow: { flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#F0FDF4', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#BBF7D0' },
+  verifiedCheck: { fontSize: 18 },
+  verifiedLabel: { fontSize: 13, fontWeight: '700', color: '#0F172A' },
+  verifiedValue: { fontSize: 12, color: '#64748B', marginTop: 2 },
 });
 

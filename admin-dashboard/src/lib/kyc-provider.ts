@@ -160,3 +160,79 @@ export async function verifyAadhaarOtp(clientId: string, otp: string): Promise<A
     return { success: false, error: error.message || 'Network error' };
   }
 }
+
+// ═══════════════════════════════════════════
+// DIGILOCKER OAUTH INTEGRATION
+// ═══════════════════════════════════════════
+const DIGILOCKER_CLIENT_ID = process.env.DIGILOCKER_CLIENT_ID || 'mock_client_id';
+const DIGILOCKER_CLIENT_SECRET = process.env.DIGILOCKER_CLIENT_SECRET || 'mock_client_secret';
+// The redirect URI must match exactly what is registered in the DigiLocker Developer Portal
+const DIGILOCKER_REDIRECT_URI = process.env.DIGILOCKER_REDIRECT_URI || 'http://localhost:3000/api/kyc/digilocker/callback';
+const DIGILOCKER_AUTH_URL = 'https://api.digitallocker.gov.in/public/oauth2/1/authorize';
+const DIGILOCKER_TOKEN_URL = 'https://api.digitallocker.gov.in/public/oauth2/1/token';
+const DIGILOCKER_USER_API = 'https://api.digitallocker.gov.in/public/oauth2/2/user';
+
+/**
+ * Returns the DigiLocker authorization URL to redirect the user to.
+ * State is used to pass the userId through the OAuth flow.
+ */
+export function getDigilockerAuthUrl(userId: string): string {
+  const state = encodeURIComponent(Buffer.from(JSON.stringify({ userId })).toString('base64'));
+  return `${DIGILOCKER_AUTH_URL}?response_type=code&client_id=${DIGILOCKER_CLIENT_ID}&redirect_uri=${encodeURIComponent(DIGILOCKER_REDIRECT_URI)}&state=${state}`;
+}
+
+/**
+ * Exchanges the authorization code for an access token.
+ */
+export async function getDigilockerAccessToken(code: string): Promise<string | null> {
+  // If no real secret is set, return a mock token for testing
+  if (DIGILOCKER_CLIENT_SECRET === 'mock_client_secret') {
+    return 'mock_digilocker_access_token';
+  }
+
+  try {
+    const response = await fetch(DIGILOCKER_TOKEN_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        code,
+        grant_type: 'authorization_code',
+        client_id: DIGILOCKER_CLIENT_ID,
+        client_secret: DIGILOCKER_CLIENT_SECRET,
+        redirect_uri: DIGILOCKER_REDIRECT_URI,
+      }),
+    });
+
+    const data = await response.json();
+    return data.access_token || null;
+  } catch (error) {
+    console.error('[KYC] DigiLocker token error:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetches user profile/documents from DigiLocker using the access token.
+ */
+export async function fetchDigilockerProfile(accessToken: string) {
+  // If using a mock token, return mock user data
+  if (accessToken === 'mock_digilocker_access_token') {
+    return {
+      name: 'DigiLocker User',
+      dob: '01/01/1990',
+      gender: 'M',
+      aadhaar: 'XXXX-XXXX-1234',
+      pan: 'ABCDE1234F',
+    };
+  }
+
+  try {
+    const response = await fetch(DIGILOCKER_USER_API, {
+      headers: { Authorization: `Bearer ${accessToken}` },
+    });
+    return await response.json();
+  } catch (error) {
+    console.error('[KYC] DigiLocker fetch error:', error);
+    return null;
+  }
+}

@@ -104,7 +104,7 @@ export async function POST(request: NextRequest) {
         email,
         password: tempPassword,
         displayName: full_name,
-        phoneNumber: phone_number || undefined,
+        emailVerified: true,
       });
       newUid = newAuthUser.uid;
     } catch (firebaseError: any) {

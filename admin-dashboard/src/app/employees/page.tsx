@@ -95,6 +95,41 @@ export default function EmployeesPage() {
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error" | "info">("success");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [modalError, setModalError] = useState<string | null>(null);
+
+  // Fetch employees from database on load
+  React.useEffect(() => {
+    async function loadEmployees() {
+      if (!user) return;
+      try {
+        const token = await user.getIdToken();
+        const res = await fetch('/api/admin/employees', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.employees && data.employees.length > 0) {
+          const dbEmployees = data.employees.map((e: any, idx: number) => ({
+            id: e.id,
+            name: e.full_name,
+            email: e.email,
+            phone: e.phone_number || "+91 00000 00000",
+            department: e.employee_department ? (e.employee_department.charAt(0).toUpperCase() + e.employee_department.slice(1)) : "Sales",
+            employeeCode: `RS-EMP-${idx + 50}`, // fallback since it's not saved yet in DB schema
+            incentiveRatePct: 0.5,
+            monthlyTarget: "₹1.00 Cr",
+            currentMonthSales: "₹0",
+            status: "Active",
+            assignedClientsCount: 0,
+          }));
+          // Merge with initial hardcoded for display purposes
+          setEmployees([...dbEmployees, ...initialEmployees]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch employees", err);
+      }
+    }
+    loadEmployees();
+  }, [user]);
 
   // Form State
   const [newEmp, setNewEmp] = useState({
@@ -151,7 +186,7 @@ export default function EmployeesPage() {
       const data = await response.json();
 
       if (!response.ok) {
-        showToast(`❌ ${data.error || 'Failed to create employee'}`, "error");
+        setModalError(data.error || 'Failed to create employee');
         return;
       }
 
@@ -498,7 +533,10 @@ export default function EmployeesPage() {
                 Create New Employee & Role
               </h2>
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={() => {
+                  setShowAddModal(false);
+                  setModalError(null);
+                }}
                 style={{
                   background: "#F1F5F9",
                   border: "none",
@@ -511,6 +549,12 @@ export default function EmployeesPage() {
                 ✕
               </button>
             </div>
+
+            {modalError && (
+              <div style={{ background: "#FEE2E2", color: "#DC2626", padding: "12px", borderRadius: "8px", marginBottom: "12px", fontSize: "0.9rem", fontWeight: 600, border: "1px solid #FCA5A5" }}>
+                ⚠️ {modalError}
+              </div>
+            )}
 
             <form onSubmit={handleAddEmployee} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div>

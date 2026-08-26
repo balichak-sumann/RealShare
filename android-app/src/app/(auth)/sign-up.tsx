@@ -132,7 +132,7 @@ export default function SignUpScreen() {
             
             <View style={styles.glassContainer}>
               <View style={styles.header}>
-                <Text style={styles.brandTitle}>RealShare</Text>
+                <Image source={require('../../../assets/logo.png')} style={{ width: 160, height: 40, resizeMode: 'contain', marginBottom: 12 }} />
                 <Text style={styles.title}>Create Account</Text>
                 <Text style={styles.subtitle}>Join the premium fractional real estate network</Text>
               </View>

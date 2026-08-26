@@ -37,7 +37,7 @@ export default function SignInScreen() {
             
             <View style={styles.glassContainer}>
               <View style={styles.header}>
-                <Text style={styles.brandTitle}>RealShare</Text>
+                <Image source={require('../../../assets/logo.png')} style={{ width: 160, height: 40, resizeMode: 'contain', marginBottom: 12 }} />
                 <Text style={styles.title}>Welcome Back</Text>
                 <Text style={styles.subtitle}>Log in to access your premium portfolio</Text>
               </View>

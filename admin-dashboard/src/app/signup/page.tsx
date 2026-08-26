@@ -68,8 +68,7 @@ export default function Signup() {
       <div style={{ background: '#FFF', padding: '40px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', width: '100%', maxWidth: '400px' }}>
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px' }}>
-            <div style={{ width: '32px', height: '32px', background: 'linear-gradient(135deg, #1E40AF, #3B82F6)', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#FFF', fontWeight: 700 }}>◆</div>
-            <h1 style={{ fontSize: '24px', fontWeight: 800, color: '#0F172A', margin: 0 }}>RealShare</h1>
+            <img src="/logo.png" alt="RealShare Logo" style={{ height: '48px', objectFit: 'contain' }} />
           </div>
           <h2 style={{ fontSize: '18px', color: '#475569', margin: 0 }}>Create Admin Account</h2>
         </div>

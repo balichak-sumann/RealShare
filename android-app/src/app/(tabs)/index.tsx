@@ -61,12 +61,7 @@ export default function HomeScreen() {
         </TouchableOpacity>
         
         <View style={styles.logoRow}>
-          <View style={styles.logoIconBox}>
-            <Text style={styles.logoIcon}>🏢</Text>
-          </View>
-          <Text style={styles.headerTitle}>
-            <Text style={{fontWeight: '800'}}>REALSHARE</Text> PROPERTIES
-          </Text>
+          <Image source={require('../../../assets/logo.png')} style={{ width: 140, height: 30, resizeMode: 'contain' }} />
         </View>
 
         <TouchableOpacity style={styles.headerIconBtn} onPress={() => Alert.alert('Notifications', 'No new notifications right now.')}>

@@ -33,8 +33,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.logo}>
-          <span className={styles.logoIcon}>◆</span>
-          <span>RealShare</span>
+          <img src="/logo.png" alt="RealShare Logo" style={{ height: '32px' }} />
         </div>
         <div className={styles.navLabel}>MANAGEMENT CONSOLE</div>
         <nav className={styles.nav}>

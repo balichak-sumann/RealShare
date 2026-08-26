@@ -54,7 +54,7 @@ export default function BuilderPortalScreen() {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch('http://localhost:3000/api/properties/builder', {
+      const res = await fetch('https://realshare-5l24.onrender.com/api/properties/builder', {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
@@ -118,7 +118,7 @@ export default function BuilderPortalScreen() {
       await uploadBytes(storageRef, blob);
       const finalImageUrl = await getDownloadURL(storageRef);
 
-      const res = await fetch('http://localhost:3000/api/properties', {
+      const res = await fetch('https://realshare-5l24.onrender.com/api/properties', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -161,7 +161,7 @@ export default function BuilderPortalScreen() {
     if (!editingProp) return;
     try {
       const token = await auth.currentUser?.getIdToken();
-      await fetch(`http://localhost:3000/api/properties/${editingProp.id}`, {
+      await fetch(`https://realshare-5l24.onrender.com/api/properties/${editingProp.id}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,

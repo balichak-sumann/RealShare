@@ -34,7 +34,7 @@ export default function HomeScreen() {
     }
 
     // In production, this would point to the deployed Next.js API or backend URL
-    fetch('http://localhost:3000/api/properties?featured=true')
+    fetch('https://realshare-5l24.onrender.com/api/properties?featured=true')
       .then(res => res.json())
       .then(data => {
         setFeaturedProperties(data);

@@ -79,7 +79,7 @@ function RootLayoutNav() {
           } catch(e) {
             console.log(e);
           }
-          fetch('http://localhost:3000/api/users/sync', {
+          fetch('https://realshare-5l24.onrender.com/api/users/sync', {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,

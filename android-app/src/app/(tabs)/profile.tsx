@@ -128,7 +128,7 @@ export default function ProfileScreen() {
         
         // Sync with backend
         const token = await auth.currentUser.getIdToken();
-        await fetch('http://localhost:3000/api/users/sync', {
+        await fetch('https://realshare-5l24.onrender.com/api/users/sync', {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` }
         });

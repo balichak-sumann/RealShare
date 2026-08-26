@@ -43,7 +43,7 @@ export default function AgentPortalScreen() {
       }
 
       const token = await user.getIdToken();
-      const res = await fetch('http://localhost:3000/api/agents/dashboard', {
+      const res = await fetch('https://realshare-5l24.onrender.com/api/agents/dashboard', {
         headers: {
           'Authorization': `Bearer ${token}`
         }

@@ -12,7 +12,7 @@ import * as WebBrowser from 'expo-web-browser';
 import * as Linking from 'expo-linking';
 import Constants from 'expo-constants';
 
-const API_BASE = 'http://localhost:3000/api';
+const API_BASE = 'https://realshare-5l24.onrender.com/api';
 
 WebBrowser.maybeCompleteAuthSession();
 

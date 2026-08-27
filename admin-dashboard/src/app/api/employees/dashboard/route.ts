@@ -27,7 +27,10 @@ export async function GET(req: Request) {
     if (department === 'sales') {
       // Return investors and their investments
       const investors = await prisma.profile.findMany({
-        where: { role: 'user' },
+        where: { 
+          role: 'user',
+          assigned_sales_rep_id: employeeProfile.id
+        },
         take: 10,
         orderBy: { created_at: 'desc' }
       });

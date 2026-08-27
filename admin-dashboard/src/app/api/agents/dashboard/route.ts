@@ -105,6 +105,11 @@ export async function GET(req: Request) {
       referralCode: profile.referral_code,
       totalEarned: `₹${totalEarned.toLocaleString('en-IN')}`,
       pendingPayout: `₹${pendingPayout.toLocaleString('en-IN')}`,
+      bankDetails: profile.bank_account_number ? {
+        accountName: profile.bank_account_name,
+        accountNumber: profile.bank_account_number,
+        ifsc: profile.bank_ifsc
+      } : null,
       clientLeads,
       monthlyTrends
     });

@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useUser } from '@/contexts/UserContext';
 
 interface KycBannerProps {
   kycStatus: 'not_submitted' | 'pending' | 'verified' | 'rejected';
@@ -8,7 +9,10 @@ interface KycBannerProps {
 
 export default function KycBanner({ kycStatus }: KycBannerProps) {
   const router = useRouter();
+  const { profile } = useUser();
 
+  // Agents and employees are created by admin — KYC does not apply to them
+  if (profile?.role === 'agent' || profile?.role === 'employee') return null;
   if (kycStatus === 'verified') return null;
 
   const config = {

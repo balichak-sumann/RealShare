@@ -156,10 +156,10 @@ export default function ProfileScreen() {
 
   const getKycStatusStyle = (status: string) => {
     switch (status) {
-      case 'verified': return { bg: '#D1FAE5', text: '#059669', label: '✓ Verified' };
-      case 'pending': return { bg: '#FEF3C7', text: '#D97706', label: '⏳ Pending Review' };
-      case 'rejected': return { bg: '#FEE2E2', text: '#DC2626', label: '✕ Rejected' };
-      default: return { bg: '#F3F4F6', text: '#6B7280', label: 'Not Submitted' };
+      case 'verified': return { bg: '#D1FAE5', text: '#059669', label: '✓ KYC: Verified' };
+      case 'pending': return { bg: '#FEF3C7', text: '#D97706', label: '⏳ KYC: Pending Review' };
+      case 'rejected': return { bg: '#FEE2E2', text: '#DC2626', label: '✕ KYC: Rejected' };
+      default: return { bg: '#F3F4F6', text: '#6B7280', label: 'KYC: Not Submitted' };
     }
   };
 
@@ -216,10 +216,12 @@ export default function ProfileScreen() {
           <Text style={styles.userName}>{user?.full_name || 'User'}</Text>
           <Text style={styles.userRole}>{(user?.role || 'investor').charAt(0).toUpperCase() + (user?.role || 'investor').slice(1)}</Text>
 
-          {/* KYC Badge */}
-          <View style={[styles.kycBadge, { backgroundColor: kycInfo.bg }]}>
-            <Text style={[styles.kycBadgeText, { color: kycInfo.text }]}>{kycInfo.label}</Text>
-          </View>
+          {/* KYC Badge (Investors Only) */}
+          {(!user?.role || user?.role === 'investor') && (
+            <View style={[styles.kycBadge, { backgroundColor: kycInfo.bg }]}>
+              <Text style={[styles.kycBadgeText, { color: kycInfo.text }]}>{kycInfo.label}</Text>
+            </View>
+          )}
         </View>
 
         {/* Personal Information */}
@@ -298,8 +300,9 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* KYC Documents */}
-        <View style={styles.section}>
+        {/* KYC Documents (Investors Only) */}
+        {(!user?.role || user?.role === 'investor') && (
+          <View style={styles.section}>
           <View style={styles.sectionHeaderRow}>
             <Text style={styles.sectionTitle}>KYC Documents</Text>
             <TouchableOpacity onPress={() => router.push('/kyc' as any)}>
@@ -351,6 +354,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           )}
         </View>
+        )}
 
         {/* Wallet (Investor Only) */}
         {(!user?.role || user?.role === 'investor' || user?.role === 'admin') && (

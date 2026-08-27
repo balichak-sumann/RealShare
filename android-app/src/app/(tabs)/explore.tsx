@@ -1,10 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, TextInput, Platform, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useRouter, Link } from 'expo-router';
+import { useUser } from '@/contexts/UserContext';
 
 export default function ExploreScreen() {
   const { width } = useWindowDimensions();
   const isDesktop = width >= 768;
+  const { profile } = useUser();
+  const isAgent = profile?.role === 'agent';
+  const isEmployee = profile?.role === 'employee';
   const [searchQuery, setSearchQuery] = useState('');
   
   // Filtering States
@@ -168,7 +172,7 @@ export default function ExploreScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Explore Properties</Text>
+        <Text style={styles.headerTitle}>{isAgent ? 'Browse Properties for Clients' : isEmployee ? 'Internal Property Directory' : 'Explore Properties'}</Text>
       </View>
 
       <View style={[styles.filterSection, { zIndex: 100, elevation: 100 }]}>
@@ -308,7 +312,7 @@ export default function ExploreScreen() {
       </View>
 
       <View style={{ flex: 1, flexDirection: isDesktop ? 'row' : 'column' }}>
-        <View style={[styles.mapContainer, { flex: isDesktop ? 1.5 : undefined, height: isDesktop ? '100%' : 300 }]}>
+        <View style={[styles.mapContainer, { flex: isDesktop ? 1.5 : undefined, height: isDesktop ? '100%' : 220 }]}>
           {Platform.OS === 'web' ? (
             <iframe 
               width="100%" 
@@ -324,7 +328,7 @@ export default function ExploreScreen() {
           )}
         </View>
 
-        <ScrollView style={{ flex: isDesktop ? 1 : undefined }} contentContainerStyle={{ paddingBottom: 100 }}>
+        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}>
           <View style={styles.listContainer}>
             {filteredProperties.length === 0 && (
               <Text style={{ textAlign: 'center', marginTop: 40, color: '#6B7280', width: '100%' }}>No properties found.</Text>
@@ -376,8 +380,10 @@ export default function ExploreScreen() {
                     </View>
 
                     <Link href={`/property/${prop.id}`} asChild>
-                      <TouchableOpacity style={styles.cardBtn}>
-                        <Text style={styles.cardBtnText}>View Details</Text>
+                      <TouchableOpacity style={StyleSheet.flatten([styles.cardBtn, isAgent && { backgroundColor: '#111827' }, isEmployee && { backgroundColor: '#1E3A8A' }])}>
+                        <Text style={[styles.cardBtnText, isAgent && { color: '#D4AF37' }, isEmployee && { color: '#FFFFFF' }]}>
+                          {isAgent ? 'Agent Toolkit & Details' : isEmployee ? 'View Internal Details' : 'View Details'}
+                        </Text>
                       </TouchableOpacity>
                     </Link>
 

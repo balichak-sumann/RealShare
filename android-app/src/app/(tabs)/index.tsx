@@ -146,25 +146,7 @@ export default function HomeScreen() {
             </>
           )}
 
-          {/* Agent Specific Tools */}
-          {profile?.role === 'agent' && (
-            <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/agent-portal' as any)}>
-              <View style={[styles.actionIconBox, { borderColor: '#D4AF37', borderWidth: 2 }]}>
-                <Text style={styles.actionIcon}>💰</Text>
-              </View>
-              <Text style={styles.actionText}>Agent{'\n'}Earnings</Text>
-            </TouchableOpacity>
-          )}
-
-          {/* Builder Specific Tools */}
-          {profile?.role === 'builder' && (
-            <TouchableOpacity style={styles.actionBtn} onPress={() => router.push('/builder-portal' as any)}>
-              <View style={[styles.actionIconBox, { borderColor: '#1A56DB', borderWidth: 2 }]}>
-                <Text style={styles.actionIcon}>🏗️</Text>
-              </View>
-              <Text style={styles.actionText}>Builder{'\n'}Portal</Text>
-            </TouchableOpacity>
-          )}
+          {/* Only investor quick actions below */}
         </View>
 
         {/* Featured Properties */}

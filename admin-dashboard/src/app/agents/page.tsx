@@ -15,6 +15,9 @@ interface Agent {
   totalSalesVolume: string;
   commissionEarned: string;
   commissionPending: string;
+  bankName: string | null;
+  bankAcc: string | null;
+  bankIfsc: string | null;
   status: "Active" | "Pending Approval" | "Suspended";
   joinedDate: string;
 }
@@ -49,6 +52,9 @@ export default function AgentsPage() {
             totalSalesVolume: `₹${(earned * 40 + pending * 40).toLocaleString('en-IN')}`,
             commissionEarned: `₹${earned.toLocaleString('en-IN')}`,
             commissionPending: `₹${pending.toLocaleString('en-IN')}`,
+            bankName: d.bank_account_name || null,
+            bankAcc: d.bank_account_number || null,
+            bankIfsc: d.bank_ifsc || null,
             status: d.is_active ? "Active" : "Suspended",
             joinedDate: new Date(d.created_at).toLocaleDateString()
           };
@@ -269,9 +275,10 @@ export default function AgentsPage() {
               <th className={styles.th}>Agent & Agency</th>
               <th className={styles.th}>Referral Code</th>
               <th className={styles.th}>Custom Commission Rate</th>
-              <th className={styles.th}>Referred Investors</th>
+              <th className={styles.th}>Investors</th>
               <th className={styles.th}>Sales Volume</th>
-              <th className={styles.th}>Commissions (Paid / Pending)</th>
+              <th className={styles.th}>Commissions</th>
+              <th className={styles.th}>Payout Bank Details</th>
               <th className={styles.th}>Status</th>
               <th className={styles.th}>Actions</th>
             </tr>
@@ -322,6 +329,17 @@ export default function AgentsPage() {
                     <div style={{ color: "#D97706", fontSize: "0.75rem", fontWeight: 600 }}>
                       {agent.commissionPending} Pending
                     </div>
+                  )}
+                </td>
+                <td className={styles.td}>
+                  {agent.bankAcc ? (
+                    <div>
+                      <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#334155" }}>{agent.bankName}</div>
+                      <div style={{ fontSize: "0.75rem", color: "#64748B" }}>A/C: {agent.bankAcc}</div>
+                      <div style={{ fontSize: "0.75rem", color: "#64748B" }}>IFSC: {agent.bankIfsc}</div>
+                    </div>
+                  ) : (
+                    <span style={{ fontSize: "0.75rem", color: "#94A3B8", fontStyle: "italic" }}>Not provided</span>
                   )}
                 </td>
                 <td className={styles.td}>

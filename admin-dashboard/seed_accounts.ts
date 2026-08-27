@@ -1,6 +1,6 @@
 import 'dotenv/config';
-import { auth } from './src/lib/firebase-admin.ts';
-import prisma from './src/lib/prisma.ts';
+import { auth } from './src/lib/firebase-admin';
+import prisma from './src/lib/prisma';
 
 async function main() {
   console.log('Seeding 5 Demo Accounts...');

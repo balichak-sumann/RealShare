@@ -13,10 +13,14 @@ import {
   Platform,
 } from 'react-native';
 import { auth } from '@/lib/firebase';
+import { useUser } from '@/contexts/UserContext';
 
 export default function PropertyDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const { profile } = useUser();
+  const isAgent = profile?.role === 'agent';
+  const isEmployee = profile?.role === 'employee';
 
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -37,6 +41,8 @@ export default function PropertyDetailsScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [fractionsToBuy, setFractionsToBuy] = useState(1);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [showAgentModal, setShowAgentModal] = useState(false);
+  const [agentCopied, setAgentCopied] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card' | 'netbanking' | 'wallet'>('upi');
   const [upiId, setUpiId] = useState('user@okhdfcbank');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -288,6 +294,17 @@ export default function PropertyDetailsScreen() {
             <Text style={styles.description}>{property.description}</Text>
           </View>
 
+          {/* Builder Details (Visible to Agents and Employees) */}
+          {(isAgent || isEmployee) && (
+            <View style={[styles.section, { backgroundColor: '#F9FAFB', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB' }]}>
+              <Text style={styles.sectionTitle}>Builder Contact Information</Text>
+              <Text style={{ fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 4 }}>Indus Innovate Developers</Text>
+              <Text style={{ fontSize: 13, color: '#4B5563', marginBottom: 8 }}>Approved Builder Partner</Text>
+              <Text style={{ fontSize: 14, color: '#1A56DB', fontWeight: '600' }}>📞 +91 98765 43210</Text>
+              <Text style={{ fontSize: 14, color: '#1A56DB', fontWeight: '600', marginTop: 4 }}>✉️ contact@indusinnovate.com</Text>
+            </View>
+          )}
+
 
 
           {/* Video Section */}
@@ -311,9 +328,29 @@ export default function PropertyDetailsScreen() {
 
       {/* Sticky Bottom Booking Bar */}
       <View style={styles.fabContainer}>
-        <TouchableOpacity style={styles.investBtn} onPress={handleInvestNowClick}>
-          {isProcessing ? <ActivityIndicator color="#fff" /> : <Text style={styles.investBtnText}>Invest Now</Text>}
-        </TouchableOpacity>
+        {isAgent ? (
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity style={[styles.investBtn, { flex: 1, backgroundColor: '#111827' }]} onPress={() => {}}>
+              <Text style={styles.investBtnText}>Download Brochure</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.investBtn, { flex: 1, backgroundColor: '#D4AF37' }]} onPress={() => setShowAgentModal(true)}>
+              <Text style={[styles.investBtnText, { color: '#111827' }]}>Share Link</Text>
+            </TouchableOpacity>
+          </View>
+        ) : isEmployee ? (
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity style={[styles.investBtn, { flex: 1, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#1E3A8A' }]} onPress={() => {}}>
+              <Text style={[styles.investBtnText, { color: '#1E3A8A' }]}>Internal Analytics</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.investBtn, { flex: 1, backgroundColor: '#1E3A8A' }]} onPress={() => {}}>
+              <Text style={styles.investBtnText}>Internal Actions</Text>
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <TouchableOpacity style={styles.investBtn} onPress={handleInvestNowClick}>
+            {isProcessing ? <ActivityIndicator color="#fff" /> : <Text style={styles.investBtnText}>Invest Now</Text>}
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Modern Payment Gateway Modal */}
@@ -401,6 +438,47 @@ export default function PropertyDetailsScreen() {
                 </TouchableOpacity>
               </View>
             )}
+          </View>
+        </View>
+      </Modal>
+
+      {/* Agent Share Modal */}
+      <Modal visible={showAgentModal} animationType="slide" transparent={true}>
+        <View style={styles.modalBackdrop}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Share Property</Text>
+              <TouchableOpacity onPress={() => setShowAgentModal(false)}>
+                <Text style={styles.modalCloseText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+            <Text style={styles.paymentSubtext}>Share this unique link to track referrals.</Text>
+            
+            <View style={{ backgroundColor: '#FDF6E3', padding: 16, borderRadius: 12, marginBottom: 24, borderWidth: 1, borderColor: '#FDE68A' }}>
+              <Text style={{ fontSize: 12, color: '#B45309', fontWeight: '700', marginBottom: 4 }}>ESTIMATED COMMISSION</Text>
+              <Text style={{ fontSize: 24, fontWeight: '800', color: '#92400E' }}>₹ {(totalBookingAmt * 0.025).toLocaleString('en-IN')}</Text>
+              <Text style={{ fontSize: 11, color: '#B45309', marginTop: 4 }}>*Based on 2.5% of min investment. Commission scales with shares bought.</Text>
+            </View>
+
+            <View style={styles.upiInputBox}>
+              <Text style={styles.inputLabel}>Your Custom Link</Text>
+              <View style={{ flexDirection: 'row', gap: 10 }}>
+                <TextInput 
+                  style={[styles.input, { flex: 1 }]}
+                  value={`https://realshare.in/ref/AG-2026/prop/${property.id}`}
+                  editable={false}
+                />
+                <TouchableOpacity 
+                  style={{ backgroundColor: '#111827', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 8 }}
+                  onPress={() => {
+                    setAgentCopied(true);
+                    setTimeout(() => setAgentCopied(false), 2000);
+                  }}
+                >
+                  <Text style={{ color: '#D4AF37', fontWeight: '700' }}>{agentCopied ? 'COPIED' : 'COPY'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
           </View>
         </View>
       </Modal>

@@ -9,9 +9,9 @@ export const GoldSystem = {
 };
 
 export const Neutrals = {
-  obsidian: '#1A1A2E',
-  charcoal: '#2D2D3F',
-  deepCharcoal: '#16213E',
+  obsidian: '#0A0A1A',
+  charcoal: '#12122A',
+  deepCharcoal: '#1A1A2E',
   warmIvory: '#FAF8F5',
   cream: '#F5F0E8',
   softBeige: '#EDE8DF',
@@ -20,20 +20,45 @@ export const Neutrals = {
   gray100: '#F3F4F6',
   gray200: '#E5E7EB',
   gray300: '#D1D5DB',
-  gray400: '#9CA3AF',
-  gray500: '#6B7280',
-  gray600: '#4B5563',
-  gray700: '#374151',
-  gray800: '#1F2937',
-  gray900: '#111827',
+  gray400: 'rgba(255,255,255,0.5)',
+  gray500: 'rgba(255,255,255,0.35)',
+  gray600: 'rgba(255,255,255,0.25)',
+  gray700: 'rgba(255,255,255,0.15)',
+  gray800: 'rgba(255,255,255,0.08)',
+  gray900: 'rgba(255,255,255,0.05)',
   
-  // Semantic aliases
-  surface: '#FFFFFF',
-  background: '#FAF8F5', // warmIvory
-  border: '#E5E7EB',
-  text: '#111827',
-  textSecondary: '#6B7280',
+  // Semantic aliases — glass dark theme
+  surface: 'rgba(255,255,255,0.07)',
+  background: '#0A0A1A',
+  border: 'rgba(255,255,255,0.12)',
+  text: '#FFFFFF',
+  textSecondary: 'rgba(255,255,255,0.6)',
   ruby: '#EF4444',
+};
+
+export const Glass = {
+  card: {
+    backgroundColor: 'rgba(255,255,255,0.07)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+  } as any,
+  cardStrong: {
+    backgroundColor: 'rgba(255,255,255,0.12)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.2)',
+    backdropFilter: 'blur(30px)',
+    WebkitBackdropFilter: 'blur(30px)',
+  } as any,
+  heroCard: {
+    backgroundColor: 'rgba(212,175,55,0.1)',
+    borderWidth: 1,
+    borderColor: 'rgba(212,175,55,0.25)',
+    backdropFilter: 'blur(20px)',
+    WebkitBackdropFilter: 'blur(20px)',
+  } as any,
+  overlay: 'rgba(10,10,26,0.5)',
 };
 
 export const Semantic = {
@@ -82,29 +107,29 @@ export const Shadows = {
   soft: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
+    shadowOpacity: 0.3,
     shadowRadius: 8,
-    elevation: 2,
+    elevation: 4,
   },
   medium: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.4,
     shadowRadius: 16,
-    elevation: 4,
+    elevation: 8,
   },
   strong: {
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
+    shadowOpacity: 0.5,
     shadowRadius: 32,
-    elevation: 8,
+    elevation: 12,
   },
   gold: {
     shadowColor: GoldSystem.metallicGold,
     shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
+    shadowOpacity: 0.3,
     shadowRadius: 20,
-    elevation: 4,
+    elevation: 6,
   },
 };

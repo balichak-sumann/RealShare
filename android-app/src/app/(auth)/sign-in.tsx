@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView, Image } from 'react-native';
-import { signInWithPhoneNumber, RecaptchaVerifier, ConfirmationResult } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 
@@ -10,26 +10,19 @@ const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q
 export default function SignInScreen() {
   const router = useRouter();
 
-  const [phoneNumber, setPhoneNumber] = useState('');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   
   const [pendingVerification, setPendingVerification] = useState(false);
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
 
-  useEffect(() => {
-    if (Platform.OS === 'web' && !(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'firebase-recaptcha-signin', {
-        'size': 'invisible',
-        'callback': (response: any) => {}
-      });
-    }
-  }, []);
+  const isEmail = identifier.includes('@');
 
-  const onSendOtpPress = async () => {
-    if (phoneNumber.length < 10) {
-      setError('Please enter a valid 10-digit mobile number.');
+  const onSignInPress = async () => {
+    if (!identifier) {
+      setError('Please enter your Email or Mobile Number.');
       return;
     }
 
@@ -37,36 +30,56 @@ export default function SignInScreen() {
     setError('');
 
     try {
-      const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
-      
-      if (Platform.OS === 'web') {
-        const appVerifier = (window as any).recaptchaVerifier;
-        const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
-        setConfirmationResult(confirmation);
-        setPendingVerification(true);
+      if (isEmail) {
+        if (!password) {
+          setError('Please enter your password.');
+          setLoading(false);
+          return;
+        }
+        await signInWithEmailAndPassword(auth, identifier.trim(), password);
+        // onAuthStateChanged in _layout.tsx handles redirection
       } else {
-        setError("Native phone auth requires React Native Firebase. Please test on Web for now.");
+        // Phone Number Mock Flow
+        if (identifier.length < 10) {
+          setError('Please enter a valid 10-digit mobile number.');
+          setLoading(false);
+          return;
+        }
+        
+        // Simulate network delay for OTP sending
+        setTimeout(() => {
+          setPendingVerification(true);
+          setLoading(false);
+        }, 800);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to send OTP.');
-    } finally {
+      setError(err.message || 'Failed to sign in.');
       setLoading(false);
     }
   };
 
   const onVerifyOtpPress = async () => {
-    if (!confirmationResult || code.length < 6) {
-      setError('Please enter a valid 6-digit OTP.');
+    if (code !== '123456') {
+      setError('Invalid OTP. Please use 123456 for testing.');
       return;
     }
+
     setLoading(true);
     setError('');
 
     try {
-      await confirmationResult.confirm(code);
+      // Create the dummy email used for backend authentication
+      const dummyEmail = `${identifier.trim()}@realshare.test`;
+      const dummyPassword = `RealShare!123456`;
+
+      await signInWithEmailAndPassword(auth, dummyEmail, dummyPassword);
       // onAuthStateChanged in _layout.tsx handles redirection
     } catch (err: any) {
-      setError(err.message || 'Invalid code.');
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        setError("Account not found. Please create an account first.");
+      } else {
+        setError(err.message || 'Invalid code.');
+      }
     } finally {
       setLoading(false);
     }
@@ -82,30 +95,68 @@ export default function SignInScreen() {
               <View style={styles.header}>
                 <Image source={require('../../../assets/logo.png')} style={{ width: 160, height: 40, resizeMode: 'contain', marginBottom: 12 }} />
                 <Text style={styles.title}>Welcome Back</Text>
-                <Text style={styles.subtitle}>Securely log in with your mobile number</Text>
+                <Text style={styles.subtitle}>Securely log in to your portfolio</Text>
               </View>
 
               {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
               {!pendingVerification ? (
                 <View style={styles.form}>
-                  <Text style={styles.label}>Mobile Number</Text>
-                  <View style={styles.phoneInputWrapper}>
-                    <Text style={styles.countryCode}>+91</Text>
-                    <TextInput
-                      autoCapitalize="none"
-                      keyboardType="phone-pad"
-                      value={phoneNumber}
-                      placeholder="9988776655"
-                      placeholderTextColor="#94A3B8"
-                      onChangeText={(num) => setPhoneNumber(num.replace(/[^0-9]/g, ''))}
-                      maxLength={10}
-                      style={[styles.input, { flex: 1, marginBottom: 0, borderLeftWidth: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }]}
-                    />
+                  <Text style={styles.label}>Email or Mobile Number</Text>
+                  <TextInput
+                    autoCapitalize="none"
+                    keyboardType="email-address"
+                    value={identifier}
+                    placeholder="john@example.com or 9988776655"
+                    placeholderTextColor="#94A3B8"
+                    onChangeText={(text) => setIdentifier(text)}
+                    style={styles.input}
+                  />
+
+                  {isEmail && (
+                    <>
+                      <Text style={styles.label}>Password</Text>
+                      <TextInput
+                        value={password}
+                        placeholder="••••••••"
+                        placeholderTextColor="#94A3B8"
+                        secureTextEntry={true}
+                        onChangeText={(password) => setPassword(password)}
+                        style={styles.input}
+                      />
+                    </>
+                  )}
+
+                  <TouchableOpacity style={styles.primaryButton} onPress={onSignInPress} disabled={loading}>
+                    {loading ? <ActivityIndicator color="#0F172A" /> : (
+                      <Text style={styles.primaryButtonText}>{isEmail ? 'Sign In' : 'Send OTP'}</Text>
+                    )}
+                  </TouchableOpacity>
+
+                  <View style={styles.dividerContainer}>
+                    <View style={styles.dividerLine} />
+                    <Text style={styles.dividerText}>OR</Text>
+                    <View style={styles.dividerLine} />
                   </View>
 
-                  <TouchableOpacity style={styles.primaryButton} onPress={onSendOtpPress} disabled={loading}>
-                    {loading ? <ActivityIndicator color="#0F172A" /> : <Text style={styles.primaryButtonText}>Send OTP</Text>}
+                  <TouchableOpacity style={styles.googleButton} onPress={async () => {
+                    setLoading(true);
+                    try {
+                      if (Platform.OS === 'web') {
+                        const { signInWithPopup } = await import('firebase/auth');
+                        const { googleProvider } = await import('@/lib/firebase');
+                        await signInWithPopup(auth, googleProvider);
+                      } else {
+                        alert("Google Sign in on native requires Expo AuthSession");
+                      }
+                    } catch (err: any) {
+                      setError(err.message || "Google sign in failed");
+                    } finally {
+                      setLoading(false);
+                    }
+                  }} disabled={loading}>
+                    <Image source={{ uri: 'https://cdn1.iconfinder.com/data/icons/google-s-logo/150/Google_Icons-09-512.png' }} style={{ width: 20, height: 20, marginRight: 12 }} />
+                    <Text style={styles.googleButtonText}>Sign in with Google</Text>
                   </TouchableOpacity>
 
                   <View style={styles.footer}>
@@ -119,7 +170,10 @@ export default function SignInScreen() {
                 <View style={styles.form}>
                   <Text style={styles.label}>Verification Code</Text>
                   <Text style={{ color: '#94A3B8', marginBottom: 16 }}>
-                    We've sent a 6-digit code to +91 {phoneNumber}
+                    We've sent a 6-digit code to +91 {identifier}
+                  </Text>
+                  <Text style={{ color: '#D4AF37', marginBottom: 16, fontSize: 12 }}>
+                    TEST MODE: Enter 123456
                   </Text>
                   <TextInput
                     value={code}
@@ -145,7 +199,6 @@ export default function SignInScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
-      {Platform.OS === 'web' && <div id="firebase-recaptcha-signin"></div>}
     </ImageBackground>
   );
 }
@@ -206,22 +259,6 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
-  phoneInputWrapper: {
-    flexDirection: 'row',
-    marginBottom: 20,
-  },
-  countryCode: {
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-    borderRightWidth: 0,
-    borderTopLeftRadius: 12,
-    borderBottomLeftRadius: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 14,
-    fontSize: 16,
-    color: '#94A3B8',
-  },
   input: {
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
     borderWidth: 1,
@@ -275,5 +312,36 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     fontSize: 14,
+  },
+  dividerContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 24,
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  dividerText: {
+    marginHorizontal: 12,
+    color: '#64748B',
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  googleButton: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingVertical: 14,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  googleButtonText: {
+    color: '#475569',
+    fontSize: 16,
+    fontWeight: '700',
   }
 });

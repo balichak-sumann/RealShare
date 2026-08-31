@@ -18,6 +18,7 @@ import { auth, app } from '@/lib/firebase';
 import { PhoneAuthProvider, linkWithCredential, verifyBeforeUpdateEmail, RecaptchaVerifier } from 'firebase/auth';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { useUser } from '@/contexts/UserContext';
+import { GuestView } from '@/components/ui/GuestView';
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -154,14 +155,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const getKycStatusStyle = (status: string) => {
-    switch (status) {
-      case 'verified': return { bg: '#D1FAE5', text: '#059669', label: '✓ KYC: Verified' };
-      case 'pending': return { bg: '#FEF3C7', text: '#D97706', label: '⏳ KYC: Pending Review' };
-      case 'rejected': return { bg: '#FEE2E2', text: '#DC2626', label: '✕ KYC: Rejected' };
-      default: return { bg: '#F3F4F6', text: '#6B7280', label: 'KYC: Not Submitted' };
-    }
-  };
+
 
   if (loading) {
     return (
@@ -171,7 +165,17 @@ export default function ProfileScreen() {
     );
   }
 
-  const kycInfo = getKycStatusStyle(user?.kyc_status || 'not_submitted');
+  if (!auth.currentUser) {
+    return (
+      <GuestView 
+        title="Sign In Required" 
+        description="Create an account or sign in to view your profile, manage verifications, and track your investments." 
+        icon="👤"
+      />
+    );
+  }
+
+
   const initials = (user?.full_name || 'U').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
 
   return (
@@ -216,12 +220,7 @@ export default function ProfileScreen() {
           <Text style={styles.userName}>{user?.full_name || 'User'}</Text>
           <Text style={styles.userRole}>{(user?.role || 'investor').charAt(0).toUpperCase() + (user?.role || 'investor').slice(1)}</Text>
 
-          {/* KYC Badge (Investors Only) */}
-          {(!user?.role || user?.role === 'investor') && (
-            <View style={[styles.kycBadge, { backgroundColor: kycInfo.bg }]}>
-              <Text style={[styles.kycBadgeText, { color: kycInfo.text }]}>{kycInfo.label}</Text>
-            </View>
-          )}
+
         </View>
 
         {/* Personal Information */}
@@ -300,61 +299,7 @@ export default function ProfileScreen() {
           </View>
         </View>
 
-        {/* KYC Documents (Investors Only) */}
-        {(!user?.role || user?.role === 'investor') && (
-          <View style={styles.section}>
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>KYC Documents</Text>
-            <TouchableOpacity onPress={() => router.push('/kyc' as any)}>
-              <Text style={styles.manageText}>Manage →</Text>
-            </TouchableOpacity>
-          </View>
 
-          <View style={styles.docCard}>
-            <View style={styles.docRow}>
-              <View style={styles.docIconBox}>
-                <Text style={styles.docIcon}>🪪</Text>
-              </View>
-              <View style={styles.docContent}>
-                <Text style={styles.docTitle}>Aadhar Card</Text>
-                <Text style={styles.docSubtext}>
-                  {user?.kyc_status === 'verified' ? 'XXXX XXXX 4567' : 'Upload your Aadhar card'}
-                </Text>
-              </View>
-              <View style={[styles.docStatusPill, { backgroundColor: kycInfo.bg }]}>
-                <Text style={[styles.docStatusText, { color: kycInfo.text }]}>
-                  {user?.kyc_status === 'verified' ? 'Verified' : user?.kyc_status === 'pending' ? 'Pending' : 'Upload'}
-                </Text>
-              </View>
-            </View>
-
-            <View style={styles.divider} />
-
-            <View style={styles.docRow}>
-              <View style={styles.docIconBox}>
-                <Text style={styles.docIcon}>💳</Text>
-              </View>
-              <View style={styles.docContent}>
-                <Text style={styles.docTitle}>PAN Card</Text>
-                <Text style={styles.docSubtext}>
-                  {user?.kyc_status === 'verified' ? 'ABCDE1234F' : 'Upload your PAN card'}
-                </Text>
-              </View>
-              <View style={[styles.docStatusPill, { backgroundColor: kycInfo.bg }]}>
-                <Text style={[styles.docStatusText, { color: kycInfo.text }]}>
-                  {user?.kyc_status === 'verified' ? 'Verified' : user?.kyc_status === 'pending' ? 'Pending' : 'Upload'}
-                </Text>
-              </View>
-            </View>
-          </View>
-
-          {user?.kyc_status !== 'verified' && (
-            <TouchableOpacity style={styles.completeKycBtn} onPress={() => router.push('/kyc' as any)}>
-              <Text style={styles.completeKycText}>Complete KYC Verification</Text>
-            </TouchableOpacity>
-          )}
-        </View>
-        )}
 
         {/* Wallet (Investor Only) */}
         {(!user?.role || user?.role === 'investor' || user?.role === 'admin') && (

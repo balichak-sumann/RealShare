@@ -92,12 +92,10 @@ function RootLayoutNav() {
             setProfile(data.profile);
           }
         })
-        .catch(err => console.error('Failed to sync user:', err));
+        .catch(err => console.warn('Failed to sync user:', err.message));
       });
 
       if (inAuthGroup) router.replace('/');
-    } else {
-      if (!inAuthGroup) router.replace('/(auth)/sign-in');
     }
   }, [user, isLoaded, segments]);
 
@@ -110,15 +108,25 @@ function RootLayoutNav() {
   );
 }
 
+import { ThemeProvider as AppThemeProvider } from '@/contexts/ThemeContext';
+import { LocationProvider } from '@/contexts/LocationContext';
+import { ShortlistProvider } from '@/contexts/ShortlistContext';
+
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <UserProvider>
-        <AnimatedSplashOverlay />
-        <RootLayoutNav />
-      </UserProvider>
+      <AppThemeProvider>
+        <LocationProvider>
+          <UserProvider>
+            <ShortlistProvider>
+              <AnimatedSplashOverlay />
+              <RootLayoutNav />
+            </ShortlistProvider>
+          </UserProvider>
+        </LocationProvider>
+      </AppThemeProvider>
     </ThemeProvider>
   );
 }

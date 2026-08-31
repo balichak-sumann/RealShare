@@ -1,309 +1,197 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  TextInput,
-  ActivityIndicator,
-} from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
+import { LinearGradient } from 'expo-linear-gradient';
 
-export default function AdditionalServicesScreen() {
+const SERVICES = [
+  { id: '1', title: 'Packers & Movers', image: 'https://images.unsplash.com/photo-1600518464441-9154a4dea21b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Verified professionals for a hassle-free move.', price: 'Starts ₹3,500' },
+  { id: '2', title: 'Interior Design', image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Premium design consultations and execution.', price: 'Free Consultation' },
+  { id: '3', title: 'Legal Assistance', image: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Title checks, drafting, and registration.', price: 'Starts ₹4,999' },
+  { id: '4', title: 'Deep Cleaning', image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Pre-move in deep cleaning services.', price: 'Starts ₹1,200' },
+  { id: '5', title: 'Property Mgmt', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Full lifecycle tenant & property management.', price: 'Starts ₹800/mo' },
+  { id: '6', title: 'Painting', image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Professional painting services.', price: 'Get a Quote' },
+];
+
+export default function ServicesScreen() {
   const router = useRouter();
 
-  const [selectedService, setSelectedService] = useState<string>('Home Loans');
-  const [fullName, setFullName] = useState('Arjun Kumar');
-  const [phone, setPhone] = useState('+91 98765 43210');
-  const [propertyReq, setPropertyReq] = useState('Goa Beachfront Villa');
-  const [budget, setBudget] = useState('₹50,00,000');
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitted, setSubmitted] = useState(false);
-
-  const servicesList = [
-    { title: 'Home Loans', icon: '🏦', partner: 'HDFC, SBI & ICICI Tie-up', desc: 'Get lowest interest rates with instant pre-approvals for your fractional real estate investments.' },
-    { title: 'Interior Works', icon: '🛋️', partner: 'Livspace & RealShare Interiors', desc: 'Turnkey interior packages, modular kitchens, Italian marble flooring, and smart home automation.' },
-    { title: 'Home Insurance', icon: '🏠', partner: 'Tata AIG & ICICI Lombard', desc: 'Protect your holiday villas and commercial suites against structural damage, fire, and natural perils.' },
-    { title: 'Auto & Health Insurance', icon: '🛡️', partner: 'Star Health & HDFC ERGO', desc: 'Exclusive bundled family health policies and luxury vehicle comprehensive coverage plans.' },
-    { title: 'Property Management', icon: '🔑', partner: 'RealShare Facility Services', desc: 'Hassle-free tenant screening, rental collection, repairs, maintenance, and 24/7 guest concierge.' },
-  ];
-
-  const handleSubmitInquiry = () => {
-    setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setSubmitted(true);
-    }, 1500);
-  };
-
   return (
-    <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
-      {/* Header */}
+    <View style={styles.container}>
       <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={{ fontSize: 16, fontWeight: '700', color: '#0F172A' }}>← Back</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Value-Added Services</Text>
+        <Text style={styles.headerTitle}>Home Services</Text>
+        <View style={{ width: 24 }} />
       </View>
 
-      <View style={styles.content}>
-        {/* Intro */}
-        <View style={styles.introCard}>
-          <Text style={styles.introTitle}>Comprehensive Real Estate Services</Text>
-          <Text style={styles.introDesc}>
-            RealShare provides institutional-grade ancillary services to enhance your property ownership and investment yields.
-          </Text>
-        </View>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }} showsVerticalScrollIndicator={false}>
+        
+        {/* Banner */}
+        <LinearGradient colors={GoldSystem.goldGradient} style={styles.banner}>
+          <Text style={styles.bannerTitle}>RealShare Concierge</Text>
+          <Text style={styles.bannerDesc}>End-to-end services to make your house a home.</Text>
+          <TouchableOpacity style={styles.bannerBtn}>
+            <Text style={styles.bannerBtnText}>Talk to an Expert</Text>
+          </TouchableOpacity>
+        </LinearGradient>
 
-        {/* Services List Cards */}
-        <Text style={styles.sectionHeader}>Select a Service:</Text>
+        <Text style={styles.sectionTitle}>Browse Services</Text>
+        
         <View style={styles.servicesGrid}>
-          {servicesList.map((srv) => (
-            <TouchableOpacity
-              key={srv.title}
-              style={[
-                styles.serviceCard,
-                selectedService === srv.title && styles.serviceCardActive,
-              ]}
-              onPress={() => {
-                setSelectedService(srv.title);
-                setSubmitted(false);
-              }}
-            >
-              <Text style={styles.serviceIcon}>{srv.icon}</Text>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.serviceTitle}>{srv.title}</Text>
-                <Text style={styles.partnerBadge}>{srv.partner}</Text>
-                <Text style={styles.serviceDesc}>{srv.desc}</Text>
+          {SERVICES.map(service => (
+            <TouchableOpacity key={service.id} style={styles.serviceCard} activeOpacity={0.9}>
+              <ImageBackground 
+                source={{ uri: service.image }} 
+                style={styles.serviceImage}
+              >
+                <LinearGradient
+                  colors={['transparent', 'rgba(0,0,0,0.8)']}
+                  style={styles.imageGradient}
+                />
+              </ImageBackground>
+              <View style={styles.serviceContent}>
+                <Text style={styles.serviceTitle}>{service.title}</Text>
+                <Text style={styles.serviceDesc}>{service.desc}</Text>
+                <View style={{ flex: 1 }} />
+                <View style={styles.serviceFooter}>
+                  <Text style={styles.servicePrice}>{service.price}</Text>
+                  <Text style={styles.arrowIcon}>→</Text>
+                </View>
               </View>
             </TouchableOpacity>
           ))}
         </View>
 
-        {/* Lead Application Form */}
-        <View style={styles.formCard}>
-          {!submitted ? (
-            <>
-              <Text style={styles.formTitle}>Request Callback for {selectedService}</Text>
-
-              <Text style={styles.label}>Full Name</Text>
-              <TextInput
-                style={styles.input}
-                value={fullName}
-                onChangeText={setFullName}
-              />
-
-              <Text style={styles.label}>Phone Number</Text>
-              <TextInput
-                style={styles.input}
-                value={phone}
-                onChangeText={setPhone}
-                keyboardType="phone-pad"
-              />
-
-              <Text style={styles.label}>Property / Project Reference</Text>
-              <TextInput
-                style={styles.input}
-                value={propertyReq}
-                onChangeText={setPropertyReq}
-              />
-
-              <Text style={styles.label}>Estimated Budget / Loan Value</Text>
-              <TextInput
-                style={styles.input}
-                value={budget}
-                onChangeText={setBudget}
-              />
-
-              <TouchableOpacity
-                style={styles.submitBtn}
-                onPress={handleSubmitInquiry}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <ActivityIndicator color="#fff" />
-                ) : (
-                  <Text style={styles.submitBtnText}>Submit Service Request</Text>
-                )}
-              </TouchableOpacity>
-            </>
-          ) : (
-            <View style={styles.successBox}>
-              <Text style={{ fontSize: 36, textAlign: 'center', marginBottom: 8 }}>✅</Text>
-              <Text style={styles.successTitle}>Inquiry Submitted Successfully!</Text>
-              <Text style={styles.successDesc}>
-                Our specialized team for {selectedService} will contact you at {phone} within 2 business hours.
-              </Text>
-              <TouchableOpacity
-                style={styles.doneBtn}
-                onPress={() => setSubmitted(false)}
-              >
-                <Text style={styles.doneBtnText}>Submit Another Request</Text>
-              </TouchableOpacity>
-            </View>
-          )}
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F7F9FC',
+    backgroundColor: Neutrals.background,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingTop: 55,
-    paddingBottom: 16,
-    paddingHorizontal: 20,
-    backgroundColor: '#FFFFFF',
+    justifyContent: 'space-between',
+    padding: 16,
+    paddingTop: 50,
+    backgroundColor: Neutrals.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#E2E8F0',
+    borderBottomColor: Neutrals.border,
   },
   backBtn: {
-    marginRight: 12,
+    padding: 8,
+    marginLeft: -8,
+  },
+  backIcon: {
+    fontSize: 24,
+    color: Neutrals.obsidian,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#0F172A',
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
   },
   content: {
-    padding: 20,
-  },
-  introCard: {
-    backgroundColor: '#EFF6FF',
-    borderRadius: 12,
+    flex: 1,
     padding: 16,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    marginBottom: 18,
   },
-  introTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#1E3A8A',
-    marginBottom: 4,
+  banner: {
+    padding: 24,
+    borderRadius: Radius.lg,
+    marginBottom: 32,
+    ...Shadows.strong,
   },
-  introDesc: {
-    fontSize: 12,
-    color: '#3B82F6',
-    lineHeight: 18,
+  bannerTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+    marginBottom: 8,
   },
-  sectionHeader: {
-    fontSize: 13,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 10,
+  bannerDesc: {
+    ...Typography.bodyMedium,
+    color: Neutrals.obsidian,
+    opacity: 0.9,
+    marginBottom: 20,
+    maxWidth: '80%',
+  },
+  bannerBtn: {
+    backgroundColor: Neutrals.obsidian,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: Radius.full,
+    alignSelf: 'flex-start',
+  },
+  bannerBtnText: {
+    ...Typography.labelMedium,
+    color: Neutrals.surface,
+  },
+  sectionTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+    marginBottom: 16,
   },
   servicesGrid: {
-    gap: 10,
-    marginBottom: 20,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
   },
   serviceCard: {
-    flexDirection: 'row',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 12,
-    padding: 14,
+    width: '47.5%',
+    backgroundColor: Neutrals.surface,
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    gap: 12,
-    alignItems: 'flex-start',
+    borderColor: Neutrals.border,
+    minHeight: 220,
+    ...Shadows.soft,
+    overflow: 'hidden',
   },
-  serviceCardActive: {
-    borderColor: '#2563EB',
-    backgroundColor: '#F0F7FF',
+  serviceImage: {
+    width: '100%',
+    height: 100,
+    justifyContent: 'flex-end',
   },
-  serviceIcon: {
-    fontSize: 26,
+  imageGradient: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    height: '60%',
+  },
+  serviceContent: {
+    padding: 12,
+    flex: 1,
   },
   serviceTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#0F172A',
-  },
-  partnerBadge: {
-    fontSize: 10,
-    fontWeight: '700',
-    color: '#2563EB',
-    marginTop: 2,
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
     marginBottom: 4,
   },
   serviceDesc: {
-    fontSize: 11,
-    color: '#64748B',
+    ...Typography.caption,
+    color: Neutrals.gray600,
+    marginBottom: 12,
     lineHeight: 16,
   },
-  formCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 18,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+  serviceFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Neutrals.border,
   },
-  formTitle: {
-    fontSize: 15,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 14,
-  },
-  label: {
+  servicePrice: {
+    ...Typography.caption,
+    color: GoldSystem.primaryGold,
+    fontWeight: '700',
     fontSize: 11,
-    fontWeight: '700',
-    color: '#475569',
-    marginBottom: 4,
   },
-  input: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#CBD5E1',
-    padding: 10,
-    fontSize: 12,
-    marginBottom: 12,
-  },
-  submitBtn: {
-    backgroundColor: '#2563EB',
-    paddingVertical: 14,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 6,
-  },
-  submitBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 13,
-  },
-  successBox: {
-    alignItems: 'center',
-    paddingVertical: 10,
-  },
-  successTitle: {
+  arrowIcon: {
+    color: Neutrals.gray400,
     fontSize: 16,
-    fontWeight: '800',
-    color: '#0F172A',
-    marginBottom: 4,
-  },
-  successDesc: {
-    fontSize: 12,
-    color: '#64748B',
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 18,
-  },
-  doneBtn: {
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 10,
-    paddingHorizontal: 20,
-    borderRadius: 8,
-  },
-  doneBtnText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#334155',
   },
 });

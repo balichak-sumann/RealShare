@@ -1,135 +1,77 @@
-import React, { useState } from 'react';
-import {
-  StyleSheet,
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Switch,
-  Alert
-} from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  
-  const [emailNotif, setEmailNotif] = useState(true);
-  const [pushNotif, setPushNotif] = useState(true);
-  const [biometric, setBiometric] = useState(false);
+
+  const SETTINGS_SECTIONS = [
+    {
+      title: 'Preferences',
+      items: [
+        { id: '1', title: 'Push Notifications', type: 'toggle', value: true },
+        { id: '2', title: 'Email Alerts', type: 'toggle', value: false },
+        { id: '3', title: 'Dark Mode', type: 'toggle', value: false },
+      ]
+    },
+    {
+      title: 'Security',
+      items: [
+        { id: '4', title: 'Change Password', type: 'link' },
+        { id: '5', title: 'Two-Factor Authentication', type: 'link' },
+        { id: '6', title: 'Biometric Login', type: 'toggle', value: true },
+      ]
+    },
+    {
+      title: 'Support & Legal',
+      items: [
+        { id: '7', title: 'Help Center', type: 'link' },
+        { id: '8', title: 'Privacy Policy', type: 'link' },
+        { id: '9', title: 'Terms of Service', type: 'link' },
+      ]
+    }
+  ];
 
   return (
     <View style={styles.container}>
-      {/* Header */}
       <View style={styles.header}>
-        <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.back()}>
-          <Text style={styles.headerIconText}>&lt;</Text>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Settings</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
+      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }}>
         
-        {/* Account Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Account & Security</Text>
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Text style={styles.rowIcon}>🔑</Text>
-                <Text style={styles.rowLabel}>Change Password</Text>
-              </View>
-              <Text style={styles.rowArrow}>›</Text>
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Text style={styles.rowIcon}>🏦</Text>
-                <Text style={styles.rowLabel}>Bank Details (Payouts)</Text>
-              </View>
-              <Text style={styles.rowArrow}>›</Text>
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Text style={styles.rowIcon}>👆</Text>
-                <Text style={styles.rowLabel}>Biometric Login</Text>
-              </View>
-              <Switch 
-                value={biometric} 
-                onValueChange={setBiometric}
-                trackColor={{ false: "#E5E7EB", true: "#1A56DB" }}
-                thumbColor="#FFFFFF"
-              />
+        {SETTINGS_SECTIONS.map((section, idx) => (
+          <View key={idx} style={styles.section}>
+            <Text style={styles.sectionTitle}>{section.title}</Text>
+            <View style={styles.sectionCard}>
+              {section.items.map((item, itemIdx) => (
+                <View key={item.id}>
+                  <TouchableOpacity style={styles.settingItem} disabled={item.type === 'toggle'}>
+                    <Text style={styles.settingTitle}>{item.title}</Text>
+                    {item.type === 'toggle' ? (
+                      <Switch 
+                        value={item.value} 
+                        trackColor={{ false: Neutrals.gray300, true: GoldSystem.primaryGold }}
+                        thumbColor={Neutrals.surface}
+                      />
+                    ) : (
+                      <Text style={styles.arrowIcon}>→</Text>
+                    )}
+                  </TouchableOpacity>
+                  {itemIdx < section.items.length - 1 && <View style={styles.divider} />}
+                </View>
+              ))}
             </View>
           </View>
-        </View>
+        ))}
 
-        {/* Notifications Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Notifications</Text>
-          <View style={styles.card}>
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Text style={styles.rowIcon}>🔔</Text>
-                <Text style={styles.rowLabel}>Push Notifications</Text>
-              </View>
-              <Switch 
-                value={pushNotif} 
-                onValueChange={setPushNotif}
-                trackColor={{ false: "#E5E7EB", true: "#1A56DB" }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-            <View style={styles.divider} />
-            <View style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Text style={styles.rowIcon}>✉️</Text>
-                <Text style={styles.rowLabel}>Email Updates</Text>
-              </View>
-              <Switch 
-                value={emailNotif} 
-                onValueChange={setEmailNotif}
-                trackColor={{ false: "#E5E7EB", true: "#1A56DB" }}
-                thumbColor="#FFFFFF"
-              />
-            </View>
-          </View>
-        </View>
-
-        {/* Legal & Danger Zone */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Legal & Privacy</Text>
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Text style={styles.rowIcon}>📄</Text>
-                <Text style={styles.rowLabel}>Terms & Conditions</Text>
-              </View>
-              <Text style={styles.rowArrow}>›</Text>
-            </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.row}>
-              <View style={styles.rowLeft}>
-                <Text style={styles.rowIcon}>🔒</Text>
-                <Text style={styles.rowLabel}>Privacy Policy</Text>
-              </View>
-              <Text style={styles.rowArrow}>›</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        <TouchableOpacity 
-          style={styles.deleteBtn}
-          onPress={() => {
-            if (typeof window !== 'undefined') {
-              alert('Contact support to delete your account.');
-            } else {
-              Alert.alert("Delete Account", "Contact support to delete your account.");
-            }
-          }}
-        >
-          <Text style={styles.deleteBtnText}>Delete Account</Text>
+        <TouchableOpacity style={styles.logoutBtn}>
+          <Text style={styles.logoutBtnText}>Log Out</Text>
         </TouchableOpacity>
 
       </ScrollView>
@@ -138,86 +80,80 @@ export default function SettingsScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: {
+    flex: 1,
+    backgroundColor: Neutrals.background,
+  },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 20,
+    padding: 16,
     paddingTop: 50,
-    paddingBottom: 15,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Neutrals.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: Neutrals.border,
   },
-  headerIconBtn: { padding: 5 },
-  headerIconText: { fontSize: 20, color: '#111827' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
+  backBtn: {
+    padding: 8,
+    marginLeft: -8,
+  },
+  backIcon: {
+    fontSize: 24,
+    color: Neutrals.obsidian,
+  },
+  headerTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+  },
+  content: {
+    flex: 1,
+    padding: 16,
+  },
   section: {
-    paddingHorizontal: 20,
-    marginTop: 24,
+    marginBottom: 24,
   },
   sectionTitle: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#6B7280',
+    ...Typography.labelMedium,
+    color: Neutrals.gray500,
     marginBottom: 12,
+    paddingHorizontal: 8,
     textTransform: 'uppercase',
     letterSpacing: 1,
   },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+  sectionCard: {
+    backgroundColor: Neutrals.surface,
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: Neutrals.border,
     overflow: 'hidden',
   },
-  row: {
+  settingItem: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
   },
-  rowLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  settingTitle: {
+    ...Typography.bodyLarge,
+    color: Neutrals.obsidian,
   },
-  rowIcon: {
+  arrowIcon: {
     fontSize: 20,
-    marginRight: 14,
-  },
-  rowLabel: {
-    fontSize: 16,
-    fontWeight: '500',
-    color: '#111827',
-  },
-  rowArrow: {
-    fontSize: 22,
-    color: '#9CA3AF',
+    color: Neutrals.gray400,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F3F4F6',
-    marginHorizontal: 16,
+    backgroundColor: Neutrals.border,
+    marginLeft: 16,
   },
-  deleteBtn: {
-    margin: 20,
-    marginTop: 40,
-    backgroundColor: '#FEE2E2',
-    paddingVertical: 16,
-    borderRadius: 12,
+  logoutBtn: {
+    padding: 16,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#FCA5A5',
+    marginTop: 16,
   },
-  deleteBtnText: {
-    color: '#DC2626',
-    fontWeight: '700',
-    fontSize: 15,
-  }
+  logoutBtnText: {
+    ...Typography.labelLarge,
+    color: '#EF4444', // Red for destructive action
+  },
 });

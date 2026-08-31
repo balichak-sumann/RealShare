@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView, Image } from 'react-native';
-import { createUserWithEmailAndPassword, signInWithPhoneNumber, RecaptchaVerifier, ConfirmationResult, sendEmailVerification } from 'firebase/auth';
+import { signInWithPhoneNumber, RecaptchaVerifier, ConfirmationResult } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 
@@ -10,10 +10,8 @@ const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q
 export default function SignUpScreen() {
   const router = useRouter();
 
-  const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [pendingVerification, setPendingVerification] = useState(false);
-  const [authStrategy, setAuthStrategy] = useState<'email' | 'phone'>('email');
   const [code, setCode] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [role, setRole] = useState<'investor' | 'agent' | 'builder'>('investor');
@@ -23,100 +21,74 @@ export default function SignUpScreen() {
 
   useEffect(() => {
     if (Platform.OS === 'web' && !(window as any).recaptchaVerifier) {
-      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'firebase-recaptcha', {
+      (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'firebase-recaptcha-signup', {
         'size': 'invisible',
         'callback': (response: any) => {}
       });
     }
   }, []);
 
-  const onSignUpPress = async () => {
+  const onSendOtpPress = async () => {
+    if (phoneNumber.length < 10) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
     setLoading(true);
     setError('');
 
-    const isEmail = identifier.includes('@');
-    setAuthStrategy(isEmail ? 'email' : 'phone');
-
     try {
-      if (isEmail) {
-        const userCredential = await createUserWithEmailAndPassword(auth, identifier, password);
-        try {
-          if (referralCode) {
-            const token = await userCredential.user.getIdToken();
-            await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ referred_by_code: referralCode, role })
-            });
-          } else if (role !== 'investor') {
-            const token = await userCredential.user.getIdToken();
-            await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${token}`,
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({ role })
-            });
-          }
-        } catch (e) {
-          console.error("Failed to sync role", e);
-        }
-
-        await sendEmailVerification(userCredential.user);
+      const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+91${phoneNumber}`;
+      
+      if (Platform.OS === 'web') {
+        const appVerifier = (window as any).recaptchaVerifier;
+        const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
+        setConfirmationResult(confirmation);
+        setPendingVerification(true);
       } else {
-        const phone = identifier.startsWith('+') ? identifier : `+91${identifier}`;
-        if (Platform.OS === 'web') {
-          const appVerifier = (window as any).recaptchaVerifier;
-          const confirmation = await signInWithPhoneNumber(auth, phone, appVerifier);
-          setConfirmationResult(confirmation);
-          setPendingVerification(true);
-        } else {
-          setError("Native phone auth requires React Native Firebase. Please test on Web for now.");
-        }
+        setError("Native phone auth requires React Native Firebase. Please test on Web for now.");
       }
     } catch (err: any) {
-      setError(err.message || 'Something went wrong');
+      setError(err.message || 'Failed to send OTP.');
     } finally {
       setLoading(false);
     }
   };
 
-  const onPressVerify = async () => {
-    if (!confirmationResult) return;
+  const onVerifyOtpPress = async () => {
+    if (!confirmationResult || code.length < 6) {
+      setError('Please enter a valid 6-digit OTP.');
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
     try {
       const userCredential = await confirmationResult.confirm(code);
+      
+      // Sync extra user data to backend if needed
       try {
-        if (referralCode && userCredential.user) {
+        if (userCredential.user) {
           const token = await userCredential.user.getIdToken();
+          const body: any = { role };
+          if (referralCode) {
+            body.referred_by_code = referralCode;
+          }
           await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
             method: 'POST',
             headers: {
               'Authorization': `Bearer ${token}`,
               'Content-Type': 'application/json'
             },
-            body: JSON.stringify({ referred_by_code: referralCode, role })
-          });
-        } else if (role !== 'investor' && userCredential.user) {
-          const token = await userCredential.user.getIdToken();
-          await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
-            method: 'POST',
-            headers: {
-              'Authorization': `Bearer ${token}`,
-              'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ role })
+            body: JSON.stringify(body)
           });
         }
       } catch (e) {
-        console.error("Failed to sync role", e);
+        console.error("Failed to sync role/referral", e);
       }
+      
+      // onAuthStateChanged in _layout.tsx handles redirection
     } catch (err: any) {
       setError(err.message || 'Invalid code');
     } finally {
@@ -156,29 +128,20 @@ export default function SignUpScreen() {
                     ))}
                   </View>
 
-                  <Text style={styles.label}>Email or Phone Number</Text>
-                  <TextInput
-                    autoCapitalize="none"
-                    value={identifier}
-                    placeholder="john@example.com or 9988776655"
-                    placeholderTextColor="#94A3B8"
-                    onChangeText={(text) => setIdentifier(text)}
-                    style={styles.input}
-                  />
-                  
-                  {identifier.includes('@') && (
-                    <>
-                      <Text style={styles.label}>Password</Text>
-                      <TextInput
-                        value={password}
-                        placeholder="••••••••"
-                        placeholderTextColor="#94A3B8"
-                        secureTextEntry={true}
-                        onChangeText={(password) => setPassword(password)}
-                        style={styles.input}
-                      />
-                    </>
-                  )}
+                  <Text style={styles.label}>Mobile Number</Text>
+                  <View style={styles.phoneInputWrapper}>
+                    <Text style={styles.countryCode}>+91</Text>
+                    <TextInput
+                      autoCapitalize="none"
+                      keyboardType="phone-pad"
+                      value={phoneNumber}
+                      placeholder="9988776655"
+                      placeholderTextColor="#94A3B8"
+                      onChangeText={(num) => setPhoneNumber(num.replace(/[^0-9]/g, ''))}
+                      maxLength={10}
+                      style={[styles.input, { flex: 1, marginBottom: 0, borderLeftWidth: 0, borderTopLeftRadius: 0, borderBottomLeftRadius: 0 }]}
+                    />
+                  </View>
 
                   <Text style={styles.label}>Referral Code (Optional)</Text>
                   <TextInput
@@ -190,42 +153,8 @@ export default function SignUpScreen() {
                     style={styles.input}
                   />
 
-                  <TouchableOpacity style={styles.primaryButton} onPress={onSignUpPress} disabled={loading}>
-                    {loading ? <ActivityIndicator color="#0F172A" /> : <Text style={styles.primaryButtonText}>Create Account</Text>}
-                  </TouchableOpacity>
-
-                  <View style={styles.dividerContainer}>
-                    <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>OR</Text>
-                    <View style={styles.dividerLine} />
-                  </View>
-
-                  <TouchableOpacity style={styles.googleButton} onPress={async () => {
-                    setLoading(true);
-                    try {
-                      if (Platform.OS === 'web') {
-                        const { signInWithPopup } = await import('firebase/auth');
-                        const { googleProvider } = await import('@/lib/firebase');
-                        const userCred = await signInWithPopup(auth, googleProvider);
-                        const token = await userCred.user.getIdToken();
-                        await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
-                          method: 'POST',
-                          headers: {
-                            'Authorization': `Bearer ${token}`,
-                            'Content-Type': 'application/json'
-                          },
-                          body: JSON.stringify({ referred_by_code: referralCode, role })
-                        });
-                      } else {
-                        alert("Google Sign in on native requires Expo AuthSession");
-                      }
-                    } catch (err: any) {
-                      setError(err.message || "Google sign in failed");
-                    } finally {
-                      setLoading(false);
-                    }
-                  }} disabled={loading}>
-                    <Text style={styles.googleButtonText}>Continue with Google</Text>
+                  <TouchableOpacity style={styles.primaryButton} onPress={onSendOtpPress} disabled={loading}>
+                    {loading ? <ActivityIndicator color="#0F172A" /> : <Text style={styles.primaryButtonText}>Send OTP</Text>}
                   </TouchableOpacity>
 
                   <View style={styles.footer}>
@@ -241,19 +170,24 @@ export default function SignUpScreen() {
                 <View style={styles.form}>
                   <Text style={styles.label}>Verification Code</Text>
                   <Text style={{ color: '#94A3B8', marginBottom: 16 }}>
-                    We've sent a 6-digit code to {identifier}
+                    We've sent a 6-digit code to +91 {phoneNumber}
                   </Text>
                   <TextInput
                     value={code}
-                    placeholder="Enter your verification code"
+                    placeholder="------"
                     placeholderTextColor="#94A3B8"
-                    onChangeText={(code) => setCode(code)}
-                    style={styles.input}
+                    onChangeText={(c) => setCode(c.replace(/[^0-9]/g, ''))}
+                    style={[styles.input, { textAlign: 'center', letterSpacing: 8, fontSize: 24 }]}
                     keyboardType="number-pad"
+                    maxLength={6}
                   />
 
-                  <TouchableOpacity style={styles.primaryButton} onPress={onPressVerify} disabled={loading}>
-                    {loading ? <ActivityIndicator color="#0F172A" /> : <Text style={styles.primaryButtonText}>Verify OTP</Text>}
+                  <TouchableOpacity style={styles.primaryButton} onPress={onVerifyOtpPress} disabled={loading}>
+                    {loading ? <ActivityIndicator color="#0F172A" /> : <Text style={styles.primaryButtonText}>Verify & Create Account</Text>}
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity style={{ marginTop: 20, alignItems: 'center' }} onPress={() => setPendingVerification(false)}>
+                    <Text style={styles.linkText}>Change Phone Number</Text>
                   </TouchableOpacity>
                 </View>
               )}
@@ -262,7 +196,7 @@ export default function SignUpScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
-      {Platform.OS === 'web' && <div id="firebase-recaptcha"></div>}
+      {Platform.OS === 'web' && <div id="firebase-recaptcha-signup"></div>}
     </ImageBackground>
   );
 }
@@ -302,14 +236,6 @@ const styles = StyleSheet.create({
     marginBottom: 32,
     alignItems: 'center',
   },
-  brandTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#D4AF37',
-    letterSpacing: 2,
-    textTransform: 'uppercase',
-    marginBottom: 12,
-  },
   title: {
     fontSize: 32,
     fontWeight: '800',
@@ -330,6 +256,22 @@ const styles = StyleSheet.create({
     marginBottom: 8,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
+  },
+  phoneInputWrapper: {
+    flexDirection: 'row',
+    marginBottom: 20,
+  },
+  countryCode: {
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    borderRightWidth: 0,
+    borderTopLeftRadius: 12,
+    borderBottomLeftRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: '#94A3B8',
   },
   input: {
     backgroundColor: 'rgba(0, 0, 0, 0.3)',
@@ -384,35 +326,6 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 8,
     fontSize: 14,
-  },
-  dividerContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginVertical: 24,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-  },
-  dividerText: {
-    marginHorizontal: 12,
-    color: '#64748B',
-    fontSize: 13,
-    fontWeight: '600',
-  },
-  googleButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.15)',
-    borderRadius: 12,
-    paddingVertical: 16,
-    alignItems: 'center',
-  },
-  googleButtonText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '600',
   },
   roleRow: {
     flexDirection: 'row',

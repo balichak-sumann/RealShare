@@ -73,11 +73,7 @@ export default function SupportScreen() {
               <Text style={styles.faqQuestion}>How do I withdraw my earnings?</Text>
               <Text style={styles.faqArrow}>+</Text>
             </TouchableOpacity>
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.faqRow}>
-              <Text style={styles.faqQuestion}>How long does KYC verification take?</Text>
-              <Text style={styles.faqArrow}>+</Text>
-            </TouchableOpacity>
+
             <View style={styles.divider} />
             <TouchableOpacity style={styles.faqRow}>
               <Text style={styles.faqQuestion}>Can I sell my property fractions?</Text>

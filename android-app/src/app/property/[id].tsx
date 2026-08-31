@@ -8,19 +8,20 @@ import {
   ScrollView,
   TouchableOpacity,
   Modal,
-  TextInput,
   ActivityIndicator,
   Platform,
 } from 'react-native';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
+import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
+import { GoldButton } from '@/components/ui/GoldButton';
+import { InvestmentScore } from '@/components/ui/InvestmentScore';
+import { TrustBadge } from '@/components/ui/TrustBadge';
 
 export default function PropertyDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { profile } = useUser();
-  const isAgent = profile?.role === 'agent';
-  const isEmployee = profile?.role === 'employee';
 
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -41,28 +42,24 @@ export default function PropertyDetailsScreen() {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [fractionsToBuy, setFractionsToBuy] = useState(1);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showAgentModal, setShowAgentModal] = useState(false);
-  const [agentCopied, setAgentCopied] = useState(false);
-  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'card' | 'netbanking' | 'wallet'>('upi');
-  const [upiId, setUpiId] = useState('user@okhdfcbank');
   const [isProcessing, setIsProcessing] = useState(false);
   const [investmentSuccess, setInvestmentSuccess] = useState(false);
   const [certificateId, setCertificateId] = useState('');
 
   if (loading) {
     return (
-      <View style={styles.errorContainer}>
-        <ActivityIndicator size="large" color="#1A56DB" />
+      <View style={styles.centerContainer}>
+        <ActivityIndicator size="large" color={GoldSystem.primaryGold} />
       </View>
     );
   }
 
   if (!property) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>Property not found</Text>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-          <Text style={styles.backBtnText}>Go Back</Text>
+      <View style={styles.centerContainer}>
+        <Text style={{ color: Neutrals.obsidian }}>Property not found</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+          <Text style={{ color: GoldSystem.primaryGold }}>Go Back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -158,7 +155,7 @@ export default function PropertyDetailsScreen() {
             email: auth.currentUser?.email || '',
           },
           theme: {
-            color: '#1A56DB'
+            color: GoldSystem.primaryGold
           }
         };
 
@@ -181,307 +178,209 @@ export default function PropertyDetailsScreen() {
     }
   };
 
-  const handleInvestNowClick = async () => {
-    setIsProcessing(true);
-    try {
-      // Mock KYC check for local testing - immediately show payment modal
-      setShowPaymentModal(true);
-    } catch (err) {
-      console.error(err);
-      alert("Failed to initiate investment");
-    } finally {
-      setIsProcessing(false);
-    }
-  };
-
   return (
     <View style={styles.container}>
-      {/* Top Header - Mockup style */}
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.push('/explore' as any)}>
-          <Text style={styles.headerIconText}>&lt;</Text>
-        </TouchableOpacity>
-        
-        <Text style={styles.headerTitle}>Property Details</Text>
-
-        <TouchableOpacity style={styles.headerIconBtn}>
-          <Text style={styles.headerIconText}>🔗</Text>
-        </TouchableOpacity>
-      </View>
-
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        {/* Top Header Map */}
-        {property.lat && property.lng ? (
-          <View style={[styles.imageContainer, { height: 300 }]}>
-            {Platform.OS === 'web' ? (
-              <div style={{ width: '100%', height: '100%' }}
-                dangerouslySetInnerHTML={{ __html: 
-                  `<iframe width="100%" height="100%" frameborder="0" style="border:0;" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q=${parseFloat(property.lat)},${parseFloat(property.lng)}&z=15&output=embed"></iframe>`
-                }}
-              />
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+        {/* Full Screen Image Gallery */}
+        <View style={styles.imageGallery}>
+          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={(e) => {
+            const index = Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width);
+            setCurrentImageIndex(index);
+          }}>
+            {property.images && property.images.length > 0 ? (
+              property.images.map((img: any, idx: number) => (
+                <Image key={idx} source={{ uri: img.image_url }} style={styles.heroImage} />
+              ))
             ) : (
-              <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: '#E5E7EB' }}>
-                <Text style={{ color: '#6B7280' }}>Map view available on web</Text>
-              </View>
+              <View style={styles.heroImagePlaceholder} />
             )}
+          </ScrollView>
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+            <Text style={styles.iconBtnText}>←</Text>
+          </TouchableOpacity>
+          <View style={styles.topRightBtns}>
+            <TouchableOpacity style={styles.iconBtn}><Text style={styles.iconBtnText}>🔗</Text></TouchableOpacity>
+            <TouchableOpacity style={styles.iconBtn}><Text style={styles.iconBtnText}>♡</Text></TouchableOpacity>
           </View>
-        ) : (
-          <View style={[styles.imageContainer, { height: 300, justifyContent: 'center', alignItems: 'center' }]}>
-            <Text style={{ color: '#6B7280' }}>Location not available</Text>
+          <View style={styles.imageCounter}>
+            <Text style={styles.imageCounterText}>{currentImageIndex + 1}/{property.images?.length || 1}</Text>
           </View>
-        )}
+        </View>
 
-        {/* Property Overview */}
+        {/* Content */}
         <View style={styles.content}>
-          <View style={styles.titleRow}>
-            <Text style={styles.title}>{property.title}</Text>
-            <TouchableOpacity><Text style={{fontSize: 20}}>♡</Text></TouchableOpacity>
-          </View>
-          
-          <Text style={styles.location}>{property.locality || property.district}, {property.state}</Text>
-          
           <View style={styles.badgeRow}>
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>NEW LAUNCH</Text>
-            </View>
-            <View style={[styles.badge, { backgroundColor: '#D1FAE5', marginLeft: 8 }]}>
-              <Text style={[styles.badgeText, { color: '#059669' }]}>{property.property_type?.toUpperCase()}</Text>
+            <TrustBadge type="verified" />
+            <View style={styles.typeBadge}>
+              <Text style={styles.typeText}>{property.property_type}</Text>
             </View>
           </View>
 
-          {/* Price & ROI */}
-          <View style={styles.priceRow}>
+          <Text style={styles.title}>{property.title}</Text>
+          <Text style={styles.location}>📍 {property.locality || property.district}, {property.state}</Text>
+
+          <View style={styles.priceCard}>
             <View>
-              <Text style={styles.priceValue}>₹ {Number(property.price_per_fraction).toLocaleString('en-IN')}</Text>
-              <Text style={styles.priceLabel}>Min. Investment ₹ {Number(property.booking_amount).toLocaleString('en-IN')}</Text>
+              <Text style={styles.priceLabel}>Price / Min. Investment</Text>
+              <Text style={styles.priceValue}>₹ {fractionPrice.toLocaleString('en-IN')}</Text>
             </View>
-            <View style={{ alignItems: 'flex-end' }}>
-              <Text style={styles.roiValue}>{Number(property.assured_yield)}%</Text>
-              <Text style={styles.roiLabel}>Expected ROI</Text>
+            <View style={styles.scoreContainer}>
+              <InvestmentScore score={92} size={50} showLabel={false} strokeWidth={4} />
             </View>
           </View>
 
-          {/* Share Pool Allocation Bar */}
-          <View style={styles.sharePoolCard}>
-            <View style={styles.shareStatsRow}>
-              <View>
+          <View style={styles.highlightsGrid}>
+            <View style={styles.highlightBox}>
+              <Text style={styles.highlightLabel}>Expected ROI</Text>
+              <Text style={styles.highlightValue}>{property.assured_yield}%</Text>
+            </View>
+            <View style={styles.highlightBox}>
+              <Text style={styles.highlightLabel}>Total Area</Text>
+              <Text style={styles.highlightValue}>{property.total_area} sqft</Text>
+            </View>
+            <View style={styles.highlightBox}>
+              <Text style={styles.highlightLabel}>Status</Text>
+              <Text style={styles.highlightValue}>{property.status || 'Ready'}</Text>
+            </View>
+            <View style={styles.highlightBox}>
+              <Text style={styles.highlightLabel}>RERA</Text>
+              <Text style={styles.highlightValue}>{property.rera_number ? 'Verified' : 'N/A'}</Text>
+            </View>
+          </View>
+
+          {/* Graphical Shares Representation */}
+          <Text style={styles.sectionTitle}>Investment Availability</Text>
+          <View style={styles.sharesCard}>
+            <View style={styles.sharesRow}>
+              <View style={styles.shareMetric}>
+                <Text style={styles.shareValue}>100</Text>
                 <Text style={styles.shareLabel}>Total Shares</Text>
-                <Text style={styles.shareValue}>{property.total_fractions || 10000}</Text>
               </View>
-              <View>
-                <Text style={styles.shareLabel}>Available Shares</Text>
-                <Text style={styles.shareValue}>{property.available_fractions || 4250}</Text>
+              <View style={styles.shareMetric}>
+                <Text style={[styles.shareValue, { color: '#059669' }]}>65</Text>
+                <Text style={styles.shareLabel}>Sold Shares</Text>
               </View>
-              <View>
-                <Text style={styles.shareLabel}>Price per share</Text>
-                <Text style={styles.shareValue}>₹ {Number(property.price_per_fraction).toLocaleString('en-IN')}</Text>
+              <View style={styles.shareMetric}>
+                <Text style={[styles.shareValue, { color: GoldSystem.primaryGold }]}>35</Text>
+                <Text style={styles.shareLabel}>Available</Text>
               </View>
             </View>
-            
             <View style={styles.progressBarBg}>
-              <View
-                style={[
-                  styles.progressBarFill,
-                  { width: `${((property.sold_fractions || 1) / (property.total_fractions || 10)) * 100}%` },
-                ]}
-              />
+              <View style={[styles.progressBarFill, { width: '65%' }]} />
             </View>
+            <Text style={styles.progressText}>65% Funded. Closing soon.</Text>
           </View>
 
-          {/* Property Description */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>About Property</Text>
-            <Text style={styles.description}>{property.description}</Text>
-          </View>
+          <Text style={styles.sectionTitle}>About Property</Text>
+          <Text style={styles.description}>{property.description || 'Premium property with excellent investment potential and high rental yields. Located in a prime area with seamless connectivity.'}</Text>
 
-          {/* Builder Details (Visible to Agents and Employees) */}
-          {(isAgent || isEmployee) && (
-            <View style={[styles.section, { backgroundColor: '#F9FAFB', padding: 16, borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB' }]}>
-              <Text style={styles.sectionTitle}>Builder Contact Information</Text>
-              <Text style={{ fontSize: 15, fontWeight: '700', color: '#111827', marginBottom: 4 }}>Indus Innovate Developers</Text>
-              <Text style={{ fontSize: 13, color: '#4B5563', marginBottom: 8 }}>Approved Builder Partner</Text>
-              <Text style={{ fontSize: 14, color: '#1A56DB', fontWeight: '600' }}>📞 +91 98765 43210</Text>
-              <Text style={{ fontSize: 14, color: '#1A56DB', fontWeight: '600', marginTop: 4 }}>✉️ contact@indusinnovate.com</Text>
-            </View>
-          )}
-
-
-
-          {/* Video Section */}
-          {property.video_url && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>🎬 Property Video Tour</Text>
+          {/* Map View */}
+          <Text style={styles.sectionTitle}>Location Details</Text>
+          {property.lat && property.lng ? (
+            <View style={[styles.mapContainer, { height: 200 }]}>
               {Platform.OS === 'web' ? (
-                <TouchableOpacity
-                  style={styles.videoBtn}
-                  onPress={() => { window.open(property.video_url, '_blank'); }}
-                >
-                  <Text style={styles.videoBtnText}>▶  Watch Property Video</Text>
-                </TouchableOpacity>
+                <div style={{ width: '100%', height: '100%' }}
+                  dangerouslySetInnerHTML={{ __html: 
+                    `<iframe width="100%" height="100%" frameborder="0" style="border:0;" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q=${parseFloat(property.lat)},${parseFloat(property.lng)}&z=15&output=embed"></iframe>`
+                  }}
+                />
               ) : (
-                <Text style={{ color: '#6B7280', fontSize: 14 }}>Video available on web</Text>
+                <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: Neutrals.gray200 }}>
+                  <Text style={{ color: Neutrals.gray500 }}>Map view available on web</Text>
+                </View>
               )}
             </View>
+          ) : (
+            <View style={[styles.mapContainer, { height: 100, justifyContent: 'center', alignItems: 'center' }]}>
+              <Text style={{ color: Neutrals.gray500 }}>Location not available</Text>
+            </View>
           )}
+
         </View>
       </ScrollView>
 
-      {/* Sticky Bottom Booking Bar */}
-      <View style={styles.fabContainer}>
-        {isAgent ? (
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity style={[styles.investBtn, { flex: 1, backgroundColor: '#111827' }]} onPress={() => {}}>
-              <Text style={styles.investBtnText}>Download Brochure</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.investBtn, { flex: 1, backgroundColor: '#D4AF37' }]} onPress={() => setShowAgentModal(true)}>
-              <Text style={[styles.investBtnText, { color: '#111827' }]}>Share Link</Text>
-            </TouchableOpacity>
-          </View>
-        ) : isEmployee ? (
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity style={[styles.investBtn, { flex: 1, backgroundColor: '#F3F4F6', borderWidth: 1, borderColor: '#1E3A8A' }]} onPress={() => {}}>
-              <Text style={[styles.investBtnText, { color: '#1E3A8A' }]}>Internal Analytics</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={[styles.investBtn, { flex: 1, backgroundColor: '#1E3A8A' }]} onPress={() => {}}>
-              <Text style={styles.investBtnText}>Internal Actions</Text>
-            </TouchableOpacity>
-          </View>
-        ) : (
-          <TouchableOpacity style={styles.investBtn} onPress={handleInvestNowClick}>
-            {isProcessing ? <ActivityIndicator color="#fff" /> : <Text style={styles.investBtnText}>Invest Now</Text>}
-          </TouchableOpacity>
-        )}
+      {/* Bottom Action Bar */}
+      <View style={styles.bottomBar}>
+        <View style={styles.bottomBarText}>
+          <Text style={styles.bottomLabel}>Booking Amount</Text>
+          <Text style={styles.bottomPrice}>₹ {bookingAmtPerFrac.toLocaleString('en-IN')}</Text>
+        </View>
+        <GoldButton 
+          title="Invest Now" 
+          onPress={() => {
+            if (!auth.currentUser) {
+              router.push('/(auth)/sign-in');
+              return;
+            }
+            setShowPaymentModal(true);
+          }} 
+          style={{ width: 160 }}
+        />
       </View>
 
-      {/* Modern Payment Gateway Modal */}
-      <Modal visible={showPaymentModal} animationType="slide" transparent={true}>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalContent}>
-            {investmentSuccess ? (
-              <View style={styles.successView}>
-                <View style={styles.successIconBox}>
-                  <Text style={styles.successIcon}>✓</Text>
-                </View>
-                <Text style={styles.successTitle}>Investment Successful!</Text>
-                <Text style={styles.successText}>You now own {fractionsToBuy} fractions of {property.title}.</Text>
-                
-                <View style={styles.certificateBox}>
-                  <Text style={styles.certTitle}>DIGITAL SHARE CERTIFICATE</Text>
-                  <Text style={styles.certId}>{certificateId}</Text>
-                  <Text style={styles.certProperty}>{property.title}</Text>
-                </View>
-                
-                <TouchableOpacity style={styles.closeBtn} onPress={() => {
-                  setShowPaymentModal(false);
-                  router.push('/portfolio' as any);
-                }}>
-                  <Text style={styles.closeBtnText}>Go To My Investments</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <View>
-                <View style={styles.modalHeader}>
-                  <Text style={styles.modalTitle}>Complete Investment</Text>
-                  <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
-                    <Text style={styles.modalCloseText}>✕</Text>
-                  </TouchableOpacity>
-                </View>
-                
-                <Text style={styles.paymentAmount}>₹{totalBookingAmt.toLocaleString('en-IN')}</Text>
-                <Text style={styles.paymentSubtext}>Booking Token for {fractionsToBuy} Fraction(s)</Text>
-                
-                <Text style={styles.paymentSectionTitle}>Select Payment Method</Text>
-                
-                <View style={styles.paymentMethodsGrid}>
-                  {['upi', 'card', 'netbanking', 'wallet'].map((method) => (
-                    <TouchableOpacity
-                      key={method}
-                      style={[
-                        styles.paymentMethodBtn,
-                        paymentMethod === method && styles.paymentMethodActive,
-                      ]}
-                      onPress={() => setPaymentMethod(method as any)}
-                    >
-                      <Text style={[
-                        styles.paymentMethodText,
-                        paymentMethod === method && styles.paymentMethodTextActive
-                      ]}>
-                        {method.toUpperCase()}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-                
-                {paymentMethod === 'upi' && (
-                  <View style={styles.upiInputBox}>
-                    <Text style={styles.inputLabel}>Enter UPI ID</Text>
-                    <TextInput 
-                      style={styles.input}
-                      value={upiId}
-                      onChangeText={setUpiId}
-                      placeholder="e.g. user@okicici"
-                      placeholderTextColor="#9CA3AF"
-                    />
-                  </View>
-                )}
-
-                <TouchableOpacity 
-                  style={[styles.payBtn, isProcessing && { opacity: 0.7 }]} 
-                  onPress={handleInitiatePayment}
-                  disabled={isProcessing}
-                >
-                  {isProcessing ? (
-                    <ActivityIndicator color="#fff" />
-                  ) : (
-                    <Text style={styles.payBtnText}>Pay ₹{totalBookingAmt.toLocaleString('en-IN')}</Text>
-                  )}
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        </View>
-      </Modal>
-
-      {/* Agent Share Modal */}
-      <Modal visible={showAgentModal} animationType="slide" transparent={true}>
-        <View style={styles.modalBackdrop}>
+      {/* Payment Modal */}
+      <Modal visible={showPaymentModal} animationType="slide" transparent>
+        <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Share Property</Text>
-              <TouchableOpacity onPress={() => setShowAgentModal(false)}>
-                <Text style={styles.modalCloseText}>✕</Text>
+              <Text style={styles.modalTitle}>Confirm Investment</Text>
+              <TouchableOpacity onPress={() => setShowPaymentModal(false)}>
+                <Text style={styles.closeIcon}>✕</Text>
               </TouchableOpacity>
             </View>
-            <Text style={styles.paymentSubtext}>Share this unique link to track referrals.</Text>
             
-            <View style={{ backgroundColor: '#FDF6E3', padding: 16, borderRadius: 12, marginBottom: 24, borderWidth: 1, borderColor: '#FDE68A' }}>
-              <Text style={{ fontSize: 12, color: '#B45309', fontWeight: '700', marginBottom: 4 }}>ESTIMATED COMMISSION</Text>
-              <Text style={{ fontSize: 24, fontWeight: '800', color: '#92400E' }}>₹ {(totalBookingAmt * 0.025).toLocaleString('en-IN')}</Text>
-              <Text style={{ fontSize: 11, color: '#B45309', marginTop: 4 }}>*Based on 2.5% of min investment. Commission scales with shares bought.</Text>
-            </View>
-
-            <View style={styles.upiInputBox}>
-              <Text style={styles.inputLabel}>Your Custom Link</Text>
-              <View style={{ flexDirection: 'row', gap: 10 }}>
-                <TextInput 
-                  style={[styles.input, { flex: 1 }]}
-                  value={`https://realshare.in/ref/AG-2026/prop/${property.id}`}
-                  editable={false}
-                />
-                <TouchableOpacity 
-                  style={{ backgroundColor: '#111827', paddingHorizontal: 16, justifyContent: 'center', borderRadius: 8 }}
-                  onPress={() => {
-                    setAgentCopied(true);
-                    setTimeout(() => setAgentCopied(false), 2000);
-                  }}
-                >
-                  <Text style={{ color: '#D4AF37', fontWeight: '700' }}>{agentCopied ? 'COPIED' : 'COPY'}</Text>
-                </TouchableOpacity>
+            <View style={styles.summaryBox}>
+              <Text style={styles.summaryTitle}>{property.title}</Text>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Fractions:</Text>
+                <Text style={styles.summaryValue}>{fractionsToBuy}</Text>
+              </View>
+              <View style={styles.summaryRow}>
+                <Text style={styles.summaryLabel}>Total Value:</Text>
+                <Text style={styles.summaryValue}>₹ {(fractionPrice * fractionsToBuy).toLocaleString('en-IN')}</Text>
+              </View>
+              <View style={[styles.summaryRow, { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: Neutrals.gray200 }]}>
+                <Text style={styles.summaryTotalLabel}>Booking Amount:</Text>
+                <Text style={styles.summaryTotalValue}>₹ {totalBookingAmt.toLocaleString('en-IN')}</Text>
               </View>
             </View>
+
+            <GoldButton 
+              title={`Pay ₹${totalBookingAmt.toLocaleString('en-IN')}`} 
+              onPress={() => {
+                setShowPaymentModal(false);
+                handleInitiatePayment();
+              }}
+              isLoading={isProcessing}
+              style={{ marginTop: 24 }}
+            />
           </View>
         </View>
       </Modal>
+
+      {/* Success Modal */}
+      <Modal visible={investmentSuccess} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { alignItems: 'center', paddingVertical: 40 }]}>
+            <Text style={{ fontSize: 60, marginBottom: 16 }}>🎉</Text>
+            <Text style={styles.successTitle}>Investment Successful!</Text>
+            <Text style={styles.successSubtitle}>Welcome to RealShare Premium.</Text>
+            <View style={styles.certBox}>
+              <Text style={styles.certLabel}>Certificate ID</Text>
+              <Text style={styles.certValue}>{certificateId}</Text>
+            </View>
+            <GoldButton 
+              title="View Portfolio"
+              onPress={() => {
+                setInvestmentSuccess(false);
+                router.replace('/portfolio' as any);
+              }}
+              style={{ width: '100%', marginTop: 24 }}
+            />
+          </View>
+        </View>
+      </Modal>
+
     </View>
   );
 }
@@ -489,280 +388,241 @@ export default function PropertyDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Neutrals.background,
   },
-  header: {
-    flexDirection: 'row',
+  centerContainer: {
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 15,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    backgroundColor: Neutrals.background,
   },
-  headerIconBtn: {
-    padding: 5,
-  },
-  headerIconText: {
-    fontSize: 20,
-    color: '#111827',
-  },
-  headerTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  imageContainer: {
+  imageGallery: {
     width: '100%',
-    backgroundColor: '#F3F4F6',
+    height: 400,
     position: 'relative',
   },
-  image: {
-    width: '100%',
-    height: 280,
-    resizeMode: 'cover',
+  heroImage: {
+    width: 400, // Should be Dimensions.get('window').width ideally
+    height: 400,
   },
-  imgArrow: {
+  heroImagePlaceholder: {
+    width: 400,
+    height: 400,
+    backgroundColor: Neutrals.gray200,
+  },
+  backBtn: {
     position: 'absolute',
-    top: '50%',
-    marginTop: -20,
+    top: 50,
+    left: 20,
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: 'rgba(0,0,0,0.45)',
+    backgroundColor: 'rgba(255,255,255,0.8)',
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10,
   },
-  imgArrowLeft: {
-    left: 12,
-  },
-  imgArrowRight: {
-    right: 12,
-  },
-  imgArrowText: {
-    color: '#FFFFFF',
-    fontSize: 24,
-    fontWeight: '700',
-    lineHeight: 26,
-  },
-  imgDotRow: {
+  topRightBtns: {
     position: 'absolute',
-    bottom: 14,
-    left: 0,
-    right: 0,
+    top: 50,
+    right: 20,
     flexDirection: 'row',
+  },
+  iconBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(255,255,255,0.8)',
+    alignItems: 'center',
     justifyContent: 'center',
-    gap: 6,
+    marginLeft: 12,
   },
-  imgDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: 'rgba(255,255,255,0.5)',
+  iconBtnText: {
+    fontSize: 20,
+    color: Neutrals.obsidian,
   },
-  imgDotActive: {
-    backgroundColor: '#FFFFFF',
-    width: 22,
-    borderRadius: 4,
-  },
-  imgCounter: {
+  imageCounter: {
     position: 'absolute',
-    top: 14,
-    right: 14,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    paddingHorizontal: 10,
+    bottom: 20,
+    right: 20,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingHorizontal: 12,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: Radius.full,
   },
-  imgCounterText: {
-    color: '#FFFFFF',
-    fontSize: 12,
-    fontWeight: '600',
+  imageCounterText: {
+    ...Typography.caption,
+    color: Neutrals.white,
   },
   content: {
     padding: 20,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 4,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#111827',
-    flex: 1,
-  },
-  location: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 12,
+    marginTop: -20,
+    backgroundColor: Neutrals.background,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
   },
   badgeRow: {
     flexDirection: 'row',
-    marginBottom: 20,
+    marginBottom: 16,
   },
-  badge: {
-    backgroundColor: '#E1EFFE',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 6,
+  typeBadge: {
+    backgroundColor: Neutrals.surface,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
   },
-  badgeText: {
-    color: '#1A56DB',
-    fontSize: 11,
-    fontWeight: '800',
+  typeText: {
+    ...Typography.caption,
+    color: Neutrals.obsidian,
     textTransform: 'uppercase',
   },
-  priceRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
+  title: {
+    ...Typography.displayMedium,
+    color: Neutrals.obsidian,
+    marginBottom: 8,
+  },
+  location: {
+    ...Typography.bodyLarge,
+    color: Neutrals.textSecondary,
     marginBottom: 24,
   },
-  priceValue: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#111827',
+  priceCard: {
+    backgroundColor: Neutrals.surface,
+    borderRadius: Radius.lg,
+    padding: 20,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    ...Shadows.medium,
+    marginBottom: 24,
   },
   priceLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
+    ...Typography.caption,
+    color: Neutrals.gray500,
+    marginBottom: 4,
   },
-  roiValue: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: '#10B981',
+  priceValue: {
+    ...Typography.displayLarge,
+    color: GoldSystem.primaryGold,
   },
-  roiLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginTop: 2,
+  scoreContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  sharePoolCard: {
-    marginBottom: 24,
-  },
-  shareStatsRow: {
+  highlightsGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  shareLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 2,
-  },
-  shareValue: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: '#111827',
-  },
-  progressBarBg: {
-    width: '100%',
-    height: 8,
-    backgroundColor: '#F3F4F6',
-    borderRadius: 4,
-  },
-  progressBarFill: {
-    height: '100%',
-    backgroundColor: '#1A56DB',
-    borderRadius: 4,
-  },
-  section: {
     marginBottom: 24,
+  },
+  highlightBox: {
+    width: '48%',
+    backgroundColor: Neutrals.surface,
+    padding: 16,
+    borderRadius: Radius.md,
+    marginBottom: 16,
+    borderWidth: 1,
+    borderColor: GoldSystem.paleGold,
+  },
+  highlightLabel: {
+    ...Typography.caption,
+    color: Neutrals.gray500,
+    marginBottom: 4,
+  },
+  highlightValue: {
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
   },
   sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
     marginBottom: 12,
   },
   description: {
-    fontSize: 14,
-    color: '#4B5563',
-    lineHeight: 22,
+    ...Typography.bodyLarge,
+    color: Neutrals.textSecondary,
+    lineHeight: 24,
+    marginBottom: 24,
   },
-  mapAddress: {
-    fontSize: 13,
-    color: '#6B7280',
-    marginBottom: 12,
-    lineHeight: 20,
-  },
-  mapBox: {
-    width: '100%',
-    height: 300,
-    borderRadius: 12,
+  mapContainer: {
+    borderRadius: Radius.lg,
     overflow: 'hidden',
-    backgroundColor: '#E5E7EB',
+    ...Shadows.soft,
+    marginBottom: 24,
   },
-  videoBtn: {
-    backgroundColor: '#111827',
-    paddingVertical: 14,
-    borderRadius: 10,
+  sharesCard: {
+    backgroundColor: Neutrals.surface,
+    padding: 16,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+    marginBottom: 24,
+  },
+  sharesRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  shareMetric: {
     alignItems: 'center',
   },
-  videoBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 15,
+  shareValue: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
   },
-  fabContainer: {
+  shareLabel: {
+    ...Typography.caption,
+    color: Neutrals.gray500,
+  },
+  progressBarBg: {
+    height: 12,
+    backgroundColor: Neutrals.gray200,
+    borderRadius: Radius.full,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  progressBarFill: {
+    height: '100%',
+    backgroundColor: GoldSystem.primaryGold,
+  },
+  progressText: {
+    ...Typography.caption,
+    color: Neutrals.gray600,
+    textAlign: 'center',
+  },
+  bottomBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: '#FFFFFF',
-    padding: 20,
-    borderTopWidth: 1,
-    borderTopColor: '#F3F4F6',
-    paddingBottom: 30, // for safe area
-  },
-  investBtn: {
-    backgroundColor: '#1A56DB',
-    paddingVertical: 16,
-    borderRadius: 12,
+    backgroundColor: Neutrals.surface,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    paddingBottom: 32, // Safe area
+    ...Shadows.strong,
   },
-  investBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 16,
+  bottomBarText: {},
+  bottomLabel: {
+    ...Typography.caption,
+    color: Neutrals.gray500,
   },
-  errorContainer: {
+  bottomPrice: {
+    ...Typography.headlineLarge,
+    color: Neutrals.obsidian,
+  },
+  modalOverlay: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-  },
-  errorText: {
-    fontSize: 18,
-    color: '#111827',
-    marginBottom: 16,
-    fontWeight: '600',
-  },
-  backBtn: {
-    backgroundColor: '#F3F4F6',
-    padding: 12,
-    borderRadius: 8,
-  },
-  backBtnText: {
-    color: '#111827',
-    fontWeight: '600',
-  },
-  modalBackdrop: {
-    flex: 1,
-    backgroundColor: 'rgba(17, 24, 39, 0.6)',
+    backgroundColor: 'rgba(0,0,0,0.6)',
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: Neutrals.surface,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
     padding: 24,
     paddingBottom: 40,
   },
@@ -773,157 +633,71 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
+    ...Typography.headlineLarge,
+    color: Neutrals.obsidian,
   },
-  modalCloseText: {
-    fontSize: 20,
-    color: '#6B7280',
+  closeIcon: {
+    fontSize: 24,
+    color: Neutrals.gray500,
   },
-  paymentAmount: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#111827',
-    textAlign: 'center',
-    marginBottom: 4,
+  summaryBox: {
+    backgroundColor: Neutrals.background,
+    padding: 16,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
   },
-  paymentSubtext: {
-    fontSize: 14,
-    color: '#6B7280',
-    textAlign: 'center',
-    marginBottom: 32,
+  summaryTitle: {
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
+    marginBottom: 16,
   },
-  paymentSectionTitle: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#111827',
-    marginBottom: 12,
-  },
-  paymentMethodsGrid: {
+  summaryRow: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 12,
-    marginBottom: 24,
-  },
-  paymentMethodBtn: {
-    paddingVertical: 12,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    backgroundColor: '#F9FAFB',
-  },
-  paymentMethodActive: {
-    borderColor: '#1A56DB',
-    backgroundColor: '#E1EFFE',
-  },
-  paymentMethodText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4B5563',
-  },
-  paymentMethodTextActive: {
-    color: '#1A56DB',
-  },
-  upiInputBox: {
-    marginBottom: 24,
-  },
-  inputLabel: {
-    fontSize: 13,
-    color: '#4B5563',
+    justifyContent: 'space-between',
     marginBottom: 8,
-    fontWeight: '500',
   },
-  input: {
-    backgroundColor: '#F9FAFB',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    padding: 14,
-    borderRadius: 8,
-    fontSize: 15,
-    color: '#111827',
+  summaryLabel: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray500,
   },
-  payBtn: {
-    backgroundColor: '#1A56DB',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
+  summaryValue: {
+    ...Typography.labelMedium,
+    color: Neutrals.obsidian,
   },
-  payBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 16,
+  summaryTotalLabel: {
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
   },
-  successView: {
-    alignItems: 'center',
-    paddingVertical: 20,
-  },
-  successIconBox: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: '#D1FAE5',
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  successIcon: {
-    fontSize: 32,
-    color: '#10B981',
-    fontWeight: '800',
+  summaryTotalValue: {
+    ...Typography.headlineMedium,
+    color: GoldSystem.primaryGold,
   },
   successTitle: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#111827',
+    ...Typography.displayMedium,
+    color: Neutrals.obsidian,
     marginBottom: 8,
   },
-  successText: {
-    fontSize: 15,
-    color: '#4B5563',
-    textAlign: 'center',
-    marginBottom: 32,
+  successSubtitle: {
+    ...Typography.bodyLarge,
+    color: Neutrals.gray500,
+    marginBottom: 24,
   },
-  certificateBox: {
-    width: '100%',
-    backgroundColor: '#F8FAFC',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderStyle: 'dashed',
-    borderRadius: 12,
-    padding: 24,
+  certBox: {
+    backgroundColor: GoldSystem.paleGold,
+    padding: 16,
+    borderRadius: Radius.md,
     alignItems: 'center',
-    marginBottom: 32,
+    width: '100%',
   },
-  certTitle: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: '#6B7280',
-    letterSpacing: 1,
-    marginBottom: 8,
-  },
-  certId: {
-    fontSize: 20,
-    fontWeight: '800',
-    color: '#1A56DB',
+  certLabel: {
+    ...Typography.caption,
+    color: GoldSystem.darkGold,
     marginBottom: 4,
   },
-  certProperty: {
-    fontSize: 14,
-    color: '#111827',
-    fontWeight: '600',
-  },
-  closeBtn: {
-    backgroundColor: '#111827',
-    paddingVertical: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    width: '100%',
-  },
-  closeBtnText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 16,
+  certValue: {
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
+    letterSpacing: 2,
   },
 });

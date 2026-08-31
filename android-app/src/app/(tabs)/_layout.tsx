@@ -1,54 +1,25 @@
 import { Tabs } from 'expo-router';
-import { Text, View } from 'react-native';
-import KycBanner from '../../components/KycBanner';
+import { View } from 'react-native';
 import { useUser } from '@/contexts/UserContext';
+import { TabBar } from '@/components/navigation/TabBar';
 
 export default function TabLayout() {
   const { profile } = useUser();
-  const kycStatus = profile?.kyc_status as 'not_submitted' | 'pending' | 'verified' | 'rejected' || 'not_submitted';
 
   return (
     <View style={{ flex: 1 }}>
-      <KycBanner kycStatus={kycStatus} />
-      <Tabs screenOptions={{ headerShown: false, tabBarActiveTintColor: '#1A56DB', tabBarStyle: { height: 60, paddingBottom: 10, paddingTop: 10 } }}>
-        <Tabs.Screen 
-          name="index" 
-          options={{ 
-            title: 'Home', 
-            tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🏠</Text> 
-          }} 
-        />
-        <Tabs.Screen 
-          name="explore" 
-          options={{ 
-            title: 'Explore', 
-            href: (profile?.role === 'builder' || profile?.role === 'employee') ? null : undefined,
-            tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🔍</Text> 
-          }} 
-        />
-        <Tabs.Screen 
-          name="portfolio" 
-          options={{ 
-            title: 'Investments', 
-            href: (profile?.role === 'agent' || profile?.role === 'builder' || profile?.role === 'employee') ? null : undefined,
-            tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📈</Text> 
-          }} 
-        />
-        <Tabs.Screen 
-          name="kyc" 
-          options={{ 
-            title: 'KYC', 
-            href: (profile?.role === 'agent' || profile?.role === 'builder' || profile?.role === 'employee') ? null : undefined,
-            tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🪪</Text> 
-          }} 
-        />
-        <Tabs.Screen 
-          name="profile" 
-          options={{ 
-            title: 'Profile', 
-            tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>👤</Text> 
-          }} 
-        />
+      <Tabs 
+        tabBar={(props) => <TabBar {...props as any} />}
+        screenOptions={{ headerShown: false }}
+      >
+        <Tabs.Screen name="index" options={{ title: 'Home' }} />
+        <Tabs.Screen name="search" options={{ title: 'Search' }} />
+        <Tabs.Screen name="portfolio" options={{ title: 'Portfolio' }} />
+        <Tabs.Screen name="shortlist" options={{ title: 'Shortlist' }} />
+        <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+        
+        {/* Hidden from tab bar but accessible via code */}
+        <Tabs.Screen name="explore" options={{ href: null }} />
       </Tabs>
     </View>
   );

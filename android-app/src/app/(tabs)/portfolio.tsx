@@ -10,6 +10,8 @@ import {
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { auth } from '@/lib/firebase';
+import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
+import { GuestView } from '@/components/ui/GuestView';
 
 export default function PortfolioScreen() {
   const router = useRouter();
@@ -70,6 +72,16 @@ export default function PortfolioScreen() {
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
         <ActivityIndicator size="large" color="#1A56DB" />
       </View>
+    );
+  }
+
+  if (!auth.currentUser) {
+    return (
+      <GuestView 
+        title="Portfolio Access" 
+        description="Sign in to track your investments, view your earnings report, and manage your fractional shares." 
+        icon="📈"
+      />
     );
   }
 
@@ -208,7 +220,7 @@ export default function PortfolioScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Neutrals.background,
   },
   header: {
     flexDirection: 'row',
@@ -217,21 +229,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 50,
     paddingBottom: 15,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: Neutrals.surface,
     borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    borderBottomColor: Neutrals.border,
   },
   headerIconBtn: {
     padding: 5,
   },
   headerIconText: {
     fontSize: 20,
-    color: '#111827',
+    color: Neutrals.obsidian,
   },
   headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
   },
   summaryRow: {
     flexDirection: 'row',
@@ -240,28 +251,27 @@ const styles = StyleSheet.create({
   },
   summaryCard: {
     flex: 1,
-    backgroundColor: '#F0F5FF',
+    backgroundColor: Neutrals.surface,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: '#E1EFFE',
+    borderColor: Neutrals.border,
+    ...Shadows.soft,
   },
   summaryLabel: {
-    fontSize: 12,
-    color: '#4B5563',
+    ...Typography.caption,
+    color: Neutrals.gray500,
     marginBottom: 6,
-    fontWeight: '500',
   },
   summaryValue: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#111827',
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
   },
   tabsRow: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: Neutrals.border,
     marginBottom: 16,
   },
   tabBtn: {
@@ -271,15 +281,14 @@ const styles = StyleSheet.create({
     borderBottomColor: 'transparent',
   },
   tabBtnActive: {
-    borderBottomColor: '#1A56DB',
+    borderBottomColor: GoldSystem.primaryGold,
   },
   tabText: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: '#6B7280',
+    ...Typography.labelMedium,
+    color: Neutrals.gray500,
   },
   tabTextActive: {
-    color: '#1A56DB',
+    color: GoldSystem.primaryGold,
   },
   listContainer: {
     paddingHorizontal: 20,

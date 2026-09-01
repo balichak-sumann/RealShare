@@ -1,14 +1,13 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, Dimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, useWindowDimensions, ScrollView } from 'react-native';
 import { MOCK_HERO_SLIDES } from '@/constants/mockData';
 import { Neutrals, GoldSystem, Typography } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
 
-const { width } = Dimensions.get('window');
-
 export function HeroCarousel() {
+  const { width } = useWindowDimensions();
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
@@ -21,7 +20,7 @@ export function HeroCarousel() {
       setActiveIndex(nextIndex);
     }, 5000);
     return () => clearInterval(interval);
-  }, [activeIndex]);
+  }, [activeIndex, width]);
 
   const handleScroll = (event: any) => {
     const slide = Math.round(event.nativeEvent.contentOffset.x / width);
@@ -40,7 +39,7 @@ export function HeroCarousel() {
         onMomentumScrollEnd={handleScroll}
       >
         {MOCK_HERO_SLIDES.map((slide, index) => (
-          <View key={slide.id} style={styles.slide}>
+          <View key={slide.id} style={[styles.slide, { width }]}>
             <Image source={{ uri: slide.image }} style={styles.image} />
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.8)']}
@@ -81,7 +80,6 @@ const styles = StyleSheet.create({
     width: '100%',
   },
   slide: {
-    width,
     height: 450,
     position: 'relative',
   },

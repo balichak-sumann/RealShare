@@ -16,6 +16,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useLocation } from '@/contexts/LocationContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
+import { isSplashComplete, onSplashComplete } from '@/components/animated-icon';
 
 import AgentPortalScreen from '../agent-portal';
 import BuilderPortalScreen from '../builder-portal';
@@ -43,6 +44,14 @@ export default function HomeScreen() {
   const [userName, setUserName] = useState('Investor');
 
   const scrollY = useRef(new Animated.Value(0)).current;
+
+  // Coordinate header logo with splash animation
+  const [splashDone, setSplashDone] = useState(isSplashComplete());
+  useEffect(() => {
+    if (!splashDone) {
+      onSplashComplete(() => setSplashDone(true));
+    }
+  }, [splashDone]);
 
   const headerBottomHeight = scrollY.interpolate({
     inputRange: [0, 60],
@@ -92,7 +101,7 @@ export default function HomeScreen() {
             <Text style={styles.headerIcon}>☰</Text>
           </TouchableOpacity>
 
-          <View style={styles.logoContainer} pointerEvents="none">
+          <View style={[styles.logoContainer, { opacity: splashDone ? 1 : 0 }]} pointerEvents="none">
             <Image source={require('../../../assets/logo.png')} style={styles.logoImage} />
           </View>
 

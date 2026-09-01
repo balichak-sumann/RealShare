@@ -8,6 +8,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { useRouter } from 'expo-router';
 import { GuestView } from '@/components/ui/GuestView';
 import { auth } from '@/lib/firebase';
+import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 
 const COLLECTIONS = ['All Saved', 'Dream Home', 'Investment', 'Compare Later'];
 
@@ -18,17 +19,20 @@ export default function ShortlistScreen() {
   
   if (!auth.currentUser) {
     return (
+      <TabAnimationWrapper>
       <GuestView 
         title="Saved Properties" 
         description="Sign in to save your favorite properties and compare them later." 
         icon="♡"
       />
+      </TabAnimationWrapper>
     );
   }
 
   const properties = MOCK_PROPERTIES.filter(p => savedProperties.includes(p.id));
 
   return (
+    <TabAnimationWrapper>
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Shortlist</Text>
@@ -82,6 +86,7 @@ export default function ShortlistScreen() {
         )}
       </ScrollView>
     </View>
+    </TabAnimationWrapper>
   );
 }
 

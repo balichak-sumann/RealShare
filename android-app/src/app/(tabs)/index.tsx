@@ -6,12 +6,16 @@ import {
   Text,
   TouchableOpacity,
   Image,
+  Platform,
+  Animated,
 } from 'react-native';
+import { useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
 import { useLocation } from '@/contexts/LocationContext';
-import { Neutrals, GoldSystem, Typography } from '@/constants/design';
+import { useDrawer } from '@/contexts/DrawerContext';
+import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 
 import AgentPortalScreen from '../agent-portal';
 import BuilderPortalScreen from '../builder-portal';
@@ -29,12 +33,34 @@ import { TopDevelopers } from '@/components/home/TopDevelopers';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { MOCK_PROPERTIES, MOCK_RESALE_PROPERTIES, MOCK_RENTAL_PROPERTIES } from '@/constants/mockData';
+import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { profile } = useUser();
   const { city } = useLocation();
+  const { toggleDrawer } = useDrawer();
   const [userName, setUserName] = useState('Investor');
+
+  const scrollY = useRef(new Animated.Value(0)).current;
+
+  const headerBottomHeight = scrollY.interpolate({
+    inputRange: [0, 60],
+    outputRange: [48, 0],
+    extrapolate: 'clamp'
+  });
+
+  const headerBottomOpacity = scrollY.interpolate({
+    inputRange: [0, 30],
+    outputRange: [1, 0],
+    extrapolate: 'clamp'
+  });
+
+  const headerBottomMargin = scrollY.interpolate({
+    inputRange: [0, 60],
+    outputRange: [16, 0],
+    extrapolate: 'clamp'
+  });
 
   useEffect(() => {
     const currentUser = auth.currentUser;
@@ -57,29 +83,51 @@ export default function HomeScreen() {
   }
 
   return (
+    <TabAnimationWrapper>
     <View style={styles.container}>
       {/* Header */}
       <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <TouchableOpacity onPress={() => router.push('/profile')}>
+        <View style={styles.headerTop}>
+          <TouchableOpacity onPress={toggleDrawer} style={styles.headerIconBtn}>
             <Text style={styles.headerIcon}>☰</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.locationSelector}>
-            <Text style={styles.locationIcon}>📍</Text>
-            <Text style={styles.locationText}>{city}</Text>
-            <Text style={styles.locationDropdown}>▼</Text>
+
+          <View style={styles.logoContainer} pointerEvents="none">
+            <Image source={require('../../../assets/logo.png')} style={styles.logoImage} />
+          </View>
+
+          <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.headerIconBtnRight}>
+            <View style={styles.notificationBadge} />
+            <Text style={styles.headerIcon}>🔔</Text>
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.logoText}>REAL<Text style={styles.logoBold}>SHARE</Text></Text>
+        <Animated.View style={{ height: headerBottomHeight, opacity: headerBottomOpacity, marginTop: headerBottomMargin, overflow: 'hidden' }}>
+          <View style={styles.headerBottom}>
+            <TouchableOpacity style={styles.locationSelector}>
+              <Text style={styles.locationIcon}>📍</Text>
+              <Text style={styles.locationText}>{city}</Text>
+              <Text style={styles.locationDropdown}>▼</Text>
+            </TouchableOpacity>
 
-        <TouchableOpacity>
-          <View style={styles.notificationBadge} />
-          <Text style={styles.headerIcon}>🔔</Text>
-        </TouchableOpacity>
+            <TouchableOpacity style={styles.searchButton} onPress={() => router.push('/search')}>
+              <Text style={styles.searchIcon}>🔍</Text>
+              <Text style={styles.searchText}>Search...</Text>
+            </TouchableOpacity>
+          </View>
+        </Animated.View>
       </View>
 
-      <ScrollView style={styles.scrollContent} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
+      <Animated.ScrollView 
+        style={styles.scrollContent} 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={{ paddingBottom: 120 }}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
+        )}
+        scrollEventThrottle={16}
+      >
         <HeroCarousel />
         <CategoryGrid />
         
@@ -131,8 +179,9 @@ export default function HomeScreen() {
           <Text style={styles.trustItem}>✓ Fractional Investing</Text>
         </View>
 
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
+    </TabAnimationWrapper>
   );
 }
 
@@ -142,42 +191,85 @@ const styles = StyleSheet.create({
     backgroundColor: Neutrals.background,
   },
   header: {
+    paddingHorizontal: 16,
+    paddingTop: Platform.OS === 'web' ? 16 : Platform.OS === 'android' ? 40 : 50,
+    paddingBottom: 16,
+    backgroundColor: Neutrals.surface,
+  },
+  headerTop: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 50,
-    paddingBottom: 12,
-    backgroundColor: Neutrals.surface,
+    position: 'relative',
+    height: 48,
   },
-  headerLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  headerIconBtn: {
+    padding: 8,
+    marginLeft: -8,
+  },
+  headerIconBtnRight: {
+    padding: 8,
+    marginRight: -8,
   },
   headerIcon: {
     fontSize: 24,
     color: Neutrals.obsidian,
   },
+  logoContainer: {
+    ...StyleSheet.absoluteFill as any,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: -1,
+  },
+  logoImage: {
+    width: 170,
+    height: 48,
+    resizeMode: 'contain',
+  },
+  headerBottom: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   locationSelector: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginLeft: 16,
     backgroundColor: Neutrals.gray100,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 20,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+    minWidth: 120,
   },
   locationIcon: {
     fontSize: 14,
     marginRight: 4,
   },
   locationText: {
-    ...Typography.labelMedium,
+    ...Typography.bodyMedium,
     color: Neutrals.obsidian,
+    marginRight: 4,
   },
   locationDropdown: {
     fontSize: 10,
-    marginLeft: 4,
+    color: Neutrals.gray500,
+    marginTop: 2,
+  },
+  searchButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Neutrals.gray100,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: Radius.full,
+  },
+  searchIcon: {
+    fontSize: 16,
+    color: Neutrals.gray500,
+    marginRight: 8,
+  },
+  searchText: {
+    ...Typography.bodyMedium,
     color: Neutrals.gray500,
   },
   logoText: {

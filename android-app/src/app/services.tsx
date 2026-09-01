@@ -10,7 +10,8 @@ const SERVICES = [
   { id: '3', title: 'Legal Assistance', image: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Title checks, drafting, and registration.', price: 'Starts ₹4,999' },
   { id: '4', title: 'Deep Cleaning', image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Pre-move in deep cleaning services.', price: 'Starts ₹1,200' },
   { id: '5', title: 'Property Mgmt', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Full lifecycle tenant & property management.', price: 'Starts ₹800/mo' },
-  { id: '6', title: 'Painting', image: 'https://images.unsplash.com/photo-1589939705384-5185137a7f0f?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Professional painting services.', price: 'Get a Quote' },
+  { id: '6', title: 'Home Loans', image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Instant approvals with lowest interest rates.', price: 'Coming Soon' },
+  { id: '7', title: 'Insurance Services', image: 'https://images.unsplash.com/photo-1450101499163-c8848c66cb85?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Home, Auto, Personal & Health Insurance.', price: 'Coming Soon' },
 ];
 
 export default function ServicesScreen() {

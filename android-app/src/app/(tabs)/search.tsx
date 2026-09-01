@@ -5,12 +5,14 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { CategoryPill } from '@/components/ui/CategoryPill';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { MOCK_CATEGORIES, MOCK_PROPERTIES } from '@/constants/mockData';
+import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState(MOCK_CATEGORIES[0].id);
 
   return (
+    <TabAnimationWrapper>
     <View style={styles.container}>
       <View style={styles.header}>
         <SearchBar
@@ -52,6 +54,7 @@ export default function SearchScreen() {
         ))}
       </ScrollView>
     </View>
+    </TabAnimationWrapper>
   );
 }
 

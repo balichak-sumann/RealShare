@@ -13,6 +13,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { GuestView } from '@/components/ui/GuestView';
+import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 
 export default function PortfolioScreen() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function PortfolioScreen() {
     const fetchPortfolio = async () => {
       try {
         const user = auth.currentUser;
-        if (!user) return;
+        if (!user) { setLoading(false); return; }
         const token = await user.getIdToken();
         const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/portfolio`, {
           headers: { 'Authorization': `Bearer ${token}` }
@@ -158,6 +159,7 @@ export default function PortfolioScreen() {
   }
 
   return (
+    <TabAnimationWrapper>
     <View style={styles.container}>
       {/* Top Header */}
       <View style={styles.header}>
@@ -330,6 +332,9 @@ export default function PortfolioScreen() {
                   </View>
                 </TouchableOpacity>
                 <View style={styles.assetActions}>
+                  <TouchableOpacity style={styles.assetActionBtnOutline} onPress={() => Alert.alert('Payment Schedule', 'Installment #1: Paid\nInstallment #2: Due Oct 15\nAmount: ₹12,50,000')}>
+                    <Text style={styles.assetActionBtnOutlineText}>Payments</Text>
+                  </TouchableOpacity>
                   <TouchableOpacity style={styles.assetActionBtnOutline} onPress={() => Alert.alert('Secondary Market', 'Listing process initiated. Our wealth managers will contact you.')}>
                     <Text style={styles.assetActionBtnOutlineText}>List for Sale</Text>
                   </TouchableOpacity>
@@ -392,6 +397,30 @@ export default function PortfolioScreen() {
           </View>
         </View>
 
+        {/* Earnings Reports */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Earnings Reports</Text>
+          <View style={styles.earningsCard}>
+            <View style={styles.earningsHeader}>
+              <Text style={styles.earningsHeaderTitle}>Recent Yields</Text>
+              <TouchableOpacity onPress={() => Alert.alert('Download', 'Downloading Full Earnings Report...')}>
+                <Text style={styles.earningsDownloadText}>↓ Full Report</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={styles.earningsRow}>
+              <Text style={styles.earningsCell}>Q3 2026</Text>
+              <Text style={styles.earningsCell}>The Obsidian Tower</Text>
+              <Text style={[styles.earningsCell, { color: '#059669', textAlign: 'right' }]}>+₹42,500</Text>
+            </View>
+            <View style={styles.earningsDivider} />
+            <View style={styles.earningsRow}>
+              <Text style={styles.earningsCell}>Q2 2026</Text>
+              <Text style={styles.earningsCell}>Aura IT Park</Text>
+              <Text style={[styles.earningsCell, { color: '#059669', textAlign: 'right' }]}>+₹28,750</Text>
+            </View>
+          </View>
+        </View>
+
         {/* VIP Concierge */}
         <View style={styles.conciergeContainer}>
           <View style={styles.conciergeCard}>
@@ -410,6 +439,7 @@ export default function PortfolioScreen() {
       </ScrollView>
 
     </View>
+    </TabAnimationWrapper>
   );
 }
 
@@ -928,5 +958,41 @@ const styles = StyleSheet.create({
   vaultAction: {
     ...Typography.labelMedium,
     color: GoldSystem.primaryGold,
+  },
+  earningsCard: {
+    backgroundColor: Neutrals.surface,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+    padding: 16,
+    ...Shadows.soft,
+  },
+  earningsHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  earningsHeaderTitle: {
+    ...Typography.labelMedium,
+    color: Neutrals.obsidian,
+  },
+  earningsDownloadText: {
+    ...Typography.labelMedium,
+    color: GoldSystem.primaryGold,
+  },
+  earningsRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    paddingVertical: 8,
+  },
+  earningsCell: {
+    ...Typography.caption,
+    color: Neutrals.obsidian,
+    flex: 1,
+  },
+  earningsDivider: {
+    height: 1,
+    backgroundColor: Neutrals.border,
+    marginVertical: 4,
   }
 });

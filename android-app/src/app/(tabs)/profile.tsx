@@ -10,15 +10,22 @@ import {
   Alert,
   Modal,
   TextInput,
+  Animated,
+  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { auth, app } from '@/lib/firebase';
 import { PhoneAuthProvider, linkWithCredential, verifyBeforeUpdateEmail, RecaptchaVerifier } from 'firebase/auth';
 import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
 import { useUser } from '@/contexts/UserContext';
 import { GuestView } from '@/components/ui/GuestView';
+import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
+import { GoldSystem, Neutrals, Typography, Radius, Shadows } from '@/constants/design';
+import { useFocusEffect } from 'expo-router';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const router = useRouter();
@@ -35,6 +42,40 @@ export default function ProfileScreen() {
   const [verificationId, setVerificationId] = useState('');
   const recaptchaVerifier = useRef(null);
 
+  // Animations
+  const headerScale = useRef(new Animated.Value(0)).current;
+  const statsAnim = useRef(new Animated.Value(0)).current;
+  const cardsAnim = useRef(new Animated.Value(0)).current;
+
+  useFocusEffect(
+    useCallback(() => {
+      headerScale.setValue(0);
+      statsAnim.setValue(0);
+      cardsAnim.setValue(0);
+
+      Animated.stagger(150, [
+        Animated.spring(headerScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          speed: 12,
+          bounciness: 5,
+        }),
+        Animated.spring(statsAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          speed: 12,
+          bounciness: 5,
+        }),
+        Animated.spring(cardsAnim, {
+          toValue: 1,
+          useNativeDriver: true,
+          speed: 12,
+          bounciness: 5,
+        }),
+      ]).start();
+    }, [])
+  );
+
   const handleAvatarEdit = async () => {
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
@@ -49,7 +90,6 @@ export default function ProfileScreen() {
         if (user) {
           setProfile({ ...user, avatar_url: imageUri });
         }
-        // In a real app, we would upload this to Firebase Storage/S3 here
       }
     } catch (error) {
       console.error('Error picking image:', error);
@@ -82,7 +122,6 @@ export default function ProfileScreen() {
         let appVerifier: any;
         
         if (Platform.OS === 'web') {
-          // On Web, use Firebase's native RecaptchaVerifier
           if (!(window as any).recaptchaVerifier) {
             (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
               size: 'invisible'
@@ -90,7 +129,6 @@ export default function ProfileScreen() {
           }
           appVerifier = (window as any).recaptchaVerifier;
         } else {
-          // On Native, use the Expo modal
           appVerifier = recaptchaVerifier.current!;
         }
 
@@ -127,7 +165,6 @@ export default function ProfileScreen() {
         const credential = PhoneAuthProvider.credential(verificationId, codeInput);
         await linkWithCredential(auth.currentUser, credential);
         
-        // Sync with backend
         const token = await auth.currentUser.getIdToken();
         await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
           method: 'POST',
@@ -155,36 +192,57 @@ export default function ProfileScreen() {
     }
   };
 
-
-
   if (loading) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center' }]}>
-        <ActivityIndicator size="large" color="#1A56DB" />
+        <ActivityIndicator size="large" color={GoldSystem.primaryGold} />
       </View>
     );
   }
 
   if (!auth.currentUser) {
     return (
+      <TabAnimationWrapper>
       <GuestView 
         title="Sign In Required" 
         description="Create an account or sign in to view your profile, manage verifications, and track your investments." 
         icon="👤"
       />
+      </TabAnimationWrapper>
     );
   }
 
-
   const initials = (user?.full_name || 'U').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+  const roleName = (user?.role || 'investor').charAt(0).toUpperCase() + (user?.role || 'investor').slice(1);
+  const memberSince = user?.created_at ? new Date(user.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short' }) : 'N/A';
+
+  // KYC completion count
+  const kycItems = [
+    { done: !!user?.email },
+    { done: !!user?.phone_number },
+    { done: false }, // Aadhar
+    { done: false }, // PAN
+  ];
+  const kycDone = kycItems.filter(i => i.done).length;
+  const kycTotal = kycItems.length;
+  const kycPercent = Math.round((kycDone / kycTotal) * 100);
+
+  const headerTranslateY = headerScale.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-40, 0],
+  });
+  const statsTranslateY = statsAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [30, 0],
+  });
+  const cardsTranslateY = cardsAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [50, 0],
+  });
 
   return (
+    <TabAnimationWrapper>
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
-        <Text style={styles.headerTitle}>My Profile</Text>
-      </View>
-
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         
         {/* Firebase Recaptcha for Native */}
@@ -201,32 +259,102 @@ export default function ProfileScreen() {
           <View nativeID="recaptcha-container" />
         )}
 
-        {/* Profile Card */}
-        <View style={styles.profileCard}>
-          {/* Avatar */}
-          <View style={styles.avatarSection}>
-            {user?.avatar_url ? (
-              <Image source={{ uri: user.avatar_url }} style={styles.avatar} />
-            ) : (
-              <View style={styles.avatarPlaceholder}>
-                <Text style={styles.avatarInitials}>{initials}</Text>
-              </View>
-            )}
-            <TouchableOpacity style={styles.editAvatarBtn} onPress={handleAvatarEdit}>
-              <Text style={styles.editAvatarText}>📷</Text>
+        {/* ─── HERO PROFILE SECTION ─── */}
+        <Animated.View style={[
+          styles.heroSection,
+          { opacity: headerScale, transform: [{ translateY: headerTranslateY }] }
+        ]}>
+          <View style={styles.heroBackground}>
+            {/* Decorative circles */}
+            <View style={[styles.heroCircle, styles.heroCircle1]} />
+            <View style={[styles.heroCircle, styles.heroCircle2]} />
+          </View>
+
+          {/* Back + Settings row */}
+          <View style={styles.heroTopRow}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.heroBackBtn}>
+              <Text style={styles.heroBackText}>‹</Text>
+            </TouchableOpacity>
+            <Text style={styles.heroPageTitle}>My Profile</Text>
+            <TouchableOpacity onPress={() => Alert.alert('Settings', 'Coming soon')} style={styles.heroSettingsBtn}>
+              <Text style={styles.heroSettingsText}>⚙️</Text>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.userName}>{user?.full_name || 'User'}</Text>
-          <Text style={styles.userRole}>{(user?.role || 'investor').charAt(0).toUpperCase() + (user?.role || 'investor').slice(1)}</Text>
+          {/* Avatar + Info */}
+          <View style={styles.heroAvatarRow}>
+            <View style={styles.avatarRing}>
+              <View style={styles.avatarRingInner}>
+                {user?.avatar_url ? (
+                  <Image source={{ uri: user.avatar_url }} style={styles.avatarImage} />
+                ) : (
+                  <View style={styles.avatarPlaceholder}>
+                    <Text style={styles.avatarInitials}>{initials}</Text>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity style={styles.editAvatarBtn} onPress={handleAvatarEdit}>
+                <Text style={styles.editAvatarIcon}>📷</Text>
+              </TouchableOpacity>
+            </View>
 
+            <View style={styles.heroInfo}>
+              <Text style={styles.heroName} numberOfLines={1}>{user?.full_name || 'User'}</Text>
+              <View style={styles.heroRoleBadge}>
+                <Text style={styles.heroRoleText}>{roleName}</Text>
+              </View>
+              <Text style={styles.heroMemberSince}>Member since {memberSince}</Text>
+            </View>
+          </View>
+        </Animated.View>
 
-        </View>
+        {/* ─── QUICK STATS ROW ─── */}
+        <Animated.View style={[
+          styles.statsRow,
+          { opacity: statsAnim, transform: [{ translateY: statsTranslateY }] }
+        ]}>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>₹{Number(user?.wallet_balance || 0).toLocaleString('en-IN')}</Text>
+            <Text style={styles.statLabel}>Wallet</Text>
+          </View>
+          <View style={[styles.statCard, styles.statCardMiddle]}>
+            <Text style={styles.statValue}>{kycPercent}%</Text>
+            <Text style={styles.statLabel}>KYC Done</Text>
+          </View>
+          <View style={styles.statCard}>
+            <Text style={styles.statValue}>0</Text>
+            <Text style={styles.statLabel}>Properties</Text>
+          </View>
+        </Animated.View>
 
-        {/* Personal Information */}
-        <View style={styles.section}>
+        {/* ─── KYC PROGRESS CARD ─── */}
+        <Animated.View style={[
+          styles.sectionWrapper,
+          { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }
+        ]}>
+          <View style={styles.kycCard}>
+            <View style={styles.kycHeader}>
+              <View>
+                <Text style={styles.kycTitle}>Verification Status</Text>
+                <Text style={styles.kycSubtitle}>{kycDone} of {kycTotal} steps completed</Text>
+              </View>
+              <View style={styles.kycProgressRing}>
+                <Text style={styles.kycProgressText}>{kycPercent}%</Text>
+              </View>
+            </View>
+            <View style={styles.kycProgressBar}>
+              <View style={[styles.kycProgressFill, { width: `${kycPercent}%` }]} />
+            </View>
+          </View>
+        </Animated.View>
+
+        {/* ─── PERSONAL INFORMATION ─── */}
+        <Animated.View style={[
+          styles.sectionWrapper,
+          { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }
+        ]}>
           <Text style={styles.sectionTitle}>Personal Information</Text>
-          <View style={styles.infoCard}>
+          <View style={styles.card}>
             <TouchableOpacity 
               style={styles.infoRow}
               onPress={() => {
@@ -238,20 +366,21 @@ export default function ProfileScreen() {
               }}
               activeOpacity={user?.email ? 1 : 0.7}
             >
-              <View style={styles.infoIconBox}>
+              <View style={[styles.infoIconBox, { backgroundColor: 'rgba(197, 165, 90, 0.1)' }]}>
                 <Text style={styles.infoIcon}>📧</Text>
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Email Address</Text>
                 {user?.email ? (
-                  <Text style={styles.infoValue}>{user.email}</Text>
+                  <View style={styles.verifiedRow}>
+                    <Text style={styles.infoValue}>{user.email}</Text>
+                    <View style={styles.verifiedBadge}><Text style={styles.verifiedBadgeText}>✓</Text></View>
+                  </View>
                 ) : (
-                  <Text style={[styles.infoValue, { color: '#D97706' }]}>Pending - Tap to Verify</Text>
+                  <Text style={[styles.infoValue, { color: '#D97706' }]}>Tap to Verify</Text>
                 )}
               </View>
-              {!user?.email && (
-                <Text style={styles.verifyArrow}>›</Text>
-              )}
+              {!user?.email && <Text style={styles.infoArrow}>›</Text>}
             </TouchableOpacity>
 
             <View style={styles.divider} />
@@ -267,26 +396,27 @@ export default function ProfileScreen() {
               }}
               activeOpacity={user?.phone_number ? 1 : 0.7}
             >
-              <View style={styles.infoIconBox}>
+              <View style={[styles.infoIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
                 <Text style={styles.infoIcon}>📱</Text>
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Mobile Number</Text>
                 {user?.phone_number ? (
-                  <Text style={styles.infoValue}>{user.phone_number}</Text>
+                  <View style={styles.verifiedRow}>
+                    <Text style={styles.infoValue}>{user.phone_number}</Text>
+                    <View style={styles.verifiedBadge}><Text style={styles.verifiedBadgeText}>✓</Text></View>
+                  </View>
                 ) : (
-                  <Text style={[styles.infoValue, { color: '#D97706' }]}>Pending - Tap to Verify</Text>
+                  <Text style={[styles.infoValue, { color: '#D97706' }]}>Tap to Verify</Text>
                 )}
               </View>
-              {!user?.phone_number && (
-                <Text style={styles.verifyArrow}>›</Text>
-              )}
+              {!user?.phone_number && <Text style={styles.infoArrow}>›</Text>}
             </TouchableOpacity>
 
             <View style={styles.divider} />
 
             <View style={styles.infoRow}>
-              <View style={styles.infoIconBox}>
+              <View style={[styles.infoIconBox, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
                 <Text style={styles.infoIcon}>📅</Text>
               </View>
               <View style={styles.infoContent}>
@@ -297,64 +427,99 @@ export default function ProfileScreen() {
               </View>
             </View>
           </View>
-        </View>
+        </Animated.View>
 
-
-
-        {/* Wallet (Investor Only) */}
-        {(!user?.role || user?.role === 'investor' || user?.role === 'admin') && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Wallet</Text>
-            <View style={styles.walletCard}>
-              <View>
-                <Text style={styles.walletLabel}>Available Balance</Text>
-                <Text style={styles.walletAmount}>₹ {Number(user?.wallet_balance || 0).toLocaleString('en-IN')}</Text>
-              </View>
-              <TouchableOpacity style={styles.walletBtn} onPress={() => Alert.alert('Coming Soon', 'Payment Gateway Integration is pending.')}>
-                <Text style={styles.walletBtnText}>+ Add Money</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        )}
-
-        {/* Quick Links */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Quick Links</Text>
-          <View style={styles.linksCard}>
+        {/* ─── DOCUMENTS ─── */}
+        <Animated.View style={[
+          styles.sectionWrapper,
+          { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }
+        ]}>
+          <Text style={styles.sectionTitle}>My Documents</Text>
+          <View style={styles.card}>
             {[
-              ...((!user?.role || user?.role === 'investor' || user?.role === 'admin') ? [
-                { icon: '📈', label: 'My Investments', route: '/portfolio?from=profile' },
-                { icon: '🔍', label: 'Explore Properties', route: '/explore?from=profile' },
-                { icon: '📄', label: 'Transaction History', route: '/portfolio?from=profile' },
-              ] : []),
-              { icon: '❓', label: 'Help & Support', route: 'alert_support' },
-              { icon: '⚙️', label: 'Settings', route: 'alert_settings' },
-            ].map((link, idx) => (
-              <React.Fragment key={link.label}>
+              { icon: '💳', title: 'Aadhar Card', sub: 'Identity proof', status: 'Not Uploaded', statusColor: '#DC2626', statusBg: '#FEE2E2' },
+              { icon: '🏦', title: 'PAN Card', sub: 'Tax & compliance', status: 'Pending Review', statusColor: '#D97706', statusBg: '#FEF3C7' },
+              { icon: '🛂', title: 'Passport', sub: 'Optional', status: 'Uploaded', statusColor: '#059669', statusBg: '#D1FAE5' },
+            ].map((doc, idx) => (
+              <React.Fragment key={doc.title}>
                 {idx > 0 && <View style={styles.divider} />}
-                <TouchableOpacity
-                  style={styles.linkRow}
-                  onPress={() => {
-                    if (link.route === 'alert_support') Alert.alert('Support', 'Help Center coming soon.');
-                    else if (link.route === 'alert_settings') Alert.alert('Settings', 'Settings screen coming soon.');
-                    else router.push(link.route as any);
-                  }}
+                <TouchableOpacity 
+                  style={styles.docRow}
+                  onPress={() => Alert.alert('Upload', `${doc.title} upload coming soon`)}
+                  activeOpacity={0.7}
                 >
-                  <View style={styles.linkIconBox}>
-                    <Text style={styles.linkIcon}>{link.icon}</Text>
+                  <View style={[styles.docIconBox, { backgroundColor: GoldSystem.paleGold }]}>
+                    <Text style={styles.docIcon}>{doc.icon}</Text>
                   </View>
-                  <Text style={styles.linkText}>{link.label}</Text>
-                  <Text style={styles.linkArrow}>›</Text>
+                  <View style={styles.docContent}>
+                    <Text style={styles.docTitle}>{doc.title}</Text>
+                    <Text style={styles.docSub}>{doc.sub}</Text>
+                  </View>
+                  <View style={[styles.statusPill, { backgroundColor: doc.statusBg }]}>
+                    <Text style={[styles.statusText, { color: doc.statusColor }]}>{doc.status}</Text>
+                  </View>
                 </TouchableOpacity>
               </React.Fragment>
             ))}
           </View>
-        </View>
+        </Animated.View>
 
-        {/* Logout Button */}
-        <View style={styles.section}>
-          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
-            <Text style={styles.logoutText}>🚪  Logout</Text>
+        {/* ─── WALLET ─── */}
+        {(!user?.role || user?.role === 'investor' || user?.role === 'admin') && (
+          <Animated.View style={[
+            styles.sectionWrapper,
+            { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }
+          ]}>
+            <Text style={styles.sectionTitle}>Wallet</Text>
+            <View style={styles.walletCard}>
+              <View style={styles.walletLeft}>
+                <Text style={styles.walletLabel}>Available Balance</Text>
+                <Text style={styles.walletAmount}>₹ {Number(user?.wallet_balance || 0).toLocaleString('en-IN')}</Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.walletBtn} 
+                onPress={() => Alert.alert('Coming Soon', 'Payment Gateway Integration is pending.')}
+              >
+                <Text style={styles.walletBtnText}>+ Add Money</Text>
+              </TouchableOpacity>
+            </View>
+          </Animated.View>
+        )}
+
+        {/* ─── QUICK ACTIONS ─── */}
+        <Animated.View style={[
+          styles.sectionWrapper,
+          { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }
+        ]}>
+          <Text style={styles.sectionTitle}>Quick Actions</Text>
+          <View style={styles.actionsGrid}>
+            {[
+              { icon: '📈', label: 'Investments', route: '/portfolio?from=profile', color: '#10B981' },
+              { icon: '🔍', label: 'Explore', route: '/explore?from=profile', color: '#3B82F6' },
+              { icon: '📄', label: 'Transactions', route: '/portfolio?from=profile', color: '#F59E0B' },
+              { icon: '❓', label: 'Support Tickets', route: '/my-tickets', color: '#8B5CF6' },
+            ].map((action) => (
+              <TouchableOpacity
+                key={action.label}
+                style={styles.actionCard}
+                onPress={() => {
+                  router.push(action.route as any);
+                }}
+                activeOpacity={0.7}
+              >
+                <View style={[styles.actionIconBox, { backgroundColor: `${action.color}15` }]}>
+                  <Text style={styles.actionIcon}>{action.icon}</Text>
+                </View>
+                <Text style={styles.actionLabel}>{action.label}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </Animated.View>
+
+        {/* ─── LOGOUT ─── */}
+        <View style={styles.sectionWrapper}>
+          <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
+            <Text style={styles.logoutText}>Sign Out</Text>
           </TouchableOpacity>
         </View>
 
@@ -369,6 +534,7 @@ export default function ProfileScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
+            <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>
                 {otpStep === 'input' 
@@ -393,6 +559,7 @@ export default function ProfileScreen() {
                       <TextInput
                         style={styles.phoneInput}
                         placeholder="10-digit mobile number"
+                        placeholderTextColor={Neutrals.gray400}
                         keyboardType="numeric"
                         maxLength={10}
                         value={inputValue}
@@ -404,6 +571,7 @@ export default function ProfileScreen() {
                       <TextInput
                         style={styles.phoneInput}
                         placeholder="your@email.com"
+                        placeholderTextColor={Neutrals.gray400}
                         keyboardType="email-address"
                         autoCapitalize="none"
                         value={inputValue}
@@ -432,6 +600,7 @@ export default function ProfileScreen() {
                   <TextInput
                     style={styles.otpInput}
                     placeholder="------"
+                    placeholderTextColor={Neutrals.gray300}
                     keyboardType="numeric"
                     maxLength={6}
                     value={codeInput}
@@ -464,146 +633,274 @@ export default function ProfileScreen() {
       </Modal>
 
     </View>
+    </TabAnimationWrapper>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Neutrals.background,
   },
-  header: {
-    alignItems: 'center',
+
+  /* ─── HERO SECTION ─── */
+  heroSection: {
+    backgroundColor: Neutrals.obsidian,
+    paddingTop: Platform.OS === 'web' ? 20 : Platform.OS === 'android' ? 44 : 54,
+    paddingBottom: 28,
     paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 15,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    overflow: 'hidden',
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
   },
-  headerTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: '#111827',
+  heroBackground: {
+    ...StyleSheet.absoluteFill as any,
   },
-  profileCard: {
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    paddingVertical: 32,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
-  },
-  avatarSection: {
-    position: 'relative',
-    marginBottom: 16,
-  },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    borderWidth: 3,
-    borderColor: '#1A56DB',
-  },
-  avatarPlaceholder: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: '#1A56DB',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: '#E1EFFE',
-  },
-  avatarInitials: {
-    fontSize: 32,
-    fontWeight: '800',
-    color: '#FFFFFF',
-  },
-  editAvatarBtn: {
+  heroCircle: {
     position: 'absolute',
-    bottom: 0,
-    right: -4,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 2,
-    borderColor: '#E5E7EB',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 3,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: 'rgba(197, 165, 90, 0.08)',
   },
-  editAvatarText: {
-    fontSize: 14,
+  heroCircle1: {
+    width: 280,
+    height: 280,
+    top: -80,
+    right: -60,
   },
-  userName: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#111827',
-    marginBottom: 4,
+  heroCircle2: {
+    width: 200,
+    height: 200,
+    bottom: -60,
+    left: -40,
   },
-  userRole: {
-    fontSize: 14,
-    color: '#6B7280',
-    marginBottom: 12,
-  },
-  kycBadge: {
-    paddingHorizontal: 16,
-    paddingVertical: 6,
-    borderRadius: 20,
-  },
-  kycBadgeText: {
-    fontSize: 13,
-    fontWeight: '700',
-  },
-  section: {
-    paddingHorizontal: 20,
-    marginTop: 24,
-  },
-  sectionHeaderRow: {
+  heroTopRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 24,
+  },
+  heroBackBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroBackText: {
+    fontSize: 22,
+    color: Neutrals.white,
+    fontWeight: '300',
+  },
+  heroPageTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.white,
+  },
+  heroSettingsBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  heroSettingsText: {
+    fontSize: 16,
+  },
+  heroAvatarRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+
+  /* Avatar Ring */
+  avatarRing: {
+    width: 88,
+    height: 88,
+    borderRadius: 44,
+    borderWidth: 2.5,
+    borderColor: GoldSystem.primaryGold,
+    padding: 3,
+    position: 'relative',
+  },
+  avatarRingInner: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 999,
+    overflow: 'hidden',
+  },
+  avatarImage: {
+    width: '100%',
+    height: '100%',
+  },
+  avatarPlaceholder: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: GoldSystem.darkGold,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  avatarInitials: {
+    fontSize: 30,
+    fontWeight: '800',
+    color: Neutrals.white,
+  },
+  editAvatarBtn: {
+    position: 'absolute',
+    bottom: -2,
+    right: -2,
+    width: 30,
+    height: 30,
+    borderRadius: 15,
+    backgroundColor: GoldSystem.primaryGold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: Neutrals.obsidian,
+  },
+  editAvatarIcon: {
+    fontSize: 13,
+  },
+  heroInfo: {
+    flex: 1,
+    marginLeft: 18,
+  },
+  heroName: {
+    ...Typography.headlineLarge,
+    color: Neutrals.white,
+    marginBottom: 6,
+  },
+  heroRoleBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: 'rgba(197, 165, 90, 0.15)',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: GoldSystem.primaryGold,
+    marginBottom: 8,
+  },
+  heroRoleText: {
+    ...Typography.caption,
+    color: GoldSystem.softGold,
+    letterSpacing: 1,
+    fontWeight: '700',
+  },
+  heroMemberSince: {
+    ...Typography.labelSmall,
+    color: Neutrals.gray400,
+  },
+
+  /* ─── STATS ROW ─── */
+  statsRow: {
+    flexDirection: 'row',
+    marginHorizontal: 20,
+    marginTop: -16,
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.lg,
+    ...Shadows.medium,
+  },
+  statCard: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 18,
+  },
+  statCardMiddle: {
+    borderLeftWidth: 1,
+    borderRightWidth: 1,
+    borderColor: Neutrals.gray100,
+  },
+  statValue: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+    marginBottom: 2,
+  },
+  statLabel: {
+    ...Typography.caption,
+    color: Neutrals.gray500,
+  },
+
+  /* ─── SECTION WRAPPER ─── */
+  sectionWrapper: {
+    paddingHorizontal: 20,
+    marginTop: 24,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
-    marginBottom: 12,
+    ...Typography.labelLarge,
+    color: Neutrals.gray700,
+    marginBottom: 10,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
-  manageText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#1A56DB',
-    marginBottom: 12,
-  },
-  infoCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 4,
+
+  /* ─── KYC CARD ─── */
+  kycCard: {
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.lg,
+    padding: 18,
+    ...Shadows.soft,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: GoldSystem.paleGold,
   },
+  kycHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  kycTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+  },
+  kycSubtitle: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray500,
+    marginTop: 2,
+  },
+  kycProgressRing: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    borderWidth: 3,
+    borderColor: GoldSystem.primaryGold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(197, 165, 90, 0.08)',
+  },
+  kycProgressText: {
+    ...Typography.labelMedium,
+    color: GoldSystem.darkGold,
+  },
+  kycProgressBar: {
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: Neutrals.gray100,
+    overflow: 'hidden',
+  },
+  kycProgressFill: {
+    height: '100%',
+    borderRadius: 3,
+    backgroundColor: GoldSystem.primaryGold,
+  },
+
+  /* ─── CARD (shared) ─── */
+  card: {
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.lg,
+    ...Shadows.soft,
+    overflow: 'hidden',
+  },
+
+  /* ─── INFO ROWS ─── */
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
   },
   infoIconBox: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: 12,
-    backgroundColor: '#F0F5FF',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -615,42 +912,55 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   infoLabel: {
-    fontSize: 12,
-    color: '#6B7280',
+    ...Typography.caption,
+    color: Neutrals.gray500,
     marginBottom: 2,
   },
   infoValue: {
-    fontSize: 15,
+    ...Typography.bodyLarge,
     fontWeight: '600',
-    color: '#111827',
+    color: Neutrals.obsidian,
+  },
+  infoArrow: {
+    fontSize: 22,
+    color: Neutrals.gray300,
+    fontWeight: '300',
+    marginLeft: 8,
+  },
+  verifiedRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  verifiedBadge: {
+    width: 18,
+    height: 18,
+    borderRadius: 9,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginLeft: 8,
+  },
+  verifiedBadgeText: {
+    color: Neutrals.white,
+    fontSize: 10,
+    fontWeight: '800',
   },
   divider: {
     height: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Neutrals.gray100,
     marginHorizontal: 16,
   },
-  docCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
+
+  /* ─── DOCUMENTS ─── */
   docRow: {
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
   },
   docIconBox: {
-    width: 40,
-    height: 40,
+    width: 42,
+    height: 42,
     borderRadius: 12,
-    backgroundColor: '#FEF3C7',
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 14,
@@ -662,142 +972,121 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   docTitle: {
-    fontSize: 15,
+    ...Typography.bodyLarge,
     fontWeight: '600',
-    color: '#111827',
+    color: Neutrals.obsidian,
     marginBottom: 2,
   },
-  docSubtext: {
-    fontSize: 12,
-    color: '#6B7280',
+  docSub: {
+    ...Typography.caption,
+    color: Neutrals.gray500,
   },
-  docStatusPill: {
-    paddingHorizontal: 12,
+  statusPill: {
+    paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
+    borderRadius: Radius.full,
   },
-  docStatusText: {
-    fontSize: 11,
+  statusText: {
+    ...Typography.caption,
     fontWeight: '700',
   },
-  completeKycBtn: {
-    backgroundColor: '#1A56DB',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginTop: 12,
-  },
-  completeKycText: {
-    color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 14,
-  },
+
+  /* ─── WALLET ─── */
   walletCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: Neutrals.obsidian,
+    borderRadius: Radius.lg,
     padding: 20,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    ...Shadows.strong,
   },
+  walletLeft: {},
   walletLabel: {
-    fontSize: 12,
-    color: '#6B7280',
-    marginBottom: 4,
+    ...Typography.caption,
+    color: Neutrals.gray400,
+    marginBottom: 6,
   },
   walletAmount: {
-    fontSize: 22,
-    fontWeight: '800',
-    color: '#111827',
+    ...Typography.displayMedium,
+    color: Neutrals.white,
   },
   walletBtn: {
-    backgroundColor: '#E1EFFE',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 10,
+    backgroundColor: GoldSystem.primaryGold,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
+    borderRadius: Radius.md,
+    ...Shadows.gold,
   },
   walletBtnText: {
-    color: '#1A56DB',
-    fontWeight: '700',
-    fontSize: 13,
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
   },
-  linksCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 4,
-    borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  linkRow: {
+
+  /* ─── QUICK ACTIONS GRID ─── */
+  actionsGrid: {
     flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
+    flexWrap: 'wrap',
+    gap: 12,
   },
-  linkIconBox: {
-    width: 36,
-    height: 36,
-    borderRadius: 10,
-    backgroundColor: '#F0F5FF',
+  actionCard: {
+    width: (SCREEN_WIDTH - 52) / 2,
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.lg,
+    padding: 18,
+    alignItems: 'center',
+    ...Shadows.soft,
+  },
+  actionIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginBottom: 10,
   },
-  linkIcon: {
-    fontSize: 16,
-  },
-  linkText: {
-    flex: 1,
-    fontSize: 15,
-    fontWeight: '600',
-    color: '#111827',
-  },
-  linkArrow: {
+  actionIcon: {
     fontSize: 22,
-    color: '#9CA3AF',
-    fontWeight: '300',
   },
+  actionLabel: {
+    ...Typography.labelMedium,
+    color: Neutrals.gray700,
+  },
+
+  /* ─── LOGOUT ─── */
   logoutBtn: {
-    backgroundColor: '#FEE2E2',
+    backgroundColor: 'rgba(239, 68, 68, 0.06)',
     paddingVertical: 16,
-    borderRadius: 12,
+    borderRadius: Radius.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#FCA5A5',
+    borderColor: 'rgba(239, 68, 68, 0.15)',
   },
   logoutText: {
-    color: '#DC2626',
-    fontWeight: '700',
-    fontSize: 15,
+    ...Typography.labelLarge,
+    color: '#EF4444',
   },
-  verifyArrow: {
-    fontSize: 22,
-    color: '#9CA3AF',
-    fontWeight: '300',
-    marginLeft: 8,
-  },
+
+  /* ─── MODAL ─── */
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
     justifyContent: 'flex-end',
   },
   modalContainer: {
-    backgroundColor: '#FFFFFF',
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    backgroundColor: Neutrals.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: 24,
-    minHeight: 320,
+    minHeight: 340,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Neutrals.gray200,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -806,87 +1095,82 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#111827',
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
   },
   closeBtn: {
     padding: 8,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Neutrals.gray100,
     borderRadius: 20,
   },
   closeBtnText: {
     fontSize: 16,
-    color: '#6B7280',
+    color: Neutrals.gray500,
     fontWeight: '700',
   },
   modalBody: {
     flex: 1,
   },
   modalSubtitle: {
-    fontSize: 14,
-    color: '#6B7280',
+    ...Typography.bodyMedium,
+    color: Neutrals.gray500,
     lineHeight: 20,
     marginBottom: 24,
   },
   phoneInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Neutrals.gray200,
+    borderRadius: Radius.md,
     paddingHorizontal: 16,
     height: 56,
     marginBottom: 24,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Neutrals.gray100,
   },
   countryCode: {
-    fontSize: 16,
+    ...Typography.bodyLarge,
     fontWeight: '600',
-    color: '#111827',
+    color: Neutrals.obsidian,
     marginRight: 12,
     borderRightWidth: 1,
-    borderRightColor: '#E5E7EB',
+    borderRightColor: Neutrals.gray200,
     paddingRight: 12,
   },
   phoneInput: {
     flex: 1,
-    fontSize: 16,
-    color: '#111827',
+    ...Typography.bodyLarge,
+    color: Neutrals.obsidian,
   },
   otpInput: {
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: Neutrals.gray200,
+    borderRadius: Radius.md,
     paddingHorizontal: 16,
     height: 64,
     marginBottom: 24,
-    backgroundColor: '#F9FAFB',
+    backgroundColor: Neutrals.gray100,
     fontSize: 24,
     fontWeight: '700',
     letterSpacing: 8,
+    color: Neutrals.obsidian,
   },
   primaryBtn: {
-    backgroundColor: '#1A56DB',
+    backgroundColor: GoldSystem.primaryGold,
     height: 56,
-    borderRadius: 12,
+    borderRadius: Radius.md,
     justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#1A56DB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 4,
+    ...Shadows.gold,
   },
   disabledBtn: {
-    backgroundColor: '#9CA3AF',
+    backgroundColor: Neutrals.gray300,
     shadowOpacity: 0,
     elevation: 0,
   },
   primaryBtnText: {
-    color: '#FFFFFF',
-    fontSize: 16,
-    fontWeight: '700',
+    color: Neutrals.obsidian,
+    ...Typography.labelLarge,
   },
   textBtn: {
     marginTop: 16,
@@ -894,9 +1178,7 @@ const styles = StyleSheet.create({
     padding: 8,
   },
   textBtnLabel: {
-    color: '#1A56DB',
-    fontWeight: '600',
-    fontSize: 14,
+    color: GoldSystem.primaryGold,
+    ...Typography.labelLarge,
   },
 });
-

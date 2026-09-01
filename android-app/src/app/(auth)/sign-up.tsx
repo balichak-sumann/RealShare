@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView, Image } from 'react-native';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView, Image, Alert } from 'react-native';
+import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 
@@ -61,6 +61,19 @@ export default function SignUpScreen() {
         }
         const userCredential = await createUserWithEmailAndPassword(auth, identifier.trim(), password);
         await syncUserToBackend(userCredential.user);
+        
+        // Send Email Verification
+        try {
+          await sendEmailVerification(userCredential.user);
+          if (Platform.OS !== 'web') {
+            Alert.alert('Verification Email Sent', 'Please check your inbox to verify your email address.');
+          } else {
+            window.alert('Verification Email Sent. Please check your inbox to verify your email address.');
+          }
+        } catch (e) {
+          console.error("Failed to send verification email", e);
+        }
+
         // onAuthStateChanged in _layout.tsx handles redirection
       } else {
         // Phone Number Mock Flow

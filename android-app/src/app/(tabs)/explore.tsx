@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, TextInput, Platform, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { useUser } from '@/contexts/UserContext';
+import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 
 export default function ExploreScreen() {
   const { width } = useWindowDimensions();
@@ -43,7 +44,57 @@ export default function ExploreScreen() {
         setLoading(false);
       })
       .catch(err => {
-        console.error('Failed to fetch properties:', err);
+        console.warn('Failed to fetch properties, using mock data:', err);
+        setProperties([
+          {
+            id: 'prop-1',
+            title: 'The Obsidian Tower',
+            locality: 'BKC, Mumbai',
+            district: 'Mumbai',
+            state: 'Maharashtra',
+            property_type: 'Commercial',
+            price_per_fraction: 5000000,
+            assured_yield: 14.2,
+            target_irr: 18.5,
+            funding_status: 85,
+            images: [
+              { image_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&q=80&w=1000' },
+              { image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000' }
+            ]
+          },
+          {
+            id: 'prop-2',
+            title: 'Aura IT Park',
+            locality: 'Whitefield, Bangalore',
+            district: 'Bangalore',
+            state: 'Karnataka',
+            property_type: 'Commercial',
+            price_per_fraction: 2500000,
+            assured_yield: 11.5,
+            target_irr: 15.0,
+            funding_status: 100,
+            images: [
+              { image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000' },
+              { image_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&q=80&w=1000' }
+            ]
+          },
+          {
+            id: 'prop-3',
+            title: 'Sapphire Residences',
+            locality: 'Jubilee Hills, Hyderabad',
+            district: 'Hyderabad',
+            state: 'Telangana',
+            property_type: 'Residential',
+            price_per_fraction: 1500000,
+            assured_yield: 8.5,
+            target_irr: 12.0,
+            funding_status: 45,
+            images: [
+              { image_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1000' },
+              { image_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1000' }
+            ]
+          }
+        ]);
         setLoading(false);
       });
   }, []);
@@ -170,6 +221,7 @@ export default function ExploreScreen() {
   }
 
   return (
+    <TabAnimationWrapper>
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>{isAgent ? 'Browse Properties for Clients' : isEmployee ? 'Internal Property Directory' : 'Explore Properties'}</Text>
@@ -394,6 +446,7 @@ export default function ExploreScreen() {
         </ScrollView>
       </View>
     </View>
+    </TabAnimationWrapper>
   );
 }
 

@@ -10,8 +10,9 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
       {state.routes.map((route, index) => {
         const { options } = descriptors[route.key];
         
-        // Hide tabs that have href: null
-        if ((options as any).href === null) {
+        // Explicitly hide these tabs from the bottom bar
+        const hiddenRoutes = ['search', 'profile'];
+        if (hiddenRoutes.includes(route.name)) {
           return null;
         }
 
@@ -48,8 +49,9 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           if (route.name === 'index') return '🏠';
           if (route.name === 'search') return '🔍';
           if (route.name === 'shortlist') return '♡';
-          if (route.name === 'portfolio') return '💼'; // Add portfolio tab
+          if (route.name === 'portfolio') return '💼';
           if (route.name === 'profile') return '👤';
+          if (route.name === 'explore') return '🔍';
           return '•';
         })();
 

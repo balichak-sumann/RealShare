@@ -416,7 +416,7 @@ export default function PortfolioScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0A1A',
+    backgroundColor: Neutrals.background,
   },
   header: {
     flexDirection: 'row',
@@ -425,9 +425,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 60,
     paddingBottom: 15,
-    backgroundColor: 'rgba(10,10,26,0.85)',
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
+    backgroundColor: Neutrals.surface,
   },
   headerIconBtn: {
     padding: 5,
@@ -438,7 +436,7 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     ...Typography.headlineMedium,
-    color: '#FFFFFF',
+    color: Neutrals.obsidian,
   },
   heroSection: {
     padding: 20,
@@ -534,14 +532,15 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     ...Typography.headlineMedium,
-    color: '#FFFFFF',
+    color: Neutrals.obsidian,
     marginBottom: 16,
   },
   incomeCard: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: Neutrals.surface,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: Neutrals.border,
+    ...Shadows.soft,
   },
   incomeMain: {
     padding: 20,
@@ -549,7 +548,7 @@ const styles = StyleSheet.create({
   },
   incomeLabel: {
     ...Typography.labelMedium,
-    color: 'rgba(255,255,255,0.5)',
+    color: Neutrals.gray500,
     marginBottom: 8,
   },
   incomeValue: {
@@ -558,19 +557,17 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   incomeBadge: {
-    backgroundColor: 'rgba(5,150,105,0.2)',
+    backgroundColor: '#D1FAE5',
     color: '#059669',
     paddingHorizontal: 12,
     paddingVertical: 4,
     borderRadius: Radius.full,
     ...Typography.caption,
     fontWeight: 'bold',
-    borderWidth: 1,
-    borderColor: 'rgba(5,150,105,0.4)',
   },
   incomeDivider: {
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: Neutrals.border,
   },
   incomeSecondary: {
     flexDirection: 'row',
@@ -582,19 +579,20 @@ const styles = StyleSheet.create({
   },
   incomeSubLabel: {
     ...Typography.caption,
-    color: 'rgba(255,255,255,0.5)',
+    color: Neutrals.gray500,
     marginBottom: 4,
   },
   incomeSubValue: {
     ...Typography.headlineMedium,
-    color: '#FFFFFF',
+    color: Neutrals.obsidian,
   },
   allocationCard: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: Neutrals.surface,
     borderRadius: Radius.lg,
     padding: 20,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: Neutrals.border,
+    ...Shadows.soft,
   },
   allocationBar: {
     height: 12,
@@ -622,13 +620,13 @@ const styles = StyleSheet.create({
   },
   legendText: {
     ...Typography.caption,
-    color: 'rgba(255,255,255,0.6)',
+    color: Neutrals.gray600,
   },
   tabsRow: {
     flexDirection: 'row',
     paddingHorizontal: 20,
     borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.08)',
+    borderBottomColor: Neutrals.border,
     marginBottom: 16,
   },
   tabBtn: {
@@ -642,7 +640,7 @@ const styles = StyleSheet.create({
   },
   tabText: {
     ...Typography.labelMedium,
-    color: 'rgba(255,255,255,0.4)',
+    color: Neutrals.gray500,
   },
   tabTextActive: {
     color: GoldSystem.primaryGold,
@@ -652,12 +650,13 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   assetCard: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: Neutrals.surface,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: Neutrals.border,
     padding: 12,
     flexDirection: 'column',
+    ...Shadows.soft,
   },
   assetImage: {
     width: 90,
@@ -676,17 +675,15 @@ const styles = StyleSheet.create({
   },
   assetTitle: {
     ...Typography.labelLarge,
-    color: '#FFFFFF',
+    color: Neutrals.obsidian,
     flex: 1,
     marginRight: 8,
   },
   assetBadge: {
-    backgroundColor: 'rgba(212,175,55,0.2)',
+    backgroundColor: GoldSystem.paleGold,
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: Radius.sm,
-    borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.4)',
   },
   assetBadgeText: {
     ...Typography.caption,
@@ -696,7 +693,7 @@ const styles = StyleSheet.create({
   },
   assetLocation: {
     ...Typography.bodyMedium,
-    color: 'rgba(255,255,255,0.5)',
+    color: Neutrals.gray500,
     marginBottom: 12,
   },
   assetMetrics: {
@@ -708,12 +705,12 @@ const styles = StyleSheet.create({
   },
   metricLabel: {
     ...Typography.caption,
-    color: 'rgba(255,255,255,0.5)',
+    color: Neutrals.gray500,
     marginBottom: 2,
   },
   metricValue: {
     ...Typography.labelLarge,
-    color: '#FFFFFF',
+    color: Neutrals.obsidian,
   },
   conciergeContainer: {
     padding: 20,
@@ -823,7 +820,7 @@ const styles = StyleSheet.create({
   assetActions: {
     flexDirection: 'row',
     borderTopWidth: 1,
-    borderTopColor: 'rgba(255,255,255,0.08)',
+    borderTopColor: Neutrals.border,
     marginTop: 12,
     paddingTop: 12,
     gap: 8,
@@ -832,33 +829,32 @@ const styles = StyleSheet.create({
   assetActionBtnOutline: {
     flex: 1,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.15)',
+    borderColor: Neutrals.border,
     borderRadius: Radius.sm,
     paddingVertical: 10,
     alignItems: 'center',
   },
   assetActionBtnOutlineText: {
     ...Typography.labelMedium,
-    color: '#FFFFFF',
+    color: Neutrals.obsidian,
   },
   assetActionBtnSolid: {
     flex: 1,
-    backgroundColor: 'rgba(212,175,55,0.2)',
+    backgroundColor: Neutrals.obsidian,
     borderRadius: Radius.sm,
     paddingVertical: 10,
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(212,175,55,0.4)',
   },
   assetActionBtnSolidText: {
     ...Typography.labelMedium,
-    color: '#D4AF37',
+    color: Neutrals.white,
   },
   activityCard: {
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: Neutrals.surface,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: Neutrals.border,
+    ...Shadows.soft,
   },
   activityItem: {
     flexDirection: 'row',
@@ -867,8 +863,8 @@ const styles = StyleSheet.create({
   },
   activityDivider: {
     height: 1,
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    marginLeft: 64,
+    backgroundColor: Neutrals.border,
+    marginLeft: 64, // Align with content, bypassing icon
   },
   activityIconBox: {
     width: 40,
@@ -886,16 +882,16 @@ const styles = StyleSheet.create({
   },
   activityTitle: {
     ...Typography.labelLarge,
-    color: '#FFFFFF',
+    color: Neutrals.obsidian,
     marginBottom: 2,
   },
   activityDate: {
     ...Typography.caption,
-    color: 'rgba(255,255,255,0.5)',
+    color: Neutrals.gray500,
   },
   activityAmount: {
     ...Typography.labelLarge,
-    color: '#FFFFFF',
+    color: Neutrals.obsidian,
   },
   vaultContainer: {
     flexDirection: 'row',
@@ -903,18 +899,19 @@ const styles = StyleSheet.create({
   },
   vaultItem: {
     flex: 1,
-    backgroundColor: 'rgba(255,255,255,0.07)',
+    backgroundColor: Neutrals.surface,
     borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.12)',
+    borderColor: Neutrals.border,
     padding: 16,
     alignItems: 'center',
+    ...Shadows.soft,
   },
   vaultIconBox: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: 'rgba(255,255,255,0.08)',
+    backgroundColor: Neutrals.background,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 12,
@@ -924,7 +921,7 @@ const styles = StyleSheet.create({
   },
   vaultTitle: {
     ...Typography.labelMedium,
-    color: '#FFFFFF',
+    color: Neutrals.obsidian,
     textAlign: 'center',
     marginBottom: 8,
   },

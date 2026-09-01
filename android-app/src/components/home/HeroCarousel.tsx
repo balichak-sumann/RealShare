@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, useWindowDimensions, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, Dimensions } from 'react-native';
 import { MOCK_HERO_SLIDES } from '@/constants/mockData';
 import { Neutrals, GoldSystem, Typography } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,7 +7,7 @@ import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
 
 export function HeroCarousel() {
-  const { width } = useWindowDimensions();
+  const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width || 400);
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const scrollRef = useRef<ScrollView>(null);
@@ -16,21 +16,24 @@ export function HeroCarousel() {
     const interval = setInterval(() => {
       let nextIndex = activeIndex + 1;
       if (nextIndex >= MOCK_HERO_SLIDES.length) nextIndex = 0;
-      scrollRef.current?.scrollTo({ x: nextIndex * width, animated: true });
+      scrollRef.current?.scrollTo({ x: nextIndex * containerWidth, animated: true });
       setActiveIndex(nextIndex);
     }, 5000);
     return () => clearInterval(interval);
-  }, [activeIndex, width]);
+  }, [activeIndex, containerWidth]);
 
   const handleScroll = (event: any) => {
-    const slide = Math.round(event.nativeEvent.contentOffset.x / width);
+    const slide = Math.round(event.nativeEvent.contentOffset.x / containerWidth);
     if (slide !== activeIndex) {
       setActiveIndex(slide);
     }
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} onLayout={(e) => {
+      const { width } = e.nativeEvent.layout;
+      if (width > 0) setContainerWidth(width);
+    }}>
       <ScrollView
         ref={scrollRef}
         horizontal
@@ -39,7 +42,7 @@ export function HeroCarousel() {
         onMomentumScrollEnd={handleScroll}
       >
         {MOCK_HERO_SLIDES.map((slide, index) => (
-          <View key={slide.id} style={[styles.slide, { width }]}>
+          <View key={slide.id} style={[styles.slide, { width: containerWidth }]}>
             <Image source={{ uri: slide.image }} style={styles.image} />
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.8)']}

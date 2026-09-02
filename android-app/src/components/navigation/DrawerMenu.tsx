@@ -33,7 +33,7 @@ const MENU_ITEMS = [
 export function DrawerWrapper({ children }: DrawerWrapperProps) {
   const { isOpen, closeDrawer } = useDrawer();
   const router = useRouter();
-  const { profile } = useUser();
+  const { profile, setProfile } = useUser();
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const currentUser = auth.currentUser;
@@ -86,9 +86,11 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
     }, 250);
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     closeDrawer();
-    auth.signOut();
+    setProfile(null);
+    await auth.signOut();
+    router.replace('/(auth)/sign-in');
   };
 
   return (
@@ -126,7 +128,12 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
 
         {/* Menu Items */}
         <View style={styles.drawerMenuList}>
-          {MENU_ITEMS.map((item) => (
+          {[
+            ...(profile?.role === 'builder' ? [{ icon: '🏗️', label: 'Builder Console', route: '/builder-portal' }] : []),
+            ...(profile?.role === 'agent' ? [{ icon: '💼', label: 'Agent Console', route: '/agent-portal' }] : []),
+            ...(profile?.role === 'employee' || profile?.role === 'admin' ? [{ icon: '🏢', label: 'Employee Portal', route: '/employee-portal' }] : []),
+            ...MENU_ITEMS,
+          ].map((item) => (
             <TouchableOpacity
               key={item.route}
               style={styles.drawerMenuItem}

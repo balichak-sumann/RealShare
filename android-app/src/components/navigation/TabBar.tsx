@@ -4,7 +4,14 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
 
+import { useUser } from '@/contexts/UserContext';
+
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { profile } = useUser();
+  if (profile?.role === 'builder') {
+    return null;
+  }
+
   return (
     <View style={styles.tabBar}>
       {state.routes.map((route, index) => {

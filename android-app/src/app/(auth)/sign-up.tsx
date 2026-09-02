@@ -4,11 +4,14 @@ import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 
+import { useUser } from '@/contexts/UserContext';
+
 // Premium dark luxury real estate background
 const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2000&auto=format&fit=crop';
 
 export default function SignUpScreen() {
   const router = useRouter();
+  const { setProfile } = useUser();
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
@@ -29,7 +32,7 @@ export default function SignUpScreen() {
         if (referralCode) {
           body.referred_by_code = referralCode;
         }
-        await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
+        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/users/sync`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -37,6 +40,12 @@ export default function SignUpScreen() {
           },
           body: JSON.stringify(body)
         });
+        if (res.ok) {
+          const data = await res.json();
+          if (data.success && data.profile) {
+            setProfile(data.profile);
+          }
+        }
       }
     } catch (e) {
       console.error("Failed to sync role/referral", e);

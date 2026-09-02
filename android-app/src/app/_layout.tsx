@@ -58,6 +58,9 @@ function RootLayoutNav() {
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      if (!currentUser) {
+        setProfile(null);
+      }
       setIsLoaded(true);
     });
     return unsubscribe;
@@ -67,10 +70,9 @@ function RootLayoutNav() {
     if (!isLoaded) return;
 
     const inAuthGroup = segments[0] === '(auth)';
-    const isVerifyScreen = segments[1] === 'verify-email';
 
     if (user) {
-      // Sync user to DB (bypassing email verification requirement for demo)
+      // Sync user to DB
       user.getIdToken().then(async token => {
         let pushToken = null;
         try {
@@ -78,7 +80,7 @@ function RootLayoutNav() {
         } catch(e) {
           console.log(e);
         }
-        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
+        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/users/sync`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -90,12 +92,31 @@ function RootLayoutNav() {
         .then(data => {
           if (data.success && data.profile) {
             setProfile(data.profile);
+            if (inAuthGroup) {
+              if (data.profile.role === 'builder') {
+                router.replace('/builder-portal');
+              } else if (data.profile.role === 'agent') {
+                router.replace('/agent-portal');
+              } else if (data.profile.role === 'employee') {
+                router.replace('/employee-portal');
+              } else {
+                router.replace('/');
+              }
+            }
+          } else if (inAuthGroup) {
+            router.replace('/');
           }
         })
-        .catch(err => console.warn('Failed to sync user:', err.message));
+        .catch(err => {
+          console.warn('Failed to sync user:', err.message);
+          if (inAuthGroup) router.replace('/');
+        });
       });
-
-      if (inAuthGroup) router.replace('/');
+    } else {
+      setProfile(null);
+      if (!inAuthGroup) {
+        router.replace('/(auth)/sign-in');
+      }
     }
   }, [user, isLoaded, segments]);
 
@@ -111,6 +132,8 @@ function RootLayoutNav() {
 import { ThemeProvider as AppThemeProvider } from '@/contexts/ThemeContext';
 import { LocationProvider } from '@/contexts/LocationContext';
 import { ShortlistProvider } from '@/contexts/ShortlistContext';
+import { DrawerProvider } from '@/contexts/DrawerContext';
+import { DrawerWrapper } from '@/components/navigation/DrawerMenu';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -120,10 +143,14 @@ export default function TabLayout() {
       <AppThemeProvider>
         <LocationProvider>
           <UserProvider>
-            <ShortlistProvider>
-              <AnimatedSplashOverlay />
-              <RootLayoutNav />
-            </ShortlistProvider>
+            <DrawerProvider>
+              <DrawerWrapper>
+                <ShortlistProvider>
+                  <AnimatedSplashOverlay />
+                  <RootLayoutNav />
+                </ShortlistProvider>
+              </DrawerWrapper>
+            </DrawerProvider>
           </UserProvider>
         </LocationProvider>
       </AppThemeProvider>

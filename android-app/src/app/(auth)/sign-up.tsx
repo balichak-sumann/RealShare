@@ -44,6 +44,13 @@ export default function SignUpScreen() {
           const data = await res.json();
           if (data.success && data.profile) {
             setProfile(data.profile);
+            if (data.profile.role === 'builder') {
+              router.replace('/builder-portal');
+            } else if (data.profile.role === 'agent') {
+              router.replace('/agent-portal');
+            } else {
+              router.replace('/');
+            }
           }
         }
       }

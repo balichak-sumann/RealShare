@@ -80,7 +80,7 @@ function RootLayoutNav() {
         } catch(e) {
           console.log(e);
         }
-        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
+        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/users/sync`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -88,11 +88,12 @@ function RootLayoutNav() {
           },
           body: JSON.stringify({ expo_push_token: pushToken })
         })
-        .then(res => res.json())
+        .then(res => res.ok ? res.json() : null)
         .then(data => {
-          if (data.success && data.profile) {
+          if (data?.success && data?.profile) {
             setProfile(data.profile);
-            if (inAuthGroup) {
+            const isSignUp = segments[1] === 'sign-up';
+            if (inAuthGroup && !isSignUp) {
               if (data.profile.role === 'builder') {
                 router.replace('/builder-portal');
               } else if (data.profile.role === 'agent') {
@@ -102,14 +103,20 @@ function RootLayoutNav() {
               } else {
                 router.replace('/');
               }
+            } else if (!segments[0] || (segments[0] === '(tabs)' && (!segments[1] || segments[1] === 'index'))) {
+              if (data.profile.role === 'builder') {
+                router.replace('/builder-portal');
+              } else if (data.profile.role === 'agent') {
+                router.replace('/agent-portal');
+              }
             }
-          } else if (inAuthGroup) {
+          } else if (inAuthGroup && segments[1] !== 'sign-up') {
             router.replace('/');
           }
         })
         .catch(err => {
           console.warn('Failed to sync user:', err.message);
-          if (inAuthGroup) router.replace('/');
+          if (inAuthGroup && segments[1] !== 'sign-up') router.replace('/');
         });
       });
     }

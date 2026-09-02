@@ -1,6 +1,6 @@
 import { Image } from 'expo-image';
 import { useState, useEffect, useCallback } from 'react';
-import { Dimensions, StyleSheet, View, Platform } from 'react-native';
+import { useWindowDimensions, StyleSheet, View, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -10,14 +10,11 @@ import Animated, {
   Easing,
   runOnJS,
   interpolate,
-  interpolateColor,
   Extrapolation,
   Keyframe,
 } from 'react-native-reanimated';
 
 import classes from './animated-icon.module.css';
-
-const { width: SW, height: SH } = Dimensions.get('window');
 
 // ─── Splash-complete signaling ───────────────────────────────────
 let _done = false;
@@ -35,7 +32,6 @@ function _signal() {
 // ─── Layout constants ────────────────────────────────────────────
 const HDR_PAD = 16; // web header paddingTop
 const HDR_CY = HDR_PAD + 24;
-const TGT_TY = -(SH / 2 - HDR_CY);
 const LOGO_W = 220;
 const LOGO_H = 200;
 const END_SCL = 0.25;
@@ -46,6 +42,9 @@ const BG_COLOR = '#FFFFFF';
 //  CINEMATIC SPLASH OVERLAY (Web)
 // ═════════════════════════════════════════════════════════════════
 export function AnimatedSplashOverlay() {
+  const { height: SH } = useWindowDimensions();
+  const TGT_TY = -(SH / 2 - HDR_CY);
+
   const [visible, setVisible] = useState(true);
 
   const lScl = useSharedValue(0.3);
@@ -120,11 +119,13 @@ export function AnimatedSplashOverlay() {
 }
 
 const sp = StyleSheet.create({
-  overlay: { ...StyleSheet.absoluteFillObject, zIndex: 1000 },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    zIndex: 1000,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   logoWrap: {
-    position: 'absolute',
-    top: SH / 2 - LOGO_H / 2,
-    left: SW / 2 - LOGO_W / 2,
     width: LOGO_W,
     height: LOGO_H,
     alignItems: 'center',

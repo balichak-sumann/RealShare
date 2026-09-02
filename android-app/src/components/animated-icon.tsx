@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState, useEffect, useCallback } from 'react';
-import { Dimensions, StyleSheet, View, Platform } from 'react-native';
+import { useWindowDimensions, StyleSheet, View, Platform } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -11,14 +11,9 @@ import Animated, {
   Easing,
   runOnJS,
   interpolate,
-  interpolateColor,
   Extrapolation,
   Keyframe,
-  type SharedValue,
 } from 'react-native-reanimated';
-
-// ─── Screen metrics ──────────────────────────────────────────────
-const { width: SW, height: SH } = Dimensions.get('window');
 
 // ═════════════════════════════════════════════════════════════════
 //  Splash-complete signaling (module-level)
@@ -37,10 +32,8 @@ function _signal() {
   _cbs.splice(0).forEach((f) => f());
 }
 
-// ─── Layout constants ────────────────────────────────────────────
 const HDR_PAD = Platform.OS === 'android' ? 40 : 50;
 const HDR_CY = HDR_PAD + 24;
-const TGT_TY = -(SH / 2 - HDR_CY);
 const LOGO_W = 220;
 const LOGO_H = 200;
 const END_SCL = 0.25;
@@ -52,6 +45,9 @@ const BG_COLOR = '#FFFFFF';
 //  Simple: logo appears → scales down → moves to header → done
 // ═════════════════════════════════════════════════════════════════
 export function AnimatedSplashOverlay() {
+  const { height: SH } = useWindowDimensions();
+  const TGT_TY = -(SH / 2 - HDR_CY);
+
   const [visible, setVisible] = useState(true);
 
   const lScl = useSharedValue(0.3);   // logo scale (spring reveal)
@@ -139,11 +135,10 @@ const sp = StyleSheet.create({
   overlay: {
     ...StyleSheet.absoluteFillObject,
     zIndex: 1000,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   logoWrap: {
-    position: 'absolute',
-    top: SH / 2 - LOGO_H / 2,
-    left: SW / 2 - LOGO_W / 2,
     width: LOGO_W,
     height: LOGO_H,
     alignItems: 'center',

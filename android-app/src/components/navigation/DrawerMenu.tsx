@@ -10,11 +10,13 @@ import {
   Image,
   TouchableWithoutFeedback,
 } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, usePathname } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { useUser } from '@/contexts/UserContext';
 import { auth } from '@/lib/firebase';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const DRAWER_WIDTH = SCREEN_WIDTH * 0.78;
@@ -23,22 +25,60 @@ interface DrawerWrapperProps {
   children: React.ReactNode;
 }
 
-const MENU_ITEMS = [
-  { icon: '👤', label: 'Profile', route: '/profile' },
-  { icon: '🛠️', label: 'Services', route: '/services' },
-  { icon: '⚙️', label: 'Settings', route: '/settings' },
-  { icon: '🎫', label: 'My Tickets', route: '/my-tickets' },
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
+
+const MENU_ITEMS: { icon: IoniconName; label: string; route: string }[] = [
+  { icon: 'person-outline', label: 'Profile', route: '/profile' },
+  { icon: 'construct-outline', label: 'Services', route: '/services' },
+  { icon: 'settings-outline', label: 'Settings', route: '/settings' },
+  { icon: 'ticket-outline', label: 'My Tickets', route: '/my-tickets' },
 ];
 
 export function DrawerWrapper({ children }: DrawerWrapperProps) {
   const { isOpen, closeDrawer } = useDrawer();
   const router = useRouter();
+  const pathname = usePathname();
   const { profile } = useUser();
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const currentUser = auth.currentUser;
-  const displayName = currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Guest';
-  const displayEmail = currentUser?.email || '';
+  const isGuest = !currentUser;
+
+  // Extract phone number from profile, firebase user, or dummy phone email
+  let displayPhone = profile?.phone_number || currentUser?.phoneNumber || '';
+  if (!displayPhone && currentUser?.email?.endsWith('@realshare.test')) {
+    const rawNumber = currentUser.email.replace('@realshare.test', '');
+    displayPhone = rawNumber.startsWith('+91') ? rawNumber : `+91 ${rawNumber}`;
+  }
+  const hasPhone = !!displayPhone;
+  if (!displayPhone) {
+    displayPhone = 'Not available';
+  }
+
+  // Extract email
+  let displayEmail = profile?.email || '';
+  if (!displayEmail && currentUser?.email && !currentUser.email.endsWith('@realshare.test')) {
+    displayEmail = currentUser.email;
+  }
+  const hasEmail = !!displayEmail;
+  if (!displayEmail) {
+    displayEmail = 'Not available';
+  }
+
+  // Extract display name
+  let displayName = profile?.full_name || currentUser?.displayName || '';
+  if (!displayName && currentUser?.email) {
+    if (currentUser.email.endsWith('@realshare.test')) {
+      displayName = 'Investor';
+    } else {
+      displayName = currentUser.email.split('@')[0];
+    }
+  }
+  if (!displayName) {
+    displayName = 'Guest';
+  }
+
+  const roleName = profile?.role || (isGuest ? 'GUEST' : 'INVESTOR');
 
   useEffect(() => {
     Animated.spring(slideAnim, {
@@ -82,7 +122,11 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
   const handleMenuPress = (route: string) => {
     closeDrawer();
     setTimeout(() => {
-      router.push(route as any);
+      if (!currentUser) {
+        router.push('/sign-in' as any);
+      } else {
+        router.push(route as any);
+      }
     }, 250);
   };
 
@@ -104,48 +148,113 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
         ]}
       >
         {/* User Profile Section */}
-        <View style={styles.drawerProfile}>
-          <View style={styles.drawerAvatar}>
-            <Text style={styles.drawerAvatarText}>
-              {displayName.charAt(0).toUpperCase()}
-            </Text>
-          </View>
-          <Text style={styles.drawerName} numberOfLines={1}>{displayName}</Text>
-          {displayEmail ? (
-            <Text style={styles.drawerEmail} numberOfLines={1}>{displayEmail}</Text>
-          ) : null}
-          {profile?.role ? (
-            <View style={styles.drawerRoleBadge}>
-              <Text style={styles.drawerRoleText}>{profile.role.toUpperCase()}</Text>
+        {currentUser ? (
+          <View style={styles.drawerProfile}>
+            <View style={styles.drawerAvatarContainer}>
+              <View style={[styles.drawerAvatarGlow, Platform.OS === 'web' ? { filter: 'blur(8px)' } as any : {}]} />
+              <LinearGradient
+                colors={GoldSystem.goldGradient as unknown as string[]}
+                style={styles.drawerAvatar}
+              >
+                <Text style={styles.drawerAvatarText}>
+                  {displayName.charAt(0).toUpperCase()}
+                </Text>
+              </LinearGradient>
             </View>
-          ) : null}
-        </View>
+            <Text style={styles.drawerName} numberOfLines={1}>{displayName}</Text>
+            
+            <View style={styles.contactRow}>
+              <Ionicons name="call-outline" size={13} color={hasPhone ? Neutrals.gray400 : Neutrals.gray500} style={styles.contactIcon} />
+              <Text style={[styles.drawerContactInfo, !hasPhone && styles.unavailableText]} numberOfLines={1}>
+                {displayPhone}
+              </Text>
+            </View>
+            
+            <View style={styles.contactRow}>
+              <Ionicons name="mail-outline" size={13} color={hasEmail ? Neutrals.gray400 : Neutrals.gray500} style={styles.contactIcon} />
+              <Text style={[styles.drawerContactInfo, !hasEmail && styles.unavailableText]} numberOfLines={1}>
+                {displayEmail}
+              </Text>
+            </View>
+
+            <View style={[styles.drawerRoleBadge, { marginTop: 10 }]}>
+              <Text style={styles.drawerRoleText}>{roleName.toUpperCase()}</Text>
+            </View>
+          </View>
+        ) : (
+          <TouchableOpacity 
+            style={styles.drawerGuestCard}
+            onPress={() => handleMenuPress('/sign-in')}
+            activeOpacity={0.8}
+          >
+            <View style={styles.drawerAvatarContainer}>
+              <LinearGradient
+                colors={GoldSystem.goldGradient as unknown as string[]}
+                style={styles.drawerAvatar}
+              >
+                <Ionicons name="person" size={28} color={Neutrals.white} />
+              </LinearGradient>
+            </View>
+            <Text style={styles.drawerName}>Welcome</Text>
+            <Text style={styles.drawerGuestSubtitle}>Sign in to view your portfolio & account</Text>
+            
+            <View style={styles.signInPill}>
+              <Text style={styles.signInPillText}>Sign In / Register →</Text>
+            </View>
+          </TouchableOpacity>
+        )}
 
         {/* Divider */}
         <View style={styles.drawerDivider} />
 
         {/* Menu Items */}
         <View style={styles.drawerMenuList}>
-          {MENU_ITEMS.map((item) => (
-            <TouchableOpacity
-              key={item.route}
-              style={styles.drawerMenuItem}
-              onPress={() => handleMenuPress(item.route)}
-              activeOpacity={0.7}
-            >
-              <Text style={styles.drawerMenuIcon}>{item.icon}</Text>
-              <Text style={styles.drawerMenuLabel}>{item.label}</Text>
-            </TouchableOpacity>
-          ))}
+          {MENU_ITEMS.map((item) => {
+            const isActive = pathname === item.route || pathname.startsWith(item.route + '/');
+
+            return (
+              <TouchableOpacity
+                key={item.route}
+                onPress={() => handleMenuPress(item.route)}
+                activeOpacity={0.7}
+                style={styles.drawerMenuBtn}
+              >
+                {isActive ? (
+                  <LinearGradient
+                    colors={['rgba(212, 175, 55, 0.15)', 'rgba(212, 175, 55, 0.02)']}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={[styles.drawerMenuItem, styles.drawerMenuItemActive]}
+                  >
+                    <View style={styles.activeIndicator} />
+                    <Ionicons name={item.icon} size={22} color={GoldSystem.metallicGold} style={styles.drawerMenuIcon} />
+                    <Text style={[styles.drawerMenuLabel, styles.drawerMenuLabelActive]}>{item.label}</Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={styles.drawerMenuItem}>
+                    <Ionicons name={item.icon} size={22} color={Neutrals.gray400} style={styles.drawerMenuIcon} />
+                    <Text style={styles.drawerMenuLabel}>{item.label}</Text>
+                  </View>
+                )}
+              </TouchableOpacity>
+            );
+          })}
         </View>
 
         {/* Bottom Section */}
         <View style={styles.drawerBottom}>
           <View style={styles.drawerDivider} />
-          <TouchableOpacity style={styles.drawerSignOutBtn} onPress={handleSignOut}>
-            <Text style={styles.drawerSignOutIcon}>🚪</Text>
-            <Text style={styles.drawerSignOutText}>Sign Out</Text>
-          </TouchableOpacity>
+          {currentUser ? (
+            <TouchableOpacity style={styles.drawerSignOutBtn} onPress={handleSignOut}>
+              <Ionicons name="log-out-outline" size={22} color="#EF4444" style={styles.drawerSignOutIcon} />
+              <Text style={styles.drawerSignOutText}>Sign Out</Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity style={styles.drawerSignOutBtn} onPress={() => handleMenuPress('/sign-in')}>
+              <Ionicons name="log-in-outline" size={22} color={GoldSystem.metallicGold} style={styles.drawerSignOutIcon} />
+              <Text style={[styles.drawerSignOutText, { color: GoldSystem.metallicGold }]}>Sign In</Text>
+            </TouchableOpacity>
+          )}
 
           <Text style={styles.drawerVersion}>RealShare v2.0</Text>
         </View>
@@ -201,14 +310,49 @@ const styles = StyleSheet.create({
   drawerProfile: {
     marginBottom: 24,
   },
+  drawerGuestCard: {
+    marginBottom: 24,
+    alignItems: 'flex-start',
+  },
+  drawerGuestSubtitle: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray400,
+    fontSize: 13,
+    marginTop: 2,
+    marginBottom: 12,
+  },
+  signInPill: {
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    borderColor: GoldSystem.metallicGold,
+    borderWidth: 1,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: Radius.full,
+  },
+  signInPillText: {
+    ...Typography.labelMedium,
+    color: GoldSystem.metallicGold,
+    fontWeight: '700',
+  },
+  drawerAvatarContainer: {
+    position: 'relative',
+    marginBottom: 16,
+    width: 64,
+    height: 64,
+  },
+  drawerAvatarGlow: {
+    position: 'absolute',
+    top: -4, left: -4, right: -4, bottom: -4,
+    backgroundColor: GoldSystem.warmGold,
+    borderRadius: 40,
+    opacity: 0.3,
+  },
   drawerAvatar: {
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: GoldSystem.primaryGold,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
     ...Shadows.gold,
   },
   drawerAvatarText: {
@@ -221,10 +365,22 @@ const styles = StyleSheet.create({
     color: Neutrals.white,
     marginBottom: 4,
   },
-  drawerEmail: {
+  contactRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  contactIcon: {
+    marginRight: 6,
+  },
+  drawerContactInfo: {
     ...Typography.bodyMedium,
     color: Neutrals.gray400,
-    marginBottom: 10,
+    fontSize: 13,
+  },
+  unavailableText: {
+    color: Neutrals.gray500,
+    fontStyle: 'italic',
   },
   drawerRoleBadge: {
     alignSelf: 'flex-start',
@@ -249,21 +405,44 @@ const styles = StyleSheet.create({
     flex: 1,
     marginTop: 8,
   },
+  drawerMenuBtn: {
+    marginBottom: 8,
+  },
   drawerMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    borderRadius: Radius.md,
-    marginBottom: 2,
+    paddingVertical: 16,
+    paddingHorizontal: 16,
+    borderRadius: Radius.lg,
+    position: 'relative',
+    overflow: 'hidden',
+  },
+  drawerMenuItemActive: {
+    borderColor: 'rgba(212, 175, 55, 0.2)',
+    borderWidth: 1,
+  },
+  activeIndicator: {
+    position: 'absolute',
+    left: 0,
+    top: '25%',
+    bottom: '25%',
+    width: 4,
+    backgroundColor: GoldSystem.metallicGold,
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
   },
   drawerMenuIcon: {
-    fontSize: 20,
     width: 36,
   },
   drawerMenuLabel: {
     ...Typography.bodyLarge,
-    color: Neutrals.gray200,
+    color: Neutrals.gray400,
+    fontWeight: '500',
+    letterSpacing: 0.3,
+  },
+  drawerMenuLabelActive: {
+    color: GoldSystem.metallicGold,
+    fontWeight: '700',
   },
   drawerBottom: {
     marginTop: 'auto',
@@ -275,7 +454,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   drawerSignOutIcon: {
-    fontSize: 20,
     width: 36,
   },
   drawerSignOutText: {

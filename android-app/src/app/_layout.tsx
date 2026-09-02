@@ -53,11 +53,14 @@ function RootLayoutNav() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const { setProfile, mfaVerified } = useUser();
+  const { setProfile } = useUser();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
+      if (!currentUser) {
+        setProfile(null);
+      }
       setIsLoaded(true);
     });
     return unsubscribe;
@@ -67,20 +70,8 @@ function RootLayoutNav() {
     if (!isLoaded) return;
 
     const inAuthGroup = segments[0] === '(auth)';
-    const isVerifyScreen = segments[1] === 'verify-email';
-    const isMfaScreen = segments[1] === 'verify-otp';
 
     if (user) {
-      const isEmailAccount = user.providerData.some(p => p.providerId === 'password');
-      
-      // BYPASS: Temporarily disabled email verification
-      /*
-      if (isEmailAccount && !user.emailVerified && !isVerifyScreen) {
-        router.replace('/verify-email');
-        return;
-      }
-      */
-
       // Sync user to DB
       user.getIdToken().then(async token => {
         let pushToken = null;
@@ -101,33 +92,37 @@ function RootLayoutNav() {
         .then(data => {
           if (data.success && data.profile) {
             setProfile(data.profile);
-            
-            // Check for Agent MFA Requirement
-            const isAgent = data.profile.role === 'agent';
-            
-            // BYPASS: Temporarily disabled MFA Phone Verification
-            /*
-            if (isEmailAccount && isAgent && !mfaVerified && !isMfaScreen) {
-              router.replace({ pathname: '/verify-otp', params: { phone: data.profile.phone_number || '' } });
-              return;
+            if (inAuthGroup) {
+              if (data.profile.role === 'builder') {
+                router.replace('/builder-portal');
+              } else if (data.profile.role === 'agent') {
+                router.replace('/agent-portal');
+              } else if (data.profile.role === 'employee') {
+                router.replace('/employee-portal');
+              } else {
+                router.replace('/');
+              }
             }
-            */
-
-            if (inAuthGroup && !isVerifyScreen && !isMfaScreen) {
-              router.replace('/');
-            }
+          } else if (inAuthGroup) {
+            router.replace('/');
           }
         })
-        .catch(err => console.warn('Failed to sync user:', err.message));
+        .catch(err => {
+          console.warn('Failed to sync user:', err.message);
+          if (inAuthGroup) router.replace('/');
+        });
       });
     }
-  }, [user, isLoaded, segments, mfaVerified]);
+  }, [user, isLoaded, segments]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen name="(auth)" options={{ headerShown: false }} />
       <Stack.Screen name="property/[id]" options={{ presentation: 'modal', headerShown: false }} />
+      <Stack.Screen name="builder-portal" options={{ headerShown: false }} />
+      <Stack.Screen name="agent-portal" options={{ headerShown: false }} />
+      <Stack.Screen name="employee-portal" options={{ headerShown: false }} />
     </Stack>
   );
 }
@@ -135,6 +130,8 @@ function RootLayoutNav() {
 import { ThemeProvider as AppThemeProvider } from '@/contexts/ThemeContext';
 import { LocationProvider } from '@/contexts/LocationContext';
 import { ShortlistProvider } from '@/contexts/ShortlistContext';
+import { DrawerProvider } from '@/contexts/DrawerContext';
+import { DrawerWrapper } from '@/components/navigation/DrawerMenu';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
@@ -144,14 +141,17 @@ export default function TabLayout() {
       <AppThemeProvider>
         <LocationProvider>
           <UserProvider>
-            <ShortlistProvider>
-              <AnimatedSplashOverlay />
-              <RootLayoutNav />
-            </ShortlistProvider>
+            <DrawerProvider>
+              <DrawerWrapper>
+                <ShortlistProvider>
+                  <AnimatedSplashOverlay />
+                  <RootLayoutNav />
+                </ShortlistProvider>
+              </DrawerWrapper>
+            </DrawerProvider>
           </UserProvider>
         </LocationProvider>
       </AppThemeProvider>
     </ThemeProvider>
   );
 }
-

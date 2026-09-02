@@ -27,7 +27,7 @@ interface DrawerWrapperProps {
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
-const MENU_ITEMS: { icon: IoniconName; label: string; route: string }[] = [
+const BASE_MENU_ITEMS: { icon: IoniconName; label: string; route: string }[] = [
   { icon: 'person-outline', label: 'Profile', route: '/profile' },
   { icon: 'construct-outline', label: 'Services', route: '/services' },
   { icon: 'settings-outline', label: 'Settings', route: '/settings' },
@@ -38,11 +38,19 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
   const { isOpen, closeDrawer } = useDrawer();
   const router = useRouter();
   const pathname = usePathname();
-  const { profile } = useUser();
+  const { profile, setProfile } = useUser();
   const slideAnim = useRef(new Animated.Value(0)).current;
 
   const currentUser = auth.currentUser;
   const isGuest = !currentUser;
+
+  // Role specific menu items
+  const roleMenuItems: { icon: IoniconName; label: string; route: string }[] = [
+    ...(profile?.role === 'builder' ? [{ icon: 'business-outline' as IoniconName, label: 'Builder Console', route: '/builder-portal' }] : []),
+    ...(profile?.role === 'agent' ? [{ icon: 'briefcase-outline' as IoniconName, label: 'Agent Console', route: '/agent-portal' }] : []),
+    ...(profile?.role === 'employee' || profile?.role === 'admin' ? [{ icon: 'people-outline' as IoniconName, label: 'Employee Portal', route: '/employee-portal' }] : []),
+    ...BASE_MENU_ITEMS,
+  ];
 
   // Extract phone number from profile, firebase user, or dummy phone email
   let displayPhone = profile?.phone_number || currentUser?.phoneNumber || '';
@@ -130,9 +138,11 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
     }, 250);
   };
 
-  const handleSignOut = () => {
+  const handleSignOut = async () => {
     closeDrawer();
-    auth.signOut();
+    setProfile(null);
+    await auth.signOut();
+    router.replace('/(auth)/sign-in');
   };
 
   return (
@@ -209,7 +219,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
 
         {/* Menu Items */}
         <View style={styles.drawerMenuList}>
-          {MENU_ITEMS.map((item) => {
+          {roleMenuItems.map((item) => {
             const isActive = pathname === item.route || pathname.startsWith(item.route + '/');
 
             return (

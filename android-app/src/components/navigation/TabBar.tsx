@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,6 +7,11 @@ import { useUser } from '@/contexts/UserContext';
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { profile } = useUser();
+
+  if (profile?.role === 'builder') {
+    return null;
+  }
+
   const isAgent = profile?.role === 'agent';
 
   return (
@@ -62,17 +67,17 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
           const isFocused = state.index === originalIndex;
 
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
+          const onPress = () => {
+            const event = navigation.emit({
+              type: 'tabPress',
+              target: route.key,
+              canPreventDefault: true,
+            });
 
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name, route.params);
-          }
-        };
+            if (!isFocused && !event.defaultPrevented) {
+              navigation.navigate(route.name, route.params);
+            }
+          };
 
           const onLongPress = () => {
             navigation.emit({
@@ -83,8 +88,8 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
           const isHome = route.name === 'index';
 
-        let icon = '•';
-        
+          let icon = '•';
+          
           if (route.name === 'index') { label = 'Home'; icon = '🏠'; }
           else if (route.name === 'portfolio') { label = 'Portfolio'; icon = '💼'; }
           else if (route.name === 'shortlist') { label = 'Shortlist'; icon = '♡'; }
@@ -135,7 +140,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: Neutrals.obsidian,
     height: 80,
-    paddingBottom: 20, // safe area padding approx
+    paddingBottom: 20,
     paddingTop: 10,
     borderTopWidth: 1,
     borderTopColor: Neutrals.charcoal,
@@ -149,7 +154,6 @@ const styles = StyleSheet.create({
     position: 'relative',
     height: '100%',
   },
-
   icon: {
     fontSize: 20,
     color: Neutrals.gray400,
@@ -174,7 +178,7 @@ const styles = StyleSheet.create({
     backgroundColor: GoldSystem.primaryGold,
   },
   homeTabContainer: {
-    transform: [{ translateY: -15 }], // pop out slightly above the bar
+    transform: [{ translateY: -15 }],
   },
   homeBtnBubble: {
     width: 60,

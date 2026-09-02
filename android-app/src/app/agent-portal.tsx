@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -15,8 +15,11 @@ import {
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { LinearGradient } from 'expo-linear-gradient';
-
+import { Radius } from '@/constants/design';
+import { PropertyCard } from '@/components/ui/PropertyCard';
+import { SectionHeader } from '@/components/ui/SectionHeader';
 const screenWidth = Dimensions.get('window').width;
 
 let LineChart: any = null;
@@ -27,11 +30,15 @@ if (Platform.OS !== 'web') {
 export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?: boolean } = {}) {
   const router = useRouter();
   const { profile } = useUser();
+  const { openDrawer } = useDrawer();
+  const scrollRef = useRef<ScrollView>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const [copied, setCopied] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [dashboardData, setDashboardData] = useState<any>(null);
+  const [properties, setProperties] = useState<any[]>([]);
   
   // Bank Details State
   const [showBankModal, setShowBankModal] = useState(false);
@@ -49,6 +56,16 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
     }
     fetchDashboardData();
   }, [profile]);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      let nextIndex = activeIndex + 1;
+      if (nextIndex >= Math.min(properties.length > 0 ? properties.length : 1, 5)) nextIndex = 0;
+      scrollRef.current?.scrollTo({ x: nextIndex * screenWidth, animated: true });
+      setActiveIndex(nextIndex);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, [activeIndex, properties]);
 
   const fetchDashboardData = async () => {
     try {
@@ -89,6 +106,25 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
       }
       
       setDashboardData(data);
+
+      // Fetch Properties
+      const propsRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`);
+      if (propsRes.ok) {
+        const propsData = await propsRes.json();
+        const mappedProperties = propsData.map((p: any) => ({
+          id: p.id,
+          title: p.title,
+          location: `${p.locality}, ${p.district}`,
+          price: `₹ ${(Number(p.price_per_fraction) || 50000).toLocaleString('en-IN')}`,
+          images: p.images?.length > 0 ? p.images.map((img: any) => img.image_url) : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1000'],
+          bhk: p.property_type,
+          area: 'Premium',
+          score: p.target_irr || 15.0,
+          isVerified: true
+        }));
+        setProperties(mappedProperties);
+      }
+      
       if (data.bankDetails) {
         setAccName(data.bankDetails.accountName);
         setAccNumber(data.bankDetails.accountNumber);
@@ -168,13 +204,13 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
       {/* Premium Header */}
       <LinearGradient colors={['#0F172A', '#1E293B']} style={styles.header}>
         <View style={styles.headerTop}>
-          {isEmbedded ? null : (
-            <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
-              <Text style={{ fontSize: 24, color: '#D4AF37' }}>‹</Text>
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity style={styles.iconBtn} onPress={openDrawer}>
+            <Text style={{ fontSize: 22, color: '#FFFFFF' }}>☰</Text>
+          </TouchableOpacity>
           <Text style={styles.headerTitle}>Wealth Partner Hub</Text>
-          <View style={{ width: 24 }} />
+          <TouchableOpacity style={styles.iconBtn}>
+            <Text style={{ fontSize: 20, color: '#FFFFFF' }}>🔔</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Profile Summary inside Header */}
@@ -201,19 +237,20 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
 
       <View style={styles.content}>
         
-        {/* VIP KPI Cards */}
-        <View style={styles.kpiRow}>
-          <LinearGradient colors={['#1F2937', '#111827']} style={styles.kpiBox}>
-            <Text style={styles.kpiLabel}>TOTAL EARNED</Text>
-            <Text style={[styles.kpiValue, { color: '#10B981' }]}>{dashboardData?.totalEarned || '₹0'}</Text>
-            <Text style={styles.kpiSub}>Transferred to Bank</Text>
-          </LinearGradient>
-
-          <LinearGradient colors={['#1F2937', '#111827']} style={styles.kpiBox}>
-            <Text style={styles.kpiLabel}>PENDING PAYOUT</Text>
-            <Text style={[styles.kpiValue, { color: '#F59E0B' }]}>{dashboardData?.pendingPayout || '₹0'}</Text>
-            <Text style={styles.kpiSub}>Clearing this week</Text>
-          </LinearGradient>
+        {/* Quick Actions Row */}
+        <View style={styles.quickActionsContainer}>
+          <TouchableOpacity style={styles.quickActionBtn} onPress={handleCopy}>
+            <Text style={styles.quickActionIcon}>🔗</Text>
+            <Text style={styles.quickActionText}>Copy Link</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/portfolio' as any)}>
+            <Text style={styles.quickActionIcon}>👥</Text>
+            <Text style={styles.quickActionText}>Add Lead</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/explore' as any)}>
+            <Text style={styles.quickActionIcon}>🏢</Text>
+            <Text style={styles.quickActionText}>Inventory</Text>
+          </TouchableOpacity>
         </View>
 
         {/* Bank Details Card */}
@@ -227,11 +264,12 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
             ) : null}
           </View>
           {bankSaved ? (
-            <View>
-              <Text style={styles.bankMaskedText}>{accName || 'Account Name'}</Text>
-              <Text style={styles.bankMaskedText}>A/C: {accNumber ? `XXXXXXXX${accNumber.slice(-4)}` : 'XXXX'}</Text>
-              <TouchableOpacity style={styles.bankUpdateBtn} onPress={() => setShowBankModal(true)}>
-                <Text style={styles.bankUpdateBtnText}>Update Details</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
+              <Text style={{ fontSize: 14, color: '#4B5563', fontWeight: '500' }}>
+                {accName || 'Bank Account'} (•••• {accNumber ? accNumber.slice(-4) : 'XXXX'})
+              </Text>
+              <TouchableOpacity onPress={() => setShowBankModal(true)}>
+                <Text style={{ color: '#D4AF37', fontSize: 12, fontWeight: '700' }}>EDIT</Text>
               </TouchableOpacity>
             </View>
           ) : (
@@ -266,82 +304,69 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
           </View>
         </View>
 
-        {/* Sales Analytics Chart */}
-        {dashboardData?.monthlyTrends && Platform.OS !== 'web' && (
-          <View style={styles.chartCard}>
-            <Text style={styles.sectionTitle}>Commission Trajectory</Text>
-            <Text style={styles.chartSub}>Last 6 months performance</Text>
-            <View style={styles.chartWrapper}>
-              <LineChart
-                data={{
-                  labels: dashboardData.monthlyTrends.labels,
-                  datasets: [
-                    {
-                      data: dashboardData.monthlyTrends.data
-                    }
-                  ]
-                }}
-                width={screenWidth - 48}
-                height={220}
-                withInnerLines={false}
-                withOuterLines={false}
-                chartConfig={{
-                  backgroundColor: '#FFFFFF',
-                  backgroundGradientFrom: '#FFFFFF',
-                  backgroundGradientTo: '#FFFFFF',
-                  decimalPlaces: 0,
-                  color: (opacity = 1) => `rgba(212, 175, 55, ${opacity})`, // Gold line
-                  labelColor: (opacity = 1) => `rgba(156, 163, 175, ${opacity})`,
-                  propsForDots: {
-                    r: "5",
-                    strokeWidth: "2",
-                    stroke: "#111827"
-                  }
-                }}
-                bezier
-                style={{
-                  marginVertical: 8,
-                  borderRadius: 16,
-                  marginLeft: -10,
-                }}
-              />
-            </View>
-          </View>
-        )}
-
-        {/* Client Pipeline & Sales Analytics */}
-        <View style={styles.pipelineSection}>
-          <View style={styles.pipelineHeader}>
-            <Text style={styles.sectionTitle}>Client Pipeline</Text>
-            <TouchableOpacity style={styles.addClientBtn}>
-              <Text style={styles.addClientText}>+ Add Lead</Text>
-            </TouchableOpacity>
-          </View>
-
-          {clientLeads.map((lead: any, i: number) => (
-            <View key={i} style={styles.leadCard}>
-              <View style={styles.leadInfo}>
-                <Text style={styles.leadName}>{lead.name}</Text>
-                <Text style={styles.leadProp}>📍 {lead.property}</Text>
+        {/* Hot Properties to Pitch */}
+        <View style={{ marginBottom: 24 }}>
+          <SectionHeader title="🔥 Hot Properties to Pitch" onViewAll={() => {}} />
+          <Text style={{ fontSize: 13, color: '#6B7280', paddingHorizontal: 16, marginTop: -8, marginBottom: 12 }}>Share these high-commission properties with your clients.</Text>
+          <ScrollView 
+            horizontal 
+            showsHorizontalScrollIndicator={false} 
+            contentContainerStyle={{ paddingHorizontal: 0 }}
+            ref={scrollRef}
+            pagingEnabled={true}
+            onScrollBeginDrag={() => clearInterval(undefined)}
+          >
+            {properties.map((prop, idx) => (
+              <View key={prop.id} style={{ width: screenWidth - 40, paddingRight: 20 }}>
+                <PropertyCard 
+                  {...prop} 
+                  compact={false}
+                  agentCommission="Est. Earn: 2.5%"
+                  onShare={() => alert(`Sharing link for ${prop.title}...`)}
+                />
               </View>
-              <View style={styles.leadStats}>
-                <Text style={styles.commissionAmt}>{lead.commission}</Text>
-                <View style={[
-                  styles.statusBadge,
-                  lead.status.includes('Converted') ? styles.statusPaid :
-                  lead.status.includes('Pending') ? styles.statusPending : styles.statusReview
-                ]}>
-                  <Text style={[
-                    styles.statusText,
-                    lead.status.includes('Converted') ? styles.statusTextPaid :
-                    lead.status.includes('Pending') ? styles.statusTextPending : styles.statusTextReview
-                  ]}>{lead.status.toUpperCase()}</Text>
-                </View>
-              </View>
-            </View>
-          ))}
+            ))}
+          </ScrollView>
         </View>
-      </View>
+
+        {/* Instant Notifications Feed */}
+        <View style={styles.sectionContainer}>
+          <Text style={styles.sectionTitle}>Instant Notifications</Text>
+          
+          <View style={styles.notificationCard}>
+            <View style={[styles.notiIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+              <Text style={styles.notiIcon}>🎉</Text>
+            </View>
+            <View style={styles.notiContent}>
+              <Text style={styles.notiTitle}>Commission Earned!</Text>
+              <Text style={styles.notiSub}>You earned ₹37,500 from Anjali Desai's investment in Aura IT Park.</Text>
+              <Text style={styles.notiTime}>2 hours ago</Text>
+            </View>
+          </View>
+
+          <View style={styles.notificationCard}>
+            <View style={[styles.notiIconBox, { backgroundColor: 'rgba(212, 175, 55, 0.1)' }]}>
+              <Text style={styles.notiIcon}>🏦</Text>
+            </View>
+            <View style={styles.notiContent}>
+              <Text style={styles.notiTitle}>Payout Credited</Text>
+              <Text style={styles.notiSub}>Your payout of ₹2,12,500 has been successfully credited to your bank account.</Text>
+              <Text style={styles.notiTime}>1 day ago</Text>
+            </View>
+          </View>
+
+          <View style={styles.notificationCard}>
+            <View style={[styles.notiIconBox, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+              <Text style={styles.notiIcon}>👥</Text>
+            </View>
+            <View style={styles.notiContent}>
+              <Text style={styles.notiTitle}>New Lead Signed Up</Text>
+              <Text style={styles.notiSub}>Rahul Sharma just signed up using your private referral link.</Text>
+              <Text style={styles.notiTime}>2 days ago</Text>
+            </View>
+          </View>
+        </View>
+        </View>
 
       {/* Bank Details Modal */}
       <Modal visible={showBankModal} animationType="slide" transparent>
@@ -394,8 +419,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    paddingHorizontal: 20,
     marginBottom: 20,
+    marginTop: Platform.OS === 'web' ? 0 : 20,
+  },
+  iconBtn: {
+    padding: 8,
   },
   backBtn: {
     padding: 5,
@@ -635,13 +663,147 @@ const styles = StyleSheet.create({
   leadName: {
     fontSize: 15,
     fontWeight: '800',
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  quickActionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 20,
+    backgroundColor: '#FFFFFF',
+    borderBottomWidth: 1,
+    borderBottomColor: '#E5E7EB',
+  },
+  quickActionBtn: {
+    flex: 1,
+    alignItems: 'center',
+    paddingVertical: 12,
+    backgroundColor: '#F9FAFB',
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginHorizontal: 4,
+  },
+  quickActionIcon: {
+    fontSize: 24,
+    marginBottom: 8,
+  },
+  quickActionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#111827',
+  },
+  notificationCard: {
+    flexDirection: 'row',
+    backgroundColor: '#FFFFFF',
+    borderRadius: Radius.lg,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 5,
+    elevation: 2,
+  },
+  notiIconBox: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  notiIcon: {
+    fontSize: 20,
+  },
+  notiContent: {
+    flex: 1,
+  },
+  notiTitle: {
+    fontSize: 14,
+    fontWeight: '800',
     color: '#111827',
     marginBottom: 4,
   },
-  leadProp: {
+  notiSub: {
+    fontSize: 12,
+    color: '#4B5563',
+    lineHeight: 18,
+    marginBottom: 8,
+  },
+  notiTime: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    fontWeight: '600',
+  },
+  sectionContainer: {
+    paddingTop: 24,
+    backgroundColor: '#FFFFFF',
+    borderTopWidth: 1,
+    borderTopColor: '#E5E7EB',
+  },
+  propertyCard: {
+    width: 260,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 16,
+    marginRight: 16,
+    overflow: 'hidden',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  propertyImage: {
+    width: '100%',
+    height: 140,
+  },
+  propertyInfo: {
+    padding: 12,
+  },
+  propertyTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  propertyLocation: {
     fontSize: 12,
     color: '#6B7280',
-    fontWeight: '500',
+    marginBottom: 12,
+  },
+  propertySplit: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  propertyPrice: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  propertyCommission: {
+    fontSize: 11,
+    fontWeight: '700',
+    color: '#059669',
+  },
+  propertyShareBtn: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingVertical: 8,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  propertyShareBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#111827',
   },
   leadStats: {
     alignItems: 'flex-end',

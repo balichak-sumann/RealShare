@@ -14,8 +14,15 @@ import { auth } from '@/lib/firebase';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { GuestView } from '@/components/ui/GuestView';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
+import { useUser } from '@/contexts/UserContext';
+import { AgentClientsScreen } from '@/components/agent/AgentClientsScreen';
 
 export default function PortfolioScreen() {
+  const { profile } = useUser();
+  if (profile?.role === 'agent') {
+    return <AgentClientsScreen />;
+  }
+
   const router = useRouter();
   const params = useLocalSearchParams();
   const [activeTab, setActiveTab] = useState('All');

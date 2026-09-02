@@ -53,7 +53,7 @@ function RootLayoutNav() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const { setProfile } = useUser();
+  const { setProfile, mfaVerified } = useUser();
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -68,9 +68,20 @@ function RootLayoutNav() {
 
     const inAuthGroup = segments[0] === '(auth)';
     const isVerifyScreen = segments[1] === 'verify-email';
+    const isMfaScreen = segments[1] === 'verify-otp';
 
     if (user) {
-      // Sync user to DB (bypassing email verification requirement for demo)
+      const isEmailAccount = user.providerData.some(p => p.providerId === 'password');
+      
+      // BYPASS: Temporarily disabled email verification
+      /*
+      if (isEmailAccount && !user.emailVerified && !isVerifyScreen) {
+        router.replace('/verify-email');
+        return;
+      }
+      */
+
+      // Sync user to DB
       user.getIdToken().then(async token => {
         let pushToken = null;
         try {
@@ -90,14 +101,27 @@ function RootLayoutNav() {
         .then(data => {
           if (data.success && data.profile) {
             setProfile(data.profile);
+            
+            // Check for Agent MFA Requirement
+            const isAgent = data.profile.role === 'agent';
+            
+            // BYPASS: Temporarily disabled MFA Phone Verification
+            /*
+            if (isEmailAccount && isAgent && !mfaVerified && !isMfaScreen) {
+              router.replace({ pathname: '/verify-otp', params: { phone: data.profile.phone_number || '' } });
+              return;
+            }
+            */
+
+            if (inAuthGroup && !isVerifyScreen && !isMfaScreen) {
+              router.replace('/');
+            }
           }
         })
         .catch(err => console.warn('Failed to sync user:', err.message));
       });
-
-      if (inAuthGroup) router.replace('/');
     }
-  }, [user, isLoaded, segments]);
+  }, [user, isLoaded, segments, mfaVerified]);
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

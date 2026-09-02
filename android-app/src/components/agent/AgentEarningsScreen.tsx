@@ -1,45 +1,19 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-import { useShortlist } from '@/contexts/ShortlistContext';
 import { MOCK_PROPERTIES } from '@/constants/mockData';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useRouter } from 'expo-router';
-import { GuestView } from '@/components/ui/GuestView';
-import { auth } from '@/lib/firebase';
-import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
-import { useUser } from '@/contexts/UserContext';
-import { AgentCRMScreen } from '@/components/agent/AgentCRMScreen';
 
-const COLLECTIONS = ['All Saved', 'Dream Home', 'Investment', 'Compare Later'];
+const COLLECTIONS = ['High Commission', 'Premium Residential', 'Commercial', 'Recently Viewed'];
 
-export default function ShortlistScreen() {
-  const { profile } = useUser();
-  if (profile?.role === 'agent') {
-    return <AgentCRMScreen />;
-  }
-
+export function AgentEarningsScreen() {
   const router = useRouter();
-  const { savedProperties } = useShortlist();
   const [activeTab, setActiveTab] = useState(COLLECTIONS[0]);
-  
-  if (!auth.currentUser) {
-    return (
-      <TabAnimationWrapper>
-      <GuestView 
-        title="Saved Properties" 
-        description="Sign in to save your favorite properties and compare them later." 
-        icon="♡"
-      />
-      </TabAnimationWrapper>
-    );
-  }
-
-  const properties = MOCK_PROPERTIES.filter(p => savedProperties.includes(p.id));
+  const properties = MOCK_PROPERTIES; // Agents see all top properties here
 
   return (
-    <TabAnimationWrapper>
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Shortlist</Text>
@@ -74,26 +48,33 @@ export default function ShortlistScreen() {
         ) : (
           <>
             <View style={styles.actionsRow}>
-              <Text style={styles.countText}>{properties.length} Properties</Text>
-              <TouchableOpacity onPress={() => router.push('/compare' as any)}>
-                <Text style={styles.compareText}>Compare Selected</Text>
+              <Text style={styles.countText}>{properties.length} Properties in list</Text>
+              <TouchableOpacity onPress={() => alert('Sharing selected properties...')}>
+                <Text style={styles.compareText}>Share Selected</Text>
               </TouchableOpacity>
             </View>
 
             {properties.map(prop => (
               <View key={prop.id} style={styles.cardWrapper}>
                 <PropertyCard {...prop} />
-                {/* Overlay Checkbox for Compare */}
+                
+                {/* Overlay Checkbox for Selection */}
                 <TouchableOpacity style={styles.checkboxOverlay}>
                   <View style={styles.checkbox} />
                 </TouchableOpacity>
+
+                {/* Agent Commission Badge Overlaid */}
+                <View style={styles.commissionBadge}>
+                  <Text style={styles.commissionBadgeText}>
+                    Est. Comm: ₹ {(Number(prop.price.replace(/[^0-9.]/g, '')) * 10000000 * 0.025).toLocaleString('en-IN')}
+                  </Text>
+                </View>
               </View>
             ))}
           </>
         )}
       </ScrollView>
     </View>
-    </TabAnimationWrapper>
   );
 }
 
@@ -158,7 +139,7 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: 16,
-    paddingBottom: 40,
+    paddingBottom: 100,
   },
   actionsRow: {
     flexDirection: 'row',
@@ -196,4 +177,19 @@ const styles = StyleSheet.create({
     borderColor: Neutrals.surface,
     backgroundColor: 'rgba(0,0,0,0.2)',
   },
+  commissionBadge: {
+    position: 'absolute',
+    bottom: 24,
+    right: 16,
+    backgroundColor: 'rgba(212, 175, 55, 0.9)', // Gold background
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    zIndex: 10,
+  },
+  commissionBadgeText: {
+    ...Typography.labelMedium,
+    color: Neutrals.obsidian,
+    fontWeight: '800',
+  }
 });

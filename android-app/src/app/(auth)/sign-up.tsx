@@ -28,11 +28,16 @@ export default function SignUpScreen() {
     try {
       if (user) {
         const token = await user.getIdToken();
+        const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+        const url = `${apiUrl}/api/users/sync`;
+        console.log('[syncUserToBackend] Fetching URL:', url);
+        console.log('[syncUserToBackend] Token prefix:', token?.substring(0, 20));
         const body: any = { role };
         if (referralCode) {
           body.referred_by_code = referralCode;
         }
-        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/users/sync`, {
+        console.log('[syncUserToBackend] Body:', JSON.stringify(body));
+        const res = await fetch(url, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -40,6 +45,7 @@ export default function SignUpScreen() {
           },
           body: JSON.stringify(body)
         });
+        console.log('[syncUserToBackend] Response status:', res.status);
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.profile) {
@@ -54,8 +60,9 @@ export default function SignUpScreen() {
           }
         }
       }
-    } catch (e) {
+    } catch (e: any) {
       console.error("Failed to sync role/referral", e);
+      console.error("[syncUserToBackend] Error name:", e?.name, "message:", e?.message);
     }
   };
 

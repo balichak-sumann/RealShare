@@ -25,6 +25,7 @@ interface DrawerWrapperProps {
 
 const MENU_ITEMS = [
   { icon: '👤', label: 'Profile', route: '/profile' },
+  { icon: '🏦', label: 'Bank Details', route: '/bank-details' },
   { icon: '🛠️', label: 'Services', route: '/services' },
   { icon: '⚙️', label: 'Settings', route: '/settings' },
   { icon: '🎫', label: 'My Tickets', route: '/my-tickets' },

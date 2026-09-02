@@ -90,11 +90,8 @@ export function AgentClientsScreen() {
             </View>
 
             <View style={styles.heroActions}>
-              <TouchableOpacity style={styles.heroBtnOutline} onPress={() => Alert.alert('Payouts', 'View detailed payout history.')}>
-                <Text style={styles.heroBtnOutlineText}>Payouts</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.heroBtnSolid} onPress={() => Alert.alert('Action', 'Generate Client Lead link.')}>
-                <Text style={styles.heroBtnSolidText}>+ Add Lead</Text>
+              <TouchableOpacity style={[styles.heroBtnOutline, { flex: 1, backgroundColor: 'transparent' }]} onPress={() => Alert.alert('Payouts', 'View detailed payout history.')}>
+                <Text style={styles.heroBtnOutlineText}>View Payout History</Text>
               </TouchableOpacity>
             </View>
           </View>

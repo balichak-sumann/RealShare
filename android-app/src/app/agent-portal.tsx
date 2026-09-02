@@ -20,6 +20,15 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Radius } from '@/constants/design';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { HeroCarousel } from '@/components/home/HeroCarousel';
+import { CategoryGrid } from '@/components/home/CategoryGrid';
+import { QuickActions } from '@/components/home/QuickActions';
+import { RecentActivity } from '@/components/home/RecentActivity';
+import { HotProjects } from '@/components/home/HotProjects';
+import { TopLocalities } from '@/components/home/TopLocalities';
+import { ServicesStrip } from '@/components/home/ServicesStrip';
+import { TopDevelopers } from '@/components/home/TopDevelopers';
+import { MOCK_PROPERTIES, MOCK_RESALE_PROPERTIES, MOCK_RENTAL_PROPERTIES } from '@/constants/mockData';
 const screenWidth = Dimensions.get('window').width;
 
 let LineChart: any = null;
@@ -39,15 +48,9 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
   const [error, setError] = useState('');
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [properties, setProperties] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
   
-  // Bank Details State
-  const [showBankModal, setShowBankModal] = useState(false);
-  const [bankSaved, setBankSaved] = useState(false);
-  const [accName, setAccName] = useState('');
-  const [accNumber, setAccNumber] = useState('');
-  const [ifsc, setIfsc] = useState('');
-
-  const [savingBank, setSavingBank] = useState(false);
+  const [showNotifications, setShowNotifications] = useState(false);
 
   useEffect(() => {
     if (profile && profile.role !== 'agent' && profile.role !== 'admin') {
@@ -124,46 +127,21 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
         }));
         setProperties(mappedProperties);
       }
-      
-      if (data.bankDetails) {
-        setAccName(data.bankDetails.accountName);
-        setAccNumber(data.bankDetails.accountNumber);
-        setIfsc(data.bankDetails.ifsc);
-        setBankSaved(true);
+
+      // Fetch Notifications
+      const notifRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/notifications`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (notifRes.ok) {
+        const notifData = await notifRes.json();
+        setNotifications(notifData);
       }
     } catch (err: any) {
       setError(err.message || 'An error occurred');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleSaveBankDetails = async () => {
-    setSavingBank(true);
-    try {
-      const user = auth.currentUser;
-      if (!user) return;
-      const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/bank`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          bank_account_name: accName,
-          bank_account_number: accNumber,
-          bank_ifsc: ifsc
-        })
-      });
-      if (res.ok) {
-        setBankSaved(true);
-        setShowBankModal(false);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setSavingBank(false);
     }
   };
 
@@ -208,8 +186,10 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
             <Text style={{ fontSize: 22, color: '#FFFFFF' }}>☰</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Wealth Partner Hub</Text>
-          <TouchableOpacity style={styles.iconBtn}>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => setShowNotifications(true)}>
             <Text style={{ fontSize: 20, color: '#FFFFFF' }}>🔔</Text>
+            {/* Notification Badge indicator */}
+            <View style={{ position: 'absolute', top: 6, right: 8, width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' }} />
           </TouchableOpacity>
         </View>
 
@@ -236,51 +216,43 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
       </LinearGradient>
 
       <View style={styles.content}>
-        
-        {/* Quick Actions Row */}
-        <View style={styles.quickActionsContainer}>
-          <TouchableOpacity style={styles.quickActionBtn} onPress={handleCopy}>
-            <Text style={styles.quickActionIcon}>🔗</Text>
-            <Text style={styles.quickActionText}>Copy Link</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/portfolio' as any)}>
-            <Text style={styles.quickActionIcon}>👥</Text>
-            <Text style={styles.quickActionText}>Add Lead</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.quickActionBtn} onPress={() => router.push('/explore' as any)}>
-            <Text style={styles.quickActionIcon}>🏢</Text>
-            <Text style={styles.quickActionText}>Inventory</Text>
-          </TouchableOpacity>
+        <HeroCarousel />
+        <CategoryGrid />
+        <QuickActions />
+        <RecentActivity />
+
+        <View style={{ marginBottom: 24, paddingLeft: 16 }}>
+          <SectionHeader title="Featured Properties" onViewAll={() => {}} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
+            {MOCK_PROPERTIES.map((prop) => (
+              <PropertyCard key={prop.id} {...prop} compact />
+            ))}
+          </ScrollView>
         </View>
 
-        {/* Bank Details Card */}
-        <View style={styles.bankCard}>
-          <View style={styles.bankHeader}>
-            <Text style={styles.cardTitle}>🏦 Payout Bank Account</Text>
-            {bankSaved ? (
-              <View style={styles.bankSavedBadge}>
-                <Text style={styles.bankSavedText}>VERIFIED</Text>
-              </View>
-            ) : null}
-          </View>
-          {bankSaved ? (
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-              <Text style={{ fontSize: 14, color: '#4B5563', fontWeight: '500' }}>
-                {accName || 'Bank Account'} (•••• {accNumber ? accNumber.slice(-4) : 'XXXX'})
-              </Text>
-              <TouchableOpacity onPress={() => setShowBankModal(true)}>
-                <Text style={{ color: '#D4AF37', fontSize: 12, fontWeight: '700' }}>EDIT</Text>
-              </TouchableOpacity>
-            </View>
-          ) : (
-            <View>
-              <Text style={styles.cardSubtitle}>Add your bank details to receive commission payouts automatically.</Text>
-              <TouchableOpacity style={styles.bankAddBtn} onPress={() => setShowBankModal(true)}>
-                <Text style={styles.bankAddBtnText}>+ Add Bank Details</Text>
-              </TouchableOpacity>
-            </View>
-          )}
+        <TopDevelopers />
+        <HotProjects />
+
+        <View style={{ marginBottom: 24, paddingLeft: 16 }}>
+          <SectionHeader title="Resale Properties" onViewAll={() => {}} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
+            {MOCK_RESALE_PROPERTIES.map((prop) => (
+              <PropertyCard key={prop.id} {...prop} compact />
+            ))}
+          </ScrollView>
         </View>
+        
+        <View style={{ marginBottom: 24, paddingLeft: 16 }}>
+          <SectionHeader title="Properties for Rent" onViewAll={() => {}} />
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 16 }}>
+            {MOCK_RENTAL_PROPERTIES.map((prop) => (
+              <PropertyCard key={prop.id} {...prop} compact />
+            ))}
+          </ScrollView>
+        </View>
+
+        <TopLocalities />
+        <ServicesStrip />
 
         {/* Referral Link Generator - Gold Accent */}
         <View style={styles.referralCard}>
@@ -304,93 +276,48 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
           </View>
         </View>
 
-        {/* Hot Properties to Pitch */}
-        <View style={{ marginBottom: 24 }}>
-          <SectionHeader title="🔥 Hot Properties to Pitch" onViewAll={() => {}} />
-          <Text style={{ fontSize: 13, color: '#6B7280', paddingHorizontal: 16, marginTop: -8, marginBottom: 12 }}>Share these high-commission properties with your clients.</Text>
-          <ScrollView 
-            horizontal 
-            showsHorizontalScrollIndicator={false} 
-            contentContainerStyle={{ paddingHorizontal: 0 }}
-            ref={scrollRef}
-            pagingEnabled={true}
-            onScrollBeginDrag={() => clearInterval(undefined)}
-          >
-            {properties.map((prop, idx) => (
-              <View key={prop.id} style={{ width: screenWidth - 40, paddingRight: 20 }}>
-                <PropertyCard 
-                  {...prop} 
-                  compact={false}
-                  agentCommission="Est. Earn: 2.5%"
-                  onShare={() => alert(`Sharing link for ${prop.title}...`)}
-                />
-              </View>
-            ))}
-          </ScrollView>
+        {/* Big Copy Link Button */}
+        <TouchableOpacity 
+          style={[styles.quickActionBtn, { marginHorizontal: 20, marginBottom: 24, width: 'auto', alignSelf: 'stretch', flexDirection: 'row', justifyContent: 'center' }]} 
+          onPress={handleCopy}
+        >
+          <Text style={[styles.quickActionIcon, { marginRight: 8, marginBottom: 0 }]}>🔗</Text>
+          <Text style={[styles.quickActionText, { fontSize: 16 }]}>{copied ? 'Link Copied!' : 'Copy Referral Link'}</Text>
+        </TouchableOpacity>
+
         </View>
 
-        {/* Instant Notifications Feed */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Instant Notifications</Text>
-          
-          <View style={styles.notificationCard}>
-            <View style={[styles.notiIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-              <Text style={styles.notiIcon}>🎉</Text>
+      {/* Notifications Modal */}
+      <Modal visible={showNotifications} animationType="fade" transparent>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '80%' }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 20 }}>
+              <Text style={styles.modalTitle}>Notifications</Text>
+              <TouchableOpacity onPress={() => setShowNotifications(false)}>
+                <Text style={{ fontSize: 24, color: '#9CA3AF' }}>✕</Text>
+              </TouchableOpacity>
             </View>
-            <View style={styles.notiContent}>
-              <Text style={styles.notiTitle}>Commission Earned!</Text>
-              <Text style={styles.notiSub}>You earned ₹37,500 from Anjali Desai's investment in Aura IT Park.</Text>
-              <Text style={styles.notiTime}>2 hours ago</Text>
-            </View>
-          </View>
 
-          <View style={styles.notificationCard}>
-            <View style={[styles.notiIconBox, { backgroundColor: 'rgba(212, 175, 55, 0.1)' }]}>
-              <Text style={styles.notiIcon}>🏦</Text>
-            </View>
-            <View style={styles.notiContent}>
-              <Text style={styles.notiTitle}>Payout Credited</Text>
-              <Text style={styles.notiSub}>Your payout of ₹2,12,500 has been successfully credited to your bank account.</Text>
-              <Text style={styles.notiTime}>1 day ago</Text>
-            </View>
-          </View>
-
-          <View style={styles.notificationCard}>
-            <View style={[styles.notiIconBox, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-              <Text style={styles.notiIcon}>👥</Text>
-            </View>
-            <View style={styles.notiContent}>
-              <Text style={styles.notiTitle}>New Lead Signed Up</Text>
-              <Text style={styles.notiSub}>Rahul Sharma just signed up using your private referral link.</Text>
-              <Text style={styles.notiTime}>2 days ago</Text>
-            </View>
-          </View>
-        </View>
-        </View>
-
-      {/* Bank Details Modal */}
-      <Modal visible={showBankModal} animationType="slide" transparent>
-        <View style={styles.modalBackdrop}>
-          <View style={styles.modalSheet}>
-            <View style={styles.modalHandle} />
-            <Text style={styles.modalTitle}>Bank Details</Text>
-            <Text style={styles.modalSubtitle}>Link your bank account for secure commission payouts.</Text>
-
-            <Text style={styles.inputLabel}>Account Holder Name</Text>
-            <TextInput style={styles.input} placeholder="As per bank records" value={accName} onChangeText={setAccName} placeholderTextColor="#9CA3AF" />
-
-            <Text style={styles.inputLabel}>Account Number</Text>
-            <TextInput style={styles.input} placeholder="e.g. 000012345678" value={accNumber} onChangeText={setAccNumber} keyboardType="number-pad" secureTextEntry={false} placeholderTextColor="#9CA3AF" />
-
-            <Text style={styles.inputLabel}>IFSC Code</Text>
-            <TextInput style={styles.input} placeholder="e.g. SBIN0001234" value={ifsc} onChangeText={setIfsc} autoCapitalize="characters" placeholderTextColor="#9CA3AF" />
-
-            <TouchableOpacity style={styles.saveBankBtn} onPress={handleSaveBankDetails} disabled={savingBank}>
-              {savingBank ? <ActivityIndicator color="#D4AF37" /> : <Text style={styles.saveBankText}>Securely Save Details</Text>}
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelBankBtn} onPress={() => setShowBankModal(false)} disabled={savingBank}>
-              <Text style={styles.cancelBankText}>Cancel</Text>
-            </TouchableOpacity>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {notifications.length === 0 ? (
+                <View style={{ padding: 20, alignItems: 'center' }}>
+                  <Text style={{ color: '#6B7280' }}>No new notifications.</Text>
+                </View>
+              ) : (
+                notifications.map(noti => (
+                  <View key={noti.id} style={styles.notificationCard}>
+                    <View style={[styles.notiIconBox, { backgroundColor: noti.iconBg }]}>
+                      <Text style={styles.notiIcon}>{noti.icon}</Text>
+                    </View>
+                    <View style={styles.notiContent}>
+                      <Text style={styles.notiTitle}>{noti.title}</Text>
+                      <Text style={styles.notiSub}>{noti.message}</Text>
+                      <Text style={styles.notiTime}>{new Date(noti.time).toLocaleDateString('en-IN')} {new Date(noti.time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}</Text>
+                    </View>
+                  </View>
+                ))
+              )}
+            </ScrollView>
           </View>
         </View>
       </Modal>

@@ -300,3 +300,30 @@ create policy "Promotional banners viewable by all" on promotional_banners for s
 create policy "Admins can manage banners" on promotional_banners for all using (
   exists (select 1 from public.profiles where profiles.id = auth.uid() and profiles.role = 'admin')
 );
+
+-- 12. Agent CRM (Clients & Property Assignments)
+create table if not exists public.agent_clients (
+  id uuid default gen_random_uuid() primary key,
+  agent_id uuid references public.profiles(id) on delete cascade not null,
+  client_name text not null,
+  phone_number text not null,
+  target_budget text,
+  status text check (status in ('Hot Lead', 'In Discussions', 'Looking for ROI', 'Closed')) default 'Hot Lead',
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+alter table public.agent_clients enable row level security;
+create policy ""Agents can manage their own clients"" on agent_clients for all using (auth.uid() = agent_id);
+
+create table if not exists public.agent_client_properties (
+  id uuid default gen_random_uuid() primary key,
+  client_id uuid references public.agent_clients(id) on delete cascade not null,
+  property_id uuid references public.properties(id) on delete cascade not null,
+  assigned_at timestamp with time zone default timezone('utc'::text, now()) not null,
+  unique(client_id, property_id)
+);
+
+alter table public.agent_client_properties enable row level security;
+create policy ""Agents can manage their client property assignments"" on agent_client_properties for all using (
+  exists (select 1 from public.agent_clients where agent_clients.id = client_id and agent_clients.agent_id = auth.uid())
+);

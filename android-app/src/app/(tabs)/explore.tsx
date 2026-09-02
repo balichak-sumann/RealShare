@@ -431,13 +431,31 @@ export default function ExploreScreen() {
                       </View>
                     </View>
 
-                    <Link href={`/property/${prop.id}`} asChild>
-                      <TouchableOpacity style={StyleSheet.flatten([styles.cardBtn, isAgent && { backgroundColor: '#111827' }, isEmployee && { backgroundColor: '#1E3A8A' }])}>
-                        <Text style={[styles.cardBtnText, isAgent && { color: '#D4AF37' }, isEmployee && { color: '#FFFFFF' }]}>
-                          {isAgent ? 'Agent Toolkit & Details' : isEmployee ? 'View Internal Details' : 'View Details'}
-                        </Text>
-                      </TouchableOpacity>
-                    </Link>
+                    {isAgent && (
+                      <View style={styles.agentInfoBox}>
+                        <Text style={styles.agentInfoLabel}>Est. Commission (2.5%)</Text>
+                        <Text style={styles.agentInfoValue}>₹ {(Number(prop.price_per_fraction) * 0.025).toLocaleString('en-IN')}</Text>
+                      </View>
+                    )}
+
+                    <View style={isAgent ? { flexDirection: 'row', gap: 8 } : {}}>
+                      <Link href={`/property/${prop.id}`} asChild style={isAgent ? { flex: 1 } : {}}>
+                        <TouchableOpacity style={StyleSheet.flatten([styles.cardBtn, isAgent && { backgroundColor: '#111827' }, isEmployee && { backgroundColor: '#1E3A8A' }])}>
+                          <Text style={[styles.cardBtnText, isAgent && { color: '#D4AF37' }, isEmployee && { color: '#FFFFFF' }]}>
+                            {isAgent ? 'Agent Toolkit' : isEmployee ? 'View Internal Details' : 'View Details'}
+                          </Text>
+                        </TouchableOpacity>
+                      </Link>
+                      
+                      {isAgent && (
+                        <TouchableOpacity 
+                          style={styles.shareBtn}
+                          onPress={() => alert('Sharing link with client...')}
+                        >
+                          <Text style={styles.shareBtnText}>Share</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
 
                   </View>
               </View>
@@ -720,6 +738,41 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '700',
     fontSize: 14,
+  },
+  agentInfoBox: {
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 16,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  agentInfoLabel: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#D4AF37',
+  },
+  agentInfoValue: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#111827',
+  },
+  shareBtn: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  shareBtnText: {
+    color: '#4B5563',
+    fontWeight: '700',
+    fontSize: 13,
   },
 });
 

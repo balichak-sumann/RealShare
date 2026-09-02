@@ -24,7 +24,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(firebaseUser);
       setLoading(false);
 
-      if (!firebaseUser && pathname !== '/login' && pathname !== '/signup') {
+      const publicPaths = ['/login', '/signup', '/agent-login'];
+      const agentPaths = ['/agent-login', '/agent-portal'];
+
+      if (!firebaseUser && !publicPaths.includes(pathname) && !agentPaths.includes(pathname)) {
         router.push('/login');
       } else if (firebaseUser && (pathname === '/login' || pathname === '/signup')) {
         router.push('/');

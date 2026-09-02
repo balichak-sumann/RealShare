@@ -154,6 +154,10 @@ export default function Login() {
         <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '14px', color: '#64748B' }}>
           Need to set up the first admin? <Link href="/signup" style={{ color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}>Create Account</Link>
         </div>
+
+        <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '14px', color: '#64748B' }}>
+          Are you a Wealth Partner? <Link href="/agent-login" style={{ color: '#D97706', fontWeight: 600, textDecoration: 'none' }}>Agent Portal Login →</Link>
+        </div>
       </div>
     </div>
   );

@@ -18,6 +18,8 @@ interface PropertyCardProps {
   isVerified?: boolean;
   onShortlist?: () => void;
   compact?: boolean;
+  agentCommission?: string;
+  onShare?: () => void;
 }
 
 export function PropertyCard({
@@ -32,6 +34,8 @@ export function PropertyCard({
   isVerified = true,
   onShortlist,
   compact = false,
+  agentCommission,
+  onShare,
 }: PropertyCardProps) {
   const router = useRouter();
   const { isShortlisted, toggleShortlist } = useShortlist();
@@ -79,6 +83,30 @@ export function PropertyCard({
           <Text style={styles.dot}>•</Text>
           <Text style={styles.feature}>{area} sq.ft</Text>
         </View>
+
+        {agentCommission && (
+          <View style={{ marginTop: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={{ fontSize: 13, color: '#4B5563', fontWeight: '500' }}>Commission</Text>
+            <View style={{ backgroundColor: '#D1FAE5', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
+              <Text style={{ color: '#059669', fontSize: 12, fontWeight: '800' }}>{agentCommission}</Text>
+            </View>
+          </View>
+        )}
+
+        {onShare && (
+          <TouchableOpacity 
+            onPress={onShare}
+            style={{ 
+              marginTop: 16, 
+              backgroundColor: '#111827', 
+              paddingVertical: 10, 
+              borderRadius: 8, 
+              alignItems: 'center' 
+            }}
+          >
+            <Text style={{ color: '#D4AF37', fontWeight: '800', fontSize: 13 }}>Share Listing</Text>
+          </TouchableOpacity>
+        )}
       </View>
     </PremiumCard>
   );

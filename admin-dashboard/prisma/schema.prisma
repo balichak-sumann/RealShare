@@ -40,6 +40,8 @@ model Profile {
   assigned_sales_rep_id     String?
   assigned_sales_rep        Profile?          @relation("SalesAssignment", fields: [assigned_sales_rep_id], references: [id])
   assigned_clients          Profile[]         @relation("SalesAssignment")
+  agent_clients             AgentClient[]     @relation("AgentClients")
+  chat_messages             ChatMessage[]
 
   @@map("profiles")
 }
@@ -98,6 +100,7 @@ model Property {
   investments       Investment[]
   transactions      Transaction[]
   agent_commissions AgentCommission[]
+  agent_client_assignments AgentClientProperty[]
 
   @@map("properties")
 }
@@ -174,4 +177,48 @@ model AgentCommission {
   investment Investment @relation(fields: [investment_id], references: [id])
 
   @@map("agent_commissions")
+}
+
+model AgentClient {
+  id             String   @id @default(uuid()) @db.Uuid
+  agent_id       String
+  client_name    String
+  phone_number   String
+  target_budget  String?
+  status         String   @default("Hot Lead")
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+
+  agent          Profile  @relation("AgentClients", fields: [agent_id], references: [id])
+  assignments    AgentClientProperty[]
+  chat_messages  ChatMessage[]
+
+  @@map("agent_clients")
+}
+
+model AgentClientProperty {
+  id             String   @id @default(uuid()) @db.Uuid
+  client_id      String   @db.Uuid
+  property_id    String   @db.Uuid
+  assigned_at    DateTime @default(now()) @db.Timestamptz(6)
+
+  client         AgentClient @relation(fields: [client_id], references: [id], onDelete: Cascade)
+  property       Property    @relation(fields: [property_id], references: [id], onDelete: Cascade)
+
+  @@unique([client_id, property_id])
+  @@map("agent_client_properties")
+}
+
+model ChatMessage {
+  id          String   @id @default(uuid()) @db.Uuid
+  agent_id    String
+  client_id   String   @db.Uuid
+  message     String
+  sender      String   // "agent" or "client"
+  read        Boolean  @default(false)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  agent       Profile     @relation(fields: [agent_id], references: [id])
+  client      AgentClient @relation(fields: [client_id], references: [id])
+
+  @@map("chat_messages")
 }

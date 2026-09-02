@@ -25,6 +25,7 @@ export default function TabLayout() {
             
             {/* Accessible via drawer */}
             <Tabs.Screen name="explore" options={{ title: 'Explore' }} />
+            <Tabs.Screen name="clients" options={{ title: 'Clients', href: null }} />
           </Tabs>
           <FloatingHelpButton />
         </View>

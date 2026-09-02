@@ -3,27 +3,64 @@ import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useUser } from '@/contexts/UserContext';
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+  const { profile } = useUser();
+  const isAgent = profile?.role === 'agent';
+
   return (
     <View style={styles.tabBar}>
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key];
-        
+      {(() => {
         // Explicitly hide these tabs from the bottom bar
-        const hiddenRoutes = ['search', 'profile'];
-        if (hiddenRoutes.includes(route.name)) {
-          return null;
+        const hiddenRoutes = ['search', 'profile', 'clients'];
+        
+        // Custom agent tabs vs investor tabs
+        if (isAgent) {
+          // Agents don't see search, but they do see clients
+          const index = hiddenRoutes.indexOf('clients');
+          if (index > -1) hiddenRoutes.splice(index, 1);
+        } else {
+          // Investors see search, don't see clients
+          const index = hiddenRoutes.indexOf('search');
+          if (index > -1) hiddenRoutes.splice(index, 1);
         }
 
-        const label =
-          options.tabBarLabel !== undefined
-            ? options.tabBarLabel
-            : options.title !== undefined
-            ? options.title
-            : route.name;
+        const visibleRoutes = state.routes.filter(route => {
+          let isHidden = hiddenRoutes.includes(route.name);
+          // Keep explore hidden for investors, but show it for agents
+          if (route.name === 'explore' && !isAgent) {
+            isHidden = true;
+          }
+          return !isHidden;
+        });
 
-        const isFocused = state.index === index;
+        // Desired order for Agents: Portfolio | Shortlist | Home | Clients | Explore
+        const order = isAgent 
+          ? ['portfolio', 'shortlist', 'index', 'clients', 'explore']
+          : ['portfolio', 'shortlist', 'index', 'search']; // Investor order
+
+        const sortedRoutes = [...visibleRoutes].sort((a, b) => {
+          let indexA = order.indexOf(a.name);
+          let indexB = order.indexOf(b.name);
+          if (indexA === -1) indexA = 99;
+          if (indexB === -1) indexB = 99;
+          return indexA - indexB;
+        });
+
+        return sortedRoutes.map((route) => {
+          // find original index for state tracking
+          const originalIndex = state.routes.findIndex(r => r.key === route.key);
+          const { options } = descriptors[route.key];
+
+          let label =
+            options.tabBarLabel !== undefined
+              ? options.tabBarLabel
+              : options.title !== undefined
+              ? options.title
+              : route.name;
+
+          const isFocused = state.index === originalIndex;
 
         const onPress = () => {
           const event = navigation.emit({
@@ -37,45 +74,58 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           }
         };
 
-        const onLongPress = () => {
-          navigation.emit({
-            type: 'tabLongPress',
-            target: route.key,
-          });
-        };
+          const onLongPress = () => {
+            navigation.emit({
+              type: 'tabLongPress',
+              target: route.key,
+            });
+          };
 
+          const isHome = route.name === 'index';
 
-        const icon = (() => {
-          if (route.name === 'index') return '🏠';
-          if (route.name === 'search') return '🔍';
-          if (route.name === 'shortlist') return '♡';
-          if (route.name === 'portfolio') return '💼';
-          if (route.name === 'profile') return '👤';
-          if (route.name === 'explore') return '🔍';
-          return '•';
-        })();
+        let icon = '•';
+        
+          if (route.name === 'index') { label = 'Home'; icon = '🏠'; }
+          else if (route.name === 'portfolio') { label = 'Portfolio'; icon = '💼'; }
+          else if (route.name === 'shortlist') { label = 'Shortlist'; icon = '♡'; }
+          else if (route.name === 'explore') { label = 'Explore'; icon = '🔍'; }
+          else if (route.name === 'clients') { label = 'Clients'; icon = '👥'; }
+          else if (route.name === 'profile') icon = '👤';
+          else if (route.name === 'search') icon = '🔍';
 
-        return (
-          <TouchableOpacity
-            key={route.key}
-            accessibilityRole="button"
-            accessibilityState={isFocused ? { selected: true } : {}}
-            accessibilityLabel={options.tabBarAccessibilityLabel}
-            testID={(options as any).tabBarTestID}
-            onPress={onPress}
-            onLongPress={onLongPress}
-            style={styles.tabContainer}
-          >
-            <Text style={[styles.icon, isFocused && styles.activeIcon]}>
-              {icon}
-            </Text>
-            <Text style={[styles.label, isFocused && styles.activeLabel]}>
-              {label as string}
-            </Text>
-            {isFocused && <View style={styles.indicator} />}
-          </TouchableOpacity>
-        );
-      })}
+          return (
+            <TouchableOpacity
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityState={isFocused ? { selected: true } : {}}
+              accessibilityLabel={options.tabBarAccessibilityLabel}
+              testID={(options as any).tabBarTestID}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              style={[styles.tabContainer, isHome && styles.homeTabContainer]}
+            >
+              {isHome ? (
+                <LinearGradient
+                  colors={['#D4AF37', '#B8860B']}
+                  style={styles.homeBtnBubble}
+                >
+                  <Text style={[styles.icon, styles.homeIcon]}>{icon}</Text>
+                </LinearGradient>
+              ) : (
+                <>
+                  <Text style={[styles.icon, isFocused && styles.activeIcon]}>
+                    {icon}
+                  </Text>
+                  <Text style={[styles.label, isFocused && styles.activeLabel]}>
+                    {label as string}
+                  </Text>
+                  {isFocused && <View style={styles.indicator} />}
+                </>
+              )}
+            </TouchableOpacity>
+          );
+        });
+      })()}
     </View>
   );
 }
@@ -122,5 +172,25 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: 2,
     backgroundColor: GoldSystem.primaryGold,
+  },
+  homeTabContainer: {
+    transform: [{ translateY: -15 }], // pop out slightly above the bar
+  },
+  homeBtnBubble: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 8,
+  },
+  homeIcon: {
+    fontSize: 28,
+    color: '#FFFFFF',
+    marginBottom: 0,
   },
 });

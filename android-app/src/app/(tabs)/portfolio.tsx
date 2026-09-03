@@ -40,79 +40,15 @@ export default function PortfolioScreen() {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
-        
-        // Mock data fallback if the user has no real investments yet
-        if (data.investments && data.investments.length > 0) {
-          setPortfolio(data.investments);
-        } else {
-          setPortfolio([
-            {
-              id: 'inv-1',
-              status: 'active',
-              total_amount: 5000000, // 50 Lakhs
-              ownership_percentage: 12.5,
-              property: {
-                id: 'prop-1',
-                title: 'The Obsidian Tower',
-                locality: 'BKC, Mumbai',
-                assured_yield: 14.2,
-                images: [{ image_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&q=80&w=1000' }]
-              }
-            },
-            {
-              id: 'inv-2',
-              status: 'completed',
-              total_amount: 2500000, // 25 Lakhs
-              ownership_percentage: 5.0,
-              property: {
-                id: 'prop-2',
-                title: 'Aura IT Park',
-                locality: 'Whitefield, Bangalore',
-                assured_yield: 11.5,
-                images: [{ image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000' }]
-              }
-            }
-          ]);
-        }
 
-        if (data.user) {
-          setUser(data.user);
-        } else {
-          // Provide a mock wallet balance if missing
-          setUser({ wallet_balance: 1250000 });
-        }
+        // Real investments only — an investor with none genuinely has an
+        // empty portfolio, and the UI below has a proper empty state for that.
+        setPortfolio(Array.isArray(data.investments) ? data.investments : []);
+        setUser(data.user || null);
       } catch (err) {
-        console.warn('Failed to fetch portfolio (expected in mock mode):', err);
-        // Fallback to mock data if API completely fails (e.g., mock auth user)
-        setPortfolio([
-          {
-            id: 'inv-1',
-            status: 'active',
-            total_amount: 5000000,
-            ownership_percentage: 12.5,
-            property: {
-              id: 'prop-1',
-              title: 'The Obsidian Tower',
-              locality: 'BKC, Mumbai',
-              assured_yield: 14.2,
-              images: [{ image_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&q=80&w=1000' }]
-            }
-          },
-          {
-            id: 'inv-2',
-            status: 'completed',
-            total_amount: 2500000,
-            ownership_percentage: 5.0,
-            property: {
-              id: 'prop-2',
-              title: 'Aura IT Park',
-              locality: 'Whitefield, Bangalore',
-              assured_yield: 11.5,
-              images: [{ image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000' }]
-            }
-          }
-        ]);
-        setUser({ wallet_balance: 1250000 });
+        console.warn('Failed to fetch portfolio:', err);
+        setPortfolio([]);
+        setUser(null);
       } finally {
         setLoading(false);
       }
@@ -189,9 +125,7 @@ export default function PortfolioScreen() {
                 <Text style={styles.heroSubtitle}>Total Net Worth</Text>
                 <Text style={styles.heroTitle}>₹ {totalNetWorth.toLocaleString('en-IN')}</Text>
               </View>
-              <View style={styles.growthBadge}>
-                <Text style={styles.growthBadgeText}>↑ +14.2%</Text>
-              </View>
+
             </View>
             
             <View style={styles.heroSplit}>
@@ -339,7 +273,7 @@ export default function PortfolioScreen() {
                   </View>
                 </TouchableOpacity>
                 <View style={styles.assetActions}>
-                  <TouchableOpacity style={styles.assetActionBtnOutline} onPress={() => Alert.alert('Payment Schedule', 'Installment #1: Paid\nInstallment #2: Due Oct 15\nAmount: ₹12,50,000')}>
+                  <TouchableOpacity style={styles.assetActionBtnOutline} onPress={() => Alert.alert('Payment Schedule', 'Payment schedules are coming soon.')}>
                     <Text style={styles.assetActionBtnOutlineText}>Payments</Text>
                   </TouchableOpacity>
                   <TouchableOpacity style={styles.assetActionBtnOutline} onPress={() => Alert.alert('Secondary Market', 'Listing process initiated. Our wealth managers will contact you.')}>

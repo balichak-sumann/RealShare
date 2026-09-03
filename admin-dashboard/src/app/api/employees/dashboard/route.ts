@@ -65,13 +65,26 @@ export async function GET(req: Request) {
     } 
     
     if (department === 'support') {
-      // Mocked tickets (since there's no actual Ticket schema yet, but in a real app this would query a tickets table)
-      return NextResponse.json({ 
-        supportTickets: [
-          { ticketId: 'TCK-101', user: 'Vikram Singh', query: 'Aadhaar upload failing due to blur image', priority: 'High', status: 'Open' },
-          { ticketId: 'TCK-102', user: 'Anjali Desai', query: 'Question regarding rental yield distribution bank account', priority: 'Medium', status: 'In Progress' },
-          { ticketId: 'TCK-103', user: 'Meera Nair', query: 'Request for digital share certificate duplicate', priority: 'Low', status: 'Resolved' },
-        ]
+      const tickets = await prisma.supportTicket.findMany({
+        orderBy: { created_at: 'desc' },
+        take: 50,
+      });
+      const userIds = [...new Set(tickets.map((t) => t.user_id))];
+      const users = await prisma.profile.findMany({
+        where: { id: { in: userIds } },
+        select: { id: true, full_name: true },
+      });
+      const nameById = new Map(users.map((u) => [u.id, u.full_name]));
+      const priorityLabel: Record<string, string> = { low: 'Low', medium: 'Medium', high: 'High' };
+      const statusLabel: Record<string, string> = { open: 'Open', in_progress: 'In Progress', resolved: 'Resolved' };
+      return NextResponse.json({
+        supportTickets: tickets.map((t) => ({
+          ticketId: t.ticket_number,
+          user: nameById.get(t.user_id) || 'Unknown',
+          query: t.subject,
+          priority: priorityLabel[t.priority] || t.priority,
+          status: statusLabel[t.status] || t.status,
+        })),
       });
     }
 

@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { useShortlist } from '@/contexts/ShortlistContext';
-import { MOCK_PROPERTIES } from '@/constants/mockData';
+import { propertyToCardProps } from '@/lib/formatters';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useRouter } from 'expo-router';
@@ -23,7 +23,28 @@ export default function ShortlistScreen() {
   const router = useRouter();
   const { savedProperties } = useShortlist();
   const [activeTab, setActiveTab] = useState(COLLECTIONS[0]);
-  
+  const [properties, setProperties] = useState<any[]>([]);
+
+  useEffect(() => {
+    if (savedProperties.length === 0) {
+      setProperties([]);
+      return;
+    }
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    (async () => {
+      try {
+        const results = await Promise.all(
+          savedProperties.map((id) =>
+            fetch(`${API_URL}/api/properties/${id}`).then((r) => (r.ok ? r.json() : null))
+          )
+        );
+        setProperties(results.filter(Boolean).map(propertyToCardProps));
+      } catch (e) {
+        console.log('Failed to load shortlisted properties', e);
+      }
+    })();
+  }, [savedProperties]);
+
   if (!auth.currentUser) {
     return (
       <TabAnimationWrapper>
@@ -35,8 +56,6 @@ export default function ShortlistScreen() {
       </TabAnimationWrapper>
     );
   }
-
-  const properties = MOCK_PROPERTIES.filter(p => savedProperties.includes(p.id));
 
   return (
     <TabAnimationWrapper>

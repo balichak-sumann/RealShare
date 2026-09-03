@@ -9,20 +9,45 @@ import {
   Alert
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { auth } from '@/lib/firebase';
 
 export default function SupportScreen() {
   const router = useRouter();
   const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!message) return;
-    if (typeof window !== 'undefined') {
-      alert('Support ticket submitted successfully! We will contact you soon.');
-    } else {
-      Alert.alert("Success", "Support ticket submitted successfully! We will contact you soon.");
+    const user = auth.currentUser;
+    if (!user) {
+      Alert.alert('Sign in required', 'Please sign in to submit a support request.');
+      return;
     }
-    setMessage('');
-    router.back();
+    setSubmitting(true);
+    try {
+      const token = await user.getIdToken();
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/tickets`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          category: 'general',
+          subject: message.slice(0, 80),
+          description: message,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        Alert.alert('Error', err.error || 'Failed to submit your request. Please try again.');
+        return;
+      }
+      Alert.alert('Success', 'Support ticket submitted successfully! We will contact you soon.');
+      setMessage('');
+      router.back();
+    } catch (e) {
+      Alert.alert('Error', 'Failed to submit your request. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   return (

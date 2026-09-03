@@ -1,18 +1,35 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
+import { auth } from '@/lib/firebase';
+import { signOut } from 'firebase/auth';
 
 export default function SettingsScreen() {
   const router = useRouter();
+  const [toggles, setToggles] = useState<Record<string, boolean>>({
+    '1': true, // Push Notifications
+    '2': false, // Email Alerts
+    '3': false, // Dark Mode
+    '6': true, // Biometric Login
+  });
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      router.replace('/(auth)/sign-in' as any);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to log out. Please try again.');
+    }
+  };
 
   const SETTINGS_SECTIONS = [
     {
       title: 'Preferences',
       items: [
-        { id: '1', title: 'Push Notifications', type: 'toggle', value: true },
-        { id: '2', title: 'Email Alerts', type: 'toggle', value: false },
-        { id: '3', title: 'Dark Mode', type: 'toggle', value: false },
+        { id: '1', title: 'Push Notifications', type: 'toggle' },
+        { id: '2', title: 'Email Alerts', type: 'toggle' },
+        { id: '3', title: 'Dark Mode', type: 'toggle' },
       ]
     },
     {
@@ -20,7 +37,7 @@ export default function SettingsScreen() {
       items: [
         { id: '4', title: 'Change Password', type: 'link' },
         { id: '5', title: 'Two-Factor Authentication', type: 'link' },
-        { id: '6', title: 'Biometric Login', type: 'toggle', value: true },
+        { id: '6', title: 'Biometric Login', type: 'toggle' },
       ]
     },
     {
@@ -51,11 +68,16 @@ export default function SettingsScreen() {
             <View style={styles.sectionCard}>
               {section.items.map((item, itemIdx) => (
                 <View key={item.id}>
-                  <TouchableOpacity style={styles.settingItem} disabled={item.type === 'toggle'}>
+                  <TouchableOpacity
+                    style={styles.settingItem}
+                    disabled={item.type === 'toggle'}
+                    onPress={() => Alert.alert(item.title, 'This is coming soon.')}
+                  >
                     <Text style={styles.settingTitle}>{item.title}</Text>
                     {item.type === 'toggle' ? (
-                      <Switch 
-                        value={item.value} 
+                      <Switch
+                        value={!!toggles[item.id]}
+                        onValueChange={(val) => setToggles((prev) => ({ ...prev, [item.id]: val }))}
                         trackColor={{ false: Neutrals.gray300, true: GoldSystem.primaryGold }}
                         thumbColor={Neutrals.surface}
                       />
@@ -70,7 +92,7 @@ export default function SettingsScreen() {
           </View>
         ))}
 
-        <TouchableOpacity style={styles.logoutBtn}>
+        <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout}>
           <Text style={styles.logoutBtnText}>Log Out</Text>
         </TouchableOpacity>
 

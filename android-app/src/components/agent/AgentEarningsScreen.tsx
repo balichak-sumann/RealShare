@@ -1,17 +1,38 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-import { MOCK_PROPERTIES } from '@/constants/mockData';
+import { propertyToCardProps } from '@/lib/formatters';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useRouter } from 'expo-router';
+import { auth } from '@/lib/firebase';
 
 const COLLECTIONS = ['High Commission', 'Premium Residential', 'Commercial', 'Recently Viewed'];
+const DEFAULT_COMMISSION_RATE_PCT = 2.5;
 
 export function AgentEarningsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState(COLLECTIONS[0]);
-  const properties = MOCK_PROPERTIES; // Agents see all top properties here
+  const [properties, setProperties] = useState<any[]>([]);
+  const [rawProperties, setRawProperties] = useState<any[]>([]);
+  const [commissionRatePct, setCommissionRatePct] = useState(DEFAULT_COMMISSION_RATE_PCT);
+
+  useEffect(() => {
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/properties`);
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : data.properties || [];
+          setRawProperties(list);
+          setProperties(list.map(propertyToCardProps));
+        }
+      } catch (e) {
+        console.log('Failed to load properties for agent earnings view', e);
+      }
+    })();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -63,10 +84,15 @@ export function AgentEarningsScreen() {
                   <View style={styles.checkbox} />
                 </TouchableOpacity>
 
-                {/* Agent Commission Badge Overlaid */}
+                {/* Agent Commission Badge Overlaid — estimate off the property's
+                    real listed price and the agent's actual commission rate. */}
                 <View style={styles.commissionBadge}>
                   <Text style={styles.commissionBadgeText}>
-                    Est. Comm: ₹ {(Number(prop.price.replace(/[^0-9.]/g, '')) * 10000000 * 0.025).toLocaleString('en-IN')}
+                    Est. Comm: ₹ {(() => {
+                      const raw = rawProperties.find((rp: any) => rp.id === prop.id);
+                      const totalValue = raw ? Number(raw.price_per_fraction) * raw.total_fractions : 0;
+                      return Math.round(totalValue * (commissionRatePct / 100)).toLocaleString('en-IN');
+                    })()}
                   </Text>
                 </View>
               </View>

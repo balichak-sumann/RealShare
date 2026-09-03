@@ -284,6 +284,32 @@ model ServiceInquiry {
   @@map("service_inquiries")
 }
 
+model SupportTicket {
+  id             String   @id @default(uuid()) @db.Uuid
+  user_id        String
+  ticket_number  String   @unique
+  category       String
+  subject        String
+  description    String
+  priority       String   @default("medium")
+  status         String   @default("open")
+  assigned_to    String?
+  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@map("support_tickets")
+}
+
+model Shortlist {
+  id          String   @id @default(uuid()) @db.Uuid
+  user_id     String
+  property_id String   @db.Uuid
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  @@unique([user_id, property_id])
+  @@map("shortlists")
+}
+
 model PlatformSetting {
   id         String   @id @default("global")
   values     Json

@@ -67,34 +67,11 @@ export default function MyTicketsScreen() {
         const data = await res.json();
         setTickets(data.tickets || []);
       } else {
-          // Mock data if API is not fully ready
-          throw new Error('API not ready');
+        setTickets([]);
       }
     } catch (err) {
       console.warn('Failed to fetch tickets', err);
-      // Mock data for demo purposes
-      setTickets([
-        {
-          id: '1',
-          ticket_number: 'RS-20260901-4921',
-          category: 'payment',
-          subject: 'Wallet recharge failed',
-          description: 'I tried to add ₹50,000 to my wallet using UPI but the amount was deducted from my bank and not added to the wallet.',
-          priority: 'high',
-          status: 'in_progress',
-          created_at: new Date().toISOString()
-        },
-        {
-          id: '2',
-          ticket_number: 'RS-20260830-1033',
-          category: 'kyc',
-          subject: 'PAN Card verification pending',
-          description: 'My PAN card has been pending review for 3 days now.',
-          priority: 'medium',
-          status: 'resolved',
-          created_at: new Date(Date.now() - 86400000 * 2).toISOString()
-        }
-      ]);
+      setTickets([]);
     } finally {
       setLoading(false);
     }

@@ -33,11 +33,11 @@ export async function POST(request: Request) {
 
     // Recipient count reflects who this notification actually targets, based on
     // real profile rows — not a fabricated figure.
-    const recipientsCount = await prisma.profile.count(
-      targetAudience === 'all'
-        ? {}
-        : { where: { role: targetAudience === 'investors' ? 'investor' : targetAudience === 'agents' ? 'agent' : 'builder' } }
-    );
+    const recipientsCount = targetAudience === 'all'
+      ? await prisma.profile.count()
+      : await prisma.profile.count({
+          where: { role: targetAudience === 'investors' ? 'investor' : targetAudience === 'agents' ? 'agent' : 'builder' }
+        });
 
     // Deliver to expo push tokens where we have them. Best-effort — a failed
     // push send doesn't fail the request, since the log record itself is the

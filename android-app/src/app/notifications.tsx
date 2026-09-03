@@ -1,30 +1,85 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, RefreshControl } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
+import { auth } from '@/lib/firebase';
 
-const MOCK_NOTIFICATIONS = [
-  { id: '1', type: 'offer', title: 'New Offer Received!', desc: 'Someone offered ₹1.45 Cr for your property in Jubilee Hills.', time: '10m ago', read: false },
-  { id: '2', type: 'update', title: 'Construction Update', desc: 'New photos added for Skyline Apartments (Plinth Level).', time: '2h ago', read: false },
-  { id: '3', type: 'system', title: 'Welcome to RealShare Premium', desc: 'Explore the new AI assistant and property tools.', time: '1d ago', read: true },
-  { id: '4', type: 'alert', title: 'Price Drop Alert', desc: 'A property in your Dream Home shortlist dropped by 5%.', time: '2d ago', read: true },
-];
+interface Notification {
+  id: string;
+  title: string;
+  body: string;
+  audience: string;
+  created_at: string;
+}
 
 export default function NotificationsScreen() {
   const router = useRouter();
-  const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
-  const markAllRead = () => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+  useEffect(() => {
+    fetchNotifications();
+  }, []);
+
+  const fetchNotifications = async () => {
+    try {
+      setError(null);
+      const user = auth.currentUser;
+      if (!user) {
+        setError('Please sign in to view notifications.');
+        setLoading(false);
+        return;
+      }
+      const token = await user.getIdToken();
+      const res = await fetch(
+        `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/notifications/feed`,
+        { headers: { Authorization: `Bearer ${token}` } }
+      );
+      if (res.ok) {
+        const data = await res.json();
+        setNotifications(Array.isArray(data) ? data : []);
+      } else if (res.status === 401) {
+        setError('Session expired. Please sign in again.');
+      } else {
+        setError('Failed to load notifications.');
+      }
+    } catch (err) {
+      console.warn('Failed to fetch notifications:', err);
+      setError('Network error — could not load notifications.');
+    } finally {
+      setLoading(false);
+      setRefreshing(false);
+    }
   };
 
-  const getIcon = (type: string) => {
-    switch(type) {
-      case 'offer': return '💰';
-      case 'update': return '🏗️';
-      case 'alert': return '📉';
-      default: return '👋';
+  const onRefresh = () => {
+    setRefreshing(true);
+    fetchNotifications();
+  };
+
+  const getIcon = (audience: string) => {
+    switch (audience) {
+      case 'investors': return '📈';
+      case 'agents': return '🤝';
+      case 'builders': return '🏗️';
+      default: return '🔔';
     }
+  };
+
+  const formatTime = (dateStr: string) => {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    if (diffMins < 1) return 'Just now';
+    if (diffMins < 60) return `${diffMins}m ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `${diffHours}h ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString();
   };
 
   return (
@@ -34,31 +89,52 @@ export default function NotificationsScreen() {
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
-        <TouchableOpacity onPress={markAllRead}>
-          <Text style={styles.markReadText}>Mark all read</Text>
-        </TouchableOpacity>
+        <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }}>
-        {notifications.map(notification => (
-          <TouchableOpacity 
-            key={notification.id} 
-            style={[styles.notificationCard, !notification.read && styles.notificationUnread]}
-          >
-            <View style={styles.iconContainer}>
-              <Text style={styles.icon}>{getIcon(notification.type)}</Text>
-            </View>
-            <View style={styles.infoContainer}>
-              <View style={styles.titleRow}>
-                <Text style={[styles.title, !notification.read && styles.titleUnread]}>{notification.title}</Text>
-                <Text style={styles.time}>{notification.time}</Text>
-              </View>
-              <Text style={styles.desc}>{notification.desc}</Text>
-            </View>
-            {!notification.read && <View style={styles.unreadDot} />}
+      {loading ? (
+        <View style={styles.centerContainer}>
+          <ActivityIndicator size="large" color={GoldSystem.primaryGold} />
+          <Text style={styles.loadingText}>Loading notifications…</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.centerContainer}>
+          <Text style={styles.errorIcon}>⚠️</Text>
+          <Text style={styles.errorText}>{error}</Text>
+          <TouchableOpacity style={styles.retryBtn} onPress={fetchNotifications}>
+            <Text style={styles.retryText}>Retry</Text>
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+        </View>
+      ) : notifications.length === 0 ? (
+        <View style={styles.centerContainer}>
+          <Text style={styles.emptyIcon}>🔔</Text>
+          <Text style={styles.emptyTitle}>No notifications yet</Text>
+          <Text style={styles.emptyDesc}>When there are updates, you'll see them here.</Text>
+        </View>
+      ) : (
+        <ScrollView
+          style={styles.content}
+          contentContainerStyle={{ paddingBottom: 40 }}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={GoldSystem.primaryGold} />
+          }
+        >
+          {notifications.map((notification) => (
+            <View key={notification.id} style={styles.notificationCard}>
+              <View style={styles.iconContainer}>
+                <Text style={styles.icon}>{getIcon(notification.audience)}</Text>
+              </View>
+              <View style={styles.infoContainer}>
+                <View style={styles.titleRow}>
+                  <Text style={styles.title} numberOfLines={1}>{notification.title}</Text>
+                  <Text style={styles.time}>{formatTime(notification.created_at)}</Text>
+                </View>
+                <Text style={styles.desc}>{notification.body}</Text>
+              </View>
+            </View>
+          ))}
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -90,12 +166,54 @@ const styles = StyleSheet.create({
     ...Typography.headlineMedium,
     color: Neutrals.obsidian,
   },
-  markReadText: {
-    ...Typography.labelMedium,
-    color: GoldSystem.primaryGold,
-  },
   content: {
     flex: 1,
+  },
+  centerContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  loadingText: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray500,
+    marginTop: 12,
+  },
+  errorIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  errorText: {
+    ...Typography.bodyLarge,
+    color: Neutrals.gray600,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  retryBtn: {
+    backgroundColor: GoldSystem.primaryGold,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+  },
+  retryText: {
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
+    fontWeight: '700',
+  },
+  emptyIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+    marginBottom: 8,
+  },
+  emptyDesc: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray500,
+    textAlign: 'center',
   },
   notificationCard: {
     flexDirection: 'row',
@@ -104,9 +222,6 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Neutrals.border,
     alignItems: 'flex-start',
-  },
-  notificationUnread: {
-    backgroundColor: GoldSystem.paleGold,
   },
   iconContainer: {
     width: 48,
@@ -134,8 +249,6 @@ const styles = StyleSheet.create({
     ...Typography.labelLarge,
     color: Neutrals.obsidian,
     flex: 1,
-  },
-  titleUnread: {
     fontWeight: '700',
   },
   time: {
@@ -145,12 +258,5 @@ const styles = StyleSheet.create({
   desc: {
     ...Typography.bodyMedium,
     color: Neutrals.gray600,
-  },
-  unreadDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: GoldSystem.primaryGold,
-    marginTop: 6,
   },
 });

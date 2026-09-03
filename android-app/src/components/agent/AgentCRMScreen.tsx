@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Modal, Dimensions, Platform, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-import { MOCK_PROPERTIES } from '@/constants/mockData';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { auth } from '@/lib/firebase';
@@ -20,12 +19,15 @@ export function AgentCRMScreen() {
   const [newClientPhone, setNewClientPhone] = useState('');
   const [newClientBudget, setNewClientBudget] = useState('');
 
+  const [fetchError, setFetchError] = useState<string | null>(null);
+
   React.useEffect(() => {
     fetchData();
   }, []);
 
   const fetchData = async () => {
     setLoading(true);
+    setFetchError(null);
     await Promise.all([fetchClients(), fetchProperties()]);
     setLoading(false);
   };
@@ -47,10 +49,12 @@ export function AgentCRMScreen() {
           isVerified: true
         }));
         setProperties(mappedProperties);
+      } else {
+        setFetchError('Couldn\'t load properties — pull to retry.');
       }
     } catch (err) {
       console.error('Failed to fetch properties:', err);
-      setProperties(MOCK_PROPERTIES); // Fallback to mock data if no DB connection
+      setFetchError('Couldn\'t load properties — pull to retry.');
     }
   };
 
@@ -140,6 +144,13 @@ export function AgentCRMScreen() {
 
       {loading ? (
         <ActivityIndicator size="large" color="#D4AF37" style={{ marginTop: 40 }} />
+      ) : fetchError ? (
+        <View style={{ alignItems: 'center', marginTop: 40 }}>
+          <EmptyState title="Something went wrong" subtitle={fetchError} icon="⚠️" />
+          <TouchableOpacity style={styles.assignBtn} onPress={fetchData}>
+            <Text style={styles.assignBtnText}>Retry</Text>
+          </TouchableOpacity>
+        </View>
       ) : properties.length === 0 ? (
         <EmptyState title="No properties found" subtitle="Explore properties to shortlist them." icon="🏢" />
       ) : (

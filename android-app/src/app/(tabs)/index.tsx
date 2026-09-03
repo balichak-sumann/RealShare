@@ -33,7 +33,6 @@ import { TopDevelopers } from '@/components/home/TopDevelopers';
 
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PropertyCard } from '@/components/ui/PropertyCard';
-import { MOCK_RESALE_PROPERTIES, MOCK_RENTAL_PROPERTIES } from '@/constants/mockData';
 import { propertyToCardProps } from '@/lib/formatters';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 
@@ -178,20 +177,20 @@ export default function HomeScreen() {
 
         <View style={styles.featuredSection}>
           <SectionHeader title="Resale Properties" onViewAll={() => {}} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
-            {MOCK_RESALE_PROPERTIES.map((prop) => (
-              <PropertyCard key={prop.id} {...prop} compact />
-            ))}
-          </ScrollView>
+          <View style={styles.comingSoonCard}>
+            <Text style={styles.comingSoonIcon}>🏠</Text>
+            <Text style={styles.comingSoonTitle}>Resale Properties — Coming Soon</Text>
+            <Text style={styles.comingSoonDesc}>We're building a real resale marketplace. Check back soon!</Text>
+          </View>
         </View>
         
         <View style={styles.featuredSection}>
           <SectionHeader title="Properties for Rent" onViewAll={() => {}} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
-            {MOCK_RENTAL_PROPERTIES.map((prop) => (
-              <PropertyCard key={prop.id} {...prop} compact />
-            ))}
-          </ScrollView>
+          <View style={styles.comingSoonCard}>
+            <Text style={styles.comingSoonIcon}>🔑</Text>
+            <Text style={styles.comingSoonTitle}>Rental Listings — Coming Soon</Text>
+            <Text style={styles.comingSoonDesc}>Real rental listings are on the way. Stay tuned!</Text>
+          </View>
         </View>
         <TopLocalities />
         <ServicesStrip />
@@ -346,5 +345,29 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Neutrals.textSecondary,
     fontWeight: '600',
+  },
+  comingSoonCard: {
+    marginHorizontal: 16,
+    padding: 24,
+    backgroundColor: Neutrals.surface,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+    alignItems: 'center',
+  },
+  comingSoonIcon: {
+    fontSize: 32,
+    marginBottom: 12,
+  },
+  comingSoonTitle: {
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
+    marginBottom: 4,
+    textAlign: 'center',
+  },
+  comingSoonDesc: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray500,
+    textAlign: 'center',
   },
 });

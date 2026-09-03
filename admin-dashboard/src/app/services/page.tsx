@@ -33,6 +33,15 @@ function mapApiInquiry(s: any): ServiceInquiry {
     notes: s.notes || undefined,
   };
 }
+
+const serviceTypeColors: Record<string, string> = {
+  'Home Loan': '#2563EB',
+  'Interior Works': '#7C3AED',
+  'Insurance (Home)': '#059669',
+  'Insurance (Auto/Health)': '#D97706',
+  'Property Management': '#DC2626',
+};
+
 export default function AdditionalServicesPage() {
   const [inquiries, setInquiries] = useState<ServiceInquiry[]>([]);
   const [loading, setLoading] = useState(true);

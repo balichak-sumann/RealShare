@@ -87,7 +87,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           
           if (route.name === 'index') { label = 'Home'; icon = '🏠'; }
           else if (route.name === 'portfolio') { label = 'Portfolio'; icon = '💼'; }
-          else if (route.name === 'shortlist') { label = 'Shortlist'; icon = '♡'; }
+          else if (route.name === 'shortlist') { label = 'Properties'; icon = '🏢'; }
           else if (route.name === 'explore') { label = 'Explore'; icon = '🔍'; }
           else if (route.name === 'clients') { label = 'Clients'; icon = '👥'; }
           else if (route.name === 'profile') icon = '👤';

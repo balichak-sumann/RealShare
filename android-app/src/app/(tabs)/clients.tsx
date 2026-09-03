@@ -106,9 +106,24 @@ export default function ClientsScreen() {
                   </View>
                 </View>
                 <View style={styles.clientFooter}>
-                  <Text style={styles.clientBudgetText}>Budget: {client.target_budget || 'N/A'}</Text>
+                  <Text style={styles.clientBudgetText}>Budget: {client.budget || client.target_budget || 'N/A'}</Text>
                   <Text style={styles.statusText}>{client.status || 'Hot Lead'}</Text>
                 </View>
+
+                {/* Assigned Properties Section */}
+                {client.pitchedProperties && client.pitchedProperties.length > 0 && (
+                  <View style={styles.assignedPropertiesSection}>
+                    <Text style={styles.assignedHeaderText}>Assigned Properties ({client.pitchedProperties.length})</Text>
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingRight: 24 }}>
+                      {client.pitchedProperties.map((prop: any) => (
+                        <View key={prop.id} style={styles.miniPropertyCard}>
+                          <Text style={styles.miniPropertyTitle} numberOfLines={1}>{prop.title}</Text>
+                          <Text style={styles.miniPropertyLocation} numberOfLines={1}>📍 {prop.locality}</Text>
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </View>
+                )}
               </TouchableOpacity>
             ))
           )}
@@ -192,6 +207,37 @@ const styles = StyleSheet.create({
   clientFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 16 },
   clientBudgetText: { fontSize: 14, fontWeight: '700', color: '#111827' },
   statusText: { color: '#059669', fontSize: 12, fontWeight: '800' },
+  assignedPropertiesSection: {
+    marginTop: 16,
+    borderTopWidth: 1,
+    borderTopColor: '#F3F4F6',
+    paddingTop: 16,
+  },
+  assignedHeaderText: {
+    fontSize: 13,
+    fontWeight: '800',
+    color: '#6B7280',
+    marginBottom: 12,
+  },
+  miniPropertyCard: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: 8,
+    padding: 12,
+    marginRight: 12,
+    width: 160,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  miniPropertyTitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  miniPropertyLocation: {
+    fontSize: 12,
+    color: '#64748B',
+  },
   modalBackdrop: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)', justifyContent: 'center' },
   modalSheet: { backgroundColor: '#FFFFFF', padding: 24 },
   modalTitle: { fontSize: 20, fontWeight: '900', color: '#0F172A', marginBottom: 4 },

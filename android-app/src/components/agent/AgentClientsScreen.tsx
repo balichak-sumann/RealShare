@@ -90,11 +90,8 @@ export function AgentClientsScreen() {
             </View>
 
             <View style={styles.heroActions}>
-              <TouchableOpacity style={styles.heroBtnOutline} onPress={() => Alert.alert('Payouts', 'View detailed payout history.')}>
-                <Text style={styles.heroBtnOutlineText}>Payouts</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.heroBtnSolid} onPress={() => Alert.alert('Action', 'Generate Client Lead link.')}>
-                <Text style={styles.heroBtnSolidText}>+ Add Lead</Text>
+              <TouchableOpacity style={[styles.heroBtnOutline, { flex: 1, backgroundColor: 'transparent' }]} onPress={() => Alert.alert('Payouts', 'View detailed payout history.')}>
+                <Text style={styles.heroBtnOutlineText}>View Payout History</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -502,7 +499,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
   },
-  incomeStatBlock: {
+  incomeRow: {
     flex: 1,
     alignItems: 'center',
   },
@@ -512,7 +509,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   incomeSubValue: {
-    ...Typography.headlineMedium,
+    ...Typography.headlineSmall,
     color: Neutrals.obsidian,
   },
   payoutCard: {
@@ -538,7 +535,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   payoutDateDay: {
-    ...Typography.headlineMedium,
+    ...Typography.headlineSmall,
     color: Neutrals.obsidian,
   },
   payoutContent: {

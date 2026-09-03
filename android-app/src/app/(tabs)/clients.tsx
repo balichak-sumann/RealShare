@@ -15,6 +15,10 @@ export default function ClientsScreen() {
   const [newClientPhone, setNewClientPhone] = useState('');
   const [newClientBudget, setNewClientBudget] = useState('');
 
+  const [showPitchModal, setShowPitchModal] = useState(false);
+  const [pitchClient, setPitchClient] = useState<any>(null);
+  const [properties, setProperties] = useState<any[]>([]);
+
   React.useEffect(() => {
     fetchClients();
   }, []);
@@ -68,6 +72,34 @@ export default function ClientsScreen() {
     }
   };
 
+  const openPitchModal = async (client: any) => {
+    setPitchClient(client);
+    setShowPitchModal(true);
+    if (properties.length === 0) {
+      try {
+        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`);
+        if (res.ok) {
+          const data = await res.json();
+          setProperties(data.properties || data);
+        }
+      } catch (err) {}
+    }
+  };
+
+  const handlePitchProperty = (property: any) => {
+    setClients(prev => prev.map(c => {
+      if (c.id === pitchClient.id) {
+        return {
+          ...c,
+          pitchedProperties: [...(c.pitchedProperties || []), property]
+        };
+      }
+      return c;
+    }));
+    setShowPitchModal(false);
+    Alert.alert('Success', 'Property pitched to client!');
+  };
+
   return (
     <TabAnimationWrapper>
       <View style={styles.container}>
@@ -92,7 +124,7 @@ export default function ClientsScreen() {
             <EmptyState title="No clients yet" subtitle="Add your first client to start pitching properties." icon="👥" />
           ) : (
             clients.map(client => (
-              <TouchableOpacity key={client.id} style={styles.clientCard} onPress={() => router.push(`/chat/${client.id}` as any)}>
+              <View key={client.id} style={styles.clientCard}>
                 <View style={styles.clientHeader}>
                   <View style={styles.clientAvatar}>
                     <Text style={styles.clientAvatarText}>{client.client_name?.charAt(0) || 'C'}</Text>
@@ -101,13 +133,18 @@ export default function ClientsScreen() {
                     <Text style={styles.clientName}>{client.client_name}</Text>
                     <Text style={styles.clientPhone}>{client.phone_number}</Text>
                   </View>
-                  <View style={styles.chatBadge}>
+                  <TouchableOpacity style={styles.chatBadge} onPress={() => router.push(`/chat/${client.id}` as any)}>
                     <Text style={styles.chatBadgeText}>💬 Chat</Text>
-                  </View>
+                  </TouchableOpacity>
                 </View>
                 <View style={styles.clientFooter}>
-                  <Text style={styles.clientBudgetText}>Budget: {client.budget || client.target_budget || 'N/A'}</Text>
-                  <Text style={styles.statusText}>{client.status || 'Hot Lead'}</Text>
+                  <View>
+                    <Text style={styles.clientBudgetText}>Budget: {client.budget || client.target_budget || 'N/A'}</Text>
+                    <Text style={styles.statusText}>{client.status || 'Hot Lead'}</Text>
+                  </View>
+                  <TouchableOpacity style={styles.pitchBtn} onPress={() => openPitchModal(client)}>
+                    <Text style={styles.pitchBtnText}>Pitch Property</Text>
+                  </TouchableOpacity>
                 </View>
 
                 {/* Assigned Properties Section */}
@@ -124,7 +161,7 @@ export default function ClientsScreen() {
                     </ScrollView>
                   </View>
                 )}
-              </TouchableOpacity>
+              </View>
             ))
           )}
         </ScrollView>
@@ -149,6 +186,31 @@ export default function ClientsScreen() {
               </TouchableOpacity>
               
               <TouchableOpacity style={styles.cancelModalBtn} onPress={() => setShowAddClientModal(false)}>
+                <Text style={styles.cancelModalText}>Cancel</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
+
+        {/* Pitch Property Modal */}
+        <Modal visible={showPitchModal} animationType="fade" transparent>
+          <View style={styles.modalBackdrop}>
+            <View style={[styles.modalSheet, { borderTopLeftRadius: 16, borderTopRightRadius: 16, borderRadius: 16, margin: 24, paddingBottom: 24, maxHeight: 500 }]}>
+              <Text style={styles.modalTitle}>Pitch a Property</Text>
+              <Text style={styles.inputLabel}>Select Property to Pitch</Text>
+              <ScrollView style={{ marginTop: 10 }}>
+                {properties.length === 0 ? (
+                  <ActivityIndicator color="#D4AF37" style={{ marginTop: 20 }} />
+                ) : (
+                  properties.map(p => (
+                    <TouchableOpacity key={p.id} style={{ padding: 12, borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }} onPress={() => handlePitchProperty(p)}>
+                      <Text style={{ fontWeight: '700', fontSize: 16, color: '#111827' }}>{p.title}</Text>
+                      <Text style={{ fontSize: 13, color: '#64748B' }}>{p.locality}</Text>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </ScrollView>
+              <TouchableOpacity style={styles.cancelModalBtn} onPress={() => setShowPitchModal(false)}>
                 <Text style={styles.cancelModalText}>Cancel</Text>
               </TouchableOpacity>
             </View>
@@ -207,6 +269,8 @@ const styles = StyleSheet.create({
   clientFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end', borderTopWidth: 1, borderTopColor: '#F3F4F6', paddingTop: 16 },
   clientBudgetText: { fontSize: 14, fontWeight: '700', color: '#111827' },
   statusText: { color: '#059669', fontSize: 12, fontWeight: '800' },
+  pitchBtn: { backgroundColor: '#F3F4F6', paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
+  pitchBtnText: { color: '#111827', fontSize: 12, fontWeight: '800' },
   assignedPropertiesSection: {
     marginTop: 16,
     borderTopWidth: 1,

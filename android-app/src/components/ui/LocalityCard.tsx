@@ -46,13 +46,13 @@ export function LocalityCard({
 
         <View style={styles.statsRow}>
           <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Avg Sale</Text>
-            <Text style={styles.statValue}>{avgSale}/sq.ft</Text>
+            <Text style={styles.statLabel}>Avg. Price</Text>
+            <Text style={styles.statValue}>{avgSale}</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Avg Rent</Text>
-            <Text style={styles.statValue}>{avgRent}/sq.ft</Text>
+            <Text style={styles.statLabel}>Avg. Yield</Text>
+            <Text style={styles.statValue}>{avgRent}</Text>
           </View>
         </View>
 

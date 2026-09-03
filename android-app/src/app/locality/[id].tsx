@@ -1,16 +1,76 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-import { MOCK_LOCALITIES, MOCK_PROPERTIES } from '@/constants/mockData';
+import { propertyToCardProps, formatPrice } from '@/lib/formatters';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { InvestmentScore } from '@/components/ui/InvestmentScore';
 
+// The locality id here is its name (URL-encoded) — there's no separate
+// Locality table, so everything shown is derived from real properties in
+// that locality rather than a fabricated market/infrastructure profile.
 export default function LocalityDetailsScreen() {
   const { id } = useLocalSearchParams();
+  const localityName = decodeURIComponent(String(id || ''));
   const router = useRouter();
-  
-  const locality = MOCK_LOCALITIES.find(l => l.id === id) || MOCK_LOCALITIES[0];
+  const [locality, setLocality] = useState<any>(null);
+  const [properties, setProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/properties`);
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : data.properties || [];
+          const inLocality = list.filter((p: any) => p.locality === localityName);
+          if (inLocality.length > 0) {
+            const avgPrice = inLocality.reduce((sum: number, p: any) => sum + Number(p.price_per_fraction) * (p.total_fractions || 1), 0) / inLocality.length;
+            const yields = inLocality.map((p: any) => Number(p.assured_yield || 0)).filter((y: number) => y > 0);
+            const avgYield = yields.length > 0 ? yields.reduce((a: number, b: number) => a + b, 0) / yields.length : 0;
+            const firstImage = inLocality[0]?.images?.[0]?.image_url
+              || 'https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=800&fit=crop';
+            setLocality({
+              name: localityName,
+              image: firstImage,
+              avgSale: formatPrice(avgPrice),
+              avgYield: avgYield > 0 ? `${avgYield.toFixed(1)}%` : 'N/A',
+              propertyCount: inLocality.length,
+              rating: avgYield > 0 ? Math.min(5, avgYield / 2) : 4,
+            });
+            setProperties(inLocality.map(propertyToCardProps));
+          }
+        }
+      } catch (e) {
+        console.log('Failed to load locality', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [localityName]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={GoldSystem.primaryGold} />
+      </View>
+    );
+  }
+
+  if (!locality) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
+        <Text style={{ ...Typography.bodyLarge, color: Neutrals.gray600, textAlign: 'center' }}>
+          No listed properties found in {localityName || 'this locality'} yet.
+        </Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+          <Text style={{ color: GoldSystem.primaryGold, fontWeight: '600' }}>Go back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -49,46 +109,19 @@ export default function LocalityDetailsScreen() {
         {/* Investment Score */}
         <View style={styles.scoreSection}>
           <View style={{ flex: 1 }}>
-            <Text style={styles.sectionTitle}>Locality Score</Text>
-            <Text style={styles.scoreDesc}>Excellent connectivity and high rental demand make this a premium investment choice.</Text>
+            <Text style={styles.sectionTitle}>Locality Snapshot</Text>
+            <Text style={styles.scoreDesc}>{locality.propertyCount} listed {locality.propertyCount === 1 ? 'property' : 'properties'} in {locality.name}, averaging {locality.avgYield} assured yield.</Text>
           </View>
-          <InvestmentScore score={locality.rating * 20} size={80} showLabel={false} strokeWidth={6} />
-        </View>
-
-        {/* Infrastructure */}
-        <Text style={styles.sectionTitle}>Infrastructure</Text>
-        <View style={styles.infraList}>
-          <View style={styles.infraRow}>
-            <Text style={styles.infraIcon}>🚇</Text>
-            <View style={styles.infraTextContainer}>
-              <Text style={styles.infraTitle}>Metro Station</Text>
-              <Text style={styles.infraDesc}>2 stations within 3km radius</Text>
-            </View>
-          </View>
-          <View style={styles.infraRow}>
-            <Text style={styles.infraIcon}>🏫</Text>
-            <View style={styles.infraTextContainer}>
-              <Text style={styles.infraTitle}>Schools & Education</Text>
-              <Text style={styles.infraDesc}>5 premium international schools</Text>
-            </View>
-          </View>
-          <View style={styles.infraRow}>
-            <Text style={styles.infraIcon}>🏢</Text>
-            <View style={styles.infraTextContainer}>
-              <Text style={styles.infraTitle}>IT Parks</Text>
-              <Text style={styles.infraDesc}>Cyber Towers, Mindspace nearby</Text>
-            </View>
-          </View>
+          <InvestmentScore score={Math.round(locality.rating * 20)} size={80} showLabel={false} strokeWidth={6} />
         </View>
 
         {/* Properties in Locality */}
         <View style={styles.sectionHeaderRow}>
           <Text style={styles.sectionTitle}>Properties in {locality.name}</Text>
-          <TouchableOpacity><Text style={styles.viewAllText}>View All</Text></TouchableOpacity>
         </View>
-        
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -16, paddingHorizontal: 16 }}>
-          {MOCK_PROPERTIES.map(prop => (
+          {properties.map(prop => (
             <PropertyCard key={prop.id} {...prop} compact />
           ))}
         </ScrollView>

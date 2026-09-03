@@ -1,28 +1,70 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { TrustBadge } from '@/components/ui/TrustBadge';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ProjectCard } from '@/components/ui/ProjectCard';
-import { MOCK_PROJECTS } from '@/constants/mockData';
+import { propertyToProjectCardProps } from '@/lib/formatters';
 
 export default function DeveloperDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
+  const [developer, setDeveloper] = useState<any>(null);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  // Mock Developer Data
-  const developer = {
-    name: 'Prestige Group',
-    logoInitial: 'P',
-    rating: 4.8,
-    projects: 124,
-    ongoing: 12,
-    hasRera: true,
-    established: 1986,
-    cities: 7,
-    about: 'Prestige Group has firmly established itself as one of the leading and most successful developers of real estate in India by imprinting its indelible mark across all asset classes.',
-  };
+  useEffect(() => {
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/developers/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          const properties = data.properties || [];
+          const ongoing = properties.filter((p: any) => p.approval_status === 'approved').length;
+          const cities = new Set(properties.map((p: any) => p.district).filter(Boolean)).size;
+          setDeveloper({
+            name: data.name,
+            logoInitial: (data.name || '?').charAt(0).toUpperCase(),
+            rating: Number(data.rating),
+            projects: data._count?.properties ?? properties.length,
+            ongoing,
+            hasRera: data.rera_registered,
+            established: data.established_year,
+            cities,
+            about: data.bio || `${data.name} is a real estate developer partnered with RealShare.`,
+          });
+          setProjects(properties.map((p: any) => propertyToProjectCardProps({ ...p, developer: data })));
+        }
+      } catch (e) {
+        console.log('Failed to load developer', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={GoldSystem.primaryGold} />
+      </View>
+    );
+  }
+
+  if (!developer) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
+        <Text style={{ ...Typography.bodyLarge, color: Neutrals.gray600, textAlign: 'center' }}>
+          This developer couldn't be found.
+        </Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+          <Text style={{ color: GoldSystem.primaryGold, fontWeight: '600' }}>Go back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -72,12 +114,18 @@ export default function DeveloperDetailsScreen() {
           <Text style={styles.aboutText}>{developer.about}</Text>
 
           <View style={{ marginTop: 24 }}>
-            <SectionHeader title="Ongoing Projects" onViewAll={() => {}} />
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20, paddingHorizontal: 20 }}>
-              {MOCK_PROJECTS.map((project) => (
-                <ProjectCard key={project.id} {...project} />
-              ))}
-            </ScrollView>
+            <SectionHeader title="Projects" onViewAll={() => {}} />
+            {projects.length === 0 ? (
+              <Text style={{ ...Typography.bodyMedium, color: Neutrals.gray600 }}>
+                No listed projects yet.
+              </Text>
+            ) : (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginHorizontal: -20, paddingHorizontal: 20 }}>
+                {projects.map((project) => (
+                  <ProjectCard key={project.id} {...project} />
+                ))}
+              </ScrollView>
+            )}
           </View>
         </View>
 

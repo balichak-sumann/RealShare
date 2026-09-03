@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { ProjectCard } from '@/components/ui/ProjectCard';
-import { MOCK_PROJECTS } from '@/constants/mockData';
+import { propertyToProjectCardProps } from '@/lib/formatters';
 
 const TABS = ['All Projects', 'New Launch', 'Under Construction', 'Ready to Move', 'Luxury'];
 
@@ -12,6 +12,31 @@ export default function ProjectsScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState(TABS[0]);
+  const [projects, setProjects] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/properties`);
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : data.properties || [];
+          setProjects(list.map(propertyToProjectCardProps));
+        }
+      } catch (e) {
+        console.log('Failed to load projects', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const filteredProjects = projects.filter((p) =>
+    p.name.toLowerCase().includes(query.toLowerCase()) ||
+    p.location.toLowerCase().includes(query.toLowerCase())
+  );
 
   return (
     <View style={styles.container}>
@@ -47,10 +72,10 @@ export default function ProjectsScreen() {
 
       <ScrollView style={styles.resultsContainer} contentContainerStyle={styles.scrollContent}>
         <View style={styles.resultsHeader}>
-          <Text style={styles.resultCount}>{MOCK_PROJECTS.length} projects found</Text>
+          <Text style={styles.resultCount}>{loading ? 'Loading…' : `${filteredProjects.length} projects found`}</Text>
         </View>
 
-        {MOCK_PROJECTS.map((project) => (
+        {filteredProjects.map((project) => (
           <TouchableOpacity 
             key={project.id} 
             activeOpacity={0.9} 

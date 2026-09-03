@@ -1,26 +1,41 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { useRouter } from 'expo-router';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-import { MOCK_PROJECTS } from '@/constants/mockData';
+import { propertyToProjectCardProps } from '@/lib/formatters';
 
+// Construction-stage and progress tracking isn't captured anywhere in the
+// schema yet (no ConstructionUpdate model, no admin flow to post one), so
+// this screen shows the real project header and an honest "not available
+// yet" state instead of fabricated milestone dates and a made-up % complete.
 export default function ConstructionTrackingScreen() {
   const router = useRouter();
-  const project = MOCK_PROJECTS[0]; // Example project
+  const { id } = useLocalSearchParams();
+  const [project, setProject] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const STAGES = [
-    { id: '1', title: 'Excavation & Foundation', date: 'Jan 2024', completed: true },
-    { id: '2', title: 'Plinth Level', date: 'Mar 2024', completed: true },
-    { id: '3', title: 'Structural Framework (50%)', date: 'Jun 2024', completed: true },
-    { id: '4', title: 'Structural Framework (100%)', date: 'Oct 2024', completed: false, current: true },
-    { id: '5', title: 'Brickwork & Plastering', date: 'Jan 2025', completed: false },
-    { id: '6', title: 'Finishing & Handover', date: 'Aug 2025', completed: false },
-  ];
+  useEffect(() => {
+    if (!id) { setLoading(false); return; }
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/properties/${id}`);
+        if (res.ok) setProject(propertyToProjectCardProps(await res.json()));
+      } catch (e) {
+        console.log('Failed to load project', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
 
-  const LATEST_UPDATES = [
-    { id: '1', date: '15 Oct 2024', text: 'Slab casting for 12th floor completed. Curing in progress.' },
-    { id: '2', date: '28 Sep 2024', text: 'Blockwork initiated on 5th floor.' },
-  ];
+  if (loading) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={GoldSystem.primaryGold} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -34,56 +49,32 @@ export default function ConstructionTrackingScreen() {
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }}>
         
-        <View style={styles.projectCard}>
-          <Image source={{ uri: project.image }} style={styles.projectImage} />
-          <View style={styles.projectInfo}>
-            <Text style={styles.projectTitle}>{project.name}</Text>
-            <Text style={styles.projectLocation}>{project.developer}</Text>
-            <View style={styles.progressContainer}>
-              <View style={styles.progressBarBg}>
-                <View style={[styles.progressBarFill, { width: `65%` }]} />
-              </View>
-              <Text style={styles.progressText}>65% Completed</Text>
+        {project ? (
+          <View style={styles.projectCard}>
+            <Image source={{ uri: project.image }} style={styles.projectImage} />
+            <View style={styles.projectInfo}>
+              <Text style={styles.projectTitle}>{project.name}</Text>
+              <Text style={styles.projectLocation}>{project.developer}</Text>
             </View>
           </View>
-        </View>
+        ) : (
+          <Text style={{ ...Typography.bodyMedium, color: Neutrals.gray600, padding: 16 }}>
+            This project couldn't be found.
+          </Text>
+        )}
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Timeline</Text>
-          
-          <View style={styles.timeline}>
-            {STAGES.map((stage, idx) => (
-              <View key={stage.id} style={styles.timelineItem}>
-                <View style={styles.timelineNodeContainer}>
-                  <View style={[
-                    styles.timelineNode, 
-                    stage.completed && styles.timelineNodeCompleted,
-                    stage.current && styles.timelineNodeCurrent
-                  ]} />
-                  {idx < STAGES.length - 1 && (
-                    <View style={[styles.timelineLine, stage.completed && styles.timelineLineCompleted]} />
-                  )}
-                </View>
-                <View style={styles.timelineContent}>
-                  <Text style={[
-                    styles.timelineTitle,
-                    (stage.completed || stage.current) && styles.timelineTitleActive
-                  ]}>{stage.title}</Text>
-                  <Text style={styles.timelineDate}>{stage.date}</Text>
-                </View>
-              </View>
-            ))}
-          </View>
+          <Text style={{ ...Typography.bodyMedium, color: Neutrals.gray600 }}>
+            Live construction milestones aren't available for this project yet. Check back soon.
+          </Text>
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Latest Updates</Text>
-          {LATEST_UPDATES.map(update => (
-            <View key={update.id} style={styles.updateCard}>
-              <Text style={styles.updateDate}>{update.date}</Text>
-              <Text style={styles.updateText}>{update.text}</Text>
-            </View>
-          ))}
+          <Text style={{ ...Typography.bodyMedium, color: Neutrals.gray600 }}>
+            No updates have been posted yet.
+          </Text>
         </View>
 
       </ScrollView>

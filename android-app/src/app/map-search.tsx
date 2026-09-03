@@ -1,8 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, TouchableOpacity, Text, TextInput, ScrollView, Platform, Dimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-import { MOCK_PROPERTIES } from '@/constants/mockData';
+import { propertyToCardProps } from '@/lib/formatters';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { MapPropertyMarker } from '@/components/ui/MapPropertyMarker';
 
@@ -11,6 +11,23 @@ const { width, height } = Dimensions.get('window');
 export default function MapSearchScreen() {
   const router = useRouter();
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [properties, setProperties] = useState<any[]>([]);
+
+  useEffect(() => {
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/properties`);
+        if (res.ok) {
+          const data = await res.json();
+          const list = Array.isArray(data) ? data : data.properties || [];
+          setProperties(list.slice(0, 3).map(propertyToCardProps));
+        }
+      } catch (e) {
+        console.log('Failed to load properties for map', e);
+      }
+    })();
+  }, []);
 
   // For this demo, we'll overlay markers on a grey background if native, or use webview for web
   return (
@@ -31,18 +48,26 @@ export default function MapSearchScreen() {
             <View style={styles.gridLineH1} />
             <View style={styles.gridLineH2} />
             
-            <Text style={styles.mapPlaceholderText}>Map View Interactive on Web/Device</Text>
+            <Text style={styles.mapPlaceholderText}>Real map view coming soon — showing nearby listings below</Text>
 
-            {/* Mock Markers on Native */}
-            <View style={{ position: 'absolute', top: 150, left: 80 }}>
-              <MapPropertyMarker price="₹1.2 Cr" isSelected={selectedId === 'p1'} onPress={() => setSelectedId('p1')} />
-            </View>
-            <View style={{ position: 'absolute', top: 250, left: 220 }}>
-              <MapPropertyMarker price="₹2.5 Cr" isSelected={selectedId === 'p2'} onPress={() => setSelectedId('p2')} />
-            </View>
-            <View style={{ position: 'absolute', top: 350, left: 120 }}>
-              <MapPropertyMarker price="₹85 L" isSelected={selectedId === 'p3'} onPress={() => setSelectedId('p3')} />
-            </View>
+            {/* Markers use real listed prices/ids; their positions are an
+                illustrative layout since we don't yet render a real map SDK
+                with actual lat/lng placement on native. */}
+            {properties[0] && (
+              <View style={{ position: 'absolute', top: 150, left: 80 }}>
+                <MapPropertyMarker price={properties[0].price} isSelected={selectedId === properties[0].id} onPress={() => setSelectedId(properties[0].id)} />
+              </View>
+            )}
+            {properties[1] && (
+              <View style={{ position: 'absolute', top: 250, left: 220 }}>
+                <MapPropertyMarker price={properties[1].price} isSelected={selectedId === properties[1].id} onPress={() => setSelectedId(properties[1].id)} />
+              </View>
+            )}
+            {properties[2] && (
+              <View style={{ position: 'absolute', top: 350, left: 120 }}>
+                <MapPropertyMarker price={properties[2].price} isSelected={selectedId === properties[2].id} onPress={() => setSelectedId(properties[2].id)} />
+              </View>
+            )}
           </View>
         )}
       </View>
@@ -81,7 +106,7 @@ export default function MapSearchScreen() {
       {selectedId && (
         <View style={styles.bottomOverlay}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16 }}>
-            {MOCK_PROPERTIES.filter(p => p.id === selectedId).map(prop => (
+            {properties.filter(p => p.id === selectedId).map(prop => (
               <PropertyCard key={prop.id} {...prop} compact />
             ))}
           </ScrollView>

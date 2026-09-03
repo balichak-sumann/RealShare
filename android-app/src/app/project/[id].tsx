@@ -1,17 +1,57 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Linking, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { GoldButton } from '@/components/ui/GoldButton';
 import { InvestmentScore } from '@/components/ui/InvestmentScore';
 import { TrustBadge } from '@/components/ui/TrustBadge';
-import { MOCK_PROJECTS } from '@/constants/mockData';
+import { propertyToProjectCardProps } from '@/lib/formatters';
 
 export default function ProjectDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
-  
-  const project = MOCK_PROJECTS.find(p => p.id === id) || MOCK_PROJECTS[0];
+  const [project, setProject] = useState<any>(null);
+  const [raw, setRaw] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/properties/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setRaw(data);
+          setProject(propertyToProjectCardProps(data));
+        }
+      } catch (e) {
+        console.log('Failed to load project', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [id]);
+
+  if (loading) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center' }]}>
+        <ActivityIndicator color={GoldSystem.primaryGold} />
+      </View>
+    );
+  }
+
+  if (!project) {
+    return (
+      <View style={[styles.container, { alignItems: 'center', justifyContent: 'center', padding: 24 }]}>
+        <Text style={{ ...Typography.bodyLarge, color: Neutrals.gray600, textAlign: 'center' }}>
+          This project couldn't be found.
+        </Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+          <Text style={{ color: GoldSystem.primaryGold, fontWeight: '600' }}>Go back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -42,38 +82,30 @@ export default function ProjectDetailsScreen() {
               <Text style={styles.priceValue}>{project.priceRange}</Text>
             </View>
             <View style={styles.scoreContainer}>
-              <InvestmentScore score={88} size={50} showLabel={false} strokeWidth={4} />
+              <InvestmentScore score={raw?.assured_yield ? Math.min(100, Math.round(Number(raw.assured_yield) * 10)) : 70} size={50} showLabel={false} strokeWidth={4} />
             </View>
           </View>
 
-          {/* Configurations */}
-          <Text style={styles.sectionTitle}>Configurations</Text>
-          <View style={styles.configCard}>
-            <View style={styles.configRow}>
-              <Text style={styles.configType}>2 BHK Apartment</Text>
-              <Text style={styles.configPrice}>₹1.8 Cr onwards</Text>
-            </View>
-            <Text style={styles.configArea}>1,250 - 1,400 sq.ft</Text>
-          </View>
-          <View style={styles.configCard}>
-            <View style={styles.configRow}>
-              <Text style={styles.configType}>3 BHK Apartment</Text>
-              <Text style={styles.configPrice}>₹2.4 Cr onwards</Text>
-            </View>
-            <Text style={styles.configArea}>1,800 - 2,100 sq.ft</Text>
-          </View>
+          {raw?.description && (
+            <>
+              <Text style={styles.sectionTitle}>About this project</Text>
+              <Text style={{ ...Typography.bodyMedium, color: Neutrals.gray700, lineHeight: 22 }}>
+                {raw.description}
+              </Text>
+            </>
+          )}
 
-          {/* Progress */}
-          <Text style={styles.sectionTitle}>Construction Status</Text>
+          {/* Status — unit-type configurations and construction-progress
+              tracking aren't captured in the schema yet, so we show the
+              real listing status instead of a fabricated breakdown. */}
+          <Text style={styles.sectionTitle}>Listing Status</Text>
           <View style={styles.progressCard}>
             <View style={styles.progressHeader}>
-              <Text style={styles.progressTitle}>Under Construction</Text>
-              <Text style={styles.progressPercent}>75%</Text>
+              <Text style={styles.progressTitle}>
+                {raw?.approval_status === 'approved' ? 'Live & Accepting Investments' : raw?.approval_status?.replace(/_/g, ' ') || 'Pending'}
+              </Text>
             </View>
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: '75%' }]} />
-            </View>
-            <Text style={styles.progressDesc}>Expected possession by {project.possession}</Text>
+            <Text style={styles.progressDesc}>{project.possession}</Text>
           </View>
 
         </View>
@@ -82,12 +114,18 @@ export default function ProjectDetailsScreen() {
       {/* Bottom Bar */}
       <View style={styles.bottomBar}>
         <View style={styles.bottomBarActions}>
-          <TouchableOpacity style={styles.outlineBtn}>
-            <Text style={styles.outlineBtnText}>Download Brochure</Text>
+          <TouchableOpacity
+            style={styles.outlineBtn}
+            onPress={() => {
+              if (raw?.brochure_url) Linking.openURL(raw.brochure_url);
+            }}
+            disabled={!raw?.brochure_url}
+          >
+            <Text style={styles.outlineBtnText}>{raw?.brochure_url ? 'Download Brochure' : 'Brochure Unavailable'}</Text>
           </TouchableOpacity>
-          <GoldButton 
-            title="Enquire Now" 
-            onPress={() => {}} 
+          <GoldButton
+            title="View & Invest"
+            onPress={() => router.push(`/property/${id}` as any)}
             style={{ flex: 1, marginLeft: 12 }}
           />
         </View>

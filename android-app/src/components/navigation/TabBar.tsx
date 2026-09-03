@@ -32,18 +32,13 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         }
 
         const visibleRoutes = state.routes.filter(route => {
-          let isHidden = hiddenRoutes.includes(route.name);
-          // Keep explore hidden for investors, but show it for agents
-          if (route.name === 'explore' && !isAgent) {
-            isHidden = true;
-          }
-          return !isHidden;
+          return !hiddenRoutes.includes(route.name);
         });
 
         // Desired order for Agents: Portfolio | Shortlist | Home | Clients | Explore
         const order = isAgent 
           ? ['portfolio', 'shortlist', 'index', 'clients', 'explore']
-          : ['portfolio', 'shortlist', 'index', 'search']; // Investor order
+          : ['portfolio', 'shortlist', 'index', 'search', 'explore']; // Investor order
 
         const sortedRoutes = [...visibleRoutes].sort((a, b) => {
           let indexA = order.indexOf(a.name);

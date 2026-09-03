@@ -1,34 +1,72 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 
-const AGENTS = [
-  { id: '1', name: 'Ravi Kumar', type: 'Premium Agent', locality: 'Gachibowli, Hyderabad', rating: 4.9, reviews: 124, listings: 45 },
-  { id: '2', name: 'Prestige Group', type: 'Top Developer', locality: 'Pan India', rating: 4.8, reviews: 3400, listings: 12 },
-  { id: '3', name: 'Sneha Reddy', type: 'Verified Agent', locality: 'Jubilee Hills, Hyderabad', rating: 4.7, reviews: 89, listings: 28 },
-];
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+
+type Agent = { id: string; type: 'agent'; name: string; locality: string | null; listings: number };
+type Developer = {
+  id: string;
+  type: 'developer';
+  name: string;
+  locality: string | null;
+  listings: number;
+  rating: number;
+  rera_registered: boolean;
+};
 
 export default function AgentsScreen() {
   const router = useRouter();
   const [filter, setFilter] = useState('All');
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [developers, setDevelopers] = useState<Developer[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/professionals`);
+        if (res.ok) {
+          const data = await res.json();
+          setAgents(data.agents || []);
+          setDevelopers(data.developers || []);
+        }
+      } catch (e) {
+        console.log('Failed to load professionals', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const items: (Agent | Developer)[] =
+    filter === 'Agents' ? agents : filter === 'Developers' ? developers : [...agents, ...developers];
+
+  const handleViewListings = (item: Agent | Developer) => {
+    if (item.type === 'developer') {
+      router.push(`/developer/${item.id}` as any);
+    } else {
+      router.push({ pathname: '/projects', params: { agent: item.id, agentName: item.name } } as any);
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <Text style={styles.backIcon}>\u2190</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Find Professionals</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }}>
-        
+
         <View style={styles.filterRow}>
           {['All', 'Agents', 'Developers'].map((f) => (
-            <TouchableOpacity 
-              key={f} 
+            <TouchableOpacity
+              key={f}
               style={[styles.filterPill, filter === f && styles.filterPillActive]}
               onPress={() => setFilter(f)}
             >
@@ -37,47 +75,58 @@ export default function AgentsScreen() {
           ))}
         </View>
 
-        {AGENTS.map(agent => (
-          <View key={agent.id} style={styles.agentCard}>
-            <View style={styles.agentHeader}>
-              <View style={styles.agentAvatar}>
-                <Text style={styles.avatarText}>{agent.name.charAt(0)}</Text>
-              </View>
-              <View style={styles.agentInfo}>
-                <Text style={styles.agentName}>{agent.name}</Text>
-                <View style={styles.badgeContainer}>
-                  <Text style={styles.badgeText}>{agent.type}</Text>
+        {loading ? (
+          <ActivityIndicator color={GoldSystem.primaryGold} style={{ marginTop: 40 }} />
+        ) : items.length === 0 ? (
+          <Text style={styles.emptyText}>No professionals with active listings found yet.</Text>
+        ) : (
+          items.map((item) => (
+            <View key={`${item.type}-${item.id}`} style={styles.agentCard}>
+              <View style={styles.agentHeader}>
+                <View style={styles.agentAvatar}>
+                  <Text style={styles.avatarText}>{item.name.charAt(0)}</Text>
+                </View>
+                <View style={styles.agentInfo}>
+                  <Text style={styles.agentName}>{item.name}</Text>
+                  <View style={styles.badgeContainer}>
+                    <Text style={styles.badgeText}>
+                      {item.type === 'developer' ? 'Developer' : 'Agent'}
+                    </Text>
+                  </View>
                 </View>
               </View>
-            </View>
 
-            <View style={styles.locationRow}>
-              <Text style={styles.locationIcon}>📍</Text>
-              <Text style={styles.locationText}>{agent.locality}</Text>
-            </View>
+              {item.locality && (
+                <View style={styles.locationRow}>
+                  <Text style={styles.locationIcon}>\ud83d\udccd</Text>
+                  <Text style={styles.locationText}>{item.locality}</Text>
+                </View>
+              )}
 
-            <View style={styles.metricsRow}>
-              <View style={styles.metric}>
-                <Text style={styles.metricValue}>★ {agent.rating}</Text>
-                <Text style={styles.metricLabel}>{agent.reviews} Reviews</Text>
+              <View style={styles.metricsRow}>
+                {item.type === 'developer' && (
+                  <>
+                    <View style={styles.metric}>
+                      <Text style={styles.metricValue}>\u2605 {item.rating.toFixed(1)}</Text>
+                      <Text style={styles.metricLabel}>Rating</Text>
+                    </View>
+                    <View style={styles.divider} />
+                  </>
+                )}
+                <View style={styles.metric}>
+                  <Text style={styles.metricValue}>{item.listings}</Text>
+                  <Text style={styles.metricLabel}>Active Listings</Text>
+                </View>
               </View>
-              <View style={styles.divider} />
-              <View style={styles.metric}>
-                <Text style={styles.metricValue}>{agent.listings}</Text>
-                <Text style={styles.metricLabel}>Active Listings</Text>
+
+              <View style={styles.actionRow}>
+                <TouchableOpacity style={styles.primaryBtn} onPress={() => handleViewListings(item)}>
+                  <Text style={styles.primaryBtnText}>View Listings</Text>
+                </TouchableOpacity>
               </View>
             </View>
-
-            <View style={styles.actionRow}>
-              <TouchableOpacity style={styles.outlineBtn}>
-                <Text style={styles.outlineBtnText}>View Profile</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.primaryBtn}>
-                <Text style={styles.primaryBtnText}>Contact</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
+          ))
+        )}
 
       </ScrollView>
     </View>
@@ -138,6 +187,12 @@ const styles = StyleSheet.create({
   },
   filterTextActive: {
     color: Neutrals.surface,
+  },
+  emptyText: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray500,
+    textAlign: 'center',
+    marginTop: 40,
   },
   agentCard: {
     backgroundColor: Neutrals.surface,
@@ -226,18 +281,6 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: 'row',
     gap: 12,
-  },
-  outlineBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Neutrals.border,
-    alignItems: 'center',
-  },
-  outlineBtnText: {
-    ...Typography.labelMedium,
-    color: Neutrals.obsidian,
   },
   primaryBtn: {
     flex: 1,

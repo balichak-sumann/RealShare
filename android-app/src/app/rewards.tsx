@@ -1,84 +1,121 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Share } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { GoldButton } from '@/components/ui/GoldButton';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useUser } from '@/contexts/UserContext';
+import { auth } from '@/lib/firebase';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+
+function formatCurrency(n: number) {
+  return `\u20b9${n.toLocaleString('en-IN')}`;
+}
 
 export default function RewardsScreen() {
   const router = useRouter();
+  const { profile } = useUser();
+  const [loading, setLoading] = useState(true);
+  const [referralCode, setReferralCode] = useState<string | null>(null);
+  const [referredCount, setReferredCount] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const [totalPending, setTotalPending] = useState(0);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        const token = await user.getIdToken();
+        const res = await fetch(`${API_URL}/api/me/referral`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setReferralCode(data.referral_code);
+          setReferredCount(data.referred_count || 0);
+          setTotalEarned(data.total_earned || 0);
+          setTotalPending(data.total_pending || 0);
+        }
+      } catch (e) {
+        console.warn('Failed to load referral info', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleShare = async () => {
+    if (!referralCode) return;
+    try {
+      await Share.share({
+        message: `Join me on RealShare and start investing in fractional real estate! Use my referral code ${referralCode} when you sign up.`,
+      });
+    } catch (e) {
+      // user cancelled or share failed silently
+    }
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <Text style={styles.backIcon}>\u2190</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Rewards & Referrals</Text>
         <View style={{ width: 24 }} />
       </View>
 
-      <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }}>
-        
-        {/* Points Card */}
-        <LinearGradient colors={GoldSystem.goldGradient} style={styles.pointsCard}>
-          <Text style={styles.pointsLabel}>Available Points</Text>
-          <View style={styles.pointsRow}>
-            <Text style={styles.pointsValue}>12,500</Text>
-            <Text style={styles.pointsIcon}>✨</Text>
-          </View>
-          <Text style={styles.pointsDesc}>Equals ₹12,500 off brokerage</Text>
-        </LinearGradient>
-
-        {/* Refer Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Refer & Earn</Text>
-          <View style={styles.referCard}>
-            <Text style={styles.referOffer}>Earn 5,000 Points</Text>
-            <Text style={styles.referDesc}>For every friend who successfully buys or sells a property through RealShare.</Text>
-            <View style={styles.codeContainer}>
-              <Text style={styles.codeText}>RS-GOLD-482</Text>
-              <TouchableOpacity style={styles.copyBtn}>
-                <Text style={styles.copyBtnText}>Copy</Text>
-              </TouchableOpacity>
-            </View>
-            <GoldButton title="Share via WhatsApp" onPress={() => alert('Sharing...')} style={{ marginTop: 16 }} />
-          </View>
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator color={GoldSystem.primaryGold} />
         </View>
+      ) : (
+        <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }}>
 
-        {/* Redeem Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Redeem Rewards</Text>
-          
-          <View style={styles.rewardCard}>
-            <View style={styles.rewardIconContainer}>
-              <Text style={styles.rewardIcon}>🏷️</Text>
+          {/* Earnings Card */}
+          <LinearGradient colors={GoldSystem.goldGradient} style={styles.pointsCard}>
+            <Text style={styles.pointsLabel}>Total Referral Earnings</Text>
+            <View style={styles.pointsRow}>
+              <Text style={styles.pointsValue}>{formatCurrency(totalEarned)}</Text>
             </View>
-            <View style={styles.rewardInfo}>
-              <Text style={styles.rewardTitle}>Zero Brokerage Pass</Text>
-              <Text style={styles.rewardPoints}>10,000 Points</Text>
+            <Text style={styles.pointsDesc}>
+              {totalPending > 0
+                ? `${formatCurrency(totalPending)} pending clearance`
+                : `${referredCount} ${referredCount === 1 ? 'person' : 'people'} referred`}
+            </Text>
+          </LinearGradient>
+
+          {/* Refer Section */}
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Refer & Earn</Text>
+            <View style={styles.referCard}>
+              <Text style={styles.referOffer}>Earn commission on every investment</Text>
+              <Text style={styles.referDesc}>
+                Share your referral code. When someone signs up with it and invests, you earn a
+                commission on their transaction.
+              </Text>
+              <View style={styles.codeContainer}>
+                <Text style={styles.codeText}>{referralCode || '—'}</Text>
+              </View>
+              <GoldButton title="Share Referral Code" onPress={handleShare} style={{ marginTop: 16 }} />
             </View>
-            <TouchableOpacity style={styles.redeemBtn}>
-              <Text style={styles.redeemBtnText}>Redeem</Text>
-            </TouchableOpacity>
           </View>
 
-          <View style={styles.rewardCard}>
-            <View style={styles.rewardIconContainer}>
-              <Text style={styles.rewardIcon}>📸</Text>
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Referred Users</Text>
+            <View style={styles.referCard}>
+              <Text style={styles.referDesc}>
+                {referredCount > 0
+                  ? `${referredCount} ${referredCount === 1 ? 'person has' : 'people have'} signed up using your referral code.`
+                  : 'No one has signed up with your referral code yet. Share it to start earning.'}
+              </Text>
             </View>
-            <View style={styles.rewardInfo}>
-              <Text style={styles.rewardTitle}>Pro Photoshoot for Listing</Text>
-              <Text style={styles.rewardPoints}>2,500 Points</Text>
-            </View>
-            <TouchableOpacity style={styles.redeemBtn}>
-              <Text style={styles.redeemBtnText}>Redeem</Text>
-            </TouchableOpacity>
           </View>
 
-        </View>
-
-      </ScrollView>
+        </ScrollView>
+      )}
     </View>
   );
 }
@@ -114,6 +151,11 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   pointsCard: {
     padding: 24,
     borderRadius: Radius.lg,
@@ -136,9 +178,6 @@ const styles = StyleSheet.create({
     ...Typography.displayLarge,
     color: Neutrals.obsidian,
     marginRight: 8,
-  },
-  pointsIcon: {
-    fontSize: 32,
   },
   pointsDesc: {
     ...Typography.bodyMedium,
@@ -198,51 +237,5 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: Neutrals.obsidian,
     fontWeight: '700',
-  },
-  rewardCard: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Neutrals.surface,
-    padding: 16,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Neutrals.border,
-    marginBottom: 12,
-    ...Shadows.soft,
-  },
-  rewardIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: GoldSystem.paleGold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 16,
-  },
-  rewardIcon: {
-    fontSize: 24,
-  },
-  rewardInfo: {
-    flex: 1,
-  },
-  rewardTitle: {
-    ...Typography.labelLarge,
-    color: Neutrals.obsidian,
-    marginBottom: 4,
-  },
-  rewardPoints: {
-    ...Typography.caption,
-    color: GoldSystem.primaryGold,
-    fontWeight: '700',
-  },
-  redeemBtn: {
-    backgroundColor: Neutrals.obsidian,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: Radius.full,
-  },
-  redeemBtnText: {
-    ...Typography.labelMedium,
-    color: Neutrals.surface,
   },
 });

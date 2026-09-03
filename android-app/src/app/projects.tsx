@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { ProjectCard } from '@/components/ui/ProjectCard';
@@ -10,6 +10,7 @@ const TABS = ['All Projects', 'New Launch', 'Under Construction', 'Ready to Move
 
 export default function ProjectsScreen() {
   const router = useRouter();
+  const { agent: agentId, agentName } = useLocalSearchParams<{ agent?: string; agentName?: string }>();
   const [query, setQuery] = useState('');
   const [activeTab, setActiveTab] = useState(TABS[0]);
   const [projects, setProjects] = useState<any[]>([]);
@@ -22,7 +23,10 @@ export default function ProjectsScreen() {
         const res = await fetch(`${API_URL}/api/properties`);
         if (res.ok) {
           const data = await res.json();
-          const list = Array.isArray(data) ? data : data.properties || [];
+          let list = Array.isArray(data) ? data : data.properties || [];
+          if (agentId) {
+            list = list.filter((p: any) => p.posted_by === agentId);
+          }
           setProjects(list.map(propertyToProjectCardProps));
         }
       } catch (e) {
@@ -31,7 +35,7 @@ export default function ProjectsScreen() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [agentId]);
 
   const filteredProjects = projects.filter((p) =>
     p.name.toLowerCase().includes(query.toLowerCase()) ||
@@ -45,7 +49,7 @@ export default function ProjectsScreen() {
           <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>New Projects</Text>
+          <Text style={styles.headerTitle}>{agentName ? String(agentName) : 'New Projects'}</Text>
           <View style={{ width: 24 }} />
         </View>
 

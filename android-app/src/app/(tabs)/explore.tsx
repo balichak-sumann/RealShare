@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, TextInput, Platform, ActivityIndicator, useWindowDimensions } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { useUser } from '@/contexts/UserContext';
+import { useShortlist } from '@/contexts/ShortlistContext';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 
 export default function ExploreScreen() {
@@ -19,10 +20,11 @@ export default function ExploreScreen() {
   const [activeYield, setActiveYield] = useState('Investment Demand');
   const [openDropdown, setOpenDropdown] = useState<string | null>(null);
   
+  const { savedProperties, toggleShortlist } = useShortlist();
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [imageIndices, setImageIndices] = useState<Record<string, number>>({});
-
+  
   const goToImage = (propertyId: string, direction: 'prev' | 'next', totalImages: number) => {
     setImageIndices(prev => {
       const current = prev[propertyId] || 0;
@@ -40,7 +42,7 @@ export default function ExploreScreen() {
     fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
       .then(res => res.json())
       .then(data => {
-        setProperties(data);
+        setProperties(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
@@ -171,8 +173,8 @@ export default function ExploreScreen() {
       <div id="map"></div>
       <script>
         var map = L.map('map', { zoomControl: true }).setView([17.3850, 78.4867], 10);
-        L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png', {
-          attribution: ''
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+          attribution: '&copy; OpenStreetMap contributors'
         }).addTo(map);
 
         var props = ${JSON.stringify(properties)};
@@ -413,6 +415,12 @@ export default function ExploreScreen() {
                     <View style={styles.cardBadge}>
                        <Text style={styles.badgeText}>NEW LAUNCH</Text>
                     </View>
+                    <TouchableOpacity 
+                      style={[styles.shortlistBtn, savedProperties.includes(prop.id) && styles.shortlistBtnSaved]} 
+                      onPress={() => toggleShortlist(prop.id)}
+                    >
+                      <Text style={[styles.shortlistIcon, savedProperties.includes(prop.id) && styles.shortlistIconSaved]}>♡</Text>
+                    </TouchableOpacity>
                   </View>
                   <View style={styles.cardContent}>
                     
@@ -756,9 +764,43 @@ const styles = StyleSheet.create({
     color: '#D4AF37',
   },
   agentInfoValue: {
-    fontSize: 14,
+    fontSize: 10,
     fontWeight: '800',
     color: '#111827',
+  },
+  shortlistBtn: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(255,255,255,0.9)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  shortlistBtnSaved: {
+    backgroundColor: '#111827',
+  },
+  shortlistIcon: {
+    fontSize: 20,
+    color: '#9CA3AF',
+    marginTop: -2,
+  },
+  shortlistIconSaved: {
+    color: '#D4AF37',
+  },
+  cardContent: {
+    backgroundColor: '#F3F4F6',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 8,
+    paddingHorizontal: 16,
   },
   shareBtn: {
     backgroundColor: '#F3F4F6',

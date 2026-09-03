@@ -15,7 +15,6 @@ export async function GET(request: Request) {
       },
       include: {
         images: true,
-        developer: true,
         profile: { select: { full_name: true, role: true } },
       },
       orderBy: {

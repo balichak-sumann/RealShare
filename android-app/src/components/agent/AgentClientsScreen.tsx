@@ -49,9 +49,18 @@ export function AgentClientsScreen() {
     return true;
   });
 
-  const totalCommissionEarned = dashboardData?.totalEarned || 0;
-  const pendingCommission = dashboardData?.pendingPayout || 0;
+  const parseCurrency = (val: any) => {
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') return Number(val.replace(/[^0-9.-]+/g, '')) || 0;
+    return 0;
+  };
+
+  const totalCommissionEarned = parseCurrency(dashboardData?.totalEarned);
+  const pendingCommission = parseCurrency(dashboardData?.pendingPayout);
   const totalCommission = totalCommissionEarned + pendingCommission;
+  
+  // Assuming 2.5% commission, total investment is commission * 40
+  const totalClientInvestments = totalCommission > 0 ? totalCommission * 40 : 0;
 
   return (
     <TabAnimationWrapper>
@@ -80,12 +89,12 @@ export function AgentClientsScreen() {
             <View style={styles.heroSplit}>
               <View style={styles.heroSplitItem}>
                 <Text style={styles.heroSplitLabel}>Paid Out</Text>
-                <Text style={styles.heroSplitValue}>₹ {typeof totalCommissionEarned === 'number' ? totalCommissionEarned.toLocaleString('en-IN') : totalCommissionEarned.replace('₹', '')}</Text>
+                <Text style={styles.heroSplitValue}>₹ {totalCommissionEarned.toLocaleString('en-IN')}</Text>
               </View>
               <View style={styles.heroSplitDivider} />
               <View style={styles.heroSplitItem}>
                 <Text style={styles.heroSplitLabel}>Pending</Text>
-                <Text style={styles.heroSplitValue}>₹ {typeof pendingCommission === 'number' ? pendingCommission.toLocaleString('en-IN') : pendingCommission.replace('₹', '')}</Text>
+                <Text style={styles.heroSplitValue}>₹ {pendingCommission.toLocaleString('en-IN')}</Text>
               </View>
             </View>
 
@@ -137,8 +146,8 @@ export function AgentClientsScreen() {
           <View style={styles.incomeCard}>
             <View style={styles.incomeMain}>
               <Text style={styles.incomeLabel}>Total Client Investments</Text>
-              <Text style={styles.incomeValue}>₹ 85,00,000</Text>
-              <Text style={styles.incomeBadge}>Top 10% Agent</Text>
+              <Text style={styles.incomeValue}>₹ {totalClientInvestments.toLocaleString('en-IN')}</Text>
+              <Text style={styles.incomeBadge}>{totalClientInvestments > 0 ? 'Top 10% Agent' : 'Getting Started'}</Text>
             </View>
             <View style={styles.incomeDivider} />
             <View style={styles.incomeSecondary}>

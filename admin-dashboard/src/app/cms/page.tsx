@@ -54,7 +54,7 @@ export default function CMSPage() {
     const authHeader = await getAuthHeader();
     if (!authHeader) { setLoading(false); return; }
     try {
-      const res = await fetch('/api/cms/banners', { headers: authHeader });
+      const res = await fetch('/api/cms/banners?all=true', { headers: authHeader });
       if (res.ok) {
         const data = await res.json();
         setBanners(Array.isArray(data) ? data.map(mapApiBanner) : []);

@@ -4,9 +4,22 @@ import { requireAdmin } from '@/lib/require-admin';
 
 export async function GET(request: Request) {
   try {
-    const auth = await requireAdmin(request);
-    if (!auth.ok) return auth.response;
-    const banners = await prisma.banner.findMany({ orderBy: { sort_order: 'asc' } });
+    const { searchParams } = new URL(request.url);
+    const includeInactive = searchParams.get('all') === 'true';
+
+    if (includeInactive) {
+      // Admin CMS view: needs to see and manage inactive banners too.
+      const auth = await requireAdmin(request);
+      if (!auth.ok) return auth.response;
+      const banners = await prisma.banner.findMany({ orderBy: { sort_order: 'asc' } });
+      return NextResponse.json(banners);
+    }
+
+    // Public: the mobile/web home screen reads active banners without auth.
+    const banners = await prisma.banner.findMany({
+      where: { is_active: true },
+      orderBy: { sort_order: 'asc' },
+    });
     return NextResponse.json(banners);
   } catch (error: any) {
     console.error('Failed to fetch banners:', error);

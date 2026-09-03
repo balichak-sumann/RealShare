@@ -1,26 +1,59 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, Image, ScrollView, Dimensions } from 'react-native';
-import { MOCK_HERO_SLIDES } from '@/constants/mockData';
 import { Neutrals, GoldSystem, Typography } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
 
+type Banner = {
+  id: string;
+  title: string;
+  subtitle?: string | null;
+  image_url: string;
+  link_url?: string | null;
+};
+
+const FALLBACK_SLIDE: Banner = {
+  id: 'fallback',
+  title: 'Own a Piece of Premium Real Estate',
+  subtitle: 'Start investing in fractional property ownership today',
+  image_url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&fit=crop',
+  link_url: '/search',
+};
+
 export function HeroCarousel() {
   const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width || 400);
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
+  const [slides, setSlides] = useState<Banner[]>([FALLBACK_SLIDE]);
   const scrollRef = useRef<ScrollView>(null);
+
+  useEffect(() => {
+    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    (async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/cms/banners`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setSlides(data);
+          }
+        }
+      } catch (e) {
+        // Network failure: keep the fallback slide rather than showing nothing.
+      }
+    })();
+  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {
       let nextIndex = activeIndex + 1;
-      if (nextIndex >= MOCK_HERO_SLIDES.length) nextIndex = 0;
+      if (nextIndex >= slides.length) nextIndex = 0;
       scrollRef.current?.scrollTo({ x: nextIndex * containerWidth, animated: true });
       setActiveIndex(nextIndex);
     }, 5000);
     return () => clearInterval(interval);
-  }, [activeIndex, containerWidth]);
+  }, [activeIndex, containerWidth, slides.length]);
 
   const handleScroll = (event: any) => {
     const slide = Math.round(event.nativeEvent.contentOffset.x / containerWidth);
@@ -41,20 +74,20 @@ export function HeroCarousel() {
         showsHorizontalScrollIndicator={false}
         onMomentumScrollEnd={handleScroll}
       >
-        {MOCK_HERO_SLIDES.map((slide, index) => (
+        {slides.map((slide, index) => (
           <View key={slide.id} style={[styles.slide, { width: containerWidth }]}>
-            <Image source={{ uri: slide.image }} style={styles.image} />
+            <Image source={{ uri: slide.image_url }} style={styles.image} />
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.8)']}
               style={styles.gradient}
             />
             <View style={styles.content}>
               <Text style={styles.title}>{slide.title}</Text>
-              <Text style={styles.subtitle}>{slide.subtitle}</Text>
+              {!!slide.subtitle && <Text style={styles.subtitle}>{slide.subtitle}</Text>}
               {index === 0 && (
                 <GoldButton
                   title="Explore Properties"
-                  onPress={() => router.push('/search' as any)}
+                  onPress={() => router.push((slide.link_url || '/search') as any)}
                   style={styles.button}
                 />
               )}
@@ -63,7 +96,7 @@ export function HeroCarousel() {
         ))}
       </ScrollView>
       <View style={styles.pagination}>
-        {MOCK_HERO_SLIDES.map((_, i) => (
+        {slides.map((_, i) => (
           <View
             key={i}
             style={[

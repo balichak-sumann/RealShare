@@ -1,15 +1,15 @@
 import React, { useState } from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
-import { MOCK_CATEGORIES } from '@/constants/mockData';
+import { PROPERTY_CATEGORIES } from '@/constants/uiConstants';
 import { CategoryPill } from '../ui/CategoryPill';
 
 export function CategoryGrid() {
-  const [activeId, setActiveId] = useState(MOCK_CATEGORIES[0].id);
+  const [activeId, setActiveId] = useState(PROPERTY_CATEGORIES[0].id);
 
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {MOCK_CATEGORIES.map((category) => (
+        {PROPERTY_CATEGORIES.map((category) => (
           <CategoryPill
             key={category.id}
             label={category.label}

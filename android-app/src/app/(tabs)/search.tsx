@@ -4,7 +4,7 @@ import { Neutrals, GoldSystem, Typography } from '@/constants/design';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { CategoryPill } from '@/components/ui/CategoryPill';
 import { PropertyCard } from '@/components/ui/PropertyCard';
-import { MOCK_CATEGORIES } from '@/constants/mockData';
+import { PROPERTY_CATEGORIES } from '@/constants/uiConstants';
 import { propertyToCardProps } from '@/lib/formatters';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 
@@ -18,7 +18,7 @@ const CATEGORY_TYPE_MAP: Record<string, string> = {
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
-  const [activeCategory, setActiveCategory] = useState(MOCK_CATEGORIES[0].id);
+  const [activeCategory, setActiveCategory] = useState(PROPERTY_CATEGORIES[0].id);
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -53,7 +53,7 @@ export default function SearchScreen() {
         
         <View style={styles.filterRow}>
           <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-            {MOCK_CATEGORIES.map((cat) => (
+            {PROPERTY_CATEGORIES.map((cat) => (
               <CategoryPill
                 key={cat.id}
                 label={cat.label}

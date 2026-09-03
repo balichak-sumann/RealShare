@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { MOCK_QUICK_ACTIONS } from '@/constants/mockData';
+import { QUICK_ACTIONS } from '@/constants/uiConstants';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { useRouter } from 'expo-router';
 
@@ -9,7 +9,7 @@ export function QuickActions() {
 
   return (
     <View style={styles.container}>
-      {MOCK_QUICK_ACTIONS.map((action) => (
+      {QUICK_ACTIONS.map((action) => (
         <TouchableOpacity
           key={action.id}
           style={styles.actionCard}

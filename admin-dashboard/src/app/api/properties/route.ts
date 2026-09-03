@@ -6,9 +6,13 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const featured = searchParams.get('featured') === 'true';
+    const listingType = searchParams.get('listing_type');
 
     const properties = await prisma.property.findMany({
-      where: featured ? { featured: true } : undefined,
+      where: {
+        ...(featured ? { featured: true } : {}),
+        ...(listingType ? { listing_type: listingType } : {}),
+      },
       include: {
         images: true,
         developer: true,

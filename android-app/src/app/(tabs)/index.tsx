@@ -43,18 +43,33 @@ export default function HomeScreen() {
   const { toggleDrawer } = useDrawer();
   const [userName, setUserName] = useState('Investor');
   const [hotProperties, setHotProperties] = useState<any[]>([]);
+  const [rentalProperties, setRentalProperties] = useState<any[]>([]);
+  const [resaleProperties, setResaleProperties] = useState<any[]>([]);
 
   useEffect(() => {
     fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          // "Hot Selling" = most-subscribed properties first
-          const sorted = [...data].sort((a, b) => (b.sold_fractions ?? 0) - (a.sold_fractions ?? 0));
+          // Filter out rental/resale from hot properties
+          const primaryProps = data.filter(p => p.listing_type !== 'rental' && p.listing_type !== 'resale');
+          const sorted = [...primaryProps].sort((a, b) => (b.sold_fractions ?? 0) - (a.sold_fractions ?? 0));
           setHotProperties(sorted.slice(0, 8));
         }
       })
       .catch(() => {});
+
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=rental`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setRentalProperties(data);
+      }).catch(() => {});
+
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=resale`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setResaleProperties(data);
+      }).catch(() => {});
   }, []);
 
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -177,20 +192,36 @@ export default function HomeScreen() {
 
         <View style={styles.featuredSection}>
           <SectionHeader title="Resale Properties" onViewAll={() => {}} />
-          <View style={styles.comingSoonCard}>
-            <Text style={styles.comingSoonIcon}>🏠</Text>
-            <Text style={styles.comingSoonTitle}>Resale Properties — Coming Soon</Text>
-            <Text style={styles.comingSoonDesc}>We're building a real resale marketplace. Check back soon!</Text>
-          </View>
+          {resaleProperties.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
+              {resaleProperties.map((prop) => (
+                <PropertyCard key={prop.id} {...propertyToCardProps(prop)} compact />
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.comingSoonCard}>
+              <Text style={styles.comingSoonIcon}>🏠</Text>
+              <Text style={styles.comingSoonTitle}>No Resale Properties</Text>
+              <Text style={styles.comingSoonDesc}>Check back later for new resale listings.</Text>
+            </View>
+          )}
         </View>
         
         <View style={styles.featuredSection}>
           <SectionHeader title="Properties for Rent" onViewAll={() => {}} />
-          <View style={styles.comingSoonCard}>
-            <Text style={styles.comingSoonIcon}>🔑</Text>
-            <Text style={styles.comingSoonTitle}>Rental Listings — Coming Soon</Text>
-            <Text style={styles.comingSoonDesc}>Real rental listings are on the way. Stay tuned!</Text>
-          </View>
+          {rentalProperties.length > 0 ? (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
+              {rentalProperties.map((prop) => (
+                <PropertyCard key={prop.id} {...propertyToCardProps(prop)} compact />
+              ))}
+            </ScrollView>
+          ) : (
+            <View style={styles.comingSoonCard}>
+              <Text style={styles.comingSoonIcon}>🔑</Text>
+              <Text style={styles.comingSoonTitle}>No Rental Listings</Text>
+              <Text style={styles.comingSoonDesc}>Check back later for new rental listings.</Text>
+            </View>
+          )}
         </View>
         <TopLocalities />
         <ServicesStrip />

@@ -71,7 +71,7 @@ export default function PropertiesPage() {
     district: "Hyderabad",
     locality: "",
     type: "Commercial" as const,
-    listingType: "fractional" as "fractional" | "outright",
+    listingType: "fractional" as "fractional" | "outright" | "rental" | "resale",
     totalFractions: 50,
     price: 500000,
     yield: 8.5,
@@ -202,8 +202,8 @@ export default function PropertiesPage() {
           locality: newProp.locality,
           property_type: newProp.type,
           listing_type: newProp.listingType,
-          total_fractions: Number(newProp.totalFractions),
-          available_fractions: Number(newProp.totalFractions),
+          total_fractions: newProp.listingType === "fractional" ? Number(newProp.totalFractions) : 1,
+          available_fractions: newProp.listingType === "fractional" ? Number(newProp.totalFractions) : 1,
           price_per_fraction: Number(newProp.price),
           booking_amount: Math.round(Number(newProp.price) * 0.1),
           assured_yield: Number(newProp.yield),
@@ -528,12 +528,15 @@ export default function PropertiesPage() {
                   )}
                 </td>
                 <td className={styles.td}>
-                  {p.listing_type === "outright" ? (
+                  {(p.listing_type || "fractional") !== "fractional" ? (
                     <span
                       className={styles.badge}
-                      style={{ background: "#EDE9FE", color: "#6D28D9" }}
+                      style={{ 
+                        background: p.listing_type === "rental" ? "#DCFCE7" : p.listing_type === "resale" ? "#FEF9C3" : "#EDE9FE", 
+                        color: p.listing_type === "rental" ? "#166534" : p.listing_type === "resale" ? "#854D0E" : "#6D28D9" 
+                      }}
                     >
-                      Outright · Whole Property
+                      {(p.listing_type || "outright").charAt(0).toUpperCase() + (p.listing_type || "outright").slice(1)} · Whole Property
                     </span>
                   ) : (
                     <div className={styles.fractionCell}>
@@ -820,7 +823,7 @@ export default function PropertiesPage() {
               <div>
                 <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Listing Type</label>
                 <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
-                  {(["fractional", "outright"] as const).map((lt) => (
+                  {(["fractional", "outright", "rental", "resale"] as const).map((lt) => (
                     <button
                       key={lt}
                       type="button"
@@ -836,7 +839,7 @@ export default function PropertiesPage() {
                         cursor: "pointer",
                       }}
                     >
-                      {lt === "fractional" ? "Fractional (shares)" : "Outright (whole property)"}
+                      {lt === "fractional" ? "Fractional (shares)" : lt === "outright" ? "Outright (whole)" : lt === "rental" ? "Rental" : "Resale"}
                     </button>
                   ))}
                 </div>
@@ -875,7 +878,7 @@ export default function PropertiesPage() {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
-                    {newProp.listingType === "outright" ? "Property Price (₹)" : "Price Per Fraction (₹)"}
+                    {newProp.listingType === "fractional" ? "Price Per Fraction (₹)" : newProp.listingType === "rental" ? "Monthly Rent (₹)" : "Total Asking Price (₹)"}
                   </label>
                   <input
                     type="number"

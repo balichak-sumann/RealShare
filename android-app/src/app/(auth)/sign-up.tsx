@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView, Image, Alert } from 'react-native';
-import { createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView, Image, Alert, Modal } from 'react-native';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 
@@ -21,6 +21,7 @@ export default function SignUpScreen() {
   const [role, setRole] = useState<'investor' | 'agent' | 'builder'>('investor');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showSuccessModal, setShowSuccessModal] = useState(false);
 
   const isEmail = identifier.includes('@');
 
@@ -49,12 +50,16 @@ export default function SignUpScreen() {
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.profile) {
-            setProfile(data.profile);
-            if (data.profile.role === 'builder') {
-              router.replace('/builder-portal');
+            if (role === 'builder') {
+              // Sign out from client so builder logs in explicitly via login page
+              await signOut(auth);
+              setProfile(null);
+              setShowSuccessModal(true);
             } else if (data.profile.role === 'agent') {
+              setProfile(data.profile);
               router.replace('/agent-portal');
             } else {
+              setProfile(data.profile);
               router.replace('/');
             }
           }
@@ -289,6 +294,40 @@ export default function SignUpScreen() {
           </ScrollView>
         </KeyboardAvoidingView>
       </View>
+
+      {/* Account Created Success Dialog */}
+      <Modal
+        visible={showSuccessModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => {
+          setShowSuccessModal(false);
+          router.replace('/(auth)/sign-in');
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalIconContainer}>
+              <Text style={styles.modalIconText}>✓</Text>
+            </View>
+
+            <Text style={styles.modalTitle}>Account Created Successfully</Text>
+            <Text style={styles.modalMessage}>
+              Your Builder account has been created. Please log in with your credentials to access the Builder Portal.
+            </Text>
+
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setShowSuccessModal(false);
+                router.replace('/(auth)/sign-in');
+              }}
+            >
+              <Text style={styles.modalButtonText}>Go to Login</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ImageBackground>
   );
 }
@@ -460,5 +499,76 @@ const styles = StyleSheet.create({
     color: '#475569',
     fontSize: 16,
     fontWeight: '700',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+  },
+  modalCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: 24,
+    padding: 28,
+    width: '100%',
+    maxWidth: 420,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  modalIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    borderWidth: 1.5,
+    borderColor: '#D4AF37',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  modalIconText: {
+    color: '#D4AF37',
+    fontSize: 30,
+    fontWeight: '800',
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 15,
+    color: '#94A3B8',
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 28,
+  },
+  modalButton: {
+    backgroundColor: '#D4AF37',
+    borderRadius: 12,
+    paddingVertical: 14,
+    paddingHorizontal: 32,
+    width: '100%',
+    alignItems: 'center',
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  modalButtonText: {
+    color: '#0F172A',
+    fontSize: 16,
+    fontWeight: '800',
+    letterSpacing: 0.5,
   }
 });

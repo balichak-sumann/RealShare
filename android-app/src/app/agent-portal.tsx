@@ -20,6 +20,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Radius } from '@/constants/design';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { SectionHeader } from '@/components/ui/SectionHeader';
+import { Ionicons } from '@expo/vector-icons';
 const screenWidth = Dimensions.get('window').width;
 
 let LineChart: any = null;
@@ -287,11 +288,11 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
       <LinearGradient colors={['#0F172A', '#1E293B']} style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity style={styles.iconBtn} onPress={openDrawer}>
-            <Text style={{ fontSize: 22, color: '#FFFFFF' }}>☰</Text>
+            <Ionicons name="menu-outline" size={24} color="#FFFFFF" />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Wealth Partner Hub</Text>
-          <TouchableOpacity style={styles.iconBtn}>
-            <Text style={{ fontSize: 20, color: '#FFFFFF' }}>🔔</Text>
+          <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/notifications')}>
+            <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
           </TouchableOpacity>
         </View>
 

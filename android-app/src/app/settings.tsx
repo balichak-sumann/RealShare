@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Alert, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { auth } from '@/lib/firebase';
@@ -14,12 +14,33 @@ export default function SettingsScreen() {
     '6': true, // Biometric Login
   });
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
-      router.replace('/(auth)/sign-in' as any);
-    } catch (e) {
-      Alert.alert('Error', 'Failed to log out. Please try again.');
+  const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to log out?')) {
+        signOut(auth)
+          .then(() => router.replace('/(auth)/sign-in' as any))
+          .catch(() => Alert.alert('Error', 'Failed to log out. Please try again.'));
+      }
+    } else {
+      Alert.alert(
+        'Sign Out',
+        'Are you sure you want to sign out?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await signOut(auth);
+                router.replace('/(auth)/sign-in' as any);
+              } catch (e) {
+                Alert.alert('Error', 'Failed to log out. Please try again.');
+              }
+            },
+          },
+        ]
+      );
     }
   };
 

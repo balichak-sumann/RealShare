@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   Platform,
   Image,
   TouchableWithoutFeedback,
+  Modal,
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -139,7 +140,10 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
     }, 250);
   };
 
+  const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
+
   const handleSignOut = async () => {
+    setShowSignOutConfirm(false);
     closeDrawer();
     setProfile(null);
     await auth.signOut();
@@ -256,7 +260,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
         <View style={styles.drawerBottom}>
           <View style={styles.drawerDivider} />
           {currentUser ? (
-            <TouchableOpacity style={styles.drawerSignOutBtn} onPress={handleSignOut}>
+            <TouchableOpacity style={styles.drawerSignOutBtn} onPress={() => setShowSignOutConfirm(true)}>
               <Ionicons name="log-out-outline" size={22} color="#EF4444" style={styles.drawerSignOutIcon} />
               <Text style={styles.drawerSignOutText}>Sign Out</Text>
             </TouchableOpacity>
@@ -298,6 +302,43 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
           </TouchableWithoutFeedback>
         )}
       </Animated.View>
+
+      {/* Sign Out Confirmation Modal */}
+      <Modal
+        visible={showSignOutConfirm}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowSignOutConfirm(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <View style={styles.modalIconContainer}>
+              <Ionicons name="log-out-outline" size={30} color="#EF4444" />
+            </View>
+
+            <Text style={styles.modalTitle}>Sign Out</Text>
+            <Text style={styles.modalMessage}>
+              Are you sure you want to sign out of your account?
+            </Text>
+
+            <View style={styles.modalButtonRow}>
+              <TouchableOpacity
+                style={styles.modalCancelButton}
+                onPress={() => setShowSignOutConfirm(false)}
+              >
+                <Text style={styles.modalCancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalConfirmButton}
+                onPress={handleSignOut}
+              >
+                <Text style={styles.modalConfirmButtonText}>Sign Out</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -486,5 +527,89 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill as any,
     backgroundColor: '#000',
     zIndex: 999,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
+    zIndex: 9999,
+  },
+  modalCard: {
+    backgroundColor: '#0F172A',
+    borderRadius: 24,
+    padding: 28,
+    width: '100%',
+    maxWidth: 380,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.5,
+    shadowRadius: 24,
+    elevation: 12,
+  },
+  modalIconContainer: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(239, 68, 68, 0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalMessage: {
+    fontSize: 14,
+    color: '#94A3B8',
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  modalButtonRow: {
+    flexDirection: 'row',
+    gap: 12,
+    width: '100%',
+  },
+  modalCancelButton: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.15)',
+    alignItems: 'center',
+  },
+  modalCancelButtonText: {
+    color: '#E2E8F0',
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  modalConfirmButton: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 12,
+    backgroundColor: '#EF4444',
+    alignItems: 'center',
+    shadowColor: '#EF4444',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  modalConfirmButtonText: {
+    color: '#FFFFFF',
+    fontSize: 15,
+    fontWeight: '700',
   },
 });

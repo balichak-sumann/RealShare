@@ -4,6 +4,9 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/contexts/UserContext';
+import { Ionicons } from '@expo/vector-icons';
+
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { profile } = useUser();
@@ -83,15 +86,15 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
           const isHome = route.name === 'index';
 
-          let icon = '•';
+          let iconName: IoniconName = 'ellipse';
           
-          if (route.name === 'index') { label = 'Home'; icon = '🏠'; }
-          else if (route.name === 'portfolio') { label = 'Portfolio'; icon = '💼'; }
-          else if (route.name === 'shortlist') { label = 'Properties'; icon = '🏢'; }
-          else if (route.name === 'explore') { label = 'Explore'; icon = '🔍'; }
-          else if (route.name === 'clients') { label = 'Clients'; icon = '👥'; }
-          else if (route.name === 'profile') icon = '👤';
-          else if (route.name === 'search') icon = '🔍';
+          if (route.name === 'index') { label = 'Home'; iconName = isFocused ? 'home' : 'home-outline'; }
+          else if (route.name === 'portfolio') { label = 'Portfolio'; iconName = isFocused ? 'briefcase' : 'briefcase-outline'; }
+          else if (route.name === 'shortlist') { label = 'Properties'; iconName = isFocused ? 'business' : 'business-outline'; }
+          else if (route.name === 'explore') { label = 'Explore'; iconName = isFocused ? 'compass' : 'compass-outline'; }
+          else if (route.name === 'clients') { label = 'Clients'; iconName = isFocused ? 'people' : 'people-outline'; }
+          else if (route.name === 'profile') iconName = isFocused ? 'person' : 'person-outline';
+          else if (route.name === 'search') iconName = isFocused ? 'search' : 'search-outline';
 
           return (
             <TouchableOpacity
@@ -109,13 +112,16 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
                   colors={['#D4AF37', '#B8860B']}
                   style={styles.homeBtnBubble}
                 >
-                  <Text style={[styles.icon, styles.homeIcon]}>{icon}</Text>
+                  <Ionicons name="home" size={26} color="#FFFFFF" />
                 </LinearGradient>
               ) : (
                 <>
-                  <Text style={[styles.icon, isFocused && styles.activeIcon]}>
-                    {icon}
-                  </Text>
+                  <Ionicons
+                    name={iconName}
+                    size={22}
+                    color={isFocused ? GoldSystem.primaryGold : Neutrals.gray400}
+                    style={styles.iconSpacing}
+                  />
                   <Text style={[styles.label, isFocused && styles.activeLabel]}>
                     {label as string}
                   </Text>
@@ -149,13 +155,8 @@ const styles = StyleSheet.create({
     position: 'relative',
     height: '100%',
   },
-  icon: {
-    fontSize: 20,
-    color: Neutrals.gray400,
-    marginBottom: 4,
-  },
-  activeIcon: {
-    color: GoldSystem.primaryGold,
+  iconSpacing: {
+    marginBottom: 2,
   },
   label: {
     ...Typography.caption,
@@ -186,10 +187,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 8,
     elevation: 8,
-  },
-  homeIcon: {
-    fontSize: 28,
-    color: '#FFFFFF',
-    marginBottom: 0,
   },
 });

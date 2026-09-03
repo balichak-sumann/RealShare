@@ -17,6 +17,7 @@ import { useLocation } from '@/contexts/LocationContext';
 import { useDrawer } from '@/contexts/DrawerContext';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { isSplashComplete, onSplashComplete } from '@/components/animated-icon';
+import { Ionicons } from '@expo/vector-icons';
 
 import AgentPortalScreen from '../agent-portal';
 import BuilderPortalScreen from '../builder-portal';
@@ -127,7 +128,7 @@ export default function HomeScreen() {
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity onPress={toggleDrawer} style={styles.headerIconBtn}>
-            <Text style={styles.headerIcon}>☰</Text>
+            <Ionicons name="menu-outline" size={24} color={Neutrals.obsidian} />
           </TouchableOpacity>
 
           <View style={[styles.logoContainer, { opacity: splashDone ? 1 : 0 }]} pointerEvents="none">
@@ -136,20 +137,20 @@ export default function HomeScreen() {
 
           <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.headerIconBtnRight}>
             <View style={styles.notificationBadge} />
-            <Text style={styles.headerIcon}>🔔</Text>
+            <Ionicons name="notifications-outline" size={22} color={Neutrals.obsidian} />
           </TouchableOpacity>
         </View>
 
         <Animated.View style={{ height: headerBottomHeight, opacity: headerBottomOpacity, marginTop: headerBottomMargin, overflow: 'hidden' }}>
           <View style={styles.headerBottom}>
             <TouchableOpacity style={styles.locationSelector}>
-              <Text style={styles.locationIcon}>📍</Text>
+              <Ionicons name="location-outline" size={16} color={GoldSystem.primaryGold} style={{ marginRight: 4 }} />
               <Text style={styles.locationText}>{city}</Text>
-              <Text style={styles.locationDropdown}>▼</Text>
+              <Ionicons name="chevron-down" size={14} color={Neutrals.gray500} style={{ marginLeft: 4 }} />
             </TouchableOpacity>
 
             <TouchableOpacity style={styles.searchButton} onPress={() => router.push('/search')}>
-              <Text style={styles.searchIcon}>🔍</Text>
+              <Ionicons name="search-outline" size={16} color={Neutrals.gray400} style={{ marginRight: 6 }} />
               <Text style={styles.searchText}>Search...</Text>
             </TouchableOpacity>
           </View>

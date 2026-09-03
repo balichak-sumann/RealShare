@@ -19,6 +19,7 @@ import { auth, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
 import { Neutrals, GoldSystem, Radius, Typography } from '@/constants/design';
+import { Ionicons } from '@expo/vector-icons';
 
 interface BuilderProperty {
   id: string;
@@ -344,7 +345,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         <View style={styles.headerTop}>
           {/* Menu Drawer Hamburger Button */}
           <TouchableOpacity onPress={toggleDrawer} style={styles.headerIconBtn}>
-            <Text style={styles.headerIcon}>☰</Text>
+            <Ionicons name="menu-outline" size={24} color={Neutrals.obsidian} />
           </TouchableOpacity>
 
           {/* Centered Logo in Top Middle */}
@@ -355,7 +356,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
           {/* Profile / Notifications Button on Right */}
           <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.headerIconBtnRight}>
             <View style={styles.notificationBadge} />
-            <Text style={styles.headerIcon}>🔔</Text>
+            <Ionicons name="notifications-outline" size={22} color={Neutrals.obsidian} />
           </TouchableOpacity>
         </View>
 
@@ -393,7 +394,10 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
           <View>
             {/* Policy Notice Box */}
             <View style={styles.policyNotice}>
-              <Text style={styles.policyTitle}>📋 RealShare Builder Posting Policy</Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+                <Ionicons name="shield-checkmark-outline" size={16} color="#B45309" style={{ marginRight: 6 }} />
+                <Text style={styles.policyTitle}>RealShare Builder Posting Policy</Text>
+              </View>
               <Text style={styles.policyText}>
                 • Builders can post and edit property specifications & pricing.{'\n'}
                 • Once submitted, listings undergo title and RERA verification by RealShare Admin before going live.{'\n'}
@@ -447,7 +451,10 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
 
                   <View style={styles.propBody}>
                     <Text style={styles.propTitle}>{prop.title}</Text>
-                    <Text style={styles.propLocation}>📍 {prop.location}</Text>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                      <Ionicons name="location-outline" size={13} color={Neutrals.gray500} style={{ marginRight: 3 }} />
+                      <Text style={styles.propLocation}>{prop.location}</Text>
+                    </View>
 
                     <View style={styles.metricGrid}>
                       <View style={styles.metricBox}>
@@ -748,9 +755,11 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         style={styles.builderNavTab}
         onPress={() => setActiveTab('my_properties')}
       >
-        <Text style={[styles.builderNavIcon, activeTab === 'my_properties' && styles.builderNavIconActive]}>
-          🏢
-        </Text>
+        <Ionicons
+          name={activeTab === 'my_properties' ? 'business' : 'business-outline'}
+          size={22}
+          color={activeTab === 'my_properties' ? GoldSystem.primaryGold : Neutrals.gray400}
+        />
         <Text style={[styles.builderNavLabel, activeTab === 'my_properties' && styles.builderNavLabelActive]}>
           My Properties
         </Text>
@@ -761,9 +770,11 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         style={styles.builderNavTab}
         onPress={() => setActiveTab('analytics')}
       >
-        <Text style={[styles.builderNavIcon, activeTab === 'analytics' && styles.builderNavIconActive]}>
-          📊
-        </Text>
+        <Ionicons
+          name={activeTab === 'analytics' ? 'bar-chart' : 'bar-chart-outline'}
+          size={22}
+          color={activeTab === 'analytics' ? GoldSystem.primaryGold : Neutrals.gray400}
+        />
         <Text style={[styles.builderNavLabel, activeTab === 'analytics' && styles.builderNavLabelActive]}>
           Sales Analytics
         </Text>
@@ -774,9 +785,11 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         style={styles.builderNavTab}
         onPress={() => setActiveTab('post_new')}
       >
-        <Text style={[styles.builderNavIcon, activeTab === 'post_new' && styles.builderNavIconActive]}>
-          ➕
-        </Text>
+        <Ionicons
+          name={activeTab === 'post_new' ? 'add-circle' : 'add-circle-outline'}
+          size={24}
+          color={activeTab === 'post_new' ? GoldSystem.primaryGold : Neutrals.gray400}
+        />
         <Text style={[styles.builderNavLabel, activeTab === 'post_new' && styles.builderNavLabelActive]}>
           Post Property
         </Text>
@@ -880,6 +893,7 @@ const styles = StyleSheet.create({
     fontSize: 18,
     color: Neutrals.obsidian,
   },
+  // (kept for backward compat, icons now use Ionicons directly)
   notificationBadge: {
     position: 'absolute',
     top: 6,

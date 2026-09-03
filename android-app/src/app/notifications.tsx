@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { auth } from '@/lib/firebase';
+import { Ionicons } from '@expo/vector-icons';
 
 interface Notification {
   id: string;
@@ -59,12 +60,12 @@ export default function NotificationsScreen() {
     fetchNotifications();
   };
 
-  const getIcon = (audience: string) => {
+  const getNotificationIcon = (audience: string) => {
     switch (audience) {
-      case 'investors': return '📈';
-      case 'agents': return '🤝';
-      case 'builders': return '🏗️';
-      default: return '🔔';
+      case 'investors': return { name: 'trending-up-outline' as const, color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' };
+      case 'agents': return { name: 'briefcase-outline' as const, color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' };
+      case 'builders': return { name: 'business-outline' as const, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' };
+      default: return { name: 'notifications-outline' as const, color: GoldSystem.primaryGold, bg: GoldSystem.paleGold };
     }
   };
 
@@ -86,7 +87,7 @@ export default function NotificationsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <Ionicons name="arrow-back" size={24} color={Neutrals.obsidian} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Notifications</Text>
         <View style={{ width: 40 }} />
@@ -99,7 +100,7 @@ export default function NotificationsScreen() {
         </View>
       ) : error ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.errorIcon}>⚠️</Text>
+          <Ionicons name="alert-circle-outline" size={48} color="#EF4444" style={{ marginBottom: 12 }} />
           <Text style={styles.errorText}>{error}</Text>
           <TouchableOpacity style={styles.retryBtn} onPress={fetchNotifications}>
             <Text style={styles.retryText}>Retry</Text>
@@ -107,7 +108,7 @@ export default function NotificationsScreen() {
         </View>
       ) : notifications.length === 0 ? (
         <View style={styles.centerContainer}>
-          <Text style={styles.emptyIcon}>🔔</Text>
+          <Ionicons name="notifications-off-outline" size={48} color={GoldSystem.primaryGold} style={{ marginBottom: 12 }} />
           <Text style={styles.emptyTitle}>No notifications yet</Text>
           <Text style={styles.emptyDesc}>When there are updates, you'll see them here.</Text>
         </View>
@@ -119,20 +120,23 @@ export default function NotificationsScreen() {
             <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={GoldSystem.primaryGold} />
           }
         >
-          {notifications.map((notification) => (
-            <View key={notification.id} style={styles.notificationCard}>
-              <View style={styles.iconContainer}>
-                <Text style={styles.icon}>{getIcon(notification.audience)}</Text>
-              </View>
-              <View style={styles.infoContainer}>
-                <View style={styles.titleRow}>
-                  <Text style={styles.title} numberOfLines={1}>{notification.title}</Text>
-                  <Text style={styles.time}>{formatTime(notification.created_at)}</Text>
+          {notifications.map((notification) => {
+            const iconConfig = getNotificationIcon(notification.audience);
+            return (
+              <View key={notification.id} style={styles.notificationCard}>
+                <View style={[styles.iconContainer, { backgroundColor: iconConfig.bg }]}>
+                  <Ionicons name={iconConfig.name} size={20} color={iconConfig.color} />
                 </View>
-                <Text style={styles.desc}>{notification.body}</Text>
+                <View style={styles.infoContainer}>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.title} numberOfLines={1}>{notification.title}</Text>
+                    <Text style={styles.time}>{formatTime(notification.created_at)}</Text>
+                  </View>
+                  <Text style={styles.desc}>{notification.body}</Text>
+                </View>
               </View>
-            </View>
-          ))}
+            );
+          })}
         </ScrollView>
       )}
     </View>

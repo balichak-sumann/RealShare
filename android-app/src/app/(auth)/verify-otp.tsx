@@ -30,7 +30,7 @@ export default function VerifyOtpScreen() {
   }, [phone]);
 
   useEffect(() => {
-    let interval: NodeJS.Timeout;
+    let interval: ReturnType<typeof setInterval>;
     if (countdown > 0) {
       interval = setInterval(() => setCountdown(c => c - 1), 1000);
     }
@@ -43,7 +43,7 @@ export default function VerifyOtpScreen() {
     try {
       if (Platform.OS === 'web') {
         // Use web specific setup if needed, but expo-firebase-recaptcha handles both if configured
-        const confirmResult = await signInWithPhoneNumber(auth, phoneNumber, window.recaptchaVerifier);
+        const confirmResult = await signInWithPhoneNumber(auth, phoneNumber, (window as any).recaptchaVerifier);
         setVerificationId(confirmResult.verificationId);
       } else {
         const confirmResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier.current as any);
@@ -126,7 +126,7 @@ export default function VerifyOtpScreen() {
             <TextInput
               style={styles.input}
               placeholder="000000"
-              placeholderTextColor={Neutrals[500]}
+              placeholderTextColor={Neutrals.gray500}
               keyboardType="number-pad"
               maxLength={6}
               value={code}
@@ -139,7 +139,7 @@ export default function VerifyOtpScreen() {
               disabled={!code || code.length < 6 || loading}
             >
               {loading ? (
-                <ActivityIndicator color={Neutrals[900]} />
+                <ActivityIndicator color={Neutrals.gray900} />
               ) : (
                 <Text style={styles.primaryButtonText}>Verify & Continue</Text>
               )}
@@ -166,26 +166,26 @@ export default function VerifyOtpScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Neutrals[900] },
-  bgImage: { ...StyleSheet.absoluteFillObject, width: '100%', height: '100%', opacity: 0.4 },
-  gradientOverlay: { ...StyleSheet.absoluteFillObject },
+  container: { flex: 1, backgroundColor: Neutrals.gray900 },
+  bgImage: { ...StyleSheet.absoluteFill, width: '100%', height: '100%', opacity: 0.4 },
+  gradientOverlay: { ...StyleSheet.absoluteFill },
   content: { flex: 1, zIndex: 1 },
   scrollContent: { flexGrow: 1, justifyContent: 'center', padding: 24 },
   header: { alignItems: 'center', marginBottom: 40 },
   shieldIcon: { width: 80, height: 80, borderRadius: 40, backgroundColor: 'rgba(212, 175, 55, 0.1)', alignItems: 'center', justifyContent: 'center', marginBottom: 24, borderWidth: 1, borderColor: 'rgba(212, 175, 55, 0.3)' },
-  title: { ...Typography.h1, color: Neutrals[50], marginBottom: 12, textAlign: 'center' },
-  subtitle: { ...Typography.body1, color: Neutrals[300], textAlign: 'center', paddingHorizontal: 20 },
+  title: { ...Typography.displayMedium, color: Neutrals.white, marginBottom: 12, textAlign: 'center' },
+  subtitle: { ...Typography.bodyLarge, color: Neutrals.gray300, textAlign: 'center', paddingHorizontal: 20 },
   formCard: { backgroundColor: 'rgba(30, 41, 59, 0.7)', borderRadius: Radius.xl, padding: 24, borderWidth: 1, borderColor: 'rgba(255,255,255,0.05)', marginBottom: 24 },
   errorBox: { backgroundColor: 'rgba(239, 68, 68, 0.1)', borderWidth: 1, borderColor: 'rgba(239, 68, 68, 0.3)', padding: 12, borderRadius: Radius.md, marginBottom: 20 },
   errorText: { color: '#FCA5A5', fontSize: 14, textAlign: 'center' },
-  label: { ...Typography.caption, color: Neutrals[400], marginBottom: 8, letterSpacing: 1 },
-  input: { backgroundColor: 'rgba(15, 23, 42, 0.6)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: Radius.lg, padding: 16, color: Neutrals[50], fontSize: 24, letterSpacing: 4, textAlign: 'center', marginBottom: 24, fontFamily: 'Inter-SemiBold' },
-  primaryButton: { backgroundColor: GoldSystem[400], padding: 16, borderRadius: Radius.lg, alignItems: 'center' },
+  label: { ...Typography.caption, color: Neutrals.gray400, marginBottom: 8, letterSpacing: 1 },
+  input: { backgroundColor: 'rgba(15, 23, 42, 0.6)', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', borderRadius: Radius.lg, padding: 16, color: Neutrals.white, fontSize: 24, letterSpacing: 4, textAlign: 'center', marginBottom: 24, fontFamily: 'Inter-SemiBold' },
+  primaryButton: { backgroundColor: GoldSystem.primaryGold, padding: 16, borderRadius: Radius.lg, alignItems: 'center' },
   primaryButtonDisabled: { opacity: 0.5 },
-  primaryButtonText: { ...Typography.button, color: Neutrals[900] },
+  primaryButtonText: { ...Typography.labelLarge, color: Neutrals.gray900 },
   resendButton: { marginTop: 24, alignItems: 'center' },
-  resendText: { color: GoldSystem[400], fontSize: 14, fontFamily: 'Inter-Medium' },
-  resendTextDisabled: { color: Neutrals[500] },
+  resendText: { color: GoldSystem.primaryGold, fontSize: 14, fontFamily: 'Inter-Medium' },
+  resendTextDisabled: { color: Neutrals.gray500 },
   signOutButton: { alignItems: 'center', marginTop: 24 },
-  signOutText: { color: Neutrals[400], fontSize: 14, fontFamily: 'Inter-Medium' },
+  signOutText: { color: Neutrals.gray400, fontSize: 14, fontFamily: 'Inter-Medium' },
 });

@@ -1,7 +1,7 @@
 import { Image } from 'expo-image';
 import * as SplashScreen from 'expo-splash-screen';
 import { useState, useEffect, useCallback } from 'react';
-import { useWindowDimensions, StyleSheet, View, Platform } from 'react-native';
+import { useWindowDimensions, StyleSheet, View, Platform, Dimensions } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -133,7 +133,7 @@ export function AnimatedSplashOverlay() {
 
 const sp = StyleSheet.create({
   overlay: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     zIndex: 1000,
     alignItems: 'center',
     justifyContent: 'center',

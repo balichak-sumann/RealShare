@@ -163,7 +163,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
             <View style={styles.drawerAvatarContainer}>
               <View style={[styles.drawerAvatarGlow, Platform.OS === 'web' ? { filter: 'blur(8px)' } as any : {}]} />
               <LinearGradient
-                colors={GoldSystem.goldGradient as unknown as string[]}
+                colors={GoldSystem.goldGradient}
                 style={styles.drawerAvatar}
               >
                 <Text style={styles.drawerAvatarText}>
@@ -199,7 +199,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
           >
             <View style={styles.drawerAvatarContainer}>
               <LinearGradient
-                colors={GoldSystem.goldGradient as unknown as string[]}
+                colors={GoldSystem.goldGradient}
                 style={styles.drawerAvatar}
               >
                 <Ionicons name="person" size={28} color={Neutrals.white} />

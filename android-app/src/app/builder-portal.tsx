@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
   headerIconBtn: {
     width: 40,
     height: 40,
-    borderRadius: Radius.medium,
+    borderRadius: Radius.md,
     backgroundColor: Neutrals.gray100,
     justifyContent: 'center',
     alignItems: 'center',
@@ -870,7 +870,7 @@ const styles = StyleSheet.create({
   headerIconBtnRight: {
     width: 40,
     height: 40,
-    borderRadius: Radius.medium,
+    borderRadius: Radius.md,
     backgroundColor: Neutrals.gray100,
     justifyContent: 'center',
     alignItems: 'center',

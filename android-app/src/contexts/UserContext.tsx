@@ -12,6 +12,8 @@ export type UserProfile = {
   created_at: string;
   updated_at: string;
   kyc_status: string;
+  avatar_url?: string | null;
+  wallet_balance?: number | string | null;
 };
 
 type UserContextType = {

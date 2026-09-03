@@ -103,7 +103,7 @@ function RootLayoutNav() {
               } else {
                 router.replace('/');
               }
-            } else if (!segments[0] || (segments[0] === '(tabs)' && (!segments[1] || segments[1] === 'index'))) {
+            } else if (!segments[0] || (segments[0] === '(tabs)' && (!segments[1] || (segments[1] as string) === 'index'))) {
               if (data.profile.role === 'builder') {
                 router.replace('/builder-portal');
               } else if (data.profile.role === 'agent') {

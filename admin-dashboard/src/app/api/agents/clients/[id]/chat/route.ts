@@ -4,7 +4,7 @@ import { auth } from '@/lib/firebase-admin';
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('Authorization');
@@ -16,7 +16,7 @@ export async function GET(
     const decodedToken = await auth.verifyIdToken(token);
     const agentId = decodedToken.uid;
 
-    const clientId = params.id;
+    const { id: clientId } = await params;
 
     // Verify client belongs to agent
     const client = await prisma.agentClient.findFirst({
@@ -49,7 +49,7 @@ export async function GET(
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = request.headers.get('Authorization');
@@ -61,7 +61,7 @@ export async function POST(
     const decodedToken = await auth.verifyIdToken(token);
     const agentId = decodedToken.uid;
 
-    const clientId = params.id;
+    const { id: clientId } = await params;
     const body = await request.json();
     const { message, sender } = body; // sender should be "agent" or "client"
 

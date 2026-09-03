@@ -502,7 +502,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     padding: 16,
   },
-  incomeRow: {
+  incomeStatBlock: {
     flex: 1,
     alignItems: 'center',
   },
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   incomeSubValue: {
-    ...Typography.headlineSmall,
+    ...Typography.headlineMedium,
     color: Neutrals.obsidian,
   },
   payoutCard: {
@@ -538,7 +538,7 @@ const styles = StyleSheet.create({
     textTransform: 'uppercase',
   },
   payoutDateDay: {
-    ...Typography.headlineSmall,
+    ...Typography.headlineMedium,
     color: Neutrals.obsidian,
   },
   payoutContent: {

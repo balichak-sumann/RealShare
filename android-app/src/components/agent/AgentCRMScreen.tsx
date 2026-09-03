@@ -15,6 +15,10 @@ export function AgentCRMScreen() {
   const [clients, setClients] = useState<any[]>([]);
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showAddClientModal, setShowAddClientModal] = useState(false);
+  const [newClientName, setNewClientName] = useState('');
+  const [newClientPhone, setNewClientPhone] = useState('');
+  const [newClientBudget, setNewClientBudget] = useState('');
 
   React.useEffect(() => {
     fetchData();
@@ -231,12 +235,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: '#94A3B8',
     fontWeight: '500',
-  },
-  headerTitle: {
-    fontSize: 24,
-    fontWeight: '900',
-    color: '#D4AF37',
-    letterSpacing: 0.5,
   },
   tabsContainer: {
     flexDirection: 'row',

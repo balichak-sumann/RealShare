@@ -241,3 +241,53 @@ model Developer {
 
   @@map("developers")
 }
+
+model Notification {
+  id               String   @id @default(uuid()) @db.Uuid
+  title            String
+  body             String
+  audience         String   @default("all") // "all" | "investors" | "agents" | "builders"
+  sent_by          String?
+  recipients_count Int      @default(0)
+  created_at       DateTime @default(now()) @db.Timestamptz(6)
+
+  @@map("notifications")
+}
+
+model Banner {
+  id         String   @id @default(uuid()) @db.Uuid
+  title      String
+  subtitle   String?
+  badge      String?
+  image_url  String
+  link_url   String?
+  is_active  Boolean  @default(true)
+  sort_order Int      @default(0)
+  created_at DateTime @default(now()) @db.Timestamptz(6)
+
+  @@map("banners")
+}
+
+model ServiceInquiry {
+  id                  String   @id @default(uuid()) @db.Uuid
+  customer_name       String
+  phone               String?
+  email               String?
+  service_type        String
+  property_reference  String?
+  estimated_budget    String?
+  assigned_to         String?
+  status              String   @default("New")
+  notes               String?
+  created_at          DateTime @default(now()) @db.Timestamptz(6)
+
+  @@map("service_inquiries")
+}
+
+model PlatformSetting {
+  id         String   @id @default("global")
+  values     Json
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@map("platform_settings")
+}

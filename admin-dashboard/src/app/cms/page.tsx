@@ -1,9 +1,10 @@
 "use client";
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "../properties/Properties.module.css";
+import { getAuthHeader } from "@/lib/api-auth";
 
 interface Banner {
   id: string;
@@ -16,41 +17,21 @@ interface Banner {
   order: number;
 }
 
-const initialBanners: Banner[] = [
-  {
-    id: "BAN-01",
-    title: "Commercial High-Yield Opportunities",
-    subtitle: "Earn up to 9.2% Net Assured Rental Yield with Grade-A IT Parks in Hyderabad",
-    badge: "Featured Opportunity",
-    imageUrl: "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=600&h=280&fit=crop",
-    targetLink: "/properties/PROP-102",
-    isActive: true,
-    order: 1,
-  },
-  {
-    id: "BAN-02",
-    title: "Goa Luxury Holiday Villas",
-    subtitle: "Co-own beachfront vacation villas and earn quarterly rental dividends + stay perks",
-    badge: "Trending in August",
-    imageUrl: "https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=280&fit=crop",
-    targetLink: "/properties/PROP-101",
-    isActive: true,
-    order: 2,
-  },
-  {
-    id: "BAN-03",
-    title: "Zero-Brokerage Home Loans Tie-up",
-    subtitle: "Exclusive instant approvals with HDFC and SBI for RealShare fraction co-owners",
-    badge: "Financial Services",
-    imageUrl: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=600&h=280&fit=crop",
-    targetLink: "/services",
-    isActive: true,
-    order: 3,
-  },
-];
-
+function mapApiBanner(b: any): Banner {
+  return {
+    id: b.id,
+    title: b.title,
+    subtitle: b.subtitle || '',
+    badge: b.badge || '',
+    imageUrl: b.image_url,
+    targetLink: b.link_url || '',
+    isActive: b.is_active,
+    order: b.sort_order,
+  };
+}
 export default function CMSPage() {
-  const [banners, setBanners] = useState<Banner[]>(initialBanners);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showAddBanner, setShowAddBanner] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
 
@@ -68,7 +49,38 @@ export default function CMSPage() {
     setTimeout(() => setToastMsg(null), 4000);
   };
 
-  const handleToggleBanner = (id: string) => {
+  const loadBanners = async () => {
+    setLoading(true);
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { setLoading(false); return; }
+    try {
+      const res = await fetch('/api/cms/banners', { headers: authHeader });
+      if (res.ok) {
+        const data = await res.json();
+        setBanners(Array.isArray(data) ? data.map(mapApiBanner) : []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadBanners();
+  }, []);
+
+  const handleToggleBanner = async (id: string) => {
+    const target = banners.find((b) => b.id === id);
+    if (!target) return;
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { showToast("You must be signed in to do that."); return; }
+    const res = await fetch(`/api/cms/banners/${id}`, {
+      method: 'PATCH',
+      headers: { ...authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: !target.isActive }),
+    });
+    if (!res.ok) { showToast("Failed to update banner."); return; }
     setBanners((prev) =>
       prev.map((b) => (b.id === id ? { ...b, isActive: !b.isActive } : b))
     );
@@ -78,7 +90,7 @@ export default function CMSPage() {
   const handleAddBanner = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBan.title) return;
-    
+
     setIsUploading(true);
     let finalImageUrl = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=280&fit=crop";
 
@@ -89,16 +101,25 @@ export default function CMSPage() {
         finalImageUrl = await getDownloadURL(storageRef);
       }
 
-      const created: Banner = {
-        id: `BAN-${Math.floor(10 + Math.random() * 90)}`,
-        title: newBan.title,
-        subtitle: newBan.subtitle,
-        badge: newBan.badge,
-        imageUrl: finalImageUrl,
-        targetLink: newBan.targetLink,
-        isActive: true,
-        order: banners.length + 1,
-      };
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { showToast("You must be signed in to do that."); return; }
+      const res = await fetch('/api/cms/banners', {
+        method: 'POST',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newBan.title,
+          subtitle: newBan.subtitle,
+          badge: newBan.badge,
+          image_url: finalImageUrl,
+          link_url: newBan.targetLink,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to save banner. Please try again.");
+        return;
+      }
+      const created = mapApiBanner(await res.json());
 
       setBanners([...banners, created]);
       setShowAddBanner(false);

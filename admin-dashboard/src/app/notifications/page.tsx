@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "../properties/Properties.module.css";
+import { getAuthHeader } from "@/lib/api-auth";
 
 interface NotificationLog {
   id: string;
@@ -15,46 +16,31 @@ interface NotificationLog {
   status: "Delivered" | "Queued" | "Failed";
 }
 
-const initialLogs: NotificationLog[] = [
-  {
-    id: "NTF-801",
-    title: "🚀 New Commercial Property Launched: Cyber Pearl Hub",
-    message: "Co-own premium tech park spaces in HITEC City with assured 8.8% rental yield.",
-    channel: "Broadcast",
-    targetAudience: "All Users",
-    sentAt: "19 Aug 2026, 10:30 AM",
-    deliveryCount: 1402,
-    openRate: "68.4%",
-    status: "Delivered",
-  },
-  {
-    id: "NTF-802",
-    title: "💰 Q2 Fractional Rental Yield Credited to Your Wallet",
-    message: "Your quarterly dividend of ₹81,250 has been deposited to your RealShare wallet.",
-    channel: "In-App Push",
-    targetAudience: "Investors Only",
-    sentAt: "15 Aug 2026, 09:00 AM",
-    deliveryCount: 380,
-    openRate: "94.2%",
-    status: "Delivered",
-  },
-  {
-    id: "NTF-803",
-    title: "⚡ Special 2.5% Agent Incentive for Goa Beachfront Villa",
-    message: "Close fractional bookings before 31st August and earn instant bonus commissions.",
-    channel: "SMS",
-    targetAudience: "Agents Only",
-    sentAt: "12 Aug 2026, 14:15 PM",
-    deliveryCount: 42,
-    openRate: "98.0%",
-    status: "Delivered",
-  },
-];
-
+function mapApiNotification(n: any): NotificationLog {
+  const audienceMap: Record<string, NotificationLog['targetAudience']> = {
+    all: 'All Users',
+    investors: 'Investors Only',
+    agents: 'Agents Only',
+    builders: 'Builders',
+  };
+  return {
+    id: n.id,
+    title: n.title,
+    message: n.body,
+    channel: 'Broadcast',
+    targetAudience: audienceMap[n.audience] || 'All Users',
+    sentAt: new Date(n.created_at).toLocaleString(),
+    deliveryCount: n.recipients_count,
+    openRate: 'Not tracked',
+    status: 'Delivered',
+  };
+}
 export default function NotificationsPage() {
-  const [logs, setLogs] = useState<NotificationLog[]>(initialLogs);
+  const [logs, setLogs] = useState<NotificationLog[]>([]);
+  const [loading, setLoading] = useState(true);
   const [showBroadcastModal, setShowBroadcastModal] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
 
   const [newNotice, setNewNotice] = useState({
     title: "",
@@ -68,25 +54,63 @@ export default function NotificationsPage() {
     setTimeout(() => setToastMsg(null), 4000);
   };
 
-  const handleSendBroadcast = (e: React.FormEvent) => {
+  const loadLogs = async () => {
+    setLoading(true);
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { setLoading(false); return; }
+    try {
+      const res = await fetch('/api/notifications', { headers: authHeader });
+      if (res.ok) {
+        const data = await res.json();
+        setLogs(Array.isArray(data) ? data.map(mapApiNotification) : []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadLogs();
+  }, []);
+
+  const audienceToApi: Record<string, string> = {
+    "All Users": "all",
+    "Investors Only": "investors",
+    "Agents Only": "agents",
+    "Builders": "builders",
+  };
+
+  const handleSendBroadcast = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newNotice.title || !newNotice.message) return;
-
-    const created: NotificationLog = {
-      id: `NTF-${Math.floor(800 + Math.random() * 200)}`,
-      title: newNotice.title,
-      message: newNotice.message,
-      channel: newNotice.channel,
-      targetAudience: newNotice.targetAudience,
-      sentAt: "Just now",
-      deliveryCount: newNotice.targetAudience === "All Users" ? 1402 : 380,
-      openRate: "Queued",
-      status: "Delivered",
-    };
-
-    setLogs([created, ...logs]);
-    setShowBroadcastModal(false);
-    showToast(`Broadcast "${created.title}" dispatched successfully via ${created.channel}!`);
+    setSending(true);
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { showToast("You must be signed in to do that."); setSending(false); return; }
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newNotice.title,
+          message: newNotice.message,
+          audience: audienceToApi[newNotice.targetAudience] || 'all',
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || 'Failed to send broadcast.');
+        return;
+      }
+      const data = await res.json();
+      setLogs([mapApiNotification(data.notification), ...logs]);
+      setShowBroadcastModal(false);
+      showToast(`Broadcast "${newNotice.title}" dispatched to ${data.notification.recipients_count} recipient(s)!`);
+      setNewNotice({ title: "", message: "", channel: "Broadcast", targetAudience: "All Users" });
+    } finally {
+      setSending(false);
+    }
   };
 
   return (
@@ -159,7 +183,7 @@ export default function NotificationsPage() {
             Total Messages Delivered
           </div>
           <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "#16A34A" }}>
-            1,824 Recipients
+            {logs.reduce((sum, l) => sum + l.deliveryCount, 0).toLocaleString('en-IN')} Recipients
           </div>
         </div>
 
@@ -172,10 +196,10 @@ export default function NotificationsPage() {
           }}
         >
           <div style={{ fontSize: "0.75rem", color: "#2563EB", fontWeight: 600, textTransform: "uppercase" }}>
-            Avg. In-App Open Rate
+            Broadcasts Sent
           </div>
           <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "#2563EB" }}>
-            86.8%
+            {logs.length}
           </div>
         </div>
       </div>

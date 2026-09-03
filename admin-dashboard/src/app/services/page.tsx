@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "../properties/Properties.module.css";
+import { getAuthHeader } from "@/lib/api-auth";
 
 interface ServiceInquiry {
   id: string;
@@ -17,71 +18,24 @@ interface ServiceInquiry {
   notes?: string;
 }
 
-const initialServices: ServiceInquiry[] = [
-  {
-    id: "SRV-201",
-    customerName: "Arjun Kumar",
-    phone: "+91 98765 43210",
-    email: "arjun.k@gmail.com",
-    serviceType: "Home Loan",
-    propertyReference: "Goa Beachfront Villa",
-    estimatedBudget: "₹75,00,000 Loan",
-    assignedTo: "Suresh Varma (Sales)",
-    status: "In Review",
-    date: "18 Aug 2026",
-    notes: "Applied with HDFC Bank pre-approval tie-up",
-  },
-  {
-    id: "SRV-202",
-    customerName: "Priya Sharma",
-    phone: "+91 87654 32109",
-    email: "priya.s@outlook.com",
-    serviceType: "Interior Works",
-    propertyReference: "Cyber Pearl Tech Hub",
-    estimatedBudget: "₹12,00,000",
-    assignedTo: "Sneha Rao (Sales)",
-    status: "Assigned",
-    date: "17 Aug 2026",
-    notes: "Full luxury wooden furnishing requirement for 2BHK fraction",
-  },
-  {
-    id: "SRV-203",
-    customerName: "Rahul Mehta",
-    phone: "+91 76543 21098",
-    email: "rahul.m@yahoo.com",
-    serviceType: "Insurance (Home)",
-    propertyReference: "Marina Bay Suites",
-    estimatedBudget: "₹45,000 / yr",
-    assignedTo: "Lavanya Reddy (Support)",
-    status: "Completed",
-    date: "14 Aug 2026",
-    notes: "Comprehensive property damage & natural disaster cover issued",
-  },
-  {
-    id: "SRV-204",
-    customerName: "Anjali Desai",
-    phone: "+91 65432 10987",
-    email: "anjali.d@gmail.com",
-    serviceType: "Property Management",
-    propertyReference: "Mountain View Alpine Lodge",
-    estimatedBudget: "10% Rental Share",
-    assignedTo: "Suresh Varma (Sales)",
-    status: "New",
-    date: "19 Aug 2026",
-    notes: "Tenant onboarding, housekeeping, and quarterly dividend distribution requested",
-  },
-];
-
-const serviceTypeColors: Record<string, string> = {
-  "Home Loan": "#2563EB",
-  "Interior Works": "#7C3AED",
-  "Insurance (Home)": "#059669",
-  "Insurance (Auto/Health)": "#0284C7",
-  "Property Management": "#D97706",
-};
-
+function mapApiInquiry(s: any): ServiceInquiry {
+  return {
+    id: s.id,
+    customerName: s.customer_name,
+    phone: s.phone || '',
+    email: s.email || '',
+    serviceType: s.service_type,
+    propertyReference: s.property_reference || undefined,
+    estimatedBudget: s.estimated_budget || '',
+    assignedTo: s.assigned_to || 'Unassigned',
+    status: s.status,
+    date: new Date(s.created_at).toLocaleDateString(),
+    notes: s.notes || undefined,
+  };
+}
 export default function AdditionalServicesPage() {
-  const [inquiries, setInquiries] = useState<ServiceInquiry[]>(initialServices);
+  const [inquiries, setInquiries] = useState<ServiceInquiry[]>([]);
+  const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -91,7 +45,34 @@ export default function AdditionalServicesPage() {
     setTimeout(() => setToastMsg(null), 4000);
   };
 
-  const handleUpdateStatus = (id: string, newStatus: ServiceInquiry["status"]) => {
+  useEffect(() => {
+    (async () => {
+      setLoading(true);
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { setLoading(false); return; }
+      try {
+        const res = await fetch('/api/services', { headers: authHeader });
+        if (res.ok) {
+          const data = await res.json();
+          setInquiries(Array.isArray(data) ? data.map(mapApiInquiry) : []);
+        }
+      } catch (e) {
+        console.error(e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
+
+  const handleUpdateStatus = async (id: string, newStatus: ServiceInquiry["status"]) => {
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { showToast("You must be signed in to do that."); return; }
+    const res = await fetch(`/api/services/${id}`, {
+      method: 'PATCH',
+      headers: { ...authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ status: newStatus }),
+    });
+    if (!res.ok) { showToast("Failed to update status."); return; }
     setInquiries((prev) =>
       prev.map((s) => (s.id === id ? { ...s, status: newStatus } : s))
     );

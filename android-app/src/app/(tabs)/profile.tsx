@@ -508,9 +508,9 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsGrid}>
             {[
+              { icon: '🏠', label: 'My Assets', route: '/my-assets', color: '#14B8A6' },
+              { icon: '📊', label: 'A/C Ledger', route: '/ledger', color: '#3B82F6' },
               { icon: '📈', label: 'Investments', route: '/portfolio?from=profile', color: '#10B981' },
-              { icon: '🔍', label: 'Explore', route: '/explore?from=profile', color: '#3B82F6' },
-              { icon: '📄', label: 'Transactions', route: '/portfolio?from=profile', color: '#F59E0B' },
               { icon: '❓', label: 'Support Tickets', route: '/my-tickets', color: '#8B5CF6' },
             ].map((action) => (
               <TouchableOpacity

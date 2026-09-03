@@ -1,7 +1,8 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "../properties/Properties.module.css";
+import { getAuthHeader } from "@/lib/api-auth";
 
 interface Investor {
   id: string;
@@ -26,135 +27,47 @@ interface Investor {
   };
 }
 
-const initialInvestors: Investor[] = [
-  {
-    id: "INV-001",
-    name: "Arjun Kumar",
-    email: "arjun.k@gmail.com",
-    phone: "+91 98765 43210",
-    kyc: "Verified",
-    fractions: 14,
-    totalInvested: "₹20,00,000",
-    joinDate: "12 Jan 2026",
-    avatar: "AK",
-    status: "Active",
-    kycDetails: {
-      aadhaarNumber: "7890 1234 5678",
-      aadhaarFront: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=250&fit=crop",
-      aadhaarBack: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=250&fit=crop",
-      panNumber: "ABCDE1234F",
-      panFront: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&h=250&fit=crop",
-      passportNumber: "Z9876543",
-      submissionDate: "12 Jan 2026",
-    },
-  },
-  {
-    id: "INV-002",
-    name: "Priya Sharma",
-    email: "priya.s@outlook.com",
-    phone: "+91 87654 32109",
-    kyc: "Pending",
-    fractions: 4,
-    totalInvested: "₹2,00,000",
-    joinDate: "15 Mar 2026",
-    avatar: "PS",
-    status: "Active",
-    kycDetails: {
-      aadhaarNumber: "4567 8901 2345",
-      aadhaarFront: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&h=250&fit=crop",
-      aadhaarBack: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&h=250&fit=crop",
-      panNumber: "PQRS5678K",
-      panFront: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&h=250&fit=crop",
-      passportNumber: "P1234567",
-      submissionDate: "18 Aug 2026",
-    },
-  },
-  {
-    id: "INV-003",
-    name: "Rahul Mehta",
-    email: "rahul.m@yahoo.com",
-    phone: "+91 76543 21098",
-    kyc: "Verified",
-    fractions: 22,
-    totalInvested: "₹35,00,000",
-    joinDate: "02 Feb 2026",
-    avatar: "RM",
-    status: "Active",
-  },
-  {
-    id: "INV-004",
-    name: "Anjali Desai",
-    email: "anjali.d@gmail.com",
-    phone: "+91 65432 10987",
-    kyc: "Pending",
-    fractions: 8,
-    totalInvested: "₹12,00,000",
-    joinDate: "20 Apr 2026",
-    avatar: "AD",
-    status: "Active",
-    kycDetails: {
-      aadhaarNumber: "1234 5678 9012",
-      aadhaarFront: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=250&fit=crop",
-      aadhaarBack: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=250&fit=crop",
-      panNumber: "XYZP9012L",
-      panFront: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=250&fit=crop",
-      submissionDate: "19 Aug 2026",
-    },
-  },
-  {
-    id: "INV-005",
-    name: "Vikram Singh",
-    email: "vikram.s@corp.com",
-    phone: "+91 54321 09876",
-    kyc: "Rejected",
-    fractions: 0,
-    totalInvested: "₹0",
-    joinDate: "08 Jun 2026",
-    avatar: "VS",
-    status: "Active",
-    kycDetails: {
-      aadhaarNumber: "9988 7766 5544",
-      aadhaarFront: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=250&fit=crop",
-      aadhaarBack: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=250&fit=crop",
-      panNumber: "VKSG1234M",
-      panFront: "https://images.unsplash.com/photo-1554224155-8d04cb21cd6c?w=400&h=250&fit=crop",
-      notes: "Blurry PAN card image. Name mismatch with Aadhaar.",
-      submissionDate: "10 Jun 2026",
-    },
-  },
-  {
-    id: "INV-006",
-    name: "Meera Nair",
-    email: "meera.n@gmail.com",
-    phone: "+91 43210 98765",
-    kyc: "Verified",
-    fractions: 30,
-    totalInvested: "₹45,00,000",
-    joinDate: "11 Jan 2026",
-    avatar: "MN",
-    status: "Active",
-  },
-  {
-    id: "INV-007",
-    name: "Rohan Deshmukh",
-    email: "rohan.d@outlook.com",
-    phone: "+91 32109 87654",
-    kyc: "Pending",
-    fractions: 2,
-    totalInvested: "₹3,00,000",
-    joinDate: "29 Jul 2026",
-    avatar: "RD",
-    status: "Active",
-    kycDetails: {
-      aadhaarNumber: "3344 5566 7788",
-      aadhaarFront: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&h=250&fit=crop",
-      aadhaarBack: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&h=250&fit=crop",
-      panNumber: "RHDM4321X",
-      panFront: "https://images.unsplash.com/photo-1589829545856-d10d557cf95f?w=400&h=250&fit=crop",
-      submissionDate: "19 Aug 2026",
-    },
-  },
-];
+function mapApiInvestor(inv: any): Investor {
+  const kycMap: Record<string, Investor['kyc']> = {
+    verified: 'Verified',
+    pending: 'Pending',
+    rejected: 'Rejected',
+    not_submitted: 'Not Submitted',
+  };
+  const statusMap = (): Investor['status'] => {
+    if (inv.is_banned) return 'Banned';
+    if (!inv.is_active) return 'Deactivated';
+    return 'Active';
+  };
+  const aadhaar = inv.kyc_documents?.find((d: any) => d.document_type === 'aadhaar');
+  const pan = inv.kyc_documents?.find((d: any) => d.document_type === 'pan');
+  const passport = inv.kyc_documents?.find((d: any) => d.document_type === 'passport');
+  const anyDoc = aadhaar || pan || passport;
+  return {
+    id: inv.id,
+    name: inv.full_name || 'Unknown',
+    email: inv.email || '',
+    phone: inv.phone_number || '',
+    kyc: kycMap[inv.kyc_status] || 'Not Submitted',
+    fractions: inv.total_fractions || 0,
+    totalInvested: `₹${Number(inv.total_invested || 0).toLocaleString('en-IN')}`,
+    joinDate: inv.created_at ? new Date(inv.created_at).toLocaleDateString() : '',
+    avatar: (inv.full_name || '?').split(' ').map((p: string) => p[0]).slice(0, 2).join('').toUpperCase(),
+    status: statusMap(),
+    kycDetails: anyDoc
+      ? {
+          aadhaarNumber: aadhaar?.document_number || '',
+          aadhaarFront: aadhaar?.document_front_url || '',
+          aadhaarBack: aadhaar?.document_back_url || '',
+          panNumber: pan?.document_number || '',
+          panFront: pan?.document_front_url || '',
+          passportNumber: passport?.document_number,
+          submissionDate: inv.created_at ? new Date(inv.created_at).toLocaleDateString() : '',
+          notes: anyDoc?.rejection_reason || undefined,
+        }
+      : undefined,
+  };
+}
 
 const kycColors: Record<string, string> = {
   Verified: "#16A34A",
@@ -164,14 +77,55 @@ const kycColors: Record<string, string> = {
 };
 
 export default function InvestorsPage() {
-  const [investors, setInvestors] = useState<Investor[]>(initialInvestors);
+  const [investors, setInvestors] = useState<Investor[]>([]);
+  const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [kycFilter, setKycFilter] = useState("All");
   const [selectedInvestor, setSelectedInvestor] = useState<Investor | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
+  const [actionError, setActionError] = useState<string | null>(null);
 
-  const handleApproveKYC = (id: string) => {
+  const loadInvestors = async () => {
+    setLoading(true);
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { setLoading(false); return; }
+    try {
+      const res = await fetch('/api/investors', { headers: authHeader });
+      if (res.ok) {
+        const data = await res.json();
+        setInvestors(Array.isArray(data) ? data.map(mapApiInvestor) : []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadInvestors();
+  }, []);
+
+  const patchInvestor = async (id: string, body: any) => {
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { setActionError('You must be signed in to do that.'); return null; }
+    const res = await fetch(`/api/investors/${id}`, {
+      method: 'PATCH',
+      headers: { ...authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      setActionError(err.error || 'Action failed.');
+      return null;
+    }
+    return res.json();
+  };
+
+  const handleApproveKYC = async (id: string) => {
+    const updated = await patchInvestor(id, { kyc_action: 'approve' });
+    if (!updated) return;
     setInvestors((prev) =>
       prev.map((inv) => (inv.id === id ? { ...inv, kyc: "Verified" } : inv))
     );
@@ -182,11 +136,13 @@ export default function InvestorsPage() {
     setTimeout(() => setActionSuccess(null), 4000);
   };
 
-  const handleRejectKYC = (id: string) => {
+  const handleRejectKYC = async (id: string) => {
     if (!rejectionReason.trim()) {
       alert("Please enter a rejection reason.");
       return;
     }
+    const updated = await patchInvestor(id, { kyc_action: 'reject', rejection_reason: rejectionReason });
+    if (!updated) return;
     setInvestors((prev) =>
       prev.map((inv) =>
         inv.id === id
@@ -218,7 +174,12 @@ export default function InvestorsPage() {
     setTimeout(() => setActionSuccess(null), 4000);
   };
 
-  const handleToggleUserStatus = (id: string, newStatus: "Active" | "Deactivated" | "Banned") => {
+  const handleToggleUserStatus = async (id: string, newStatus: "Active" | "Deactivated" | "Banned") => {
+    const updated = await patchInvestor(id, {
+      is_active: newStatus !== "Deactivated",
+      is_banned: newStatus === "Banned",
+    });
+    if (!updated) return;
     setInvestors((prev) =>
       prev.map((inv) => (inv.id === id ? { ...inv, status: newStatus } : inv))
     );

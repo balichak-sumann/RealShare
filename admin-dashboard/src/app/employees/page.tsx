@@ -1,8 +1,9 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "../properties/Properties.module.css";
 import { useAuth } from "@/contexts/AuthContext";
+import { getAuthHeader } from "@/lib/api-auth";
 
 interface Employee {
   id: string;
@@ -18,83 +19,57 @@ interface Employee {
   assignedClientsCount: number;
 }
 
-const initialEmployees: Employee[] = [
-  {
-    id: "EMP-101",
-    name: "Suresh Varma",
-    email: "suresh.v@realshare.in",
-    phone: "+91 98480 12345",
-    department: "Sales",
-    employeeCode: "RS-SALES-01",
-    incentiveRatePct: 0.75,
-    monthlyTarget: "₹1.50 Cr",
-    currentMonthSales: "₹1.15 Cr",
-    status: "Active",
-    assignedClientsCount: 42,
-  },
-  {
-    id: "EMP-102",
-    name: "Lavanya Reddy",
-    email: "lavanya.r@realshare.in",
-    phone: "+91 98480 23456",
-    department: "Support",
-    employeeCode: "RS-SUPP-01",
-    incentiveRatePct: 0.20,
-    monthlyTarget: "400 Tickets",
-    currentMonthSales: "348 Resolved",
-    status: "Active",
-    assignedClientsCount: 180,
-  },
-  {
-    id: "EMP-103",
-    name: "Karthik Nambiar",
-    email: "karthik.n@realshare.in",
-    phone: "+91 98480 34567",
-    department: "Accounts",
-    employeeCode: "RS-ACCT-01",
-    incentiveRatePct: 0.15,
-    monthlyTarget: "₹10.0 Cr Audit",
-    currentMonthSales: "₹8.4 Cr Disbursed",
-    status: "Active",
+function mapApiEmployee(p: any): Employee {
+  const deptMap: Record<string, Employee['department']> = {
+    sales: 'Sales',
+    support: 'Support',
+    accounts: 'Accounts',
+  };
+  return {
+    id: p.id,
+    name: p.full_name || 'Unknown',
+    email: p.email || '',
+    phone: p.phone_number || '',
+    department: deptMap[p.employee_department] || 'Sales',
+    employeeCode: p.id.slice(0, 8).toUpperCase(),
+    incentiveRatePct: 0,
+    monthlyTarget: 'Not tracked',
+    currentMonthSales: 'Not tracked',
+    status: p.is_active ? 'Active' : 'Inactive',
     assignedClientsCount: 0,
-  },
-  {
-    id: "EMP-104",
-    name: "Sneha Rao",
-    email: "sneha.r@realshare.in",
-    phone: "+91 98480 45678",
-    department: "Sales",
-    employeeCode: "RS-SALES-02",
-    incentiveRatePct: 0.85,
-    monthlyTarget: "₹2.00 Cr",
-    currentMonthSales: "₹1.85 Cr",
-    status: "Active",
-    assignedClientsCount: 56,
-  },
-  {
-    id: "EMP-105",
-    name: "Ramesh Babu",
-    email: "ramesh.b@realshare.in",
-    phone: "+91 98480 56789",
-    department: "Sales",
-    employeeCode: "RS-SALES-03",
-    incentiveRatePct: 0.50,
-    monthlyTarget: "₹1.00 Cr",
-    currentMonthSales: "₹40.0 L",
-    status: "Inactive",
-    assignedClientsCount: 12,
-  },
-];
-
+  };
+}
 export default function EmployeesPage() {
   const { user } = useAuth();
-  const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loading, setLoading] = useState(true);
   const [deptFilter, setDeptFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [toastType, setToastType] = useState<"success" | "error" | "info">("success");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const loadEmployees = async () => {
+    setLoading(true);
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { setLoading(false); return; }
+    try {
+      const res = await fetch('/api/admin/employees', { headers: authHeader });
+      if (res.ok) {
+        const data = await res.json();
+        setEmployees(Array.isArray(data.employees) ? data.employees.map(mapApiEmployee) : []);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
 
   // Form State
   const [newEmp, setNewEmp] = useState({
@@ -113,15 +88,34 @@ export default function EmployeesPage() {
     setTimeout(() => setToastMsg(null), 6000);
   };
 
-  const handleToggleStatus = (id: string) => {
-    setEmployees((prev) =>
-      prev.map((emp) =>
-        emp.id === id
-          ? { ...emp, status: emp.status === "Active" ? "Inactive" : "Active" }
-          : emp
-      )
-    );
-    showToast("Employee status updated successfully.");
+  const handleToggleStatus = async (id: string) => {
+    const target = employees.find((e) => e.id === id);
+    if (!target) return;
+    const newActive = target.status !== "Active";
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { showToast("You must be signed in to do that.", "error"); return; }
+    try {
+      const res = await fetch(`/api/admin/employees/${id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_active: newActive }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || 'Failed to update status.', "error");
+        return;
+      }
+      setEmployees((prev) =>
+        prev.map((emp) =>
+          emp.id === id
+            ? { ...emp, status: emp.status === "Active" ? "Inactive" : "Active" }
+            : emp
+        )
+      );
+      showToast("Employee status updated successfully.");
+    } catch (e) {
+      showToast("Failed to update status.", "error");
+    }
   };
 
   const handleAddEmployee = async (e: React.FormEvent) => {

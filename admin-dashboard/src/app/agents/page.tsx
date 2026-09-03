@@ -4,6 +4,12 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { getAuthHeader } from "@/lib/api-auth";
 import styles from "../properties/Properties.module.css";
 
+function formatInr(n: number) {
+  if (n >= 10000000) return `₹${(n / 10000000).toFixed(2)} Cr`;
+  if (n >= 100000) return `₹${(n / 100000).toFixed(2)} L`;
+  return `₹${n.toLocaleString("en-IN")}`;
+}
+
 interface Agent {
   id: string;
   name: string;
@@ -51,7 +57,7 @@ export default function AgentsPage() {
             email: d.email || '',
             phone: d.phone_number || '',
             referralCode: d.referral_code || '',
-            commissionRatePct: 2.5,
+            commissionRatePct: d.commission_rate_pct != null ? Number(d.commission_rate_pct) : 2.5,
             totalInvestorsReferred: commissions.length,
             totalSalesVolume: `₹${(earned * 40 + pending * 40).toLocaleString('en-IN')}`,
             commissionEarned: `₹${earned.toLocaleString('en-IN')}`,
@@ -82,15 +88,31 @@ export default function AgentsPage() {
     setTimeout(() => setToastMsg(null), 4000);
   };
 
-  const handleApproveAgent = (id: string) => {
+  const handleApproveAgent = async (id: string) => {
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { showToast("You must be signed in to do that."); return; }
+    const res = await fetch(`/api/agents/${id}`, {
+      method: 'PATCH',
+      headers: { ...authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ is_active: true }),
+    });
+    if (!res.ok) { showToast("Failed to approve agent."); return; }
     setAgents((prev) =>
       prev.map((a) => (a.id === id ? { ...a, status: "Active" } : a))
     );
     showToast(`Agent ${id} approved successfully.`);
   };
 
-  const handleUpdateCommission = () => {
+  const handleUpdateCommission = async () => {
     if (!selectedAgent) return;
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { showToast("You must be signed in to do that."); return; }
+    const res = await fetch(`/api/agents/${selectedAgent.id}`, {
+      method: 'PATCH',
+      headers: { ...authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ commission_rate_pct: editCommissionRate }),
+    });
+    if (!res.ok) { showToast("Failed to update commission rate."); return; }
     setAgents((prev) =>
       prev.map((a) =>
         a.id === selectedAgent.id ? { ...a, commissionRatePct: editCommissionRate } : a
@@ -208,7 +230,7 @@ export default function AgentsPage() {
             Agent-Driven Sales Volume
           </div>
           <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "#2563EB" }}>
-            ₹8.15 Cr
+            {formatInr(agents.reduce((sum, a) => sum + parseInt(a.totalSalesVolume.replace(/[^0-9]/g, "") || "0"), 0))}
           </div>
         </div>
 
@@ -224,7 +246,7 @@ export default function AgentsPage() {
             Total Commissions Paid
           </div>
           <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "#16A34A" }}>
-            ₹18.45 L
+            {formatInr(agents.reduce((sum, a) => sum + parseInt(a.commissionEarned.replace(/[^0-9]/g, "") || "0"), 0))}
           </div>
         </div>
 
@@ -240,7 +262,7 @@ export default function AgentsPage() {
             Pending Commission Payouts
           </div>
           <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "#D97706" }}>
-            ₹2.00 L
+            {formatInr(agents.reduce((sum, a) => sum + parseInt(a.commissionPending.replace(/[^0-9]/g, "") || "0"), 0))}
           </div>
         </div>
       </div>

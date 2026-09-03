@@ -13,16 +13,34 @@ interface NotificationLog {
   sentAt: string;
   deliveryCount: number;
   openRate: string;
-  status: "Delivered" | "Queued" | "Failed";
+  // "Delivered"/"Partial"/"Failed" reflect a real per-token Expo push result
+  // (only known right after sending -- the DB doesn't persist it). "Sent"
+  // means the broadcast was logged but we have no delivery outcome for it
+  // (e.g. re-loaded from history), which is honest instead of assuming success.
+  status: "Delivered" | "Partial" | "Failed" | "Sent";
 }
 
-function mapApiNotification(n: any): NotificationLog {
+// pushResult is only available immediately after POSTing a new broadcast --
+// history fetched via GET has no persisted delivery outcome to report.
+function mapApiNotification(
+  n: any,
+  pushResult?: { sent: number; failed: number; eligible: number }
+): NotificationLog {
   const audienceMap: Record<string, NotificationLog['targetAudience']> = {
     all: 'All Users',
     investors: 'Investors Only',
     agents: 'Agents Only',
     builders: 'Builders',
   };
+
+  let status: NotificationLog['status'] = 'Sent';
+  if (pushResult) {
+    if (pushResult.eligible === 0) status = 'Sent';
+    else if (pushResult.failed === 0) status = 'Delivered';
+    else if (pushResult.sent === 0) status = 'Failed';
+    else status = 'Partial';
+  }
+
   return {
     id: n.id,
     title: n.title,
@@ -32,7 +50,7 @@ function mapApiNotification(n: any): NotificationLog {
     sentAt: new Date(n.created_at).toLocaleString(),
     deliveryCount: n.recipients_count,
     openRate: 'Not tracked',
-    status: 'Delivered',
+    status,
   };
 }
 export default function NotificationsPage() {
@@ -62,7 +80,7 @@ export default function NotificationsPage() {
       const res = await fetch('/api/notifications', { headers: authHeader });
       if (res.ok) {
         const data = await res.json();
-        setLogs(Array.isArray(data) ? data.map(mapApiNotification) : []);
+        setLogs(Array.isArray(data) ? data.map((n: any) => mapApiNotification(n)) : []);
       }
     } catch (e) {
       console.error(e);
@@ -104,9 +122,18 @@ export default function NotificationsPage() {
         return;
       }
       const data = await res.json();
-      setLogs([mapApiNotification(data.notification), ...logs]);
+      setLogs([mapApiNotification(data.notification, data.push), ...logs]);
       setShowBroadcastModal(false);
-      showToast(`Broadcast "${newNotice.title}" dispatched to ${data.notification.recipients_count} recipient(s)!`);
+      const push = data.push as { sent: number; failed: number; eligible: number; targeted: number } | undefined;
+      if (push && push.eligible > 0) {
+        showToast(
+          `Broadcast "${newNotice.title}" sent to ${data.notification.recipients_count} recipient(s) — ` +
+          `push delivered to ${push.sent}/${push.eligible} device(s)` +
+          (push.failed > 0 ? `, ${push.failed} failed.` : '.')
+        );
+      } else {
+        showToast(`Broadcast "${newNotice.title}" logged for ${data.notification.recipients_count} recipient(s). No devices had push tokens registered.`);
+      }
       setNewNotice({ title: "", message: "", channel: "Broadcast", targetAudience: "All Users" });
     } finally {
       setSending(false);
@@ -270,8 +297,16 @@ export default function NotificationsPage() {
                       borderRadius: "6px",
                       fontSize: "0.75rem",
                       fontWeight: 700,
-                      background: "#DCFCE7",
-                      color: "#15803D",
+                      background:
+                        log.status === "Delivered" ? "#DCFCE7" :
+                        log.status === "Partial" ? "#FEF3C7" :
+                        log.status === "Failed" ? "#FEE2E2" :
+                        "#EFF6FF",
+                      color:
+                        log.status === "Delivered" ? "#15803D" :
+                        log.status === "Partial" ? "#B45309" :
+                        log.status === "Failed" ? "#B91C1C" :
+                        "#2563EB",
                     }}
                   >
                     {log.status}

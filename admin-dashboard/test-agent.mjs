@@ -1,8 +1,7 @@
 import { initializeApp, cert } from 'firebase-admin/app';
 import { getAuth as getAdminAuth } from 'firebase-admin/auth';
 import { PrismaClient } from '@prisma/client';
-import { Pool } from 'pg';
-import { PrismaPg } from '@prisma/adapter-pg';
+import { PrismaMariaDb } from '@prisma/adapter-mariadb';
 import fetch from 'node-fetch';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -10,8 +9,26 @@ import path from 'path';
 // Load environment variables from admin-dashboard/.env
 dotenv.config({ path: path.join(process.cwd(), '.env') });
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-const adapter = new PrismaPg(pool);
+function parseConnectionString(url) {
+  const parsed = new URL(url);
+  return {
+    host: parsed.hostname || 'localhost',
+    port: parseInt(parsed.port || '3306', 10),
+    user: decodeURIComponent(parsed.username),
+    password: decodeURIComponent(parsed.password),
+    database: parsed.pathname.replace(/^\//, ''),
+  };
+}
+
+const dbConfig = parseConnectionString(process.env.DATABASE_URL || '');
+const adapter = new PrismaMariaDb({
+  host: dbConfig.host,
+  port: dbConfig.port,
+  user: dbConfig.user,
+  password: dbConfig.password,
+  database: dbConfig.database,
+  connectionLimit: 5,
+});
 const prisma = new PrismaClient({ adapter });
 const API_BASE_URL = 'http://localhost:3000/api';
 

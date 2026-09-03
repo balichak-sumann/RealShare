@@ -39,6 +39,8 @@ interface Property {
   builderContact?: string;
   videoUrl?: string;
   raised?: string;
+  description?: string;
+  full_address?: string;
 }
 
 export default function PropertiesPage() {
@@ -1070,6 +1072,120 @@ export default function PropertiesPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* View Property Modal (read-only) */}
+      {selectedProperty && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.7)",
+            backdropFilter: "blur(4px)",
+            zIndex: 100,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "720px",
+              maxHeight: "90vh",
+              overflowY: "auto",
+              padding: "28px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderBottom: "1px solid #E2E8F0",
+                paddingBottom: "16px",
+                marginBottom: "20px",
+              }}
+            >
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0F172A" }}>{selectedProperty.title}</h2>
+              <button
+                onClick={() => setSelectedProperty(null)}
+                style={{ background: "#F1F5F9", border: "none", borderRadius: "8px", padding: "6px 12px", cursor: "pointer", fontWeight: 700 }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {selectedProperty.images && selectedProperty.images.length > 0 && (
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "20px" }}>
+                {selectedProperty.images.map((img: any, idx: number) => (
+                  <img
+                    key={img.id || idx}
+                    src={img.image_url}
+                    alt={`${selectedProperty.title} ${idx + 1}`}
+                    style={{ width: "140px", height: "100px", objectFit: "cover", borderRadius: "8px", border: "1px solid #E2E8F0" }}
+                  />
+                ))}
+              </div>
+            )}
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", fontSize: "0.85rem", color: "#334155" }}>
+              <div><strong>Location:</strong> {selectedProperty.locality}, {selectedProperty.district}, {selectedProperty.state}</div>
+              <div><strong>Property Type:</strong> {selectedProperty.property_type}</div>
+              <div><strong>Listing Type:</strong> {selectedProperty.listing_type || "fractional"}</div>
+              <div><strong>Approval Status:</strong> {selectedProperty.approval_status}</div>
+              <div><strong>Price / Fraction:</strong> ₹{Number(selectedProperty.price_per_fraction).toLocaleString("en-IN")}</div>
+              <div><strong>Booking Amount:</strong> ₹{Number(selectedProperty.booking_amount).toLocaleString("en-IN")}</div>
+              <div><strong>Assured Yield:</strong> {selectedProperty.assured_yield}%</div>
+              <div><strong>Target IRR:</strong> {selectedProperty.target_irr}%</div>
+              <div>
+                <strong>Posted By:</strong>{" "}
+                {selectedProperty.profile?.full_name || selectedProperty.postedBy || "Admin"}
+                {selectedProperty.profile?.role ? ` (${selectedProperty.profile.role})` : ""}
+              </div>
+              <div><strong>Full Address:</strong> {selectedProperty.full_address || "—"}</div>
+            </div>
+
+            <div style={{ marginTop: "20px", padding: "16px", background: "#F8FAFC", borderRadius: "10px" }}>
+              <div style={{ fontWeight: 700, marginBottom: "8px", fontSize: "0.85rem" }}>Share Pool Status</div>
+              {(selectedProperty.listing_type || "fractional") === "fractional" ? (
+                <>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: "0.85rem", marginBottom: "6px" }}>
+                    <span>Sold: <strong style={{ color: "#16A34A" }}>{selectedProperty.sold_fractions}</strong></span>
+                    <span>Available: <strong style={{ color: "#2563EB" }}>{selectedProperty.available_fractions}</strong></span>
+                    <span>Total: <strong>{selectedProperty.total_fractions}</strong></span>
+                  </div>
+                  <div style={{ height: "10px", width: "100%", background: "#E2E8F0", borderRadius: "5px", overflow: "hidden" }}>
+                    <div
+                      style={{
+                        height: "100%",
+                        width: `${selectedProperty.total_fractions > 0 ? (selectedProperty.sold_fractions / selectedProperty.total_fractions) * 100 : 0}%`,
+                        background: "linear-gradient(90deg, #10B981, #059669)",
+                      }}
+                    />
+                  </div>
+                </>
+              ) : (
+                <div style={{ fontSize: "0.85rem" }}>
+                  Whole-property listing ({selectedProperty.listing_type}) — single unit, no share pool.
+                </div>
+              )}
+            </div>
+
+            {selectedProperty.description && (
+              <div style={{ marginTop: "20px" }}>
+                <div style={{ fontWeight: 700, marginBottom: "6px", fontSize: "0.85rem" }}>Description</div>
+                <div style={{ fontSize: "0.85rem", color: "#475569", whiteSpace: "pre-wrap" }}>{selectedProperty.description}</div>
+              </div>
+            )}
           </div>
         </div>
       )}

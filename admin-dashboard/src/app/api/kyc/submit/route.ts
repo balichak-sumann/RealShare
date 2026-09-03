@@ -27,15 +27,16 @@ export async function POST(req: Request) {
         document_number,
         document_front_url,
         document_back_url,
-        verification_status: 'verified', // Simulated instant verification for beta
-        verified_at: new Date()
+        verification_status: 'pending',
+        verified_at: null
       }
     });
 
-    // Update User Profile KYC Status
+    // Update User Profile KYC Status - stays pending until an admin reviews
+    // and approves/rejects it via the existing KYC review flow.
     await prisma.profile.update({
       where: { id: userId },
-      data: { kyc_status: 'verified' }
+      data: { kyc_status: 'pending' }
     });
 
     return NextResponse.json({ success: true, kycDocumentId: kycDoc.id });

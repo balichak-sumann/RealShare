@@ -7,10 +7,13 @@ export async function GET(request: Request) {
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
 
-    // Get all agents who have referral codes
+    // Get every user who has a referral code -- referral codes are issued to
+    // any authenticated user (see /api/me/referral), not just agents, so
+    // filtering this admin view to role 'agent' hid real non-agent referral
+    // activity. Reward/commission columns below are agent-specific and will
+    // correctly show 0 for non-agent referrers; that's expected.
     const agents = await prisma.profile.findMany({
       where: {
-        role: 'agent',
         referral_code: { not: null },
       },
       select: {

@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAuth } from '@/lib/require-admin';
 
+// Real statuses the ticket UI (my-tickets.tsx) and the DB default ("open") use.
+const VALID_TICKET_STATUSES = ['open', 'in_progress', 'resolved', 'closed'];
+
 // PATCH: staff-only status/assignment updates.
 export async function PATCH(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
@@ -15,7 +18,15 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     const body = await request.json();
     const { status, assigned_to } = body;
     const data: any = {};
-    if (status) data.status = status;
+    if (status !== undefined) {
+      if (typeof status !== 'string' || !VALID_TICKET_STATUSES.includes(status)) {
+        return NextResponse.json(
+          { error: `Invalid status. Must be one of: ${VALID_TICKET_STATUSES.join(', ')}` },
+          { status: 400 }
+        );
+      }
+      data.status = status;
+    }
     if (assigned_to !== undefined) data.assigned_to = assigned_to;
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });

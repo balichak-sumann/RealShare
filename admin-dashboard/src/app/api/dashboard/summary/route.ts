@@ -2,6 +2,14 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
 
+// The only transaction_type value ever actually written by the backend today
+// (see src/app/api/transactions/create-order/route.ts). Kept as a map so a
+// new transaction_type just needs a label added here instead of leaking a
+// raw db value into the activity feed.
+const TRANSACTION_TYPE_ACTION_LABELS: Record<string, string> = {
+  property_booking: 'booked a share in',
+};
+
 export async function GET(request: Request) {
   try {
     const auth = await requireAdmin(request);
@@ -56,12 +64,7 @@ export async function GET(request: Request) {
     const recentActivity = recentTransactions.map((t) => ({
       id: t.id,
       user: t.profile?.full_name || 'Unknown',
-      action:
-        t.transaction_type === 'investment'
-          ? 'invested'
-          : t.transaction_type === 'payout'
-          ? 'received a payout for'
-          : t.transaction_type,
+      action: TRANSACTION_TYPE_ACTION_LABELS[t.transaction_type] || t.transaction_type,
       target: t.property?.title || '',
       amount: Number(t.amount),
       status: t.payment_status,

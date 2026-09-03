@@ -99,7 +99,7 @@ export default function ReferralsPage() {
             {totalReferrals}
           </div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 4 }}>
-            From {referrals.length} agents
+            From {referrals.length} referrers
           </div>
         </div>
 
@@ -142,7 +142,7 @@ export default function ReferralsPage() {
 
       {/* Header with Search & Export */}
       <div className={styles.header}>
-        <div className={styles.title}>Agent Referral Performance</div>
+        <div className={styles.title}>Referral Performance</div>
         <div className={styles.headerRight}>
           <button className={styles.addButton} onClick={handleExportCSV}>
             📥 Export CSV
@@ -165,7 +165,7 @@ export default function ReferralsPage() {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th className={styles.th}>Agent</th>
+              <th className={styles.th}>Referrer</th>
               <th className={styles.th}>Referral Code</th>
               <th className={styles.th}>Investors Referred</th>
               <th className={styles.th}>Investment Volume</th>
@@ -179,7 +179,7 @@ export default function ReferralsPage() {
             {filtered.length === 0 ? (
               <tr>
                 <td className={styles.td} colSpan={8} style={{ textAlign: "center", padding: 40, color: "var(--text-secondary)" }}>
-                  {referrals.length === 0 ? "No referral data yet. Agents will appear here once they register and share referral links." : "No results match your search."}
+                  {referrals.length === 0 ? "No referral data yet. Users will appear here once they register and share their referral link." : "No results match your search."}
                 </td>
               </tr>
             ) : (

@@ -29,15 +29,32 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const startDate = new Date(data.start_date);
+    const endDate = new Date(data.end_date);
+    if (isNaN(startDate.getTime()) || isNaN(endDate.getTime())) {
+      return NextResponse.json({ error: 'Invalid start_date or end_date' }, { status: 400 });
+    }
+    if (endDate <= startDate) {
+      return NextResponse.json({ error: 'end_date must be after start_date' }, { status: 400 });
+    }
+    const monthlyRent = Number(data.monthly_rent);
+    if (!Number.isFinite(monthlyRent) || monthlyRent <= 0) {
+      return NextResponse.json({ error: 'monthly_rent must be greater than 0' }, { status: 400 });
+    }
+    const securityDeposit = Number(data.security_deposit);
+    if (!Number.isFinite(securityDeposit) || securityDeposit < 0) {
+      return NextResponse.json({ error: 'security_deposit must not be negative' }, { status: 400 });
+    }
+
     const agreement = await prisma.rentalAgreement.create({
       data: {
         asset_id: id,
         tenant_name: data.tenant_name,
         tenant_phone: data.tenant_phone || null,
-        start_date: new Date(data.start_date),
-        end_date: new Date(data.end_date),
-        monthly_rent: data.monthly_rent,
-        security_deposit: data.security_deposit,
+        start_date: startDate,
+        end_date: endDate,
+        monthly_rent: monthlyRent,
+        security_deposit: securityDeposit,
         status: data.status || 'active',
       }
     });

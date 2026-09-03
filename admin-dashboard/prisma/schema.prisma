@@ -3,32 +3,32 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
 }
 
 model Profile {
-  id                   String        @id
-  full_name            String
-  email                String?       @unique
-  phone_number         String?
-  full_address         String?
-  role                 String        @default("investor")
-  employee_department  String?       // "sales", "support", or "accounts"
-  avatar_url           String?
+  id                   String        @id @db.VarChar(128)
+  full_name            String        @db.VarChar(255)
+  email                String?       @unique @db.VarChar(255)
+  phone_number         String?       @db.VarChar(20)
+  full_address         String?       @db.Text
+  role                 String        @default("investor") @db.VarChar(50)
+  employee_department  String?       @db.VarChar(50) // "sales", "support", or "accounts"
+  avatar_url           String?       @db.Text
   wallet_balance       Decimal       @default(0.00) @db.Decimal(15, 2)
-  kyc_status           String        @default("not_submitted")
-  kyc_rejection_reason String?
-  referral_code        String?       @unique
-  referred_by_code     String?
-  expo_push_token      String?
+  kyc_status           String        @default("not_submitted") @db.VarChar(50)
+  kyc_rejection_reason String?       @db.Text
+  referral_code        String?       @unique @db.VarChar(50)
+  referred_by_code     String?       @db.VarChar(50)
+  expo_push_token      String?       @db.VarChar(255)
   is_active            Boolean       @default(true)
   is_banned            Boolean       @default(false)
-  bank_account_name    String?
-  bank_account_number  String?
-  bank_ifsc            String?
+  bank_account_name    String?       @db.VarChar(255)
+  bank_account_number  String?       @db.VarChar(50)
+  bank_ifsc            String?       @db.VarChar(20)
   commission_rate_pct  Decimal?      @db.Decimal(5, 2) // agent commission rate, admin-settable
-  created_at           DateTime      @default(now()) @db.Timestamptz(6)
-  updated_at           DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
+  created_at           DateTime      @default(now()) @db.Timestamp(6)
+  updated_at           DateTime      @default(now()) @updatedAt @db.Timestamp(6)
 
   // Relations
   kyc_documents             KycDocument[]
@@ -39,7 +39,7 @@ model Profile {
   agent_commissions         AgentCommission[] @relation("AgentCommissions")
   investor_commissions      AgentCommission[] @relation("InvestorCommissions")
   
-  assigned_sales_rep_id     String?
+  assigned_sales_rep_id     String?       @db.VarChar(128)
   assigned_sales_rep        Profile?          @relation("SalesAssignment", fields: [assigned_sales_rep_id], references: [id])
   assigned_clients          Profile[]         @relation("SalesAssignment")
   agent_clients             AgentClient[]     @relation("AgentClients")
@@ -50,17 +50,17 @@ model Profile {
 }
 
 model KycDocument {
-  id                  String    @id @default(uuid()) @db.Uuid
-  user_id             String
-  document_type       String
-  document_number     String
-  document_front_url  String    @default("")
-  document_back_url   String?
-  verification_status String    @default("pending")
-  rejection_reason    String?
-  verified_by         String?
-  verified_at         DateTime? @db.Timestamptz(6)
-  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+  id                  String    @id @default(uuid()) @db.VarChar(36)
+  user_id             String    @db.VarChar(128)
+  document_type       String    @db.VarChar(50)
+  document_number     String    @db.VarChar(100)
+  document_front_url  String    @db.Text
+  document_back_url   String?   @db.Text
+  verification_status String    @default("pending") @db.VarChar(50)
+  rejection_reason    String?   @db.Text
+  verified_by         String?   @db.VarChar(128)
+  verified_at         DateTime? @db.Timestamp(6)
+  created_at          DateTime  @default(now()) @db.Timestamp(6)
 
   // Relations
   profile          Profile  @relation(fields: [user_id], references: [id], onDelete: Cascade)
@@ -71,11 +71,11 @@ model KycDocument {
 }
 
 model Property {
-  id                  String    @id @default(uuid()) @db.Uuid
-  title               String
-  description         String?
-  property_type       String
-  listing_type        String    @default("fractional") // "fractional" | "outright"
+  id                  String    @id @default(uuid()) @db.VarChar(36)
+  title               String    @db.VarChar(255)
+  description         String?   @db.Text
+  property_type       String    @db.VarChar(50)
+  listing_type        String    @default("fractional") @db.VarChar(50) // "fractional" | "outright"
   total_fractions     Int
   available_fractions Int
   sold_fractions      Int       @default(0)
@@ -83,21 +83,21 @@ model Property {
   booking_amount      Decimal   @default(50000.00) @db.Decimal(12, 2)
   assured_yield       Decimal?  @db.Decimal(5, 2)
   target_irr          Decimal?  @db.Decimal(5, 2)
-  state               String
-  district            String
-  locality            String
-  full_address        String?
+  state               String    @db.VarChar(100)
+  district            String    @db.VarChar(100)
+  locality            String    @db.VarChar(100)
+  full_address        String?   @db.Text
   lat                 Decimal?  @db.Decimal(10, 6)
   lng                 Decimal?  @db.Decimal(10, 6)
-  video_url           String?
-  brochure_url        String?
-  posted_by           String?
-  developer_id        String?   @db.Uuid
-  approval_status     String    @default("pending_approval")
-  rejection_notes     String?
+  video_url           String?   @db.Text
+  brochure_url        String?   @db.Text
+  posted_by           String?   @db.VarChar(128)
+  developer_id        String?   @db.VarChar(36)
+  approval_status     String    @default("pending_approval") @db.VarChar(50)
+  rejection_notes     String?   @db.Text
   featured            Boolean   @default(false)
-  created_at          DateTime  @default(now()) @db.Timestamptz(6)
-  updated_at          DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
+  created_at          DateTime  @default(now()) @db.Timestamp(6)
+  updated_at          DateTime  @default(now()) @updatedAt @db.Timestamp(6)
 
   // Relations
   profile           Profile?          @relation(fields: [posted_by], references: [id])
@@ -112,11 +112,11 @@ model Property {
 }
 
 model PropertyImage {
-  id          String   @id @default(uuid()) @db.Uuid
-  property_id String   @db.Uuid
-  image_url   String
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  property_id String   @db.VarChar(36)
+  image_url   String   @db.Text
   is_primary  Boolean  @default(false)
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
 
   property Property @relation(fields: [property_id], references: [id], onDelete: Cascade)
 
@@ -124,16 +124,16 @@ model PropertyImage {
 }
 
 model Investment {
-  id                  String   @id @default(uuid()) @db.Uuid
-  user_id             String
-  property_id         String   @db.Uuid
+  id                  String   @id @default(uuid()) @db.VarChar(36)
+  user_id             String   @db.VarChar(128)
+  property_id         String   @db.VarChar(36)
   fractions_bought    Int
   total_amount        Decimal  @db.Decimal(15, 2)
   booking_amount_paid Decimal  @db.Decimal(15, 2)
   ownership_percentage Decimal @db.Decimal(6, 3)
-  certificate_number  String?  @unique
-  status              String   @default("completed")
-  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  certificate_number  String?  @unique @db.VarChar(50)
+  status              String   @default("completed") @db.VarChar(50)
+  created_at          DateTime @default(now()) @db.Timestamp(6)
 
   profile           Profile           @relation(fields: [user_id], references: [id])
   property          Property          @relation(fields: [property_id], references: [id])
@@ -144,19 +144,19 @@ model Investment {
 }
 
 model Transaction {
-  id               String   @id @default(uuid()) @db.Uuid
-  user_id          String
-  property_id      String?  @db.Uuid
-  investment_id    String?  @db.Uuid
-  transaction_type String
+  id               String   @id @default(uuid()) @db.VarChar(36)
+  user_id          String   @db.VarChar(128)
+  property_id      String?  @db.VarChar(36)
+  investment_id    String?  @db.VarChar(36)
+  transaction_type String   @db.VarChar(50)
   amount           Decimal  @db.Decimal(15, 2)
-  currency         String   @default("INR")
-  payment_gateway  String?  @default("Razorpay")
-  gateway_txn_id   String?
-  payment_method   String?
-  payment_status   String   @default("pending")
+  currency         String   @default("INR") @db.VarChar(10)
+  payment_gateway  String?  @default("Razorpay") @db.VarChar(50)
+  gateway_txn_id   String?  @db.VarChar(255)
+  payment_method   String?  @db.VarChar(50)
+  payment_status   String   @default("pending") @db.VarChar(50)
   metadata         Json?
-  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  created_at       DateTime @default(now()) @db.Timestamp(6)
 
   profile    Profile     @relation("UserTransactions", fields: [user_id], references: [id])
   property   Property?   @relation(fields: [property_id], references: [id])
@@ -166,16 +166,16 @@ model Transaction {
 }
 
 model AgentCommission {
-  id                    String   @id @default(uuid()) @db.Uuid
-  agent_id              String
-  investor_id           String
-  property_id           String   @db.Uuid
-  investment_id         String   @db.Uuid
+  id                    String   @id @default(uuid()) @db.VarChar(36)
+  agent_id              String   @db.VarChar(128)
+  investor_id           String   @db.VarChar(128)
+  property_id           String   @db.VarChar(36)
+  investment_id         String   @db.VarChar(36)
   commission_percentage Decimal  @default(2.00) @db.Decimal(5, 2)
   commission_amount     Decimal  @db.Decimal(15, 2)
-  status                String   @default("pending_clearance")
-  paid_at               DateTime? @db.Timestamptz(6)
-  created_at            DateTime @default(now()) @db.Timestamptz(6)
+  status                String   @default("pending_clearance") @db.VarChar(50)
+  paid_at               DateTime? @db.Timestamp(6)
+  created_at            DateTime @default(now()) @db.Timestamp(6)
 
   agent      Profile    @relation("AgentCommissions", fields: [agent_id], references: [id])
   investor   Profile    @relation("InvestorCommissions", fields: [investor_id], references: [id])
@@ -186,13 +186,13 @@ model AgentCommission {
 }
 
 model AgentClient {
-  id             String   @id @default(uuid()) @db.Uuid
-  agent_id       String
-  client_name    String
-  phone_number   String
-  target_budget  String?
-  status         String   @default("Hot Lead")
-  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  agent_id       String   @db.VarChar(128)
+  client_name    String   @db.VarChar(255)
+  phone_number   String   @db.VarChar(20)
+  target_budget  String?  @db.VarChar(100)
+  status         String   @default("Hot Lead") @db.VarChar(50)
+  created_at     DateTime @default(now()) @db.Timestamp(6)
 
   agent          Profile  @relation("AgentClients", fields: [agent_id], references: [id])
   assignments    AgentClientProperty[]
@@ -202,10 +202,10 @@ model AgentClient {
 }
 
 model AgentClientProperty {
-  id             String   @id @default(uuid()) @db.Uuid
-  client_id      String   @db.Uuid
-  property_id    String   @db.Uuid
-  assigned_at    DateTime @default(now()) @db.Timestamptz(6)
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  client_id      String   @db.VarChar(36)
+  property_id    String   @db.VarChar(36)
+  assigned_at    DateTime @default(now()) @db.Timestamp(6)
 
   client         AgentClient @relation(fields: [client_id], references: [id], onDelete: Cascade)
   property       Property    @relation(fields: [property_id], references: [id], onDelete: Cascade)
@@ -215,13 +215,13 @@ model AgentClientProperty {
 }
 
 model ChatMessage {
-  id          String   @id @default(uuid()) @db.Uuid
-  agent_id    String
-  client_id   String   @db.Uuid
-  message     String
-  sender      String   // "agent" or "client"
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  agent_id    String   @db.VarChar(128)
+  client_id   String   @db.VarChar(36)
+  message     String   @db.Text
+  sender      String   @db.VarChar(20) // "agent" or "client"
   read        Boolean  @default(false)
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
 
   agent       Profile     @relation(fields: [agent_id], references: [id])
   client      AgentClient @relation(fields: [client_id], references: [id])
@@ -230,14 +230,14 @@ model ChatMessage {
 }
 
 model Developer {
-  id                String    @id @default(uuid()) @db.Uuid
-  name              String    @unique
-  logo_url          String?
-  bio               String?
+  id                String    @id @default(uuid()) @db.VarChar(36)
+  name              String    @unique @db.VarChar(255)
+  logo_url          String?   @db.Text
+  bio               String?   @db.Text
   rating            Decimal   @default(4.5) @db.Decimal(2, 1)
   established_year  Int?
   rera_registered   Boolean   @default(true)
-  created_at        DateTime  @default(now()) @db.Timestamptz(6)
+  created_at        DateTime  @default(now()) @db.Timestamp(6)
 
   properties Property[]
 
@@ -245,91 +245,91 @@ model Developer {
 }
 
 model Notification {
-  id               String   @id @default(uuid()) @db.Uuid
-  title            String
-  body             String
-  audience         String   @default("all") // "all" | "investors" | "agents" | "builders"
-  sent_by          String?
+  id               String   @id @default(uuid()) @db.VarChar(36)
+  title            String   @db.VarChar(255)
+  body             String   @db.Text
+  audience         String   @default("all") @db.VarChar(50) // "all" | "investors" | "agents" | "builders"
+  sent_by          String?  @db.VarChar(128)
   recipients_count Int      @default(0)
-  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  created_at       DateTime @default(now()) @db.Timestamp(6)
 
   @@map("notifications")
 }
 
 model Banner {
-  id         String   @id @default(uuid()) @db.Uuid
-  title      String
-  subtitle   String?
-  badge      String?
-  image_url  String
-  link_url   String?
+  id         String   @id @default(uuid()) @db.VarChar(36)
+  title      String   @db.VarChar(255)
+  subtitle   String?  @db.VarChar(255)
+  badge      String?  @db.VarChar(100)
+  image_url  String   @db.Text
+  link_url   String?  @db.Text
   is_active  Boolean  @default(true)
   sort_order Int      @default(0)
-  created_at DateTime @default(now()) @db.Timestamptz(6)
+  created_at DateTime @default(now()) @db.Timestamp(6)
 
   @@map("banners")
 }
 
 model ServiceInquiry {
-  id                  String   @id @default(uuid()) @db.Uuid
-  customer_name       String
-  phone               String?
-  email               String?
-  service_type        String
-  property_reference  String?
-  estimated_budget    String?
-  assigned_to         String?
-  status              String   @default("New")
-  notes               String?
-  created_at          DateTime @default(now()) @db.Timestamptz(6)
+  id                  String   @id @default(uuid()) @db.VarChar(36)
+  customer_name       String   @db.VarChar(255)
+  phone               String?  @db.VarChar(20)
+  email               String?  @db.VarChar(255)
+  service_type        String   @db.VarChar(100)
+  property_reference  String?  @db.VarChar(255)
+  estimated_budget    String?  @db.VarChar(100)
+  assigned_to         String?  @db.VarChar(128)
+  status              String   @default("New") @db.VarChar(50)
+  notes               String?  @db.Text
+  created_at          DateTime @default(now()) @db.Timestamp(6)
 
   @@map("service_inquiries")
 }
 
 model SupportTicket {
-  id             String   @id @default(uuid()) @db.Uuid
-  user_id        String
-  ticket_number  String   @unique
-  category       String
-  subject        String
-  description    String
-  priority       String   @default("medium")
-  status         String   @default("open")
-  assigned_to    String?
-  created_at     DateTime @default(now()) @db.Timestamptz(6)
-  updated_at     DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  user_id        String   @db.VarChar(128)
+  ticket_number  String   @unique @db.VarChar(50)
+  category       String   @db.VarChar(100)
+  subject        String   @db.VarChar(255)
+  description    String   @db.Text
+  priority       String   @default("medium") @db.VarChar(20)
+  status         String   @default("open") @db.VarChar(20)
+  assigned_to    String?  @db.VarChar(128)
+  created_at     DateTime @default(now()) @db.Timestamp(6)
+  updated_at     DateTime @default(now()) @updatedAt @db.Timestamp(6)
 
   @@map("support_tickets")
 }
 
 model Shortlist {
-  id          String   @id @default(uuid()) @db.Uuid
-  user_id     String
-  property_id String   @db.Uuid
-  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  user_id     String   @db.VarChar(128)
+  property_id String   @db.VarChar(36)
+  created_at  DateTime @default(now()) @db.Timestamp(6)
 
   @@unique([user_id, property_id])
   @@map("shortlists")
 }
 
 model PlatformSetting {
-  id         String   @id @default("global")
+  id         String   @id @default("global") @db.VarChar(50)
   values     Json
-  updated_at DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+  updated_at DateTime @default(now()) @updatedAt @db.Timestamp(6)
 
   @@map("platform_settings")
 }
 
 model Asset {
-  id             String   @id @default(uuid()) @db.Uuid
-  user_id        String
-  title          String
-  property_type  String
-  address        String
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  user_id        String   @db.VarChar(128)
+  title          String   @db.VarChar(255)
+  property_type  String   @db.VarChar(50)
+  address        String   @db.Text
   purchase_price Decimal? @db.Decimal(15, 2)
   purchase_date  DateTime? @db.Date
-  status         String   @default("active") // active, sold
-  created_at     DateTime @default(now()) @db.Timestamptz(6)
+  status         String   @default("active") @db.VarChar(20) // active, sold
+  created_at     DateTime @default(now()) @db.Timestamp(6)
   
   user           Profile  @relation(fields: [user_id], references: [id])
   documents      AssetDocument[]
@@ -339,12 +339,12 @@ model Asset {
 }
 
 model AssetDocument {
-  id            String   @id @default(uuid()) @db.Uuid
-  asset_id      String   @db.Uuid
-  title         String
-  document_url  String
-  document_type String   // e.g., "sale_deed", "tax_receipt"
-  uploaded_at   DateTime @default(now()) @db.Timestamptz(6)
+  id            String   @id @default(uuid()) @db.VarChar(36)
+  asset_id      String   @db.VarChar(36)
+  title         String   @db.VarChar(255)
+  document_url  String   @db.Text
+  document_type String   @db.VarChar(50) // e.g., "sale_deed", "tax_receipt"
+  uploaded_at   DateTime @default(now()) @db.Timestamp(6)
 
   asset         Asset    @relation(fields: [asset_id], references: [id], onDelete: Cascade)
 
@@ -352,16 +352,16 @@ model AssetDocument {
 }
 
 model RentalAgreement {
-  id               String   @id @default(uuid()) @db.Uuid
-  asset_id         String   @db.Uuid
-  tenant_name      String
-  tenant_phone     String?
+  id               String   @id @default(uuid()) @db.VarChar(36)
+  asset_id         String   @db.VarChar(36)
+  tenant_name      String   @db.VarChar(255)
+  tenant_phone     String?  @db.VarChar(20)
   start_date       DateTime @db.Date
   end_date         DateTime @db.Date
   monthly_rent     Decimal  @db.Decimal(15, 2)
   security_deposit Decimal  @db.Decimal(15, 2)
-  status           String   @default("active") // active, terminated
-  created_at       DateTime @default(now()) @db.Timestamptz(6)
+  status           String   @default("active") @db.VarChar(20) // active, terminated
+  created_at       DateTime @default(now()) @db.Timestamp(6)
 
   asset            Asset    @relation(fields: [asset_id], references: [id], onDelete: Cascade)
   statements       RentalStatement[]
@@ -370,15 +370,15 @@ model RentalAgreement {
 }
 
 model RentalStatement {
-  id                String   @id @default(uuid()) @db.Uuid
-  agreement_id      String   @db.Uuid
-  month_year        String   // e.g., "Oct 2026"
+  id                String   @id @default(uuid()) @db.VarChar(36)
+  agreement_id      String   @db.VarChar(36)
+  month_year        String   @db.VarChar(20) // e.g., "Oct 2026"
   amount_paid       Decimal  @db.Decimal(15, 2)
   payment_date      DateTime @db.Date
-  payment_mode      String?
-  receipt_url       String?
-  status            String   @default("paid") // paid, pending
-  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  payment_mode      String?  @db.VarChar(50)
+  receipt_url       String?  @db.Text
+  status            String   @default("paid") @db.VarChar(20) // paid, pending
+  created_at        DateTime @default(now()) @db.Timestamp(6)
 
   agreement         RentalAgreement @relation(fields: [agreement_id], references: [id], onDelete: Cascade)
 

@@ -4,10 +4,16 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import { getAuthHeader } from "@/lib/api-auth";
 import styles from "../properties/Properties.module.css";
 
+// The only transaction_type value ever actually written by the backend today
+// (see src/app/api/transactions/create-order/route.ts). Keep this in sync
+// with the write paths rather than the aspirational Investment/Deposit/Payout
+// set the UI used to show, which never matched anything in the database.
+const TRANSACTION_TYPE_LABELS: Record<string, string> = {
+  property_booking: "Property Booking",
+};
+
 const typeColors: Record<string, string> = {
-  Investment: "#2563EB",
-  Deposit: "#059669",
-  Payout: "#7C3AED",
+  property_booking: "#2563EB",
 };
 
 const statusColors: Record<string, string> = {
@@ -47,14 +53,14 @@ export default function LedgerPage() {
     const matchType = typeFilter === "All" || typeStr === typeFilter;
     const searchString = `${txn.id} ${txn.profile?.full_name} ${txn.property?.title}`.toLowerCase();
     const matchSearch = searchString.includes(search.toLowerCase());
-    
+
     let matchDate = true;
     if (dateFrom || dateTo) {
       const txnDate = new Date(txn.created_at);
       if (dateFrom && new Date(dateFrom) > txnDate) matchDate = false;
       if (dateTo && new Date(dateTo) < txnDate) matchDate = false;
     }
-    
+
     return matchType && matchSearch && matchDate;
   });
 
@@ -65,7 +71,7 @@ export default function LedgerPage() {
       new Date(t.created_at).toLocaleString(),
       t.profile?.full_name || 'System',
       t.property?.title || 'Wallet Action',
-      t.transaction_type,
+      TRANSACTION_TYPE_LABELS[t.transaction_type] || t.transaction_type,
       t.investment?.fractions_bought || '-',
       t.amount,
       t.payment_status
@@ -110,8 +116,10 @@ export default function LedgerPage() {
         <div className={styles.title}>Transaction History</div>
         <div className={styles.headerRight}>
           <div className={styles.filterGroup}>
-            {["All", "Investment", "Deposit", "Payout"].map(t => (
-              <button key={t} className={`${styles.filterPill} ${typeFilter === t ? styles.filterActive : ""}`} onClick={() => setTypeFilter(t)}>{t}</button>
+            {["All", ...Object.keys(TRANSACTION_TYPE_LABELS)].map(t => (
+              <button key={t} className={`${styles.filterPill} ${typeFilter === t ? styles.filterActive : ""}`} onClick={() => setTypeFilter(t)}>
+                {t === "All" ? "All" : TRANSACTION_TYPE_LABELS[t] || t}
+              </button>
             ))}
           </div>
           <button className={styles.addButton} onClick={handleExportCSV}>📥 Export CSV</button>
@@ -155,7 +163,7 @@ export default function LedgerPage() {
                 <td className={styles.td}>{txn.profile?.full_name || 'System'}</td>
                 <td className={styles.td}>{txn.property?.title || 'Wallet Action'}</td>
                 <td className={styles.td}>
-                  <span className={styles.badge} style={{ background: `${typeColors[txn.transaction_type] || "#666"}15`, color: typeColors[txn.transaction_type] || "#666" }}>{txn.transaction_type}</span>
+                  <span className={styles.badge} style={{ background: `${typeColors[txn.transaction_type] || "#666"}15`, color: typeColors[txn.transaction_type] || "#666" }}>{TRANSACTION_TYPE_LABELS[txn.transaction_type] || txn.transaction_type}</span>
                 </td>
                 <td className={styles.td}>{txn.investment?.fractions_bought || '-'}</td>
                 <td className={styles.td}><strong>₹{Number(txn.amount).toLocaleString('en-IN')}</strong></td>

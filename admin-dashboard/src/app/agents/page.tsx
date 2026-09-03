@@ -38,8 +38,12 @@ export default function AgentsPage() {
       const authHeader = await getAuthHeader();
       if (!authHeader) { setLoading(false); return; }
       fetch('/api/agents', { headers: authHeader })
-        .then(res => res.json())
+        .then(async res => {
+          if (!res.ok) throw new Error('API Error');
+          return res.json();
+        })
       .then(data => {
+        if (!Array.isArray(data)) return;
         const mapped = data.map((d: any) => {
           let earned = 0;
           let pending = 0;
@@ -65,7 +69,7 @@ export default function AgentsPage() {
             bankName: d.bank_account_name || null,
             bankAcc: d.bank_account_number || null,
             bankIfsc: d.bank_ifsc || null,
-            status: d.is_active ? "Active" : "Suspended",
+            status: (d.is_active ? "Active" : "Suspended") as Agent["status"],
             joinedDate: new Date(d.created_at).toLocaleDateString()
           };
         });

@@ -39,9 +39,10 @@ export async function POST(request: Request) {
           where: { role: targetAudience === 'investors' ? 'investor' : targetAudience === 'agents' ? 'agent' : 'builder' }
         });
 
-    // Deliver to expo push tokens where we have them. Best-effort — a failed
-    // push send doesn't fail the request, since the log record itself is the
-    // source of truth for what was "sent".
+    // Deliver to expo push tokens where we have them. A failed push send
+    // still doesn't fail the whole request (the log record is created either
+    // way), but we now track the real per-token outcome instead of just
+    // assuming every send succeeded.
     const recipients = await prisma.profile.findMany({
       where: {
         expo_push_token: { not: null },
@@ -52,9 +53,11 @@ export async function POST(request: Request) {
       select: { expo_push_token: true },
     });
 
+    let pushSent = 0;
+    let pushFailed = 0;
     if (recipients.length > 0) {
       try {
-        await fetch('https://exp.host/--/api/v2/push/send', {
+        const pushRes = await fetch('https://exp.host/--/api/v2/push/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
           body: JSON.stringify(
@@ -65,8 +68,22 @@ export async function POST(request: Request) {
             }))
           ),
         });
+        // Expo's push API returns { data: [{ status: 'ok' | 'error', ... }, ...] }
+        // with one ticket per submitted token, in order -- that's the real
+        // per-recipient success/failure signal, not just the HTTP status.
+        const pushJson = await pushRes.json().catch(() => null);
+        const tickets: any[] = Array.isArray(pushJson?.data) ? pushJson.data : [];
+        for (const ticket of tickets) {
+          if (ticket?.status === 'ok') pushSent++;
+          else pushFailed++;
+        }
+        // Any recipient that didn't get a ticket back at all (malformed
+        // response, or the whole call failed) counts as failed too.
+        const unaccounted = recipients.length - tickets.length;
+        if (unaccounted > 0) pushFailed += unaccounted;
       } catch (e) {
         console.error('Push delivery failed (notification still logged):', e);
+        pushFailed = recipients.length;
       }
     }
 
@@ -80,7 +97,14 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, notification });
+    return NextResponse.json({
+      success: true,
+      notification,
+      // Real delivery outcome for this send -- not persisted (the schema has
+      // no column for it), so it's only available for the send that just
+      // happened, not for notifications re-fetched later via GET.
+      push: { sent: pushSent, failed: pushFailed, eligible: recipients.length, targeted: recipientsCount },
+    });
   } catch (error: any) {
     console.error('Failed to send notification:', error);
     return NextResponse.json({ error: error.message || 'Failed to send notification' }, { status: 500 });

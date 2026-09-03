@@ -44,6 +44,19 @@ export default function CMSPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
 
+  // Editing an existing banner
+  const [editingBanner, setEditingBanner] = useState<Banner | null>(null);
+  const [editForm, setEditForm] = useState({
+    title: "",
+    subtitle: "",
+    badge: "",
+    imageUrl: "",
+    targetLink: "",
+  });
+  const [editSelectedFile, setEditSelectedFile] = useState<File | null>(null);
+  const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 4000);
@@ -131,6 +144,88 @@ export default function CMSPage() {
       showToast("Failed to upload image. Please try again.");
     } finally {
       setIsUploading(false);
+    }
+  };
+
+  const openEditBanner = (ban: Banner) => {
+    setEditingBanner(ban);
+    setEditForm({
+      title: ban.title,
+      subtitle: ban.subtitle,
+      badge: ban.badge,
+      imageUrl: ban.imageUrl,
+      targetLink: ban.targetLink,
+    });
+    setEditSelectedFile(null);
+  };
+
+  const handleUpdateBanner = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingBanner || !editForm.title) return;
+
+    setIsSavingEdit(true);
+    let finalImageUrl = editForm.imageUrl;
+
+    try {
+      if (editSelectedFile) {
+        const storageRef = ref(storage, `banners/${Date.now()}_${editSelectedFile.name}`);
+        await uploadBytes(storageRef, editSelectedFile);
+        finalImageUrl = await getDownloadURL(storageRef);
+      }
+
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { showToast("You must be signed in to do that."); return; }
+      const res = await fetch(`/api/cms/banners/${editingBanner.id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: editForm.title,
+          subtitle: editForm.subtitle,
+          badge: editForm.badge,
+          image_url: finalImageUrl,
+          link_url: editForm.targetLink,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to save changes. Please try again.");
+        return;
+      }
+      const updated = mapApiBanner(await res.json());
+      setBanners((prev) => prev.map((b) => (b.id === updated.id ? updated : b)));
+      setEditingBanner(null);
+      setEditSelectedFile(null);
+      showToast(`Banner "${updated.title}" updated.`);
+    } catch (error) {
+      console.error("Error saving banner edits:", error);
+      showToast("Failed to save changes. Please try again.");
+    } finally {
+      setIsSavingEdit(false);
+    }
+  };
+
+  const handleDeleteBanner = async (ban: Banner) => {
+    if (!window.confirm(`Delete banner "${ban.title}"? This cannot be undone.`)) return;
+    setDeletingId(ban.id);
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { showToast("You must be signed in to do that."); setDeletingId(null); return; }
+    try {
+      const res = await fetch(`/api/cms/banners/${ban.id}`, {
+        method: 'DELETE',
+        headers: authHeader,
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        showToast(err.error || "Failed to delete banner.");
+        return;
+      }
+      setBanners((prev) => prev.filter((b) => b.id !== ban.id));
+      showToast(`Banner "${ban.title}" deleted.`);
+    } catch (error) {
+      console.error("Error deleting banner:", error);
+      showToast("Failed to delete banner.");
+    } finally {
+      setDeletingId(null);
     }
   };
 
@@ -250,20 +345,52 @@ export default function CMSPage() {
                 >
                   {ban.isActive ? "● Live on Apps" : "○ Hidden"}
                 </span>
-                <button
-                  onClick={() => handleToggleBanner(ban.id)}
-                  style={{
-                    padding: "4px 10px",
-                    borderRadius: "6px",
-                    border: "1px solid var(--border-color)",
-                    background: "#fff",
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    cursor: "pointer",
-                  }}
-                >
-                  {ban.isActive ? "Hide" : "Activate"}
-                </button>
+                <div style={{ display: "flex", gap: "6px" }}>
+                  <button
+                    onClick={() => openEditBanner(ban)}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--border-color)",
+                      background: "#fff",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleToggleBanner(ban.id)}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid var(--border-color)",
+                      background: "#fff",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      cursor: "pointer",
+                    }}
+                  >
+                    {ban.isActive ? "Hide" : "Activate"}
+                  </button>
+                  <button
+                    onClick={() => handleDeleteBanner(ban)}
+                    disabled={deletingId === ban.id}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      border: "1px solid #FCA5A5",
+                      background: "#FEF2F2",
+                      color: "#DC2626",
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      cursor: deletingId === ban.id ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {deletingId === ban.id ? "Deleting..." : "Delete"}
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -401,6 +528,151 @@ export default function CMSPage() {
                   style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: isUploading ? "not-allowed" : "pointer", fontWeight: 700 }}
                 >
                   {isUploading ? "Uploading..." : "Publish Banner"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Banner Modal */}
+      {editingBanner && (
+        <div
+          style={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.7)",
+            backdropFilter: "blur(4px)",
+            zIndex: 100,
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#FFFFFF",
+              borderRadius: "16px",
+              width: "100%",
+              maxWidth: "540px",
+              padding: "28px",
+            }}
+          >
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                borderBottom: "1px solid #E2E8F0",
+                paddingBottom: "16px",
+                marginBottom: "20px",
+              }}
+            >
+              <h2 style={{ fontSize: "1.2rem", fontWeight: 800, color: "#0F172A" }}>
+                Edit Promotional Banner
+              </h2>
+              <button
+                onClick={() => setEditingBanner(null)}
+                style={{
+                  background: "#F1F5F9",
+                  border: "none",
+                  borderRadius: "8px",
+                  padding: "6px 12px",
+                  cursor: "pointer",
+                  fontWeight: 700,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateBanner} style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Banner Title</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.title}
+                  onChange={(e) => setEditForm({ ...editForm, title: e.target.value })}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Subtitle / Caption</label>
+                <input
+                  type="text"
+                  required
+                  value={editForm.subtitle}
+                  onChange={(e) => setEditForm({ ...editForm, subtitle: e.target.value })}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                />
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Tag / Badge</label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.badge}
+                    onChange={(e) => setEditForm({ ...editForm, badge: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Target Link / Route</label>
+                  <input
+                    type="text"
+                    required
+                    value={editForm.targetLink}
+                    onChange={(e) => setEditForm({ ...editForm, targetLink: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Current Image</label>
+                <img
+                  src={editForm.imageUrl}
+                  alt={editForm.title}
+                  style={{ width: "100%", height: "120px", objectFit: "cover", borderRadius: "8px", marginTop: "6px" }}
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Replace Banner Image (optional)</label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => {
+                    if (e.target.files && e.target.files[0]) {
+                      setEditSelectedFile(e.target.files[0]);
+                    }
+                  }}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                />
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "14px" }}>
+                <button
+                  type="button"
+                  onClick={() => setEditingBanner(null)}
+                  style={{ padding: "10px 16px", borderRadius: "8px", border: "1px solid #CBD5E1", background: "#fff", cursor: "pointer", fontWeight: 600 }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSavingEdit}
+                  style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: isSavingEdit ? "not-allowed" : "pointer", fontWeight: 700 }}
+                >
+                  {isSavingEdit ? "Saving..." : "Save Changes"}
                 </button>
               </div>
             </form>

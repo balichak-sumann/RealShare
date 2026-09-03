@@ -55,6 +55,57 @@ export async function POST(req: Request) {
     const fractionsBought = (transaction.metadata as any)?.fractions_bought || 1;
     const certificateId = `RS-CERT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
 
+    const propertyBeforeUpdate = await prisma.property.findUnique({
+      where: { id: transaction.property_id! },
+    });
+
+    if (!propertyBeforeUpdate) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
+
+    // Guard against overselling: only decrement available_fractions when enough
+    // remain. This runs as a single conditional UPDATE (WHERE available_fractions
+    // >= fractionsBought), so it stays correct under concurrent purchases instead
+    // of letting available_fractions go negative.
+    const decrementResult = await prisma.property.updateMany({
+      where: {
+        id: transaction.property_id!,
+        available_fractions: { gte: fractionsBought },
+      },
+      data: {
+        available_fractions: { decrement: fractionsBought },
+        sold_fractions: { increment: fractionsBought },
+      },
+    });
+
+    if (decrementResult.count === 0) {
+      return NextResponse.json(
+        { error: 'Not enough available fractions remaining for this purchase' },
+        { status: 409 }
+      );
+    }
+
+    // If this purchase exhausted the share pool, mark the property sold out so
+    // the admin "Sold Out" filter tab actually finds it.
+    const propertyAfterUpdate = await prisma.property.findUnique({
+      where: { id: transaction.property_id! },
+      select: { available_fractions: true },
+    });
+    if (propertyAfterUpdate && propertyAfterUpdate.available_fractions <= 0) {
+      await prisma.property.update({
+        where: { id: transaction.property_id! },
+        data: { approval_status: 'sold_out' },
+      });
+    }
+
+    // Real ownership percentage (not the raw fraction count), rounded to the
+    // Decimal(6,3) precision the Investment.ownership_percentage column expects.
+    const rawOwnershipPercentage =
+      propertyBeforeUpdate.total_fractions > 0
+        ? (fractionsBought / propertyBeforeUpdate.total_fractions) * 100
+        : 0;
+    const ownershipPercentage = Math.round(rawOwnershipPercentage * 1000) / 1000;
+
     const investment = await prisma.investment.create({
       data: {
         user_id: userId,
@@ -62,18 +113,9 @@ export async function POST(req: Request) {
         fractions_bought: fractionsBought,
         total_amount: transaction.amount,
         booking_amount_paid: transaction.amount,
-        ownership_percentage: fractionsBought, // In a real app this might be (fractionsBought / total_fractions) * 100
+        ownership_percentage: ownershipPercentage,
         certificate_number: certificateId,
         status: 'completed',
-      }
-    });
-
-    // Update Property fractions
-    await prisma.property.update({
-      where: { id: transaction.property_id! },
-      data: {
-        available_fractions: { decrement: fractionsBought },
-        sold_fractions: { increment: fractionsBought },
       }
     });
 
@@ -89,7 +131,7 @@ export async function POST(req: Request) {
 
       if (agent && agent.role === 'agent') {
         const commissionAmount = Number(transaction.amount) * 0.025;
-        
+
         await prisma.agentCommission.create({
           data: {
             agent_id: agent.id,

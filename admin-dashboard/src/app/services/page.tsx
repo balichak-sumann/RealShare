@@ -4,18 +4,26 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "../properties/Properties.module.css";
 import { getAuthHeader } from "@/lib/api-auth";
 
+// These 4 values are exactly what the mobile app's Home Services screen
+// submits as service_type (android-app/src/app/services.tsx) -- keep this
+// list in sync with that file, not with any hoped-for future catalog.
 interface ServiceInquiry {
   id: string;
   customerName: string;
   phone: string;
   email: string;
-  serviceType: "Home Loan" | "Interior Works" | "Insurance (Home)" | "Insurance (Auto/Health)" | "Property Management";
+  serviceType: "Interior Design" | "Property Mgmt" | "Home Loans" | "General Consultation";
   propertyReference?: string;
   estimatedBudget: string;
-  assignedTo: string;
+  assignedTo: string; // profile id of the assignee, or "" when unassigned
   status: "New" | "In Review" | "Assigned" | "Completed" | "Cancelled";
   date: string;
   notes?: string;
+}
+
+interface TeamMember {
+  id: string;
+  full_name: string;
 }
 
 function mapApiInquiry(s: any): ServiceInquiry {
@@ -27,7 +35,7 @@ function mapApiInquiry(s: any): ServiceInquiry {
     serviceType: s.service_type,
     propertyReference: s.property_reference || undefined,
     estimatedBudget: s.estimated_budget || '',
-    assignedTo: s.assigned_to || 'Unassigned',
+    assignedTo: s.assigned_to || '',
     status: s.status,
     date: new Date(s.created_at).toLocaleDateString(),
     notes: s.notes || undefined,
@@ -35,15 +43,17 @@ function mapApiInquiry(s: any): ServiceInquiry {
 }
 
 const serviceTypeColors: Record<string, string> = {
-  'Home Loan': '#2563EB',
-  'Interior Works': '#7C3AED',
-  'Insurance (Home)': '#059669',
-  'Insurance (Auto/Health)': '#D97706',
-  'Property Management': '#DC2626',
+  'Interior Design': '#7C3AED',
+  'Property Mgmt': '#DC2626',
+  'Home Loans': '#2563EB',
+  'General Consultation': '#059669',
 };
+
+const SERVICE_TYPES = ["Interior Design", "Property Mgmt", "Home Loans", "General Consultation"] as const;
 
 export default function AdditionalServicesPage() {
   const [inquiries, setInquiries] = useState<ServiceInquiry[]>([]);
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("All");
   const [search, setSearch] = useState("");
@@ -60,10 +70,17 @@ export default function AdditionalServicesPage() {
       const authHeader = await getAuthHeader();
       if (!authHeader) { setLoading(false); return; }
       try {
-        const res = await fetch('/api/services', { headers: authHeader });
-        if (res.ok) {
-          const data = await res.json();
+        const [inquiriesRes, employeesRes] = await Promise.all([
+          fetch('/api/services', { headers: authHeader }),
+          fetch('/api/admin/employees', { headers: authHeader }),
+        ]);
+        if (inquiriesRes.ok) {
+          const data = await inquiriesRes.json();
           setInquiries(Array.isArray(data) ? data.map(mapApiInquiry) : []);
+        }
+        if (employeesRes.ok) {
+          const data = await employeesRes.json();
+          setTeamMembers(Array.isArray(data.employees) ? data.employees : []);
         }
       } catch (e) {
         console.error(e);
@@ -72,6 +89,8 @@ export default function AdditionalServicesPage() {
       }
     })();
   }, []);
+
+  const teamMemberName = (id: string) => teamMembers.find((m) => m.id === id)?.full_name || id;
 
   const handleUpdateStatus = async (id: string, newStatus: ServiceInquiry["status"]) => {
     const authHeader = await getAuthHeader();
@@ -88,6 +107,25 @@ export default function AdditionalServicesPage() {
     showToast(`Service inquiry ${id} status changed to ${newStatus}`);
   };
 
+  const handleAssign = async (id: string, employeeId: string) => {
+    const authHeader = await getAuthHeader();
+    if (!authHeader) { showToast("You must be signed in to do that."); return; }
+    const res = await fetch(`/api/services/${id}`, {
+      method: 'PATCH',
+      headers: { ...authHeader, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ assigned_to: employeeId || null }),
+    });
+    if (!res.ok) { showToast("Failed to update assignment."); return; }
+    setInquiries((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, assignedTo: employeeId } : s))
+    );
+    showToast(
+      employeeId
+        ? `Service inquiry ${id} assigned to ${teamMemberName(employeeId)}.`
+        : `Service inquiry ${id} unassigned.`
+    );
+  };
+
   const filtered = inquiries.filter((inq) => {
     const matchType = typeFilter === "All" || inq.serviceType === typeFilter;
     const matchSearch =
@@ -97,6 +135,33 @@ export default function AdditionalServicesPage() {
       inq.id.toLowerCase().includes(search.toLowerCase());
     return matchType && matchSearch;
   });
+
+  // Same client-side CSV generation pattern as src/app/ledger/page.tsx's
+  // handleExportCSV, for consistency.
+  const handleExportLeads = () => {
+    const headers = ["Inquiry ID", "Date", "Customer Name", "Phone", "Email", "Service Type", "Property Reference", "Budget / Value", "Assigned To", "Status", "Notes"];
+    const rows = filtered.map((inq) => [
+      inq.id,
+      inq.date,
+      inq.customerName,
+      inq.phone,
+      inq.email,
+      inq.serviceType,
+      inq.propertyReference || '',
+      inq.estimatedBudget,
+      inq.assignedTo ? teamMemberName(inq.assignedTo) : 'Unassigned',
+      inq.status,
+      inq.notes || '',
+    ]);
+    const csvContent = [headers, ...rows].map((row) => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `service_leads_${new Date().toISOString().split("T")[0]}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <AdminLayout title="Additional Services Management">
@@ -148,11 +213,49 @@ export default function AdditionalServicesPage() {
             padding: "18px",
           }}
         >
+          <div style={{ fontSize: "0.75rem", color: "#7C3AED", fontWeight: 700, textTransform: "uppercase" }}>
+            🛋️ Interior Design
+          </div>
+          <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px" }}>
+            {inquiries.filter((i) => i.serviceType === "Interior Design").length} Requests
+          </div>
+          <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: 4 }}>
+            Premium design consultations
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: "var(--bg-secondary)",
+            border: "1px solid var(--border-color)",
+            borderRadius: "12px",
+            padding: "18px",
+          }}
+        >
+          <div style={{ fontSize: "0.75rem", color: "#DC2626", fontWeight: 700, textTransform: "uppercase" }}>
+            🔑 Property Mgmt
+          </div>
+          <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px" }}>
+            {inquiries.filter((i) => i.serviceType === "Property Mgmt").length} Requests
+          </div>
+          <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: 4 }}>
+            Tenant onboarding & rental servicing
+          </div>
+        </div>
+
+        <div
+          style={{
+            background: "var(--bg-secondary)",
+            border: "1px solid var(--border-color)",
+            borderRadius: "12px",
+            padding: "18px",
+          }}
+        >
           <div style={{ fontSize: "0.75rem", color: "#2563EB", fontWeight: 700, textTransform: "uppercase" }}>
             🏦 Home Loans
           </div>
           <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px" }}>
-            {inquiries.filter((i) => i.serviceType === "Home Loan").length} Leads
+            {inquiries.filter((i) => i.serviceType === "Home Loans").length} Leads
           </div>
           <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: 4 }}>
             Partnered with HDFC, SBI & ICICI
@@ -167,52 +270,14 @@ export default function AdditionalServicesPage() {
             padding: "18px",
           }}
         >
-          <div style={{ fontSize: "0.75rem", color: "#7C3AED", fontWeight: 700, textTransform: "uppercase" }}>
-            🛋️ Interior Works
-          </div>
-          <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px" }}>
-            {inquiries.filter((i) => i.serviceType === "Interior Works").length} Requests
-          </div>
-          <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: 4 }}>
-            Modular, Turnkey & Luxury Fitouts
-          </div>
-        </div>
-
-        <div
-          style={{
-            background: "var(--bg-secondary)",
-            border: "1px solid var(--border-color)",
-            borderRadius: "12px",
-            padding: "18px",
-          }}
-        >
           <div style={{ fontSize: "0.75rem", color: "#059669", fontWeight: 700, textTransform: "uppercase" }}>
-            🛡️ Insurance (Home/Auto/Health)
+            💬 General Consultation
           </div>
           <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px" }}>
-            {inquiries.filter((i) => i.serviceType.includes("Insurance")).length} Policies
+            {inquiries.filter((i) => i.serviceType === "General Consultation").length} Requests
           </div>
           <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: 4 }}>
-            Comprehensive Coverage Tie-ups
-          </div>
-        </div>
-
-        <div
-          style={{
-            background: "var(--bg-secondary)",
-            border: "1px solid var(--border-color)",
-            borderRadius: "12px",
-            padding: "18px",
-          }}
-        >
-          <div style={{ fontSize: "0.75rem", color: "#D97706", fontWeight: 700, textTransform: "uppercase" }}>
-            🔑 Property Management
-          </div>
-          <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px" }}>
-            {inquiries.filter((i) => i.serviceType === "Property Management").length} Contracts
-          </div>
-          <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: 4 }}>
-            Tenant onboarding & rental servicing
+            "Talk to an Expert" inquiries
           </div>
         </div>
       </div>
@@ -222,7 +287,7 @@ export default function AdditionalServicesPage() {
         <div className={styles.title}>All Value-Added Service Inquiries ({filtered.length})</div>
         <div className={styles.headerRight}>
           <div className={styles.filterGroup}>
-            {["All", "Home Loan", "Interior Works", "Insurance (Home)", "Property Management"].map((t) => (
+            {["All", ...SERVICE_TYPES].map((t) => (
               <button
                 key={t}
                 className={`${styles.filterPill} ${typeFilter === t ? styles.filterActive : ""}`}
@@ -232,7 +297,7 @@ export default function AdditionalServicesPage() {
               </button>
             ))}
           </div>
-          <button className={styles.addButton}>📥 Export Leads</button>
+          <button className={styles.addButton} onClick={handleExportLeads}>📥 Export Leads</button>
         </div>
       </div>
 
@@ -298,9 +363,30 @@ export default function AdditionalServicesPage() {
                   <strong>{inq.estimatedBudget}</strong>
                 </td>
                 <td className={styles.td}>
-                  <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#334155" }}>
-                    {inq.assignedTo}
-                  </span>
+                  <select
+                    value={inq.assignedTo}
+                    onChange={(e) => handleAssign(inq.id, e.target.value)}
+                    style={{
+                      padding: "4px 8px",
+                      borderRadius: "6px",
+                      border: "1px solid #CBD5E1",
+                      fontSize: "0.75rem",
+                      background: "#fff",
+                      cursor: "pointer",
+                      maxWidth: "160px",
+                    }}
+                  >
+                    <option value="">Unassigned</option>
+                    {teamMembers.map((m) => (
+                      <option key={m.id} value={m.id}>{m.full_name}</option>
+                    ))}
+                    {/* If assigned to someone outside the fetched employee list
+                        (e.g. an admin, or a since-removed employee), still show
+                        them instead of silently reverting the select to blank. */}
+                    {inq.assignedTo && !teamMembers.some((m) => m.id === inq.assignedTo) && (
+                      <option value={inq.assignedTo}>{teamMemberName(inq.assignedTo)}</option>
+                    )}
+                  </select>
                 </td>
                 <td className={styles.td}>
                   <span

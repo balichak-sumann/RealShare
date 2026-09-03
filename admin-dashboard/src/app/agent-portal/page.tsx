@@ -21,9 +21,11 @@ interface DashboardData {
   referralCode: string;
   totalEarned: string;
   pendingPayout: string;
-  totalSales: number;
   clientLeads: ClientLead[];
-  salesTrend: number[];
+  monthlyTrends: {
+    labels: string[];
+    data: number[];
+  };
 }
 
 export default function AgentPortal() {
@@ -48,23 +50,7 @@ export default function AgentPortal() {
         }
       });
       if (res.ok) {
-        let fetchedData = await res.json();
-        
-        // Inject rich demo fallback data if the agent is new and has no history
-        if (fetchedData.totalEarned === '₹0' && fetchedData.clientLeads.length === 0) {
-          fetchedData = {
-            ...fetchedData,
-            totalEarned: '₹2,50,000',
-            pendingPayout: '₹37,500',
-            totalSales: 8,
-            salesTrend: [30000, 45000, 20000, 60000, 35000, 60000],
-            clientLeads: [
-              { id: '1', name: 'Vikram Singh', date: '2026-08-20', status: 'Commission Paid', property: 'Goa Beachfront Villa', commission: '₹12,500', fractions: 2 },
-              { id: '2', name: 'Anjali Desai', date: '2026-08-22', status: 'Pending Payout', property: 'Cyber Pearl Tech Park', commission: '₹15,000', fractions: 4 },
-              { id: '3', name: 'Rahul Sharma', date: '2026-08-24', status: 'Under Review', property: 'Marina Bay Condo', commission: '₹10,000', fractions: 1 },
-            ]
-          };
-        }
+        const fetchedData = await res.json();
         setData(fetchedData);
       } else {
         router.push('/');
@@ -91,8 +77,11 @@ export default function AgentPortal() {
     );
   }
 
-  // Calculate max for bar chart
-  const maxSale = Math.max(...(data.salesTrend || [1]));
+  // Calculate max for bar chart (never divide by zero when every month is ₹0)
+  const trendData = data.monthlyTrends?.data || [];
+  const trendLabels = data.monthlyTrends?.labels || [];
+  const maxSale = Math.max(1, ...trendData);
+  const totalSalesCount = data.clientLeads?.length || 0;
 
   return (
     <div style={{ minHeight: '100vh', backgroundColor: '#F8FAFC', padding: '20px 40px' }}>
@@ -128,7 +117,7 @@ export default function AgentPortal() {
         </div>
         <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #E2E8F0' }}>
           <div style={{ fontSize: '14px', color: '#64748B', fontWeight: 600, marginBottom: '8px' }}>TOTAL SALES</div>
-          <div style={{ fontSize: '32px', fontWeight: 700, color: '#1E293B' }}>{data.totalSales} <span style={{ fontSize: '16px', color: '#10B981' }}>properties</span></div>
+          <div style={{ fontSize: '32px', fontWeight: 700, color: '#1E293B' }}>{totalSalesCount} <span style={{ fontSize: '16px', color: '#10B981' }}>properties</span></div>
         </div>
       </div>
 
@@ -138,14 +127,17 @@ export default function AgentPortal() {
         <div style={{ background: '#FFF', padding: '24px', borderRadius: '12px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', border: '1px solid #E2E8F0' }}>
           <h2 style={{ fontSize: '18px', fontWeight: 700, color: '#1E293B', marginTop: 0, marginBottom: '24px' }}>Sales Analytics (6 Months)</h2>
           <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', height: '200px', paddingTop: '20px' }}>
-            {data.salesTrend?.map((val, idx) => {
+            {trendData.length === 0 && (
+              <div style={{ width: '100%', textAlign: 'center', color: '#94A3B8', fontSize: '14px' }}>No sales data yet</div>
+            )}
+            {trendData.map((val, idx) => {
               const heightPct = (val / maxSale) * 100;
               return (
                 <div key={idx} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
                   <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-end', background: '#F1F5F9', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{ width: '100%', height: `${heightPct}%`, background: '#D97706', transition: 'height 0.5s ease' }} />
                   </div>
-                  <span style={{ fontSize: '12px', color: '#64748B' }}>M{idx+1}</span>
+                  <span style={{ fontSize: '12px', color: '#64748B' }}>{trendLabels[idx] || `M${idx + 1}`}</span>
                 </div>
               );
             })}

@@ -185,9 +185,12 @@ export function getDigilockerAuthUrl(userId: string): string {
  * Exchanges the authorization code for an access token.
  */
 export async function getDigilockerAccessToken(code: string): Promise<string | null> {
-  // If no real secret is set, return a mock token for testing
-  if (DIGILOCKER_CLIENT_SECRET === 'mock_client_secret') {
-    return 'mock_digilocker_access_token';
+  // Fail closed: without real DigiLocker credentials configured, never
+  // fabricate a token that would let fetchDigilockerProfile hand back fake
+  // "verified" identity data.
+  if (!DIGILOCKER_CLIENT_SECRET || DIGILOCKER_CLIENT_SECRET === 'mock_client_secret') {
+    console.error('[KYC] DigiLocker is not configured (DIGILOCKER_CLIENT_SECRET missing/mock) - refusing to fabricate an access token');
+    return null;
   }
 
   try {
@@ -215,15 +218,13 @@ export async function getDigilockerAccessToken(code: string): Promise<string | n
  * Fetches user profile/documents from DigiLocker using the access token.
  */
 export async function fetchDigilockerProfile(accessToken: string) {
-  // If using a mock token, return mock user data
-  if (accessToken === 'mock_digilocker_access_token') {
-    return {
-      name: 'DigiLocker User',
-      dob: '01/01/1990',
-      gender: 'M',
-      aadhaar: 'XXXX-XXXX-1234',
-      pan: 'ABCDE1234F',
-    };
+  // Fail closed: never hand back fabricated identity/document data. A caller
+  // should only ever reach here with a real access token from a configured
+  // DigiLocker integration (getDigilockerAccessToken already refuses to
+  // return a token when unconfigured).
+  if (!accessToken) {
+    console.error('[KYC] fetchDigilockerProfile called without a real access token');
+    return null;
   }
 
   try {

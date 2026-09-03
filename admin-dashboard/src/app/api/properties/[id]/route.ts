@@ -21,7 +21,7 @@ async function getUser(request: Request) {
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params;
-    
+
     if (!id) {
       return NextResponse.json({ error: 'Property ID is required' }, { status: 400 });
     }
@@ -65,13 +65,42 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         return NextResponse.json({ error: `Invalid property_type. Allowed: ${allowedCategories.join(', ')}` }, { status: 400 });
       }
     }
+
+    // Resolve what listing_type and total_fractions would be *after* this
+    // update, and enforce the "outright listings always have exactly one
+    // fraction" invariant against that final state (covers both changing
+    // total_fractions on an outright property and changing listing_type to
+    // outright without also setting total_fractions to 1).
+    const finalListingType = data.listing_type !== undefined ? data.listing_type : property.listing_type;
+    const finalTotalFractions =
+      data.total_fractions !== undefined ? Number(data.total_fractions) : property.total_fractions;
+
+    if (finalListingType === 'outright' && finalTotalFractions !== 1) {
+      return NextResponse.json(
+        { error: 'Outright listings must have total_fractions = 1' },
+        { status: 400 }
+      );
+    }
+
+    // If total_fractions is changing, keep available_fractions consistent:
+    // sold_fractions is a historical fact we never rewrite here, so the
+    // remaining pool is simply the new total minus what's already sold,
+    // clamped so it can never exceed the new total or go negative.
+    let newAvailableFractions: number | undefined = undefined;
+    if (data.total_fractions !== undefined) {
+      const newTotal = Number(data.total_fractions);
+      newAvailableFractions = Math.min(newTotal, Math.max(0, newTotal - property.sold_fractions));
+    }
+
     const updated = await prisma.property.update({
       where: { id },
       data: {
         title: data.title,
         locality: data.locality,
         property_type: data.property_type,
-        total_fractions: data.total_fractions,
+        listing_type: data.listing_type !== undefined ? data.listing_type : undefined,
+        total_fractions: data.total_fractions !== undefined ? Number(data.total_fractions) : undefined,
+        available_fractions: newAvailableFractions,
         price_per_fraction: data.price_per_fraction,
         assured_yield: data.assured_yield,
       }

@@ -97,7 +97,7 @@ function RootLayoutNav() {
               if (data.profile.role === 'builder') {
                 router.replace('/builder-portal');
               } else if (data.profile.role === 'agent') {
-                router.replace('/agent-portal');
+                router.replace('/');
               } else if (data.profile.role === 'employee') {
                 router.replace('/employee-portal');
               } else {
@@ -107,7 +107,7 @@ function RootLayoutNav() {
               if (data.profile.role === 'builder') {
                 router.replace('/builder-portal');
               } else if (data.profile.role === 'agent') {
-                router.replace('/agent-portal');
+                // Let it stay on / (which renders tabs/index which embeds agent portal)
               }
             }
           } else if (inAuthGroup && segments[1] !== 'sign-up') {

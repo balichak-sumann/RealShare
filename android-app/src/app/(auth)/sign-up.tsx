@@ -53,7 +53,7 @@ export default function SignUpScreen() {
             if (data.profile.role === 'builder') {
               router.replace('/builder-portal');
             } else if (data.profile.role === 'agent') {
-              router.replace('/agent-portal');
+              router.replace('/');
             } else {
               router.replace('/');
             }

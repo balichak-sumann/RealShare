@@ -7,6 +7,9 @@ import {
   Animated,
 } from 'react-native';
 import { GoldSystem, Neutrals, Radius, Typography } from '@/constants/design';
+import { Ionicons } from '@expo/vector-icons';
+
+type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 interface CategoryPillProps {
   label: string;
@@ -51,7 +54,12 @@ export function CategoryPill({
         style={[styles.container, isActive ? styles.activeContainer : styles.inactiveContainer]}
       >
         {icon && (
-          <Text style={styles.icon}>{icon}</Text>
+          <Ionicons
+            name={icon as IoniconName}
+            size={14}
+            color={isActive ? GoldSystem.darkGold : Neutrals.textSecondary}
+            style={styles.icon}
+          />
         )}
         <Text style={[styles.label, isActive ? styles.activeLabel : styles.inactiveLabel]}>
           {label}
@@ -85,7 +93,6 @@ const styles = StyleSheet.create({
     borderColor: Neutrals.border,
   },
   icon: {
-    fontSize: 14,
     marginRight: 6,
   },
   label: {

@@ -24,6 +24,7 @@ import { GuestView } from '@/components/ui/GuestView';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { GoldSystem, Neutrals, Typography, Radius, Shadows } from '@/constants/design';
 import { useFocusEffect } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -96,12 +97,31 @@ export default function ProfileScreen() {
     }
   };
 
-  const handleLogout = async () => {
-    try {
-      await auth.signOut();
-      router.replace('/sign-in' as any);
-    } catch (err) {
-      console.error('Logout failed:', err);
+  const handleLogout = () => {
+    if (Platform.OS === 'web') {
+      if (window.confirm('Are you sure you want to sign out of your account?')) {
+        auth.signOut().then(() => router.replace('/sign-in' as any));
+      }
+    } else {
+      Alert.alert(
+        'Sign Out',
+        'Are you sure you want to sign out of your account?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          {
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await auth.signOut();
+                router.replace('/sign-in' as any);
+              } catch (err) {
+                console.error('Logout failed:', err);
+              }
+            },
+          },
+        ]
+      );
     }
   };
 
@@ -352,7 +372,7 @@ export default function ProfileScreen() {
               activeOpacity={user?.email ? 1 : 0.7}
             >
               <View style={[styles.infoIconBox, { backgroundColor: 'rgba(197, 165, 90, 0.1)' }]}>
-                <Text style={styles.infoIcon}>📧</Text>
+                <Ionicons name="mail-outline" size={20} color="#C5A55A" />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Email Address</Text>
@@ -382,7 +402,7 @@ export default function ProfileScreen() {
               activeOpacity={user?.phone_number ? 1 : 0.7}
             >
               <View style={[styles.infoIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
-                <Text style={styles.infoIcon}>📱</Text>
+                <Ionicons name="phone-portrait-outline" size={20} color="#10B981" />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Mobile Number</Text>
@@ -402,7 +422,7 @@ export default function ProfileScreen() {
 
             <View style={styles.infoRow}>
               <View style={[styles.infoIconBox, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
-                <Text style={styles.infoIcon}>📅</Text>
+                <Ionicons name="calendar-outline" size={20} color="#3B82F6" />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Member Since</Text>
@@ -416,7 +436,7 @@ export default function ProfileScreen() {
 
             <View style={styles.infoRow}>
               <View style={[styles.infoIconBox, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
-                <Text style={styles.infoIcon}>📍</Text>
+                <Ionicons name="location-outline" size={20} color="#8B5CF6" />
               </View>
               <View style={styles.infoContent}>
                 <Text style={styles.infoLabel}>Full Address</Text>
@@ -436,9 +456,9 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>My Documents</Text>
           <View style={styles.card}>
             {[
-              { icon: '💳', title: 'Aadhar Card', sub: 'Identity proof', status: 'Not Uploaded', statusColor: '#DC2626', statusBg: '#FEE2E2' },
-              { icon: '🏦', title: 'PAN Card', sub: 'Tax & compliance', status: 'Pending Review', statusColor: '#D97706', statusBg: '#FEF3C7' },
-              { icon: '🛂', title: 'Passport', sub: 'Optional', status: 'Uploaded', statusColor: '#059669', statusBg: '#D1FAE5' },
+              { icon: 'card-outline' as const, title: 'Aadhar Card', sub: 'Identity proof', status: 'Not Uploaded', statusColor: '#DC2626', statusBg: '#FEE2E2' },
+              { icon: 'business-outline' as const, title: 'PAN Card', sub: 'Tax & compliance', status: 'Pending Review', statusColor: '#D97706', statusBg: '#FEF3C7' },
+              { icon: 'globe-outline' as const, title: 'Passport', sub: 'Optional', status: 'Uploaded', statusColor: '#059669', statusBg: '#D1FAE5' },
             ].map((doc, idx) => (
               <React.Fragment key={doc.title}>
                 {idx > 0 && <View style={styles.divider} />}
@@ -448,7 +468,7 @@ export default function ProfileScreen() {
                   activeOpacity={0.7}
                 >
                   <View style={[styles.docIconBox, { backgroundColor: GoldSystem.paleGold }]}>
-                    <Text style={styles.docIcon}>{doc.icon}</Text>
+                    <Ionicons name={doc.icon} size={20} color={GoldSystem.darkGold} />
                   </View>
                   <View style={styles.docContent}>
                     <Text style={styles.docTitle}>{doc.title}</Text>
@@ -493,10 +513,10 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsGrid}>
             {[
-              { icon: '🏠', label: 'My Assets', route: '/my-assets', color: '#14B8A6' },
-              { icon: '📊', label: 'A/C Ledger', route: '/ledger', color: '#3B82F6' },
-              { icon: '📈', label: 'Investments', route: '/portfolio?from=profile', color: '#10B981' },
-              { icon: '❓', label: 'Support Tickets', route: '/my-tickets', color: '#8B5CF6' },
+              { icon: 'home-outline' as const, label: 'My Assets', route: '/my-assets', color: '#14B8A6' },
+              { icon: 'receipt-outline' as const, label: 'A/C Ledger', route: '/ledger', color: '#3B82F6' },
+              { icon: 'trending-up-outline' as const, label: 'Investments', route: '/portfolio?from=profile', color: '#10B981' },
+              { icon: 'help-circle-outline' as const, label: 'Support Tickets', route: '/my-tickets', color: '#8B5CF6' },
             ].map((action) => (
               <TouchableOpacity
                 key={action.label}
@@ -507,7 +527,7 @@ export default function ProfileScreen() {
                 activeOpacity={0.7}
               >
                 <View style={[styles.actionIconBox, { backgroundColor: `${action.color}15` }]}>
-                  <Text style={styles.actionIcon}>{action.icon}</Text>
+                  <Ionicons name={action.icon} size={22} color={action.color} />
                 </View>
                 <Text style={styles.actionLabel}>{action.label}</Text>
               </TouchableOpacity>

@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { SectionHeader } from '../ui/SectionHeader';
+import { Ionicons } from '@expo/vector-icons';
 
 export function RecentActivity() {
   return (
@@ -11,26 +12,26 @@ export function RecentActivity() {
         
         {/* Continue Search Card */}
         <TouchableOpacity style={styles.activityCard}>
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>🔍</Text>
+          <View style={[styles.iconContainer, { backgroundColor: '#EFF6FF' }]}>
+            <Ionicons name="search-outline" size={20} color="#3B82F6" />
           </View>
           <View style={styles.cardContent}>
             <Text style={styles.title}>Continue Search</Text>
             <Text style={styles.subtitle}>3 BHK in Gachibowli</Text>
           </View>
-          <Text style={styles.arrow}>➔</Text>
+          <Ionicons name="arrow-forward-outline" size={16} color={Neutrals.gray400} />
         </TouchableOpacity>
 
         {/* Recently Viewed */}
         <TouchableOpacity style={styles.activityCard}>
-          <View style={styles.iconContainer}>
-            <Text style={styles.icon}>👀</Text>
+          <View style={[styles.iconContainer, { backgroundColor: '#F5F3FF' }]}>
+            <Ionicons name="eye-outline" size={20} color="#8B5CF6" />
           </View>
           <View style={styles.cardContent}>
             <Text style={styles.title}>Recently Viewed</Text>
             <Text style={styles.subtitle}>12 Properties</Text>
           </View>
-          <Text style={styles.arrow}>➔</Text>
+          <Ionicons name="arrow-forward-outline" size={16} color={Neutrals.gray400} />
         </TouchableOpacity>
 
       </ScrollView>
@@ -58,16 +59,12 @@ const styles = StyleSheet.create({
     borderColor: Neutrals.border,
   },
   iconContainer: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Neutrals.gray100,
+    width: 42,
+    height: 42,
+    borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
-  },
-  icon: {
-    fontSize: 18,
   },
   cardContent: {
     flex: 1,
@@ -80,9 +77,5 @@ const styles = StyleSheet.create({
     ...Typography.caption,
     color: GoldSystem.primaryGold,
     marginTop: 2,
-  },
-  arrow: {
-    color: Neutrals.gray400,
-    fontSize: 16,
   },
 });

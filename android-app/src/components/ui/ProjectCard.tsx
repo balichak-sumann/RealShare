@@ -4,6 +4,7 @@ import { Neutrals, GoldSystem, Radius, Typography } from '@/constants/design';
 import { PremiumCard } from './PremiumCard';
 import { useRouter } from 'expo-router';
 import { TrustBadge } from './TrustBadge';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ProjectCardProps {
   id: string;
@@ -45,7 +46,10 @@ export function ProjectCard({
         <Text style={styles.developer}>by {developer}</Text>
         
         <View style={styles.detailsRow}>
-          <Text style={styles.location}>📍 {location}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="location-outline" size={13} color={Neutrals.textSecondary} style={{ marginRight: 3 }} />
+            <Text style={styles.location}>{location}</Text>
+          </View>
           <Text style={styles.possession}>Status: {possession}</Text>
         </View>
       </View>

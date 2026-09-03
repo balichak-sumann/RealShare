@@ -5,6 +5,7 @@ import { PremiumCard } from './PremiumCard';
 import { useRouter } from 'expo-router';
 import { TrustBadge } from './TrustBadge';
 import { useShortlist } from '@/contexts/ShortlistContext';
+import { Ionicons } from '@expo/vector-icons';
 
 interface PropertyCardProps {
   id: string;
@@ -78,7 +79,10 @@ export function PropertyCard({
         </View>
 
         <Text style={styles.title} numberOfLines={1}>{title}</Text>
-        <Text style={styles.location}>📍 {location}</Text>
+        <View style={styles.locationRow}>
+          <Ionicons name="location-outline" size={14} color={Neutrals.textSecondary} style={{ marginRight: 4 }} />
+          <Text style={styles.location}>{location}</Text>
+        </View>
 
         <View style={styles.featuresRow}>
           <Text style={styles.feature}>{bhk}</Text>
@@ -198,10 +202,15 @@ const styles = StyleSheet.create({
     color: Neutrals.obsidian,
     marginBottom: 4,
   },
+  locationRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   location: {
     ...Typography.bodyMedium,
     color: Neutrals.textSecondary,
-    marginBottom: 12,
+    flex: 1,
   },
   featuresRow: {
     flexDirection: 'row',

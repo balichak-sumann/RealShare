@@ -65,6 +65,7 @@ export function InvestmentScore({
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
             transform={`rotate(-90 ${size / 2} ${size / 2})`}
+            {...({ collapsable: 'false' } as any)}
           />
         </Svg>
         <Text style={[styles.scoreText, { fontSize: size * 0.35 }]}>{score}</Text>

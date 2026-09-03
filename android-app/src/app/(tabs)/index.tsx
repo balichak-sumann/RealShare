@@ -178,7 +178,7 @@ export default function HomeScreen() {
         <RecentActivity />
         
         <View style={styles.featuredSection}>
-          <SectionHeader title="Hot Selling Projects" onViewAll={() => {}} />
+          <SectionHeader title="Hot Selling Projects" onViewAll={() => router.push('/(tabs)/search')} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
             {hotProperties.map((prop) => (
               <PropertyCard key={prop.id} {...propertyToCardProps(prop)} compact />
@@ -191,7 +191,7 @@ export default function HomeScreen() {
         <HotProjects />
 
         <View style={styles.featuredSection}>
-          <SectionHeader title="Resale Properties" onViewAll={() => {}} />
+          <SectionHeader title="Resale Properties" onViewAll={() => router.push('/(tabs)/search')} />
           {resaleProperties.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
               {resaleProperties.map((prop) => (
@@ -208,7 +208,7 @@ export default function HomeScreen() {
         </View>
         
         <View style={styles.featuredSection}>
-          <SectionHeader title="Properties for Rent" onViewAll={() => {}} />
+          <SectionHeader title="Properties for Rent" onViewAll={() => router.push('/(tabs)/search')} />
           {rentalProperties.length > 0 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
               {rentalProperties.map((prop) => (

@@ -3,8 +3,10 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { SectionHeader } from '../ui/SectionHeader';
 import { PropertyCard } from '../ui/PropertyCard';
 import { propertyToCardProps } from '@/lib/formatters';
+import { useRouter } from 'expo-router';
 
 export function HotProjects() {
+  const router = useRouter();
   const [properties, setProperties] = useState<any[]>([]);
 
   useEffect(() => {
@@ -23,7 +25,7 @@ export function HotProjects() {
 
   return (
     <View style={styles.container}>
-      <SectionHeader title="New Projects" onViewAll={() => {}} />
+      <SectionHeader title="New Projects" onViewAll={() => router.push('/(tabs)/search')} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {properties.map((prop) => (
           <View key={prop.id} style={{ width: 220, marginRight: 12 }}>

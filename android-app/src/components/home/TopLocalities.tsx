@@ -3,12 +3,14 @@ import { View, StyleSheet, ScrollView } from 'react-native';
 import { SectionHeader } from '../ui/SectionHeader';
 import { LocalityCard } from '../ui/LocalityCard';
 import { formatPrice } from '@/lib/formatters';
+import { useRouter } from 'expo-router';
 
 // Derived from real listed properties, grouped by locality — there's no
 // separate Locality table (or tracked rent/sale-per-sqft market data), so
 // "Avg. Price" and "Avg. Yield" are computed from actual property rows
 // instead of a fabricated market index.
 export function TopLocalities() {
+  const router = useRouter();
   const [localities, setLocalities] = useState<any[]>([]);
 
   useEffect(() => {
@@ -59,7 +61,7 @@ export function TopLocalities() {
 
   return (
     <View style={styles.container}>
-      <SectionHeader title="Top Localities" onViewAll={() => {}} />
+      <SectionHeader title="Top Localities" onViewAll={() => router.push('/(tabs)/search')} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {localities.map((locality) => (
           <LocalityCard key={locality.id} {...locality} />

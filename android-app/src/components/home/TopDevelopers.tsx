@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { SectionHeader } from '../ui/SectionHeader';
+import { useRouter } from 'expo-router';
 import { Neutrals, Typography, Radius, Shadows } from '@/constants/design';
 
 const PLACEHOLDER_LOGO = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=120&h=120&fit=crop';
 
 export function TopDevelopers() {
+  const router = useRouter();
   const [developers, setDevelopers] = useState<any[]>([]);
 
   useEffect(() => {
@@ -21,7 +23,7 @@ export function TopDevelopers() {
 
   return (
     <View style={styles.container}>
-      <SectionHeader title="Top Developers" onViewAll={() => {}} />
+      <SectionHeader title="Top Developers" onViewAll={() => router.push('/(tabs)/search')} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         {developers.map((dev) => (
           <TouchableOpacity key={dev.id} style={styles.devCard} activeOpacity={0.7}>

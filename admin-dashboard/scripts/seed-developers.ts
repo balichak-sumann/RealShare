@@ -40,8 +40,12 @@ const demoDevelopers = [
 
 async function main() {
   for (const dev of demoDevelopers) {
-    const created = await prisma.developer.create({ data: dev });
-    console.log(`✅ Created developer: ${created.name}`);
+    const created = await prisma.developer.upsert({
+      where: { name: dev.name },
+      update: dev,
+      create: dev,
+    });
+    console.log(`✅ Upserted developer: ${created.name}`);
   }
   console.log(`\n🎉 Done! ${demoDevelopers.length} developers seeded successfully.`);
   console.log('Tip: run this after applying the schema migration (npx prisma db push).');

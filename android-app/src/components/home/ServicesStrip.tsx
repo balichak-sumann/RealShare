@@ -7,10 +7,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 
 const SERVICES = [
   { id: '1', title: 'Interior Design', image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80' },
-  { id: '2', title: 'Packers & Movers', image: 'https://images.unsplash.com/photo-1600518464441-9154a4dea21b?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80' },
-  { id: '3', title: 'Legal Help', image: 'https://images.unsplash.com/photo-1589829085413-56de8ae18c73?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80' },
-  { id: '4', title: 'Deep Cleaning', image: 'https://images.unsplash.com/photo-1581578731548-c64695cc6952?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80' },
-  { id: '5', title: 'Property Mgmt', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80' },
+  { id: '2', title: 'Property Mgmt', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80' },
+  { id: '3', title: 'Home Loans', image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=400&q=80' },
 ];
 
 const AnimatedServiceItem = ({ item, onPress }: { item: any, onPress: () => void }) => {

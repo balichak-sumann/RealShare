@@ -7,7 +7,16 @@ export async function GET(request: Request) {
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
 
-    const [propertyCount, investorCount, investments, properties, recentTransactions] = await Promise.all([
+    const [
+      propertyCount,
+      investorCount,
+      investments,
+      properties,
+      recentTransactions,
+      pendingUsers,
+      pendingProperties,
+      activeAgents,
+    ] = await Promise.all([
       prisma.property.count(),
       prisma.profile.count({ where: { role: 'investor' } }),
       prisma.investment.findMany({ select: { total_amount: true, property_id: true } }),
@@ -21,6 +30,9 @@ export async function GET(request: Request) {
         take: 6,
         include: { profile: { select: { full_name: true } }, property: { select: { title: true } } },
       }),
+      prisma.profile.count({ where: { kyc_status: 'pending' } }),
+      prisma.property.count({ where: { approval_status: 'pending_approval' } }),
+      prisma.profile.count({ where: { role: 'agent', is_active: true } }),
     ]);
 
     const totalInvested = investments.reduce((sum, i) => sum + Number(i.total_amount), 0);
@@ -62,6 +74,9 @@ export async function GET(request: Request) {
         activeInvestors: investorCount,
         totalInvestments: totalInvested,
         avgYield: Math.round(avgYield * 10) / 10,
+        pendingUsers,
+        pendingProperties,
+        activeAgents,
       },
       topProperties,
       recentActivity,

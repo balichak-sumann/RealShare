@@ -1,13 +1,45 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Switch, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform, ActivityIndicator, Linking, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { useUser } from '@/contexts/UserContext';
+import { auth } from '@/lib/firebase';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+
+function formatCurrency(n: number) {
+  if (n >= 10000000) return `\u20b9${(n / 10000000).toFixed(2)} Cr`;
+  if (n >= 100000) return `\u20b9${(n / 100000).toFixed(2)} L`;
+  return `\u20b9${n.toLocaleString('en-IN')}`;
+}
 
 export default function AdminDashboardScreen() {
   const router = useRouter();
   const { profile } = useUser();
-  const [activeTab, setActiveTab] = useState('Overview');
+  const [loading, setLoading] = useState(true);
+  const [kpis, setKpis] = useState<any>(null);
+
+  useEffect(() => {
+    if (profile?.role !== 'admin' && profile?.role !== 'employee') return;
+    (async () => {
+      try {
+        const user = auth.currentUser;
+        if (!user) return;
+        const token = await user.getIdToken();
+        const res = await fetch(`${API_URL}/api/dashboard/summary`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setKpis(data.kpis);
+        }
+      } catch (e) {
+        console.log('Failed to load admin summary', e);
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [profile]);
 
   if (profile?.role !== 'admin' && profile?.role !== 'employee') {
     return (
@@ -17,120 +49,64 @@ export default function AdminDashboardScreen() {
     );
   }
 
-  const TABS = ['Overview', 'Users', 'Agents', 'Properties', 'Transactions', 'Services'];
-
-  const renderOverview = () => (
-    <View style={styles.grid}>
-      <View style={styles.statCard}>
-        <Text style={styles.statLabel}>Total Sales (Fractions)</Text>
-        <Text style={styles.statValue}>₹ 14.5 Cr</Text>
-      </View>
-      <View style={styles.statCard}>
-        <Text style={styles.statLabel}>Pending Users</Text>
-        <Text style={[styles.statValue, { color: '#D97706' }]}>12</Text>
-      </View>
-      <View style={styles.statCard}>
-        <Text style={styles.statLabel}>Pending Properties</Text>
-        <Text style={[styles.statValue, { color: '#059669' }]}>3</Text>
-      </View>
-      <View style={styles.statCard}>
-        <Text style={styles.statLabel}>Active Agents</Text>
-        <Text style={styles.statValue}>45</Text>
-      </View>
-    </View>
-  );
-
-  const renderUsers = () => (
-    <View style={styles.listSection}>
-      <View style={styles.listItem}>
-        <View>
-          <Text style={styles.itemTitle}>Rahul Sharma</Text>
-          <Text style={styles.itemSubtitle}>ID: PAN - ABCD1234E</Text>
-        </View>
-        <View style={styles.actionRow}>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#10B981' }]}><Text style={styles.actionText}>Approve</Text></TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#EF4444' }]}><Text style={styles.actionText}>Reject</Text></TouchableOpacity>
-        </View>
-      </View>
-      <View style={styles.listItem}>
-        <View>
-          <Text style={styles.itemTitle}>Anita Desai</Text>
-          <Text style={styles.itemSubtitle}>ID: Aadhar - 1234 5678 9012</Text>
-        </View>
-        <View style={styles.actionRow}>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#10B981' }]}><Text style={styles.actionText}>Approve</Text></TouchableOpacity>
-          <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#EF4444' }]}><Text style={styles.actionText}>Reject</Text></TouchableOpacity>
-        </View>
-      </View>
-    </View>
-  );
-
-  const renderProperties = () => (
-    <View style={styles.listSection}>
-      <View style={styles.listItem}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.itemTitle}>Lodha Bellezza - 3BHK</Text>
-          <Text style={styles.itemSubtitle}>Total Shares: 100 • Price/Share: ₹1.5L</Text>
-          <View style={styles.progressBg}>
-            <View style={[styles.progressFill, { width: '45%' }]} />
-          </View>
-          <Text style={styles.progressText}>45 / 100 Shares Sold</Text>
-        </View>
-        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: Neutrals.obsidian }]}><Text style={styles.actionText}>Edit Listing</Text></TouchableOpacity>
-      </View>
-      
-      <View style={styles.listItem}>
-        <View style={{ flex: 1 }}>
-          <Text style={styles.itemTitle}>Prestige High Fields (Pending)</Text>
-          <Text style={styles.itemSubtitle}>Builder: Aparna Group • Shares: 50</Text>
-        </View>
-        <TouchableOpacity style={[styles.actionBtn, { backgroundColor: '#10B981' }]}><Text style={styles.actionText}>Approve</Text></TouchableOpacity>
-      </View>
-    </View>
-  );
-
-  const renderServices = () => (
-    <View style={styles.listSection}>
-      <Text style={styles.sectionHeader}>Manage Additional Services</Text>
-      {['Interior Works', 'Insurance Services', 'Property Management'].map(service => (
-        <View key={service} style={styles.listItem}>
-          <Text style={styles.itemTitle}>{service}</Text>
-          <Switch value={true} trackColor={{ true: GoldSystem.primaryGold }} />
-        </View>
-      ))}
-    </View>
-  );
+  const openWebAdmin = () => {
+    const adminUrl = process.env.EXPO_PUBLIC_ADMIN_URL;
+    if (!adminUrl) {
+      Alert.alert(
+        'Web admin not configured',
+        'Ask your platform administrator for the web admin dashboard URL.'
+      );
+      return;
+    }
+    Linking.openURL(adminUrl);
+  };
 
   return (
     <View style={styles.container}>
       <View style={styles.sidebar}>
         <Text style={styles.logo}>RealShare <Text style={{ color: GoldSystem.primaryGold }}>Admin</Text></Text>
-        {TABS.map(tab => (
-          <TouchableOpacity 
-            key={tab} 
-            style={[styles.sidebarTab, activeTab === tab && styles.sidebarTabActive]}
-            onPress={() => setActiveTab(tab)}
-          >
-            <Text style={[styles.sidebarTabText, activeTab === tab && styles.sidebarTabTextActive]}>{tab}</Text>
-          </TouchableOpacity>
-        ))}
         <TouchableOpacity style={[styles.sidebarTab, { marginTop: 'auto' }]} onPress={() => router.replace('/')}>
-          <Text style={styles.sidebarTabText}>← Back to App</Text>
+          <Text style={styles.sidebarTabText}>\u2190 Back to App</Text>
         </TouchableOpacity>
       </View>
 
       <View style={styles.mainContent}>
-        <Text style={styles.pageTitle}>{activeTab}</Text>
+        <Text style={styles.pageTitle}>Overview</Text>
         <ScrollView style={{ flex: 1 }}>
-          {activeTab === 'Overview' && renderOverview()}
-          {activeTab === 'Users' && renderUsers()}
-          {activeTab === 'Properties' && renderProperties()}
-          {activeTab === 'Services' && renderServices()}
-          
-          {['Agents', 'Transactions'].includes(activeTab) && (
-             <View style={styles.centerContainer}>
-               <Text style={styles.itemTitle}>{activeTab} Module Loading...</Text>
-             </View>
+          {loading ? (
+            <ActivityIndicator color={GoldSystem.primaryGold} style={{ marginTop: 40 }} />
+          ) : (
+            <>
+              <View style={styles.grid}>
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>Total Investments</Text>
+                  <Text style={styles.statValue}>{formatCurrency(kpis?.totalInvestments || 0)}</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>Pending KYC</Text>
+                  <Text style={[styles.statValue, { color: '#D97706' }]}>{kpis?.pendingUsers ?? 0}</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>Pending Properties</Text>
+                  <Text style={[styles.statValue, { color: '#059669' }]}>{kpis?.pendingProperties ?? 0}</Text>
+                </View>
+                <View style={styles.statCard}>
+                  <Text style={styles.statLabel}>Active Agents</Text>
+                  <Text style={styles.statValue}>{kpis?.activeAgents ?? 0}</Text>
+                </View>
+              </View>
+
+              <View style={styles.webAdminCard}>
+                <Text style={styles.webAdminTitle}>Full admin tools</Text>
+                <Text style={styles.webAdminDesc}>
+                  User approvals, property moderation, agent management, transactions and service
+                  settings are managed from the RealShare web admin dashboard.
+                </Text>
+                <TouchableOpacity style={styles.webAdminBtn} onPress={openWebAdmin}>
+                  <Text style={styles.webAdminBtnText}>Open Web Admin Dashboard</Text>
+                </TouchableOpacity>
+              </View>
+            </>
           )}
         </ScrollView>
       </View>
@@ -171,15 +147,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     marginBottom: 8,
   },
-  sidebarTabActive: {
-    backgroundColor: 'rgba(212, 175, 55, 0.15)',
-  },
   sidebarTabText: {
     ...Typography.labelLarge,
     color: Neutrals.gray400,
-  },
-  sidebarTabTextActive: {
-    color: GoldSystem.primaryGold,
   },
   mainContent: {
     flex: 1,
@@ -215,68 +185,35 @@ const styles = StyleSheet.create({
     ...Typography.displayLarge,
     color: Neutrals.obsidian,
   },
-  listSection: {
+  webAdminCard: {
     backgroundColor: Neutrals.surface,
+    padding: 24,
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Neutrals.border,
-    overflow: 'hidden',
+    marginTop: 24,
     ...Shadows.soft,
   },
-  listItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: Neutrals.border,
-  },
-  itemTitle: {
-    ...Typography.labelLarge,
-    color: Neutrals.obsidian,
-    marginBottom: 4,
-  },
-  itemSubtitle: {
-    ...Typography.bodyMedium,
-    color: Neutrals.gray500,
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionBtn: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: Radius.sm,
-  },
-  actionText: {
-    ...Typography.labelMedium,
-    color: Neutrals.white,
-  },
-  progressBg: {
-    height: 6,
-    backgroundColor: Neutrals.gray200,
-    borderRadius: 3,
-    marginTop: 12,
-    marginBottom: 4,
-    width: '100%',
-    maxWidth: 300,
-  },
-  progressFill: {
-    height: '100%',
-    backgroundColor: GoldSystem.primaryGold,
-    borderRadius: 3,
-  },
-  progressText: {
-    ...Typography.caption,
-    color: Neutrals.gray500,
-  },
-  sectionHeader: {
+  webAdminTitle: {
     ...Typography.headlineMedium,
     color: Neutrals.obsidian,
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: Neutrals.border,
-    backgroundColor: Neutrals.gray100,
-  }
+    marginBottom: 8,
+  },
+  webAdminDesc: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray600,
+    marginBottom: 20,
+  },
+  webAdminBtn: {
+    backgroundColor: Neutrals.obsidian,
+    paddingVertical: 14,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    alignSelf: 'flex-start',
+    paddingHorizontal: 24,
+  },
+  webAdminBtnText: {
+    ...Typography.labelMedium,
+    color: Neutrals.surface,
+  },
 });

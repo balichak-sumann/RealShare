@@ -1,14 +1,12 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 
-const MOCK_LEADS = [
-  { id: '1', name: 'Rahul Sharma', time: '2 hours ago', status: 'New', phone: '+91 98765 43210', property: '3 BHK Villa, Jubilee Hills' },
-  { id: '2', name: 'Priya Patel', time: '5 hours ago', status: 'Contacted', phone: '+91 99887 76655', property: '3 BHK Villa, Jubilee Hills' },
-  { id: '3', name: 'Arjun Reddy', time: '1 day ago', status: 'Negotiating', phone: '+91 91234 56789', property: 'Commercial Plot, Gachibowli' },
-];
-
+// No lead-capture pipeline exists yet for property owners (that requires a new
+// domain model + a public "enquire about this listing" flow -- tracked as
+// future work alongside the rest of the Owner Dashboard/Property Management
+// suite). This screen is honest about that instead of showing fabricated leads.
 export default function LeadsScreen() {
   const router = useRouter();
 
@@ -16,53 +14,21 @@ export default function LeadsScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
+          <Text style={styles.backIcon}>\u2190</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Lead Management</Text>
         <View style={{ width: 24 }} />
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 40 }}>
-        
-        <View style={styles.filterRow}>
-          {['All', 'New', 'Contacted', 'Negotiating'].map((filter, idx) => (
-            <TouchableOpacity key={filter} style={[styles.filterPill, idx === 0 && styles.filterPillActive]}>
-              <Text style={[styles.filterText, idx === 0 && styles.filterTextActive]}>{filter}</Text>
-            </TouchableOpacity>
-          ))}
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyIcon}>\ud83d\udc65</Text>
+          <Text style={styles.emptyTitle}>No leads yet</Text>
+          <Text style={styles.emptyDesc}>
+            When buyers enquire about one of your listings, their details will show up here.
+            Lead capture for listings is coming soon.
+          </Text>
         </View>
-
-        {MOCK_LEADS.map(lead => (
-          <View key={lead.id} style={styles.leadCard}>
-            <View style={styles.leadHeader}>
-              <View style={styles.leadAvatar}>
-                <Text style={styles.avatarText}>{lead.name.charAt(0)}</Text>
-              </View>
-              <View style={styles.leadInfo}>
-                <Text style={styles.leadName}>{lead.name}</Text>
-                <Text style={styles.leadTime}>{lead.time}</Text>
-              </View>
-              <View style={[styles.statusBadge, lead.status === 'New' && styles.statusNew]}>
-                <Text style={[styles.statusText, lead.status === 'New' && styles.statusTextNew]}>{lead.status}</Text>
-              </View>
-            </View>
-
-            <View style={styles.leadDetails}>
-              <Text style={styles.detailText}>📞 {lead.phone}</Text>
-              <Text style={styles.detailText}>🏠 {lead.property}</Text>
-            </View>
-
-            <View style={styles.leadActions}>
-              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: Neutrals.surface, borderWidth: 1, borderColor: Neutrals.border }]}>
-                <Text style={styles.actionBtnText}>WhatsApp</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={[styles.actionBtn, { backgroundColor: Neutrals.obsidian }]}>
-                <Text style={[styles.actionBtnText, { color: Neutrals.surface }]}>Call Now</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        ))}
-
       </ScrollView>
     </View>
   );
@@ -99,108 +65,24 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
   },
-  filterRow: {
-    flexDirection: 'row',
-    marginBottom: 20,
-    gap: 8,
-  },
-  filterPill: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: Radius.full,
-    backgroundColor: Neutrals.surface,
-    borderWidth: 1,
-    borderColor: Neutrals.border,
-  },
-  filterPillActive: {
-    backgroundColor: Neutrals.obsidian,
-    borderColor: Neutrals.obsidian,
-  },
-  filterText: {
-    ...Typography.labelMedium,
-    color: Neutrals.obsidian,
-  },
-  filterTextActive: {
-    color: Neutrals.surface,
-  },
-  leadCard: {
-    backgroundColor: Neutrals.surface,
-    borderRadius: Radius.lg,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Neutrals.border,
-    marginBottom: 16,
-    ...Shadows.soft,
-  },
-  leadHeader: {
-    flexDirection: 'row',
+  emptyState: {
     alignItems: 'center',
+    paddingVertical: 60,
+    paddingHorizontal: 24,
+  },
+  emptyIcon: {
+    fontSize: 40,
     marginBottom: 16,
   },
-  leadAvatar: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: GoldSystem.paleGold,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  avatarText: {
+  emptyTitle: {
     ...Typography.headlineMedium,
-    color: GoldSystem.darkGold,
-  },
-  leadInfo: {
-    flex: 1,
-  },
-  leadName: {
-    ...Typography.labelLarge,
     color: Neutrals.obsidian,
+    marginBottom: 8,
   },
-  leadTime: {
-    ...Typography.caption,
-    color: Neutrals.gray500,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.sm,
-    backgroundColor: Neutrals.gray100,
-  },
-  statusText: {
-    ...Typography.caption,
-    color: Neutrals.obsidian,
-  },
-  statusNew: {
-    backgroundColor: '#DEF7EC',
-  },
-  statusTextNew: {
-    color: '#03543F',
-    fontWeight: '700',
-  },
-  leadDetails: {
-    backgroundColor: Neutrals.background,
-    padding: 12,
-    borderRadius: Radius.md,
-    marginBottom: 16,
-    gap: 8,
-  },
-  detailText: {
+  emptyDesc: {
     ...Typography.bodyMedium,
-    color: Neutrals.textSecondary,
-  },
-  leadActions: {
-    flexDirection: 'row',
-    gap: 12,
-  },
-  actionBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: Radius.md,
-    alignItems: 'center',
-  },
-  actionBtnText: {
-    ...Typography.labelMedium,
-    color: Neutrals.obsidian,
+    color: Neutrals.gray500,
+    textAlign: 'center',
+    lineHeight: 20,
   },
 });

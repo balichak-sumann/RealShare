@@ -1,19 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
 import { SectionHeader } from '../ui/SectionHeader';
-import { MOCK_DEVELOPERS } from '@/constants/mockData';
 import { Neutrals, Typography, Radius, Shadows } from '@/constants/design';
 
+const PLACEHOLDER_LOGO = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=120&h=120&fit=crop';
+
 export function TopDevelopers() {
+  const [developers, setDevelopers] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/developers`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) setDevelopers(data.slice(0, 10));
+      })
+      .catch(() => {});
+  }, []);
+
+  if (developers.length === 0) return null;
+
   return (
     <View style={styles.container}>
       <SectionHeader title="Top Developers" onViewAll={() => {}} />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-        {MOCK_DEVELOPERS.map((dev) => (
+        {developers.map((dev) => (
           <TouchableOpacity key={dev.id} style={styles.devCard} activeOpacity={0.7}>
-            <Image source={{ uri: dev.logo }} style={styles.devLogo} />
+            <Image source={{ uri: dev.logo_url || PLACEHOLDER_LOGO }} style={styles.devLogo} />
             <Text style={styles.devName} numberOfLines={1}>{dev.name}</Text>
-            <Text style={styles.devInfo}>{dev.info}</Text>
+            <Text style={styles.devInfo}>
+              {dev._count?.properties ?? 0} Projects · ⭐ {Number(dev.rating).toFixed(1)}
+            </Text>
           </TouchableOpacity>
         ))}
       </ScrollView>

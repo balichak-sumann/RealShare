@@ -20,6 +20,7 @@ interface PropertyCardProps {
   compact?: boolean;
   agentCommission?: string;
   onShare?: () => void;
+  areaSuffix?: string;
 }
 
 export function PropertyCard({
@@ -36,6 +37,7 @@ export function PropertyCard({
   compact = false,
   agentCommission,
   onShare,
+  areaSuffix = 'sq.ft',
 }: PropertyCardProps) {
   const router = useRouter();
   const { isShortlisted, toggleShortlist } = useShortlist();
@@ -81,7 +83,7 @@ export function PropertyCard({
         <View style={styles.featuresRow}>
           <Text style={styles.feature}>{bhk}</Text>
           <Text style={styles.dot}>•</Text>
-          <Text style={styles.feature}>{area} sq.ft</Text>
+          <Text style={styles.feature}>{area}{areaSuffix ? ` ${areaSuffix}` : ''}</Text>
         </View>
 
         {agentCommission && (

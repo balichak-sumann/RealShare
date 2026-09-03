@@ -1,15 +1,41 @@
-import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text } from 'react-native';
-import { useRouter } from 'expo-router';
-import { Neutrals, Typography } from '@/constants/design';
-import { MOCK_PROPERTIES } from '@/constants/mockData';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { useRouter, useLocalSearchParams } from 'expo-router';
+import { Neutrals, Typography, GoldSystem } from '@/constants/design';
+import { propertyToCardProps } from '@/lib/formatters';
 import { ComparisonTable } from '@/components/ui/ComparisonTable';
 
 export default function CompareScreen() {
   const router = useRouter();
-  
-  // For demo, we just compare the first 3 properties
-  const propertiesToCompare = MOCK_PROPERTIES.slice(0, 3);
+  const { ids } = useLocalSearchParams<{ ids?: string }>();
+  const [propertiesToCompare, setPropertiesToCompare] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    const requestedIds = ids ? ids.split(',').filter(Boolean) : [];
+
+    const load = async () => {
+      try {
+        if (requestedIds.length > 0) {
+          const results = await Promise.all(
+            requestedIds.map((id) => fetch(`${apiUrl}/api/properties/${id}`).then((res) => (res.ok ? res.json() : null)))
+          );
+          setPropertiesToCompare(results.filter(Boolean).map(propertyToCardProps));
+        } else {
+          // No explicit selection passed in — compare the 3 most recent live listings.
+          const res = await fetch(`${apiUrl}/api/properties`);
+          const data = await res.json();
+          setPropertiesToCompare(Array.isArray(data) ? data.slice(0, 3).map(propertyToCardProps) : []);
+        }
+      } catch (e) {
+        console.log('Failed to load properties to compare', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, [ids]);
 
   return (
     <View style={styles.container}>
@@ -24,8 +50,18 @@ export default function CompareScreen() {
       </View>
 
       <View style={styles.content}>
-        <Text style={styles.subtitle}>Comparing {propertiesToCompare.length} properties</Text>
-        <ComparisonTable properties={propertiesToCompare} />
+        {loading ? (
+          <ActivityIndicator color={GoldSystem.primaryGold} style={{ marginTop: 40 }} />
+        ) : propertiesToCompare.length === 0 ? (
+          <Text style={{ color: Neutrals.textSecondary, textAlign: 'center', marginTop: 40 }}>
+            No properties available to compare right now.
+          </Text>
+        ) : (
+          <>
+            <Text style={styles.subtitle}>Comparing {propertiesToCompare.length} properties</Text>
+            <ComparisonTable properties={propertiesToCompare} />
+          </>
+        )}
       </View>
     </View>
   );

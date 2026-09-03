@@ -18,6 +18,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const navItems = [
     { name: "Overview", path: "/", icon: "📊" },
     { name: "Properties & Shares", path: "/properties", icon: "🏢" },
+    { name: "Developers", path: "/developers", icon: "🏗️" },
     { name: "Investors & KYC", path: "/investors", icon: "👥" },
     { name: "Employees (RBAC)", path: "/employees", icon: "👔" },
     { name: "Agents & Commissions", path: "/agents", icon: "🤝" },

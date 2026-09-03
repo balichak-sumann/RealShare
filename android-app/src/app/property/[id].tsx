@@ -67,7 +67,8 @@ export default function PropertyDetailsScreen() {
 
   const fractionPrice = Number(property.price_per_fraction) || 500000;
   const bookingAmtPerFrac = Number(property.booking_amount) || 25000;
-  const totalBookingAmt = fractionsToBuy * bookingAmtPerFrac;
+  const isOutright = property.listing_type === 'outright';
+  const totalBookingAmt = isOutright ? fractionsToBuy * fractionPrice : fractionsToBuy * bookingAmtPerFrac;
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -302,11 +303,11 @@ export default function PropertyDetailsScreen() {
       {/* Bottom Action Bar */}
       <View style={styles.bottomBar}>
         <View style={styles.bottomBarText}>
-          <Text style={styles.bottomLabel}>Booking Amount</Text>
-          <Text style={styles.bottomPrice}>₹ {bookingAmtPerFrac.toLocaleString('en-IN')}</Text>
+          <Text style={styles.bottomLabel}>{isOutright ? 'Full Property Price' : 'Booking Amount'}</Text>
+          <Text style={styles.bottomPrice}>₹ {(isOutright ? fractionPrice : bookingAmtPerFrac).toLocaleString('en-IN')}</Text>
         </View>
         <GoldButton 
-          title="Invest Now" 
+          title={isOutright ? 'Buy Now' : 'Invest Now'} 
           onPress={() => {
             if (!auth.currentUser) {
               router.push('/(auth)/sign-in');
@@ -331,17 +332,24 @@ export default function PropertyDetailsScreen() {
             
             <View style={styles.summaryBox}>
               <Text style={styles.summaryTitle}>{property.title}</Text>
-              <View style={styles.summaryRow}>
-                <Text style={styles.summaryLabel}>Fractions:</Text>
-                <Text style={styles.summaryValue}>{fractionsToBuy}</Text>
-              </View>
+              {isOutright ? (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Ownership:</Text>
+                  <Text style={styles.summaryValue}>100% (Whole Property)</Text>
+                </View>
+              ) : (
+                <View style={styles.summaryRow}>
+                  <Text style={styles.summaryLabel}>Fractions:</Text>
+                  <Text style={styles.summaryValue}>{fractionsToBuy}</Text>
+                </View>
+              )}
               <View style={styles.summaryRow}>
                 <Text style={styles.summaryLabel}>Total Value:</Text>
                 <Text style={styles.summaryValue}>₹ {(fractionPrice * fractionsToBuy).toLocaleString('en-IN')}</Text>
               </View>
               <View style={[styles.summaryRow, { marginTop: 12, paddingTop: 12, borderTopWidth: 1, borderTopColor: Neutrals.gray200 }]}>
-                <Text style={styles.summaryTotalLabel}>Booking Amount:</Text>
-                <Text style={styles.summaryTotalValue}>₹ {totalBookingAmt.toLocaleString('en-IN')}</Text>
+                <Text style={styles.summaryTotalLabel}>{isOutright ? 'Amount Payable:' : 'Booking Amount:'}</Text>
+                <Text style={styles.summaryTotalValue}>₹ {(isOutright ? fractionPrice * fractionsToBuy : totalBookingAmt).toLocaleString('en-IN')}</Text>
               </View>
             </View>
 

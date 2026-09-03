@@ -32,6 +32,8 @@ interface Property {
   target_irr: string | number;
   images?: any[];
   approval_status: string;
+  listing_type?: string;
+  profile?: { full_name: string; role: string } | null;
   postedBy?: string;
   builderContact?: string;
   videoUrl?: string;
@@ -68,6 +70,7 @@ export default function PropertiesPage() {
     district: "Hyderabad",
     locality: "",
     type: "Commercial" as const,
+    listingType: "fractional" as "fractional" | "outright",
     totalFractions: 50,
     price: 500000,
     yield: 8.5,
@@ -180,26 +183,32 @@ export default function PropertiesPage() {
         videoUrl = await getDownloadURL(videoRef);
       }
 
-      const created: any = {
-        id: `PROP-${Math.floor(100 + Math.random() * 900)}`,
-        title: newProp.title,
-        state: newProp.state,
-        district: newProp.district,
-        locality: newProp.locality,
-        property_type: newProp.type.toLowerCase(),
-        total_fractions: Number(newProp.totalFractions),
-        sold_fractions: 0,
-        available_fractions: Number(newProp.totalFractions),
-        price_per_fraction: Number(newProp.price),
-        booking_amount: Math.round(Number(newProp.price) * 0.1),
-        assured_yield: Number(newProp.yield),
-        target_irr: Number(newProp.irr),
-        images: uploadedImageUrls.map(url => ({ image_url: url })),
-        approval_status: "approved",
-        postedBy: newProp.postedBy,
-        videoUrl: videoUrl || undefined,
-        raised: "₹0",
-      };
+      const res = await fetch('/api/properties', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer MOCK_TOKEN', 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: newProp.title,
+          state: newProp.state,
+          district: newProp.district,
+          locality: newProp.locality,
+          property_type: newProp.type.toLowerCase(),
+          listing_type: newProp.listingType,
+          total_fractions: Number(newProp.totalFractions),
+          available_fractions: Number(newProp.totalFractions),
+          price_per_fraction: Number(newProp.price),
+          booking_amount: Math.round(Number(newProp.price) * 0.1),
+          assured_yield: Number(newProp.yield),
+          target_irr: Number(newProp.irr),
+          featured: false,
+          image_url: uploadedImageUrls[0],
+        }),
+      });
+
+      if (!res.ok) {
+        throw new Error('Failed to save property to the database');
+      }
+      const created = await res.json();
+
       setProperties([created, ...properties]);
       setShowAddModal(false);
       setSelectedFiles([]);
@@ -491,7 +500,18 @@ export default function PropertiesPage() {
                   </span>
                 </td>
                 <td className={styles.td}>
-                  <strong>{p.postedBy || "Admin"}</strong>
+                  <strong>
+                    {p.profile?.role
+                      ? p.profile.role === "admin"
+                        ? "Admin"
+                        : p.profile.role.charAt(0).toUpperCase() + p.profile.role.slice(1)
+                      : p.postedBy || "Admin"}
+                  </strong>
+                  {p.profile?.full_name && (
+                    <div style={{ fontSize: "0.7rem", color: "#64748B" }}>
+                      {p.profile.full_name}
+                    </div>
+                  )}
                   {p.builderContact && (
                     <div style={{ fontSize: "0.7rem", color: "#64748B" }}>
                       {p.builderContact}
@@ -499,26 +519,37 @@ export default function PropertiesPage() {
                   )}
                 </td>
                 <td className={styles.td}>
-                  <div className={styles.fractionCell}>
-                    <span style={{ fontWeight: 600 }}>
-                      {p.sold_fractions} sold / {p.available_fractions} avail ({p.total_fractions} total)
+                  {p.listing_type === "outright" ? (
+                    <span
+                      className={styles.badge}
+                      style={{ background: "#EDE9FE", color: "#6D28D9" }}
+                    >
+                      Outright · Whole Property
                     </span>
-                    <div className={styles.miniProgress}>
-                      <div
-                        className={styles.miniFill}
-                        style={{
-                          width: `${(p.sold_fractions / p.total_fractions) * 100}%`,
-                          backgroundColor:
-                            p.available_fractions === 0 ? "#DC2626" : "#16A34A",
-                        }}
-                      />
+                  ) : (
+                    <div className={styles.fractionCell}>
+                      <span style={{ fontWeight: 600 }}>
+                        {p.sold_fractions} sold / {p.available_fractions} avail ({p.total_fractions} total)
+                      </span>
+                      <div className={styles.miniProgress}>
+                        <div
+                          className={styles.miniFill}
+                          style={{
+                            width: `${(p.sold_fractions / p.total_fractions) * 100}%`,
+                            backgroundColor:
+                              p.available_fractions === 0 ? "#DC2626" : "#16A34A",
+                          }}
+                        />
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </td>
                 <td className={styles.td}>
                   <strong>₹{Number(p.price_per_fraction).toLocaleString("en-IN")}</strong>
                   <div style={{ fontSize: "0.7rem", color: "#64748B" }}>
-                    Booking: ₹{Number(p.booking_amount).toLocaleString("en-IN")}
+                    {p.listing_type === "outright"
+                      ? "Full property price"
+                      : `Booking: ₹${Number(p.booking_amount).toLocaleString("en-IN")}`}
                   </div>
                 </td>
                 <td className={styles.td}>
@@ -777,6 +808,31 @@ export default function PropertiesPage() {
                   </div>
                 </div>              </div>
 
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Listing Type</label>
+                <div style={{ display: "flex", gap: "8px", marginTop: "4px" }}>
+                  {(["fractional", "outright"] as const).map((lt) => (
+                    <button
+                      key={lt}
+                      type="button"
+                      onClick={() => setNewProp({ ...newProp, listingType: lt })}
+                      style={{
+                        flex: 1,
+                        padding: "10px",
+                        borderRadius: "8px",
+                        border: newProp.listingType === lt ? "2px solid #2563EB" : "1px solid #CBD5E1",
+                        background: newProp.listingType === lt ? "#EFF6FF" : "#FFFFFF",
+                        color: newProp.listingType === lt ? "#1D4ED8" : "#475569",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {lt === "fractional" ? "Fractional (shares)" : "Outright (whole property)"}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Property Type</label>
@@ -791,22 +847,26 @@ export default function PropertiesPage() {
                     <option value="International">International</option>
                   </select>
                 </div>
-                <div>
-                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Total Fractions</label>
-                  <input
-                    type="number"
-                    required
-                    min={1}
-                    value={newProp.totalFractions}
-                    onChange={(e) => setNewProp({ ...newProp, totalFractions: Number(e.target.value) })}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
-                  />
-                </div>
+                {newProp.listingType === "fractional" && (
+                  <div>
+                    <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Total Fractions</label>
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      value={newProp.totalFractions}
+                      onChange={(e) => setNewProp({ ...newProp, totalFractions: Number(e.target.value) })}
+                      style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                    />
+                  </div>
+                )}
               </div>
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                 <div>
-                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Price Per Fraction (₹)</label>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
+                    {newProp.listingType === "outright" ? "Property Price (₹)" : "Price Per Fraction (₹)"}
+                  </label>
                   <input
                     type="number"
                     required

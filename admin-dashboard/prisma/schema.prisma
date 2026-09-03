@@ -72,6 +72,7 @@ model Property {
   title               String
   description         String?
   property_type       String
+  listing_type        String    @default("fractional") // "fractional" | "outright"
   total_fractions     Int
   available_fractions Int
   sold_fractions      Int       @default(0)
@@ -88,6 +89,7 @@ model Property {
   video_url           String?
   brochure_url        String?
   posted_by           String?
+  developer_id        String?   @db.Uuid
   approval_status     String    @default("pending_approval")
   rejection_notes     String?
   featured            Boolean   @default(false)
@@ -96,6 +98,7 @@ model Property {
 
   // Relations
   profile           Profile?          @relation(fields: [posted_by], references: [id])
+  developer         Developer?        @relation(fields: [developer_id], references: [id])
   images            PropertyImage[]
   investments       Investment[]
   transactions      Transaction[]
@@ -221,4 +224,19 @@ model ChatMessage {
   client      AgentClient @relation(fields: [client_id], references: [id])
 
   @@map("chat_messages")
+}
+
+model Developer {
+  id                String    @id @default(uuid()) @db.Uuid
+  name              String
+  logo_url          String?
+  bio               String?
+  rating            Decimal   @default(4.5) @db.Decimal(2, 1)
+  established_year  Int?
+  rera_registered   Boolean   @default(true)
+  created_at        DateTime  @default(now()) @db.Timestamptz(6)
+
+  properties Property[]
+
+  @@map("developers")
 }

@@ -11,6 +11,8 @@ export async function GET(request: Request) {
       where: featured ? { featured: true } : undefined,
       include: {
         images: true,
+        developer: true,
+        profile: { select: { full_name: true, role: true } },
       },
       orderBy: {
         created_at: 'desc',
@@ -56,13 +58,21 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    // Outright listings are modeled as a single "fraction" = 100% ownership,
+    // so every existing Investment/Transaction/AgentCommission calculation
+    // (fractions_bought, ownership_percentage) keeps working unmodified.
+    const listingType = data.listing_type === 'outright' ? 'outright' : 'fractional';
+    const totalFractions = listingType === 'outright' ? 1 : data.total_fractions;
+    const availableFractions = listingType === 'outright' ? 1 : data.available_fractions;
+
     const property = await prisma.property.create({
       data: {
         title: data.title,
         description: data.description || '',
         property_type: data.property_type,
-        total_fractions: data.total_fractions,
-        available_fractions: data.available_fractions,
+        listing_type: listingType,
+        total_fractions: totalFractions,
+        available_fractions: availableFractions,
         price_per_fraction: data.price_per_fraction,
         booking_amount: data.booking_amount || 50000,
         assured_yield: data.assured_yield,
@@ -72,6 +82,7 @@ export async function POST(request: Request) {
         locality: data.locality,
         featured: data.featured || false,
         posted_by: userId,
+        developer_id: data.developer_id || null,
         approval_status: isAdmin ? 'approved' : 'pending_approval',
         images: data.image_url ? {
           create: {
@@ -81,7 +92,8 @@ export async function POST(request: Request) {
         } : undefined
       },
       include: {
-        images: true
+        images: true,
+        developer: true,
       }
     });
 

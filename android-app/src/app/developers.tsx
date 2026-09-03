@@ -1,20 +1,37 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Neutrals, Typography } from '@/constants/design';
+import { Neutrals, Typography, GoldSystem } from '@/constants/design';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { DeveloperCard } from '@/components/ui/DeveloperCard';
 
-const MOCK_DEVELOPERS = [
-  { id: 'd1', name: 'Prestige Group', logoInitial: 'P', rating: 4.8, projects: 124, ongoing: 12, hasRera: true },
-  { id: 'd2', name: 'Lodha Group', logoInitial: 'L', rating: 4.7, projects: 98, ongoing: 15, hasRera: true },
-  { id: 'd3', name: 'Aparna Constructions', logoInitial: 'A', rating: 4.9, projects: 45, ongoing: 8, hasRera: true },
-  { id: 'd4', name: 'My Home Group', logoInitial: 'M', rating: 4.8, projects: 32, ongoing: 5, hasRera: true },
-];
+const mapDeveloper = (d: any) => ({
+  id: d.id,
+  name: d.name,
+  logoInitial: d.name?.charAt(0)?.toUpperCase() || '?',
+  rating: Number(d.rating),
+  projects: d._count?.properties ?? 0,
+  ongoing: Array.isArray(d.properties) ? d.properties.filter((p: any) => p.approval_status === 'approved').length : 0,
+  hasRera: !!d.rera_registered,
+});
 
 export default function DevelopersScreen() {
   const router = useRouter();
   const [query, setQuery] = useState('');
+  const [developers, setDevelopers] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/developers`)
+      .then((res) => res.json())
+      .then((data) => {
+        setDevelopers(Array.isArray(data) ? data.map(mapDeveloper) : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const filtered = developers.filter((d) => d.name.toLowerCase().includes(query.trim().toLowerCase()));
 
   return (
     <View style={styles.container}>
@@ -35,15 +52,20 @@ export default function DevelopersScreen() {
       </View>
 
       <ScrollView style={styles.resultsContainer} contentContainerStyle={styles.scrollContent}>
-        <Text style={styles.resultCount}>{MOCK_DEVELOPERS.length} developers found</Text>
-
-        {MOCK_DEVELOPERS.map((dev) => (
-          <DeveloperCard
-            key={dev.id}
-            {...dev}
-            onPress={() => router.push(`/developer/${dev.id}` as any)}
-          />
-        ))}
+        {loading ? (
+          <ActivityIndicator color={GoldSystem.primaryGold} style={{ marginTop: 40 }} />
+        ) : (
+          <>
+            <Text style={styles.resultCount}>{filtered.length} developers found</Text>
+            {filtered.map((dev) => (
+              <DeveloperCard
+                key={dev.id}
+                {...dev}
+                onPress={() => router.push(`/developer/${dev.id}` as any)}
+              />
+            ))}
+          </>
+        )}
       </ScrollView>
     </View>
   );

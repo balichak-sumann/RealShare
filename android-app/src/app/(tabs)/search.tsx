@@ -1,15 +1,45 @@
-import React, { useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
 import { Neutrals, GoldSystem, Typography } from '@/constants/design';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { CategoryPill } from '@/components/ui/CategoryPill';
 import { PropertyCard } from '@/components/ui/PropertyCard';
-import { MOCK_CATEGORIES, MOCK_PROPERTIES } from '@/constants/mockData';
+import { MOCK_CATEGORIES } from '@/constants/mockData';
+import { propertyToCardProps } from '@/lib/formatters';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
+
+// Category chips map loosely onto property_type where a real equivalent exists.
+// Categories with no direct backend equivalent (Rent, PG/Hostels, Plot & Land, Luxury)
+// intentionally fall through to "show everything" rather than a misleading empty state.
+const CATEGORY_TYPE_MAP: Record<string, string> = {
+  '6': 'commercial', // Commercial
+  '8': 'holiday',    // Investment -> our fractional/holiday listings skew investment-led
+};
 
 export default function SearchScreen() {
   const [query, setQuery] = useState('');
   const [activeCategory, setActiveCategory] = useState(MOCK_CATEGORIES[0].id);
+  const [properties, setProperties] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+      .then((res) => res.json())
+      .then((data) => {
+        setProperties(Array.isArray(data) ? data : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
+  const mappedType = CATEGORY_TYPE_MAP[activeCategory];
+  const filtered = properties.filter((p) => {
+    const matchesCategory = !mappedType || p.property_type === mappedType;
+    if (!matchesCategory) return false;
+    if (!query.trim()) return true;
+    const haystack = `${p.title} ${p.locality} ${p.district} ${p.state} ${p.property_type}`.toLowerCase();
+    return haystack.includes(query.trim().toLowerCase());
+  });
 
   return (
     <TabAnimationWrapper>
@@ -40,18 +70,28 @@ export default function SearchScreen() {
 
       <ScrollView style={styles.resultsContainer} contentContainerStyle={styles.scrollContent}>
         <View style={styles.resultsHeader}>
-          <Text style={styles.resultCount}>124 properties found</Text>
+          <Text style={styles.resultCount}>
+            {loading ? 'Searching…' : `${filtered.length} propert${filtered.length === 1 ? 'y' : 'ies'} found`}
+          </Text>
           <TouchableOpacity style={styles.sortBtn}>
             <Text style={styles.sortText}>Sort by: Relevance ▼</Text>
           </TouchableOpacity>
         </View>
 
-        {MOCK_PROPERTIES.map((prop) => (
-          <PropertyCard
-            key={prop.id}
-            {...prop}
-          />
-        ))}
+        {loading ? (
+          <ActivityIndicator color={GoldSystem.primaryGold} style={{ marginTop: 40 }} />
+        ) : filtered.length === 0 ? (
+          <Text style={{ color: Neutrals.textSecondary, textAlign: 'center', marginTop: 40 }}>
+            No properties match your search.
+          </Text>
+        ) : (
+          filtered.map((prop) => (
+            <PropertyCard
+              key={prop.id}
+              {...propertyToCardProps(prop)}
+            />
+          ))
+        )}
       </ScrollView>
     </View>
     </TabAnimationWrapper>

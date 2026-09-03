@@ -33,7 +33,8 @@ import { TopDevelopers } from '@/components/home/TopDevelopers';
 
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PropertyCard } from '@/components/ui/PropertyCard';
-import { MOCK_PROPERTIES, MOCK_RESALE_PROPERTIES, MOCK_RENTAL_PROPERTIES } from '@/constants/mockData';
+import { MOCK_RESALE_PROPERTIES, MOCK_RENTAL_PROPERTIES } from '@/constants/mockData';
+import { propertyToCardProps } from '@/lib/formatters';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 
 export default function HomeScreen() {
@@ -42,6 +43,20 @@ export default function HomeScreen() {
   const { city } = useLocation();
   const { toggleDrawer } = useDrawer();
   const [userName, setUserName] = useState('Investor');
+  const [hotProperties, setHotProperties] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (Array.isArray(data)) {
+          // "Hot Selling" = most-subscribed properties first
+          const sorted = [...data].sort((a, b) => (b.sold_fractions ?? 0) - (a.sold_fractions ?? 0));
+          setHotProperties(sorted.slice(0, 8));
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -149,10 +164,10 @@ export default function HomeScreen() {
         <RecentActivity />
         
         <View style={styles.featuredSection}>
-          <SectionHeader title="Featured Properties" onViewAll={() => {}} />
+          <SectionHeader title="Hot Selling Projects" onViewAll={() => {}} />
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
-            {MOCK_PROPERTIES.map((prop) => (
-              <PropertyCard key={prop.id} {...prop} compact />
+            {hotProperties.map((prop) => (
+              <PropertyCard key={prop.id} {...propertyToCardProps(prop)} compact />
             ))}
           </ScrollView>
         </View>

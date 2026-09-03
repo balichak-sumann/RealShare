@@ -49,13 +49,89 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
 
   const [savingBank, setSavingBank] = useState(false);
 
+  // Post Property State
+  const [showPostModal, setShowPostModal] = useState(false);
+  const [myListings, setMyListings] = useState<any[]>([]);
+  const [postTitle, setPostTitle] = useState('');
+  const [postLocality, setPostLocality] = useState('');
+  const [postDistrict, setPostDistrict] = useState('Hyderabad');
+  const [postState, setPostState] = useState('Telangana');
+  const [postType, setPostType] = useState('Residential');
+  const [postListingType, setPostListingType] = useState<'fractional' | 'outright'>('fractional');
+  const [postFractions, setPostFractions] = useState('100');
+  const [postPrice, setPostPrice] = useState('500000');
+  const [postYield, setPostYield] = useState('9.0');
+  const [postSubmitting, setPostSubmitting] = useState(false);
+
   useEffect(() => {
     if (profile && profile.role !== 'agent' && profile.role !== 'admin') {
       if (!isEmbedded) router.replace('/');
       return;
     }
     fetchDashboardData();
+    fetchMyListings();
   }, [profile]);
+
+  const fetchMyListings = async () => {
+    try {
+      const user = auth.currentUser;
+      const token = (await user?.getIdToken()) || 'MOCK_TOKEN';
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties/builder`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMyListings(Array.isArray(data) ? data : []);
+      }
+    } catch (e) {
+      console.log('Failed to fetch agent listings', e);
+    }
+  };
+
+  const handlePostProperty = async () => {
+    if (!postTitle || !postLocality) {
+      alert('Please enter a title and locality.');
+      return;
+    }
+    setPostSubmitting(true);
+    try {
+      const user = auth.currentUser;
+      const token = (await user?.getIdToken()) || 'MOCK_TOKEN';
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: postTitle,
+          description: `Property submitted by Agent ${profile?.full_name || ''}`,
+          locality: postLocality,
+          district: postDistrict,
+          state: postState,
+          property_type: postType.toLowerCase(),
+          listing_type: postListingType,
+          total_fractions: postListingType === 'outright' ? 1 : Number(postFractions),
+          available_fractions: postListingType === 'outright' ? 1 : Number(postFractions),
+          price_per_fraction: Number(postPrice),
+          booking_amount: Number(postPrice) * 0.1,
+          assured_yield: Number(postYield),
+          image_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&fit=crop',
+        }),
+      });
+      if (res.ok) {
+        setShowPostModal(false);
+        setPostTitle('');
+        setPostLocality('');
+        alert('Property submitted to RealShare Admin for approval.');
+        fetchMyListings();
+      } else {
+        alert('Could not submit property. Please try again.');
+      }
+    } catch (e) {
+      console.log('Failed to post property', e);
+      alert('Could not submit property. Please try again.');
+    } finally {
+      setPostSubmitting(false);
+    }
+  };
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -329,6 +405,45 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
           </ScrollView>
         </View>
 
+        {/* My Listings (Agent Posting) */}
+        <View style={styles.sectionContainer}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <Text style={styles.sectionTitle}>My Listings</Text>
+            <TouchableOpacity style={styles.addClientBtn} onPress={() => setShowPostModal(true)}>
+              <Text style={styles.addClientText}>+ Post Property</Text>
+            </TouchableOpacity>
+          </View>
+          {myListings.length === 0 ? (
+            <Text style={{ fontSize: 13, color: '#6B7280' }}>You haven't posted any properties yet. Post one for admin approval.</Text>
+          ) : (
+            myListings.map((p) => (
+              <View key={p.id} style={styles.leadCard}>
+                <View style={styles.leadInfo}>
+                  <Text style={styles.leadName}>{p.title}</Text>
+                  <Text style={{ fontSize: 12, color: '#6B7280' }}>
+                    {p.locality}, {p.district} · {p.listing_type === 'outright' ? 'Outright' : 'Fractional'}
+                  </Text>
+                </View>
+                <View
+                  style={[
+                    styles.statusBadge,
+                    p.approval_status === 'approved' ? styles.statusPaid : styles.statusPending,
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.statusText,
+                      p.approval_status === 'approved' ? styles.statusTextPaid : styles.statusTextPending,
+                    ]}
+                  >
+                    {p.approval_status === 'approved' ? 'Live' : p.approval_status === 'pending_approval' ? 'Pending' : p.approval_status}
+                  </Text>
+                </View>
+              </View>
+            ))
+          )}
+        </View>
+
         {/* Instant Notifications Feed */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Instant Notifications</Text>
@@ -392,6 +507,68 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
               <Text style={styles.cancelBankText}>Cancel</Text>
             </TouchableOpacity>
           </View>
+        </View>
+      </Modal>
+
+      <Modal visible={showPostModal} animationType="slide" transparent>
+        <View style={styles.modalBackdrop}>
+          <ScrollView style={styles.modalSheet}>
+            <View style={styles.modalHandle} />
+            <Text style={styles.modalTitle}>Post a Property</Text>
+            <Text style={styles.modalSubtitle}>Submit a listing for RealShare Admin approval.</Text>
+
+            <Text style={styles.inputLabel}>Property Title</Text>
+            <TextInput style={styles.input} placeholder="e.g. Skyline Residences" value={postTitle} onChangeText={setPostTitle} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>Locality</Text>
+            <TextInput style={styles.input} placeholder="e.g. Gachibowli" value={postLocality} onChangeText={setPostLocality} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>District</Text>
+            <TextInput style={styles.input} value={postDistrict} onChangeText={setPostDistrict} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>State</Text>
+            <TextInput style={styles.input} value={postState} onChangeText={setPostState} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>Listing Type</Text>
+            <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
+              {(['fractional', 'outright'] as const).map((lt) => (
+                <TouchableOpacity
+                  key={lt}
+                  style={[
+                    { flex: 1, paddingVertical: 12, borderRadius: 10, borderWidth: 1, alignItems: 'center' },
+                    postListingType === lt
+                      ? { backgroundColor: '#111827', borderColor: '#111827' }
+                      : { backgroundColor: '#F9FAFB', borderColor: '#E5E7EB' },
+                  ]}
+                  onPress={() => setPostListingType(lt)}
+                >
+                  <Text style={{ color: postListingType === lt ? '#D4AF37' : '#374151', fontWeight: '700', fontSize: 12 }}>
+                    {lt === 'fractional' ? 'Fractional' : 'Outright'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {postListingType === 'fractional' && (
+              <>
+                <Text style={styles.inputLabel}>Total Fractions</Text>
+                <TextInput style={styles.input} keyboardType="numeric" value={postFractions} onChangeText={setPostFractions} placeholderTextColor="#9CA3AF" />
+              </>
+            )}
+
+            <Text style={styles.inputLabel}>{postListingType === 'outright' ? 'Property Price (₹)' : 'Price per Fraction (₹)'}</Text>
+            <TextInput style={styles.input} keyboardType="numeric" value={postPrice} onChangeText={setPostPrice} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>Assured Yield (%)</Text>
+            <TextInput style={styles.input} keyboardType="numeric" value={postYield} onChangeText={setPostYield} placeholderTextColor="#9CA3AF" />
+
+            <TouchableOpacity style={styles.saveBankBtn} onPress={handlePostProperty} disabled={postSubmitting}>
+              {postSubmitting ? <ActivityIndicator color="#D4AF37" /> : <Text style={styles.saveBankText}>Submit for Approval</Text>}
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.cancelBankBtn} onPress={() => setShowPostModal(false)} disabled={postSubmitting}>
+              <Text style={styles.cancelBankText}>Cancel</Text>
+            </TouchableOpacity>
+          </ScrollView>
         </View>
       </Modal>
 

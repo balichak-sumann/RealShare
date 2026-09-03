@@ -56,6 +56,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
   const [district, setDistrict] = useState('Hyderabad');
   const [stateName, setStateName] = useState('Telangana');
   const [type, setType] = useState('Commercial');
+  const [listingType, setListingType] = useState<'fractional' | 'outright'>('fractional');
   const [fractions, setFractions] = useState('100');
   const [price, setPrice] = useState('500000');
   const [yieldVal, setYieldVal] = useState('9.5');
@@ -230,8 +231,9 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
           district: district || 'Hyderabad',
           state: stateName || 'Telangana',
           property_type: type.toLowerCase(),
-          total_fractions: Number(fractions),
-          available_fractions: Number(fractions),
+          listing_type: listingType,
+          total_fractions: listingType === 'outright' ? 1 : Number(fractions),
+          available_fractions: listingType === 'outright' ? 1 : Number(fractions),
           price_per_fraction: Number(price),
           booking_amount: Number(price) * 0.1,
           assured_yield: Number(yieldVal),
@@ -565,6 +567,21 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
               </View>
             </View>
 
+            <Text style={styles.label}>Listing Type</Text>
+            <View style={styles.typeRow}>
+              {(['fractional', 'outright'] as const).map((lt) => (
+                <TouchableOpacity
+                  key={lt}
+                  style={[styles.typePill, listingType === lt && styles.typePillActive]}
+                  onPress={() => setListingType(lt)}
+                >
+                  <Text style={[styles.typeText, listingType === lt && styles.typeTextActive]}>
+                    {lt === 'fractional' ? 'Fractional (shares)' : 'Outright (whole property)'}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <Text style={styles.label}>Property Category</Text>
             <View style={styles.typeRow}>
               {['Commercial', 'Residential', 'Retail', 'Industrial', 'Land'].map((t) => (
@@ -579,17 +596,19 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
             </View>
 
             <View style={styles.rowInputs}>
+              {listingType === 'fractional' && (
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.label}>Total Fractions</Text>
+                  <TextInput
+                    style={styles.input}
+                    keyboardType="numeric"
+                    value={fractions}
+                    onChangeText={setFractions}
+                  />
+                </View>
+              )}
               <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Total Fractions</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={fractions}
-                  onChangeText={setFractions}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Price / Frac (₹)</Text>
+                <Text style={styles.label}>{listingType === 'outright' ? 'Property Price (₹)' : 'Price / Frac (₹)'}</Text>
                 <TextInput
                   style={styles.input}
                   keyboardType="numeric"

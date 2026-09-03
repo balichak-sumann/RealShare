@@ -38,7 +38,7 @@ export default function SearchScreen() {
     const matchesCategory = !mappedType || p.property_type === mappedType;
     if (!matchesCategory) return false;
     if (!query.trim()) return true;
-    const haystack = `${p.title} ${p.locality} ${p.district} ${p.state} ${p.property_type} ${p.developer?.name || ''}`.toLowerCase();
+    const haystack = `${p.title} ${p.description || ''} ${p.locality} ${p.district} ${p.state} ${p.full_address || ''} ${p.property_type} ${p.listing_type} ${p.developer?.name || ''}`.toLowerCase();
     return haystack.includes(query.trim().toLowerCase());
   });
 

@@ -53,6 +53,11 @@ export async function POST(request: Request) {
     if (!data.title || !data.property_type || !data.price_per_fraction) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
+    
+    const allowedCategories = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Investor'];
+    if (!allowedCategories.includes(data.property_type)) {
+      return NextResponse.json({ error: `Invalid property_type. Allowed: ${allowedCategories.join(', ')}` }, { status: 400 });
+    }
 
     // Outright listings are modeled as a single "fraction" = 100% ownership,
     // so every existing Investment/Transaction/AgentCommission calculation

@@ -1,12 +1,9 @@
 export const MOCK_CATEGORIES = [
-  { id: '1', label: 'Buy', icon: '🏠', count: 12453 },
-  { id: '2', label: 'Rent', icon: '🔑', count: 8321 },
-  { id: '3', label: 'Projects', icon: '🏗️', count: 432 },
-  { id: '4', label: 'PG / Hostels', icon: '🛏️', count: 2150 },
-  { id: '5', label: 'Plot & Land', icon: '🗺️', count: 1540 },
-  { id: '6', label: 'Commercial', icon: '🏢', count: 3200 },
-  { id: '7', label: 'Luxury', icon: '💎', count: 850 },
-  { id: '8', label: 'Investment', icon: '📈', count: 420 },
+  { id: 'Commercial', label: 'Commercial', icon: '🏢' },
+  { id: 'Fractional', label: 'Fractional', icon: '📈' },
+  { id: 'Residential', label: 'Residential', icon: '🏠' },
+  { id: 'Holiday', label: 'Holiday', icon: '🏖️' },
+  { id: 'Investor', label: 'Investor', icon: '💎' },
 ];
 
 export const MOCK_HERO_SLIDES = [

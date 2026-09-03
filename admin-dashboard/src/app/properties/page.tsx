@@ -200,7 +200,7 @@ export default function PropertiesPage() {
           state: newProp.state,
           district: newProp.district,
           locality: newProp.locality,
-          property_type: newProp.type.toLowerCase(),
+          property_type: newProp.type,
           listing_type: newProp.listingType,
           total_fractions: Number(newProp.totalFractions),
           available_fractions: Number(newProp.totalFractions),
@@ -427,7 +427,7 @@ export default function PropertiesPage() {
 
         <div className={styles.headerRight}>
           <div className={styles.filterGroup}>
-            {["All", "Commercial", "Holiday", "Residential", "International"].map((t) => (
+            {["All", "Commercial", "Fractional", "Residential", "Holiday", "Investor"].map((t) => (
               <button
                 key={t}
                 className={`${styles.filterPill} ${typeFilter === t ? styles.filterActive : ""}`}
@@ -472,7 +472,7 @@ export default function PropertiesPage() {
             {properties
             .filter((p) => {
               if (statusTab !== "All" && p.approval_status !== statusTab) return false;
-              if (typeFilter !== "All" && p.property_type !== typeFilter.toLowerCase()) return false;
+              if (typeFilter !== "All" && p.property_type !== typeFilter) return false;
               if (
                 search &&
                 !p.title.toLowerCase().includes(search.toLowerCase()) &&
@@ -498,9 +498,9 @@ export default function PropertiesPage() {
                 <td className={styles.td}>
                   <span
                     className={`${styles.badge} ${
-                      p.property_type === "holiday"
+                      p.property_type === "Holiday"
                         ? styles.badgeHoliday
-                        : p.property_type === "commercial"
+                        : p.property_type === "Commercial"
                         ? styles.badgeCommercial
                         : styles.badgeInternational
                     }`}
@@ -851,9 +851,10 @@ export default function PropertiesPage() {
                     style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                   >
                     <option value="Commercial">Commercial</option>
-                    <option value="Holiday">Holiday</option>
+                    <option value="Fractional">Fractional</option>
                     <option value="Residential">Residential</option>
-                    <option value="International">International</option>
+                    <option value="Holiday">Holiday</option>
+                    <option value="Investor">Investor</option>
                   </select>
                 </div>
                 {newProp.listingType === "fractional" && (

@@ -7,6 +7,7 @@ export type UserProfile = {
   full_name: string;
   email: string | null;
   phone_number: string | null;
+  full_address?: string | null;
   email_verified: boolean;
   phone_verified: boolean;
   created_at: string;

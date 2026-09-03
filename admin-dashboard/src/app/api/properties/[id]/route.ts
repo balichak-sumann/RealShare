@@ -59,6 +59,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const data = await request.json();
+    if (data.property_type) {
+      const allowedCategories = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Investor'];
+      if (!allowedCategories.includes(data.property_type)) {
+        return NextResponse.json({ error: `Invalid property_type. Allowed: ${allowedCategories.join(', ')}` }, { status: 400 });
+      }
+    }
     const updated = await prisma.property.update({
       where: { id },
       data: {

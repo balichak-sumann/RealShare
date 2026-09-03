@@ -14,7 +14,6 @@ export function CategoryGrid() {
             key={category.id}
             label={category.label}
             icon={category.icon}
-            count={category.count}
             isActive={activeId === category.id}
             onPress={() => setActiveId(category.id)}
           />

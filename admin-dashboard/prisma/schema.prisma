@@ -11,6 +11,7 @@ model Profile {
   full_name            String
   email                String?       @unique
   phone_number         String?
+  full_address         String?
   role                 String        @default("investor")
   employee_department  String?       // "sales", "support", or "accounts"
   avatar_url           String?

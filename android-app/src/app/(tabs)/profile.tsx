@@ -426,6 +426,20 @@ export default function ProfileScreen() {
                 </Text>
               </View>
             </View>
+
+            <View style={styles.divider} />
+
+            <View style={styles.infoRow}>
+              <View style={[styles.infoIconBox, { backgroundColor: 'rgba(139, 92, 246, 0.1)' }]}>
+                <Text style={styles.infoIcon}>📍</Text>
+              </View>
+              <View style={styles.infoContent}>
+                <Text style={styles.infoLabel}>Full Address</Text>
+                <Text style={styles.infoValue}>
+                  {user?.full_address || 'Not Provided'}
+                </Text>
+              </View>
+            </View>
           </View>
         </Animated.View>
 

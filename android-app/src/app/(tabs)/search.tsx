@@ -12,8 +12,9 @@ import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 // Categories with no direct backend equivalent (Rent, PG/Hostels, Plot & Land, Luxury)
 // intentionally fall through to "show everything" rather than a misleading empty state.
 const CATEGORY_TYPE_MAP: Record<string, string> = {
-  '6': 'commercial', // Commercial
-  '8': 'holiday',    // Investment -> our fractional/holiday listings skew investment-led
+  'Commercial': 'commercial',
+  'Fractional': 'fractional',
+  'Residential': 'residential',
 };
 
 export default function SearchScreen() {

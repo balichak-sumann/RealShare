@@ -1,4 +1,5 @@
 export const PROPERTY_CATEGORIES = [
+  { id: 'All', label: 'All', icon: '🔍' },
   { id: 'Commercial', label: 'Commercial', icon: '🏢' },
   { id: 'Fractional', label: 'Fractional', icon: '📈' },
   { id: 'Residential', label: 'Residential', icon: '🏠' },

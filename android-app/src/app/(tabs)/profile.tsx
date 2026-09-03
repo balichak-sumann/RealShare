@@ -18,7 +18,7 @@ import * as ImagePicker from 'expo-image-picker';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { auth, app } from '@/lib/firebase';
 import { PhoneAuthProvider, linkWithCredential, verifyBeforeUpdateEmail, RecaptchaVerifier } from 'firebase/auth';
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+// Removed expo-firebase-recaptcha
 import { useUser } from '@/contexts/UserContext';
 import { GuestView } from '@/components/ui/GuestView';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
@@ -119,23 +119,15 @@ export default function ProfileScreen() {
     
     try {
       if (otpType === 'phone') {
-        let appVerifier: any;
-        
         if (Platform.OS === 'web') {
-          if (!(window as any).recaptchaVerifier) {
-            (window as any).recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
-              size: 'invisible'
-            });
-          }
-          appVerifier = (window as any).recaptchaVerifier;
+          Alert.alert('Not Supported', 'Phone verification on Web is currently disabled during migration.');
         } else {
-          appVerifier = recaptchaVerifier.current!;
+          const rnauth = (await import('@react-native-firebase/auth')).default;
+          // Use native Firebase to send the SMS and bypass recaptcha
+          const confirmation = await rnauth().verifyPhoneNumber(`+91${inputValue}`);
+          setVerificationId(confirmation.verificationId);
+          setOtpStep('code');
         }
-
-        const phoneProvider = new PhoneAuthProvider(auth);
-        const vId = await phoneProvider.verifyPhoneNumber(`+91${inputValue}`, appVerifier);
-        setVerificationId(vId);
-        setOtpStep('code');
       } else {
         if (auth.currentUser) {
           await verifyBeforeUpdateEmail(auth.currentUser, inputValue);
@@ -245,14 +237,7 @@ export default function ProfileScreen() {
     <View style={styles.container}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         
-        {/* Firebase Recaptcha for Native */}
-        {Platform.OS !== 'web' && (
-          <FirebaseRecaptchaVerifierModal
-            ref={recaptchaVerifier}
-            firebaseConfig={app.options}
-            attemptInvisibleVerification={true}
-          />
-        )}
+        {/* Firebase Recaptcha for Native Removed */}
 
         {/* Firebase Recaptcha Container for Web */}
         {Platform.OS === 'web' && (

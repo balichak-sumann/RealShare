@@ -18,6 +18,7 @@ import { useDrawer } from '@/contexts/DrawerContext';
 import { auth, storage } from '@/lib/firebase';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import * as ImagePicker from 'expo-image-picker';
+import * as FileSystem from 'expo-file-system';
 import { Neutrals, GoldSystem, Radius, Typography } from '@/constants/design';
 
 interface BuilderProperty {
@@ -184,6 +185,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
       allowsEditing: true,
       aspect: [16, 9],
       quality: 0.8,
+      base64: true,
     });
     if (!result.canceled) {
       setImageUri(result.assets[0].uri);
@@ -210,8 +212,11 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
           await uploadBytes(storageRef, blob);
           finalImageUrl = await getDownloadURL(storageRef);
         } catch (err) {
-          console.log("Storage upload fallback used", err);
-          finalImageUrl = imageUri;
+          console.log("Storage upload fallback used (PostgreSQL text insertion).", err);
+          const base64Str = await FileSystem.readAsStringAsync(imageUri, { encoding: FileSystem.EncodingType.Base64 });
+          // Note: PostgreSQL insertion needs the full Data URI format to render correctly on the web
+          const extension = imageUri.split('.').pop() || 'jpeg';
+          finalImageUrl = `data:image/${extension};base64,${base64Str}`;
         }
       }
 

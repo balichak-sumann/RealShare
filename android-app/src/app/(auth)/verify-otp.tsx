@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView } from 'react-native';
-import { signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
-import { FirebaseRecaptchaVerifierModal } from 'expo-firebase-recaptcha';
+// import { signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
+// Removed expo-firebase-recaptcha
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
 import { useRouter, useLocalSearchParams } from 'expo-router';
@@ -15,7 +15,6 @@ export default function VerifyOtpScreen() {
   const [error, setError] = useState('');
   const [verificationId, setVerificationId] = useState('');
   const [countdown, setCountdown] = useState(60);
-  const recaptchaVerifier = React.useRef(null);
   
   const { setMfaVerified, profile } = useUser();
   const router = useRouter();
@@ -42,11 +41,10 @@ export default function VerifyOtpScreen() {
     setError('');
     try {
       if (Platform.OS === 'web') {
-        // Use web specific setup if needed, but expo-firebase-recaptcha handles both if configured
-        const confirmResult = await signInWithPhoneNumber(auth, phoneNumber, (window as any).recaptchaVerifier);
-        setVerificationId(confirmResult.verificationId);
+        setError('Phone verification on Web is currently disabled during migration.');
       } else {
-        const confirmResult = await signInWithPhoneNumber(auth, phoneNumber, recaptchaVerifier.current as any);
+        const rnauth = (await import('@react-native-firebase/auth')).default;
+        const confirmResult = await rnauth().signInWithPhoneNumber(phoneNumber);
         setVerificationId(confirmResult.verificationId);
       }
       setCountdown(60);
@@ -95,11 +93,6 @@ export default function VerifyOtpScreen() {
 
   return (
     <View style={styles.container}>
-      <FirebaseRecaptchaVerifierModal
-        ref={recaptchaVerifier}
-        firebaseConfig={auth.app.options}
-        attemptInvisibleVerification={true}
-      />
       
       <LinearGradient colors={['#0F172A', 'rgba(15, 23, 42, 0.95)', '#0F172A']} style={styles.gradientOverlay} />
 

@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "135004726221",
+    "project_id": "real-share-b7162",
+    "storage_bucket": "real-share-b7162.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:135004726221:android:1abf6ac544056186335a84",
+        "android_client_info": {
+          "package_name": "com.realshare"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "135004726221-61e6me5npovguajiva0mj045fl5rdl6a.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.realshare",
+            "certificate_hash": "8ece505501f33438f9057ca8a338fe24a7afeb2c"
+          }
+        },
+        {
+          "client_id": "135004726221-ks37k9cghtb59tq1ioauiouogf0hktc3.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCzLjIFUyDE9uK_ETSeeENCjapmps-pI6E"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "135004726221-ks37k9cghtb59tq1ioauiouogf0hktc3.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

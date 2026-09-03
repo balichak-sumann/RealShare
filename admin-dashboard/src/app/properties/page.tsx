@@ -173,10 +173,21 @@ export default function PropertiesPage() {
       // Upload all selected images
       if (selectedFiles.length > 0) {
         for (const file of selectedFiles) {
-          const storageRef = ref(storage, `properties/${Date.now()}_${file.name}`);
-          await uploadBytes(storageRef, file);
-          const url = await getDownloadURL(storageRef);
-          uploadedImageUrls.push(url);
+          try {
+            const storageRef = ref(storage, `properties/${Date.now()}_${file.name}`);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+            uploadedImageUrls.push(url);
+          } catch (storageError) {
+            console.warn("Firebase Storage upload failed. Falling back to Base64 (PostgreSQL text insertion).", storageError);
+            const base64Str = await new Promise<string>((resolve, reject) => {
+              const reader = new FileReader();
+              reader.onload = () => resolve(reader.result as string);
+              reader.onerror = reject;
+              reader.readAsDataURL(file);
+            });
+            uploadedImageUrls.push(base64Str);
+          }
         }
       }
       if (uploadedImageUrls.length === 0) {
@@ -185,9 +196,20 @@ export default function PropertiesPage() {
 
       // Upload video if selected
       if (selectedVideo) {
-        const videoRef = ref(storage, `properties/videos/${Date.now()}_${selectedVideo.name}`);
-        await uploadBytes(videoRef, selectedVideo);
-        videoUrl = await getDownloadURL(videoRef);
+        try {
+          const videoRef = ref(storage, `properties/videos/${Date.now()}_${selectedVideo.name}`);
+          await uploadBytes(videoRef, selectedVideo);
+          videoUrl = await getDownloadURL(videoRef);
+        } catch (storageError) {
+          console.warn("Firebase Storage upload failed. Falling back to Base64 (PostgreSQL text insertion).", storageError);
+          const base64Str = await new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = () => resolve(reader.result as string);
+            reader.onerror = reject;
+            reader.readAsDataURL(selectedVideo);
+          });
+          videoUrl = base64Str;
+        }
       }
 
       const authHeader = await getAuthHeader();

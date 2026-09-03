@@ -1,8 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, Modal, TextInput, Alert, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useUser } from '@/contexts/UserContext';
+
+const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
 
 const SERVICES = [
   { id: '1', title: 'Packers & Movers', image: 'https://images.unsplash.com/photo-1600518464441-9154a4dea21b?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Verified professionals for a hassle-free move.', price: 'Starts ₹3,500' },
@@ -16,6 +19,47 @@ const SERVICES = [
 
 export default function ServicesScreen() {
   const router = useRouter();
+  const { profile } = useUser();
+  const [inquiryFor, setInquiryFor] = useState<string | null>(null);
+  const [name, setName] = useState(profile?.full_name || '');
+  const [phone, setPhone] = useState(profile?.phone_number || '');
+  const [submitting, setSubmitting] = useState(false);
+
+  const openInquiry = (serviceTitle: string) => {
+    setInquiryFor(serviceTitle);
+  };
+
+  const submitInquiry = async () => {
+    if (!inquiryFor) return;
+    if (!name || !phone) {
+      Alert.alert('Missing details', 'Please enter your name and phone number.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch(`${API_URL}/api/services`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer_name: name,
+          phone,
+          email: profile?.email || undefined,
+          service_type: inquiryFor,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        Alert.alert('Error', err.error || 'Failed to submit your request. Please try again.');
+        return;
+      }
+      Alert.alert('Request received', `Our team will reach out about ${inquiryFor} shortly.`);
+      setInquiryFor(null);
+    } catch (e) {
+      Alert.alert('Error', 'Failed to submit your request. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -33,7 +77,7 @@ export default function ServicesScreen() {
         <LinearGradient colors={GoldSystem.goldGradient} style={styles.banner}>
           <Text style={styles.bannerTitle}>RealShare Concierge</Text>
           <Text style={styles.bannerDesc}>End-to-end services to make your house a home.</Text>
-          <TouchableOpacity style={styles.bannerBtn}>
+          <TouchableOpacity style={styles.bannerBtn} onPress={() => openInquiry('General Consultation')}>
             <Text style={styles.bannerBtnText}>Talk to an Expert</Text>
           </TouchableOpacity>
         </LinearGradient>
@@ -42,7 +86,7 @@ export default function ServicesScreen() {
         
         <View style={styles.servicesGrid}>
           {SERVICES.map(service => (
-            <TouchableOpacity key={service.id} style={styles.serviceCard} activeOpacity={0.9}>
+            <TouchableOpacity key={service.id} style={styles.serviceCard} activeOpacity={0.9} onPress={() => openInquiry(service.title)}>
               <ImageBackground 
                 source={{ uri: service.image }} 
                 style={styles.serviceImage}
@@ -66,6 +110,42 @@ export default function ServicesScreen() {
         </View>
 
       </ScrollView>
+
+      <Modal visible={!!inquiryFor} transparent animationType="slide" onRequestClose={() => setInquiryFor(null)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>{inquiryFor}</Text>
+            <Text style={styles.modalSubtitle}>Leave your details and our team will call you back.</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Your name"
+              value={name}
+              onChangeText={setName}
+              placeholderTextColor={Neutrals.gray400}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Phone number"
+              value={phone}
+              onChangeText={setPhone}
+              keyboardType="phone-pad"
+              placeholderTextColor={Neutrals.gray400}
+            />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setInquiryFor(null)} disabled={submitting}>
+                <Text style={styles.modalCancelText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.modalSubmitBtn} onPress={submitInquiry} disabled={submitting}>
+                {submitting ? (
+                  <ActivityIndicator color={Neutrals.surface} />
+                ) : (
+                  <Text style={styles.modalSubmitText}>Request Callback</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -194,5 +274,64 @@ const styles = StyleSheet.create({
   arrowIcon: {
     color: Neutrals.gray400,
     fontSize: 16,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalCard: {
+    backgroundColor: Neutrals.surface,
+    borderTopLeftRadius: Radius.lg,
+    borderTopRightRadius: Radius.lg,
+    padding: 24,
+    paddingBottom: 40,
+  },
+  modalTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray600,
+    marginBottom: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+    borderRadius: Radius.md,
+    padding: 14,
+    marginBottom: 12,
+    ...Typography.bodyMedium,
+    color: Neutrals.obsidian,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalCancelBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+    alignItems: 'center',
+  },
+  modalCancelText: {
+    ...Typography.labelMedium,
+    color: Neutrals.obsidian,
+  },
+  modalSubmitBtn: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: Radius.md,
+    backgroundColor: Neutrals.obsidian,
+    alignItems: 'center',
+  },
+  modalSubmitText: {
+    ...Typography.labelMedium,
+    color: Neutrals.surface,
   },
 });

@@ -35,19 +35,15 @@ export async function POST(request: Request) {
     const authHeader = request.headers.get('Authorization');
     if (authHeader && authHeader.startsWith('Bearer ')) {
       const token = authHeader.split('Bearer ')[1];
-      if (token === 'MOCK_TOKEN') {
-        userId = 'mock-user-123';
-      } else {
-        try {
-          const decodedToken = await auth.verifyIdToken(token);
-          userId = decodedToken.uid;
-          
-          // Check if admin
-          const profile = await prisma.profile.findUnique({ where: { id: userId } });
-          if (profile?.role === 'admin') isAdmin = true;
-        } catch (e) {
-          console.error('Invalid token', e);
-        }
+      try {
+        const decodedToken = await auth.verifyIdToken(token);
+        userId = decodedToken.uid;
+
+        // Check if admin
+        const profile = await prisma.profile.findUnique({ where: { id: userId } });
+        if (profile?.role === 'admin') isAdmin = true;
+      } catch (e) {
+        console.error('Invalid token', e);
       }
     }
 

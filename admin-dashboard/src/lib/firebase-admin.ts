@@ -19,7 +19,15 @@ try {
   console.log('Firebase Admin init bypassed due to invalid credentials in .env');
 }
 
-// Export a safe mock if Firebase isn't initialized so API routes don't crash
-export const auth = getApps().length > 0 ? getAuth() : {
-  verifyIdToken: async () => ({ uid: 'mock-user-123', email: 'mock@example.com', phone_number: '+919876543210' })
-} as any;
+// SECURITY: if Firebase Admin never initialized (missing/invalid credentials),
+// every route that calls auth.verifyIdToken() MUST fail closed, not silently
+// accept every request as a fake authenticated user. A misconfigured
+// deployment should error loudly on the first authenticated call, not quietly
+// grant access to everyone.
+export const auth = getApps().length > 0 ? getAuth() : ({
+  verifyIdToken: async () => {
+    throw new Error(
+      'Firebase Admin is not initialized (missing FIREBASE_PRIVATE_KEY/FIREBASE_PROJECT_ID/FIREBASE_CLIENT_EMAIL) — refusing to verify tokens.'
+    );
+  },
+} as unknown as ReturnType<typeof getAuth>);

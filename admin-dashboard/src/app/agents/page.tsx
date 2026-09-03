@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import { getAuthHeader } from "@/lib/api-auth";
 import styles from "../properties/Properties.module.css";
 
 interface Agent {
@@ -27,8 +28,11 @@ export default function AgentsPage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch('/api/agents')
-      .then(res => res.json())
+    (async () => {
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { setLoading(false); return; }
+      fetch('/api/agents', { headers: authHeader })
+        .then(res => res.json())
       .then(data => {
         const mapped = data.map((d: any) => {
           let earned = 0;
@@ -66,6 +70,7 @@ export default function AgentsPage() {
         console.error(err);
         setLoading(false);
       });
+    })();
   }, []);
   const [search, setSearch] = useState("");
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
@@ -97,7 +102,9 @@ export default function AgentsPage() {
 
   const handleDisburseCommission = async (id: string) => {
     try {
-      const res = await fetch(`/api/agents/${id}/disburse`, { method: 'POST' });
+      const authHeader = await getAuthHeader();
+      if (!authHeader) return;
+      const res = await fetch(`/api/agents/${id}/disburse`, { method: 'POST', headers: authHeader });
       if (res.ok) {
         setAgents((prev) =>
           prev.map((a) =>

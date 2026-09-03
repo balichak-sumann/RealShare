@@ -11,12 +11,8 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     const token = authHeader.split('Bearer ')[1];
-    let userId = 'mock-user-123';
-    
-    if (token !== 'MOCK_TOKEN') {
-      const decodedToken = await auth.verifyIdToken(token);
-      userId = decodedToken.uid;
-    }
+    const decodedToken = await auth.verifyIdToken(token);
+    const userId = decodedToken.uid;
 
     const body = await req.json();
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, transactionId } = body;

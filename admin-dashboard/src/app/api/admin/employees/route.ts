@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/firebase-admin';
+import { requireAdmin } from '@/lib/require-admin';
 import { sendWelcomeEmail } from '@/lib/mailer';
 import { getWelcomeEmailHTML } from '@/lib/email-template';
 import crypto from 'crypto';
@@ -57,12 +58,9 @@ export async function POST(request: NextRequest) {
       where: { id: decodedToken.uid }
     });
 
-    // TEMPORARY: Allow testing without strict admin role check
-    /*
     if (!adminUser || adminUser.role !== 'admin') {
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
-    */
 
     const body = await request.json();
     const { full_name, email, phone_number, department } = body;
@@ -127,7 +125,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Build the login URL
-    const loginUrl = 'http://localhost:8081/sign-in';
+    const loginUrl = process.env.EMPLOYEE_APP_LOGIN_URL || 'http://localhost:8081/sign-in';
 
     // Generate the welcome email HTML
     const emailHTML = getWelcomeEmailHTML({
@@ -178,17 +176,8 @@ export async function POST(request: NextRequest) {
 // GET: List all employees
 export async function GET(request: NextRequest) {
   try {
-    const authHeader = request.headers.get('Authorization');
-    if (!authHeader?.startsWith('Bearer ')) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const token = authHeader.split('Bearer ')[1];
-    try {
-      await auth.verifyIdToken(token);
-    } catch (e) {
-      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
-    }
+    const authCheck = await requireAdmin(request);
+    if (!authCheck.ok) return authCheck.response;
 
     const employees = await prisma.profile.findMany({
       where: { role: 'employee' },

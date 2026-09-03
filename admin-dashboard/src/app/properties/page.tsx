@@ -4,6 +4,7 @@ import dynamic from "next/dynamic";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { storage } from "@/lib/firebase";
 import AdminLayout from "@/components/layout/AdminLayout";
+import { getAuthHeader } from "@/lib/api-auth";
 import styles from "./Properties.module.css";
 
 // Dynamic import to avoid SSR issues with Leaflet
@@ -110,9 +111,11 @@ export default function PropertiesPage() {
 
   const handleApproveProperty = async (id: string) => {
     try {
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { showToast('You must be signed in to do that.'); return; }
       const res = await fetch(`/api/properties/${id}`, {
         method: 'PATCH',
-        headers: { 'Authorization': 'Bearer MOCK_TOKEN', 'Content-Type': 'application/json' },
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({ approval_status: 'approved' })
       });
       if (res.ok) {
@@ -124,9 +127,11 @@ export default function PropertiesPage() {
 
   const handleRejectProperty = async (id: string) => {
     try {
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { showToast('You must be signed in to do that.'); return; }
       const res = await fetch(`/api/properties/${id}`, {
         method: 'PATCH',
-        headers: { 'Authorization': 'Bearer MOCK_TOKEN', 'Content-Type': 'application/json' },
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({ approval_status: 'rejected' })
       });
       if (res.ok) {
@@ -139,9 +144,11 @@ export default function PropertiesPage() {
   const handleDeleteProperty = async (id: string) => {
     if (confirm("Are you sure you want to delete this property listing? This action cannot be undone.")) {
       try {
+        const authHeader = await getAuthHeader();
+        if (!authHeader) { showToast('You must be signed in to do that.'); return; }
         const res = await fetch(`/api/properties/${id}`, {
           method: 'DELETE',
-          headers: { 'Authorization': 'Bearer MOCK_TOKEN' }
+          headers: authHeader
         });
         if (res.ok) {
           setProperties((prev) => prev.filter((p) => p.id !== id));
@@ -183,9 +190,11 @@ export default function PropertiesPage() {
         videoUrl = await getDownloadURL(videoRef);
       }
 
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { alert('You must be signed in to do that.'); setIsUploading(false); return; }
       const res = await fetch('/api/properties', {
         method: 'POST',
-        headers: { 'Authorization': 'Bearer MOCK_TOKEN', 'Content-Type': 'application/json' },
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: newProp.title,
           state: newProp.state,

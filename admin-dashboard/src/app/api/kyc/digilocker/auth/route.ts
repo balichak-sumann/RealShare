@@ -13,11 +13,8 @@ export async function GET(request: Request) {
 
     const returnUrl = searchParams.get('return_url') || 'realshare://kyc-success';
 
-    let userId = 'mock-user-123';
-    if (token !== 'MOCK_TOKEN') {
-      const decodedToken = await auth.verifyIdToken(token);
-      userId = decodedToken.uid;
-    }
+    const decodedToken = await auth.verifyIdToken(token);
+    const userId = decodedToken.uid;
 
     // Embed return_url into the state so the callback knows where to redirect
     const state = encodeURIComponent(Buffer.from(JSON.stringify({ userId, returnUrl })).toString('base64'));

@@ -75,7 +75,8 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
   const fetchMyListings = async () => {
     try {
       const user = auth.currentUser;
-      const token = (await user?.getIdToken()) || 'MOCK_TOKEN';
+      if (!user) return;
+      const token = await user.getIdToken();
       const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties/builder`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -96,7 +97,12 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
     setPostSubmitting(true);
     try {
       const user = auth.currentUser;
-      const token = (await user?.getIdToken()) || 'MOCK_TOKEN';
+      if (!user) {
+        alert('Please sign in to post a property.');
+        setPostSubmitting(false);
+        return;
+      }
+      const token = await user.getIdToken();
       const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },

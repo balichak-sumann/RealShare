@@ -7,7 +7,6 @@ async function getUser(request: Request) {
   const authHeader = request.headers.get('Authorization');
   if (authHeader && authHeader.startsWith('Bearer ')) {
     const token = authHeader.split('Bearer ')[1];
-    if (token === 'MOCK_TOKEN') return { uid: 'mock-user-123', isAdmin: true };
     try {
       const decodedToken = await auth.verifyIdToken(token);
       const profile = await prisma.profile.findUnique({ where: { id: decodedToken.uid } });

@@ -28,13 +28,9 @@ export async function POST(request: Request) {
     const token = authHeader.split('Bearer ')[1];
 
     let isAdmin = false;
-    if (token === 'MOCK_TOKEN') {
-      isAdmin = true;
-    } else {
-      const decodedToken = await auth.verifyIdToken(token);
-      const profile = await prisma.profile.findUnique({ where: { id: decodedToken.uid } });
-      isAdmin = profile?.role === 'admin';
-    }
+    const decodedToken = await auth.verifyIdToken(token);
+    const profile = await prisma.profile.findUnique({ where: { id: decodedToken.uid } });
+    isAdmin = profile?.role === 'admin';
 
     if (!isAdmin) {
       return NextResponse.json({ error: 'Only admins can add developers' }, { status: 403 });

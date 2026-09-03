@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import { getAuthHeader } from "@/lib/api-auth";
 import styles from "../properties/Properties.module.css";
 
 const typeColors: Record<string, string> = {
@@ -25,16 +26,20 @@ export default function LedgerPage() {
   const [dateTo, setDateTo] = useState("");
 
   useEffect(() => {
-    fetch('/api/transactions')
-      .then(res => res.json())
-      .then(data => {
-        setTransactions(data);
-        setLoading(false);
-      })
-      .catch(err => {
-        console.error(err);
-        setLoading(false);
-      });
+    (async () => {
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { setLoading(false); return; }
+      fetch('/api/transactions', { headers: authHeader })
+        .then(res => res.json())
+        .then(data => {
+          setTransactions(data);
+          setLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setLoading(false);
+        });
+    })();
   }, []);
 
   const filtered = transactions.filter(txn => {

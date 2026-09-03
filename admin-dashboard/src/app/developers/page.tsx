@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import { getAuthHeader } from "@/lib/api-auth";
 import styles from "../properties/Properties.module.css";
 
 interface Developer {
@@ -54,9 +55,11 @@ export default function DevelopersPage() {
       return;
     }
     try {
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { alert("You must be signed in to do that."); return; }
       const res = await fetch("/api/developers", {
         method: "POST",
-        headers: { Authorization: "Bearer MOCK_TOKEN", "Content-Type": "application/json" },
+        headers: { ...authHeader, "Content-Type": "application/json" },
         body: JSON.stringify(newDev),
       });
       if (!res.ok) throw new Error("Failed to create developer");

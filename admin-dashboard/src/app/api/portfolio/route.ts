@@ -10,12 +10,8 @@ export async function GET(request: Request) {
     }
     
     const token = authHeader.split('Bearer ')[1];
-    let userId = 'mock-user-123';
-    
-    if (token !== 'MOCK_TOKEN') {
-      const decodedToken = await auth.verifyIdToken(token);
-      userId = decodedToken.uid;
-    }
+    const decodedToken = await auth.verifyIdToken(token);
+    const userId = decodedToken.uid;
 
     let user = await prisma.profile.findUnique({ where: { id: userId } });
     

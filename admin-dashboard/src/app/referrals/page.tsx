@@ -1,6 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
+import { getAuthHeader } from "@/lib/api-auth";
 import styles from "../properties/Properties.module.css";
 
 interface ReferralData {
@@ -25,18 +26,22 @@ export default function ReferralsPage() {
   const [expandedAgent, setExpandedAgent] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch("/api/referrals")
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          setReferrals(data);
-        }
-        setLoading(false);
-      })
-      .catch((err) => {
-        console.error(err);
-        setLoading(false);
-      });
+    (async () => {
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { setLoading(false); return; }
+      fetch("/api/referrals", { headers: authHeader })
+        .then((res) => res.json())
+        .then((data) => {
+          if (Array.isArray(data)) {
+            setReferrals(data);
+          }
+          setLoading(false);
+        })
+        .catch((err) => {
+          console.error(err);
+          setLoading(false);
+        });
+    })();
   }, []);
 
   const totalReferrals = referrals.reduce((sum, r) => sum + r.investorsReferred, 0);

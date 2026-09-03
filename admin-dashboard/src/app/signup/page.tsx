@@ -9,6 +9,7 @@ import Link from 'next/link';
 export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [bootstrapSecret, setBootstrapSecret] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
@@ -21,16 +22,26 @@ export default function Signup() {
     try {
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const token = await userCredential.user.getIdToken();
-      
-      // Register this user as an ADMIN in the database
-      await fetch('/api/users/sync', {
+
+      // Register this user as an ADMIN in the database. The server only grants
+      // the admin role here if the bootstrap secret matches — this page is for
+      // setting up the very first admin account only. Every admin after that
+      // must be created from inside the dashboard by an existing admin.
+      const res = await fetch('/api/users/sync', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-admin-bootstrap-secret': bootstrapSecret,
         },
         body: JSON.stringify({ role: 'admin' })
       });
+      const data = await res.json().catch(() => null);
+      if (data?.profile?.role !== 'admin') {
+        setError('Bootstrap secret was incorrect, so an admin account was not created. Ask an existing admin to add you from Employees instead.');
+        setLoading(false);
+        return;
+      }
 
       // AuthContext will handle redirect to dashboard
     } catch (err: any) {
@@ -47,15 +58,20 @@ export default function Signup() {
     try {
       const userCredential = await signInWithPopup(auth, googleProvider);
       const token = await userCredential.user.getIdToken();
-      
-      await fetch('/api/users/sync', {
+
+      const res = await fetch('/api/users/sync', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'x-admin-bootstrap-secret': bootstrapSecret,
         },
         body: JSON.stringify({ role: 'admin' })
       });
+      const data = await res.json().catch(() => null);
+      if (data?.profile?.role !== 'admin') {
+        setError('Bootstrap secret was incorrect, so an admin account was not created. Ask an existing admin to add you from Employees instead.');
+      }
     } catch (err: any) {
       setError(err.message || 'Failed to sign up with Google');
     } finally {
@@ -102,6 +118,21 @@ export default function Signup() {
               style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
               placeholder="••••••••"
             />
+          </div>
+
+          <div>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Bootstrap Secret</label>
+            <input
+              type="password"
+              required
+              value={bootstrapSecret}
+              onChange={(e) => setBootstrapSecret(e.target.value)}
+              style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
+              placeholder="Provided out-of-band by RealShare"
+            />
+            <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '6px' }}>
+              This page only creates the first admin account. It matches against the server's ADMIN_BOOTSTRAP_SECRET env var — without it, no admin role is granted.
+            </p>
           </div>
 
           <button 

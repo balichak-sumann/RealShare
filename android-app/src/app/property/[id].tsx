@@ -96,8 +96,15 @@ export default function PropertyDetailsScreen() {
     }
 
     try {
-      // 1. Get Firebase Token
-      const token = (await auth.currentUser?.getIdToken()) || "MOCK_TOKEN";
+      // 1. Get Firebase Token — never fall back to a fake token; if the user
+      // isn't actually signed in, stop and send them to sign in instead of
+      // letting a real-money payment flow proceed unauthenticated.
+      if (!auth.currentUser) {
+        alert('Please sign in to continue.');
+        setIsProcessing(false);
+        return;
+      }
+      const token = await auth.currentUser.getIdToken();
 
       // 2. Create Order on Backend
       const orderResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/transactions/create-order`, {

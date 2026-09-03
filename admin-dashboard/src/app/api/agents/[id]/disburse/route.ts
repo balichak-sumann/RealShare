@@ -1,8 +1,12 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { requireAdmin } from '@/lib/require-admin';
 
 export async function POST(req: Request, context: { params: Promise<{ id: string }> }) {
   try {
+    const auth = await requireAdmin(req);
+    if (!auth.ok) return auth.response;
+
     const params = await context.params;
     const agentId = params.id;
 

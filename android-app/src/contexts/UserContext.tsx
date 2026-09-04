@@ -15,6 +15,10 @@ export type UserProfile = {
   kyc_status: string;
   avatar_url?: string | null;
   wallet_balance?: number | string | null;
+  kyc_documents?: Array<{
+    document_type: string;
+    verification_status: string;
+  }>;
 };
 
 type UserContextType = {

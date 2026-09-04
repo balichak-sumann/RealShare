@@ -39,9 +39,15 @@ export default function SignInScreen() {
         await signInWithEmailAndPassword(auth, identifier.trim(), password);
         // onAuthStateChanged in _layout.tsx handles redirection
       } else {
-        // Phone Number Mock Flow
-        if (identifier.length < 10) {
+        // Phone Number Validation
+        const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
+        if (cleanedPhone.length !== 10) {
           setError('Please enter a valid 10-digit mobile number.');
+          setLoading(false);
+          return;
+        }
+        if (!/^[6-9]/.test(cleanedPhone)) {
+          setError('Mobile number must start with 7, 8, 9, or 6.');
           setLoading(false);
           return;
         }

@@ -79,8 +79,9 @@ export default function EmployeePortalScreen({ isEmbedded = false }: { isEmbedde
   };
 
   const handleAddLead = () => {
-    if (!newLeadName.trim() || !newLeadPhone.trim()) {
-      Alert.alert('Missing Fields', 'Please enter at least a name and phone number.');
+    const cleanedPhone = newLeadPhone.replace(/\D/g, '').slice(-10);
+    if (!newLeadName.trim() || cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
+      Alert.alert('Invalid Input', 'Please enter a valid name and a 10-digit mobile number starting with 7, 8, 9, or 6.');
       return;
     }
     setIsSaving(true);

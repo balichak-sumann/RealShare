@@ -122,6 +122,14 @@ export default function EmployeesPage() {
     e.preventDefault();
     if (!newEmp.name || !newEmp.email) return;
 
+    if (newEmp.phone) {
+      const cleanedPhone = newEmp.phone.replace(/\D/g, '').slice(-10);
+      if (cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
+        showToast("❌ Phone number must be a valid 10-digit mobile number starting with 7, 8, 9, or 6.", "error");
+        return;
+      }
+    }
+
     setIsSubmitting(true);
 
     try {

@@ -70,8 +70,15 @@ function RootLayoutNav() {
     if (!isLoaded) return;
 
     const inAuthGroup = segments[0] === '(auth)';
+    const isSignUp = segments[1] === 'sign-up';
 
     if (user) {
+      // Prevent race condition: If the user is currently signing up, let the sign-up 
+      // form handle the sync so it can pass the correct role to the backend.
+      if (inAuthGroup && isSignUp) {
+        return;
+      }
+
       // Sync user to DB
       user.getIdToken().then(async token => {
         let pushToken = null;

@@ -104,6 +104,13 @@ export function AgentListingsScreen() {
       Alert.alert('Missing Fields', 'Please fill in all required fields: Title, Price, State, District, and Locality.');
       return;
     }
+    if (contactPhone) {
+      const cleanedPhone = contactPhone.replace(/\D/g, '').slice(-10);
+      if (cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
+        Alert.alert('Invalid Mobile Number', 'Please enter a valid 10-digit contact mobile number starting with 7, 8, 9, or 6.');
+        return;
+      }
+    }
     setSubmitting(true);
     try {
       const token = await auth.currentUser?.getIdToken();

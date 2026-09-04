@@ -27,8 +27,9 @@ export default function ServicesScreen() {
 
   const submitInquiry = async () => {
     if (!inquiryFor) return;
-    if (!name || !phone) {
-      Alert.alert('Missing details', 'Please enter your name and phone number.');
+    const cleanedPhone = phone.replace(/\D/g, '').slice(-10);
+    if (cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
+      Alert.alert('Invalid Mobile Number', 'Please enter a valid 10-digit mobile number starting with 7, 8, 9, or 6.');
       return;
     }
     setSubmitting(true);

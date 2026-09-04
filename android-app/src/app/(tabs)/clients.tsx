@@ -41,8 +41,9 @@ export default function ClientsScreen() {
   };
 
   const handleAddClient = async () => {
-    if (!newClientName || !newClientPhone) {
-      Alert.alert('Error', 'Name and Phone are required.');
+    const cleanedPhone = newClientPhone.replace(/\D/g, '').slice(-10);
+    if (!newClientName || cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
+      Alert.alert('Error', 'Please enter a valid name and a 10-digit mobile number starting with 7, 8, 9, or 6.');
       return;
     }
     try {

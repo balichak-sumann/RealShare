@@ -43,7 +43,9 @@ export default function Signup() {
         return;
       }
 
-      // AuthContext will handle redirect to dashboard
+      // AuthContext will not redirect us away immediately, so we explicitly
+      // redirect to the dashboard upon successful DB setup.
+      router.push('/');
     } catch (err: any) {
       setError(err.message || 'Failed to create account');
     } finally {
@@ -71,7 +73,10 @@ export default function Signup() {
       const data = await res.json().catch(() => null);
       if (data?.profile?.role !== 'admin') {
         setError('Bootstrap secret was incorrect, so an admin account was not created. Ask an existing admin to add you from Employees instead.');
+        return;
       }
+      
+      router.push('/');
     } catch (err: any) {
       setError(err.message || 'Failed to sign up with Google');
     } finally {

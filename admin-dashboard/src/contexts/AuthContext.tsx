@@ -68,10 +68,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         if (cancelled) return;
 
         if (!res.ok) {
-          // No profile (or lookup failed) - not authorized for this portal.
-          // Safe to always sign out here: once signed out, `user` becomes
-          // null and this effect no-ops on the next run, so there's no
-          // redirect loop even if we're already sitting on /login.
+          // If they are on the signup page, the profile is currently being created by
+          // /api/users/sync. Do not interrupt it. The signup page will redirect them.
+          if (pathname === '/signup') return;
+          
           await signOut(auth);
           router.push('/login?unauthorized=1');
           return;

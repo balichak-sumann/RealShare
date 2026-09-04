@@ -63,12 +63,30 @@ app.prepare().then(() => {
     }
   });
 
+  const customOrigins = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map((o) => o.trim())
+    .filter(Boolean);
+  const defaultOrigins = [
+    'https://realshare.in',
+    'https://www.realshare.in',
+    'https://admin.realshare.in',
+  ];
+  const allowedOrigins = customOrigins.length > 0 ? customOrigins : defaultOrigins;
+
   const io = new Server(httpServer, {
-    // Same-origin in production (the app and API share one host on
-    // Render); CORS is only relevant for local dev against a different
-    // Metro/web-dev origin, so keep it permissive there and same-origin
-    // (default, no cors option) in production.
-    cors: dev ? { origin: '*' } : undefined,
+    cors: {
+      origin: dev
+        ? '*'
+        : (origin, callback) => {
+            if (!origin || allowedOrigins.includes(origin)) {
+              callback(null, true);
+            } else {
+              callback(new Error('Not allowed by CORS'));
+            }
+          },
+      credentials: true,
+    },
   });
 
   const firebaseAuth = getSocketAuth();

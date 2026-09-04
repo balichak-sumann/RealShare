@@ -40,3 +40,30 @@ services:
         value: production
       - key: PORT
         value: 10000 # Render assigns a port via this env var
+
+  - type: static
+    name: realshare-app
+    rootDir: android-app
+    buildCommand: npm install && npx expo export --platform web
+    staticPublishPath: dist
+    routes:
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      - key: EXPO_PUBLIC_API_URL
+        sync: false
+      - key: EXPO_PUBLIC_FIREBASE_API_KEY
+        value: AIzaSyCDUd5PLfeEi-cdRvJwEPh0omcxfby8obI
+      - key: EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN
+        value: real-share-b7162.firebaseapp.com
+      - key: EXPO_PUBLIC_FIREBASE_PROJECT_ID
+        value: real-share-b7162
+      - key: EXPO_PUBLIC_FIREBASE_STORAGE_BUCKET
+        value: real-share-b7162.firebasestorage.app
+      - key: EXPO_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+        value: "135004726221"
+      - key: EXPO_PUBLIC_FIREBASE_APP_ID
+        value: "1:135004726221:web:a1c1dfbe32c9bf3a335a84"
+      - key: EXPO_PUBLIC_RAZORPAY_KEY_ID
+        value: rzp_test_TSKXy2WO8gcwyH

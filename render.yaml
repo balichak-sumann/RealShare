@@ -3,7 +3,7 @@ services:
     name: realshare-admin
     env: node
     rootDir: admin-dashboard
-    buildCommand: npm install && npm run build
+    buildCommand: npm install --include=dev && npm run build
     startCommand: npm run start
     plan: starter # $7/month production plan
     envVars:

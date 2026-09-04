@@ -94,7 +94,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
   useEffect(() => {
     Animated.spring(slideAnim, {
       toValue: isOpen ? 1 : 0,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
       speed: 18,
       bounciness: 4,
     }).start();
@@ -456,7 +456,9 @@ const styles = StyleSheet.create({
   },
   drawerMenuList: {
     flex: 1,
+    flexShrink: 1,
     marginTop: 8,
+    width: '100%',
   },
   drawerMenuBtn: {
     marginBottom: 8,
@@ -492,13 +494,17 @@ const styles = StyleSheet.create({
     color: Neutrals.gray400,
     fontWeight: '500',
     letterSpacing: 0.3,
+    flex: 1,
   },
   drawerMenuLabelActive: {
     color: GoldSystem.metallicGold,
     fontWeight: '700',
+    flex: 1,
   },
   drawerBottom: {
     marginTop: 'auto',
+    width: '100%',
+    flexShrink: 0,
   },
   drawerSignOutBtn: {
     flexDirection: 'row',
@@ -518,6 +524,7 @@ const styles = StyleSheet.create({
     color: Neutrals.gray500,
     textAlign: 'center',
     marginTop: 16,
+    width: '100%',
   },
   mainContent: {
     flex: 1,

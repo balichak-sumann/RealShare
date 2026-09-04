@@ -1,0 +1,42 @@
+services:
+  - type: web
+    name: realshare-admin
+    env: node
+    rootDir: admin-dashboard
+    buildCommand: npm install && npm run build
+    startCommand: npm run start
+    plan: starter # $7/month production plan
+    envVars:
+      # Database connection
+      - key: DATABASE_URL
+        sync: false # User must enter this securely in the Render dashboard
+
+      # Firebase Config
+      - key: FIREBASE_PROJECT_ID
+        sync: false
+      - key: FIREBASE_CLIENT_EMAIL
+        sync: false
+      - key: FIREBASE_PRIVATE_KEY
+        sync: false
+      - key: NEXT_PUBLIC_FIREBASE_API_KEY
+        sync: false
+      - key: NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN
+        sync: false
+      - key: NEXT_PUBLIC_FIREBASE_PROJECT_ID
+        sync: false
+      - key: NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET
+        sync: false
+      - key: NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID
+        sync: false
+      - key: NEXT_PUBLIC_FIREBASE_APP_ID
+        sync: false
+
+      # App Security
+      - key: ADMIN_BOOTSTRAP_SECRET
+        sync: false
+      
+      # Next.js Specific
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000 # Render assigns a port via this env var

@@ -8,10 +8,10 @@
     "start": "NODE_ENV=production node server.js",
     "start:cpanel": "NODE_ENV=production node server.js",
     "lint": "eslint",
-    "zip": "npm run build && cd .. && zip -q -r admin-dashboard-deploy.zip admin-dashboard -x \"admin-dashboard/node_modules/*\" -x \"admin-dashboard/.git/*\" -x \"admin-dashboard/.vscode/*\" && echo '\u2705 Deployment ZIP created at Desktop/RealShare/admin-dashboard-deploy.zip'"
+    "zip": "npm run build && cd .. && zip -q -r admin-dashboard-deploy.zip admin-dashboard -x \"admin-dashboard/node_modules/*\" -x \"admin-dashboard/.git/*\" -x \"admin-dashboard/.vscode/*\" && echo '✅ Deployment ZIP created at Desktop/RealShare/admin-dashboard-deploy.zip'"
   },
   "dependencies": {
-    "@prisma/adapter-mariadb": "^7.10.0",
+    "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@types/leaflet": "^1.9.22",
     "@types/nodemailer": "^8.0.1",
@@ -20,6 +20,7 @@
     "leaflet": "^1.9.4",
     "next": "16.3.1",
     "nodemailer": "^9.0.5",
+    "pg": "^8.23.0",
     "razorpay": "^2.9.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
@@ -30,6 +31,7 @@
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.43",
+    "@types/pg": "^8.23.1",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "dotenv": "^17.4.2",

@@ -45,6 +45,8 @@ model Profile {
   agent_clients             AgentClient[]     @relation("AgentClients")
   chat_messages             ChatMessage[]
   assets                    Asset[]
+  conversation_participants ConversationParticipant[]
+  messages                  Message[]
 
   @@map("profiles")
 }
@@ -383,4 +385,45 @@ model RentalStatement {
   agreement         RentalAgreement @relation(fields: [agreement_id], references: [id], onDelete: Cascade)
 
   @@map("rental_statements")
+}
+
+model Conversation {
+  id             String   @id @default(uuid()) @db.VarChar(36)
+  type           String   @db.VarChar(20)   // "advisor" | "support" | "property_inquiry"
+  context_id     String?  @db.VarChar(36)   // ticket id or property id, depending on type
+  context_label  String?  @db.VarChar(255)  // cached subject line for inbox lists, e.g. ticket number or property title
+  created_at     DateTime @default(now()) @db.Timestamp(6)
+  updated_at     DateTime @updatedAt @db.Timestamp(6)
+
+  participants   ConversationParticipant[]
+  messages       Message[]
+
+  @@map("conversations")
+}
+
+model ConversationParticipant {
+  id               String    @id @default(uuid()) @db.VarChar(36)
+  conversation_id  String    @db.VarChar(36)
+  profile_id       String    @db.VarChar(128)
+  last_read_at     DateTime? @db.Timestamp(6)
+
+  conversation     Conversation @relation(fields: [conversation_id], references: [id])
+  profile          Profile      @relation(fields: [profile_id], references: [id])
+
+  @@unique([conversation_id, profile_id])
+  @@map("conversation_participants")
+}
+
+model Message {
+  id               String   @id @default(uuid()) @db.VarChar(36)
+  conversation_id  String   @db.VarChar(36)
+  sender_id        String   @db.VarChar(128)
+  body             String   @db.Text
+  created_at       DateTime @default(now()) @db.Timestamp(6)
+
+  conversation     Conversation @relation(fields: [conversation_id], references: [id])
+  sender           Profile      @relation(fields: [sender_id], references: [id])
+
+  @@index([conversation_id, created_at])
+  @@map("messages")
 }

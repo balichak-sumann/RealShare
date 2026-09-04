@@ -9,6 +9,7 @@ import {
   Animated,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { useUser } from '@/contexts/UserContext';
 import { auth } from '@/lib/firebase';
@@ -30,6 +31,7 @@ export default function MyTicketsScreen() {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [openingConversationId, setOpeningConversationId] = useState<string | null>(null);
 
   const slideAnim = useRef(new Animated.Value(20)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -98,6 +100,35 @@ export default function MyTicketsScreen() {
       }
   };
 
+  const openTicketConversation = async (ticket: Ticket) => {
+    if (openingConversationId) return;
+    setOpeningConversationId(ticket.id);
+    try {
+      const user = auth.currentUser;
+      if (!user) throw new Error('Not logged in');
+      const token = await user.getIdToken();
+
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ type: 'support', ticket_id: ticket.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.id) {
+        router.push(('/conversations/' + data.id) as any);
+      } else {
+        console.warn('Failed to open ticket conversation:', data?.error);
+      }
+    } catch (err) {
+      console.warn('Failed to open ticket conversation', err);
+    } finally {
+      setOpeningConversationId(null);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Header */}
@@ -139,10 +170,24 @@ export default function MyTicketsScreen() {
                     <View style={styles.ticketIdBadge}>
                         <Text style={styles.ticketIdText}>{ticket.ticket_number}</Text>
                     </View>
-                    <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
-                        <Text style={[styles.statusText, { color: statusStyle.text }]}>
-                            {statusStyle.label}
-                        </Text>
+                    <View style={styles.ticketHeaderActions}>
+                        <View style={[styles.statusBadge, { backgroundColor: statusStyle.bg }]}>
+                            <Text style={[styles.statusText, { color: statusStyle.text }]}>
+                                {statusStyle.label}
+                            </Text>
+                        </View>
+                        <TouchableOpacity
+                            style={styles.conversationBtn}
+                            onPress={() => openTicketConversation(ticket)}
+                            disabled={openingConversationId === ticket.id}
+                        >
+                            {openingConversationId === ticket.id ? (
+                                <ActivityIndicator size="small" color={GoldSystem.darkGold} />
+                            ) : (
+                                <Ionicons name="chatbubble-ellipses-outline" size={16} color={GoldSystem.darkGold} />
+                            )}
+                            <Text style={styles.conversationBtnText}>View Conversation</Text>
+                        </TouchableOpacity>
                     </View>
                 </View>
 
@@ -281,6 +326,25 @@ const styles = StyleSheet.create({
       justifyContent: 'space-between',
       alignItems: 'center',
       marginBottom: 12,
+  },
+  ticketHeaderActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+  },
+  conversationBtn: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: GoldSystem.paleGold,
+      paddingHorizontal: 10,
+      paddingVertical: 5,
+      borderRadius: Radius.full,
+  },
+  conversationBtnText: {
+      ...Typography.labelSmall,
+      color: GoldSystem.darkGold,
+      fontWeight: '700',
   },
   ticketIdBadge: {
       backgroundColor: Neutrals.gray100,

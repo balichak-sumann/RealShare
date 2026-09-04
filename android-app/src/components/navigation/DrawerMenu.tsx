@@ -33,6 +33,7 @@ const BASE_MENU_ITEMS: { icon: IoniconName; label: string; route: string }[] = [
   { icon: 'card-outline', label: 'Bank Details', route: '/bank-details' },
   { icon: 'construct-outline', label: 'Services', route: '/services' },
   { icon: 'settings-outline', label: 'Settings', route: '/settings' },
+  { icon: 'chatbubbles-outline', label: 'Messages', route: '/conversations' },
   { icon: 'ticket-outline', label: 'My Tickets', route: '/my-tickets' },
 ];
 

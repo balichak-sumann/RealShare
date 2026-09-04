@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter } from 'next/navigation';
 
@@ -92,6 +93,12 @@ export default function AgentPortal() {
           <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#1E293B', margin: 0 }}>Wealth Partner Portal</h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
+          <Link
+            href="/messages"
+            style={{ padding: '8px 16px', background: '#F1F5F9', border: '1px solid #E2E8F0', color: '#334155', borderRadius: '6px', cursor: 'pointer', fontWeight: 600, textDecoration: 'none' }}
+          >
+            💬 Messages
+          </Link>
           <div style={{ textAlign: 'right' }}>
             <div style={{ fontWeight: 600, color: '#334155' }}>{data.agentName}</div>
             <div style={{ fontSize: '13px', color: '#64748B' }}>{data.agencyName}</div>

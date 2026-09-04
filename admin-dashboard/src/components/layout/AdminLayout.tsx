@@ -25,6 +25,8 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     { name: "Referral Tracking", path: "/referrals", icon: "🔗" },
     { name: "Financial Ledger", path: "/ledger", icon: "💰" },
     { name: "Additional Services", path: "/services", icon: "🛎️" },
+    { name: "Support Tickets", path: "/tickets", icon: "🎫" },
+    { name: "Messages", path: "/messages", icon: "💬" },
     { name: "Notifications Hub", path: "/notifications", icon: "📢" },
     { name: "Content & Banners", path: "/cms", icon: "🎨" },
     { name: "System Settings", path: "/settings", icon: "⚙️" },

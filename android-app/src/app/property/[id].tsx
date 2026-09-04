@@ -45,6 +45,7 @@ export default function PropertyDetailsScreen() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [investmentSuccess, setInvestmentSuccess] = useState(false);
   const [certificateId, setCertificateId] = useState('');
+  const [askingQuestion, setAskingQuestion] = useState(false);
 
   if (loading) {
     return (
@@ -64,6 +65,43 @@ export default function PropertyDetailsScreen() {
       </View>
     );
   }
+
+  // The API rejects the inquiry (400) when there's no listing contact or
+  // the caller posted the listing themselves -- both are knowable from the
+  // property record we already have, so hide the entry point rather than
+  // let the user tap it and hit an error.
+  const canAskQuestion = !!property.posted_by && property.posted_by !== profile?.id;
+
+  const handleAskQuestion = async () => {
+    if (askingQuestion) return;
+    if (!auth.currentUser) {
+      router.push('/(auth)/sign-in' as any);
+      return;
+    }
+    setAskingQuestion(true);
+    try {
+      const token = await auth.currentUser.getIdToken();
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ type: 'property_inquiry', property_id: property.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.id) {
+        router.push(('/conversations/' + data.id) as any);
+      } else {
+        alert(data?.error || 'Could not start a conversation about this property right now.');
+      }
+    } catch (err) {
+      console.warn('Failed to start property inquiry conversation:', err);
+      alert('Could not start a conversation about this property right now.');
+    } finally {
+      setAskingQuestion(false);
+    }
+  };
 
   const fractionPrice = Number(property.price_per_fraction) || 500000;
   const bookingAmtPerFrac = Number(property.booking_amount) || 25000;
@@ -236,6 +274,23 @@ export default function PropertyDetailsScreen() {
               <InvestmentScore score={92} size={50} showLabel={false} strokeWidth={4} />
             </View>
           </View>
+
+          {canAskQuestion && (
+            <TouchableOpacity
+              style={[styles.askQuestionBtn, askingQuestion && { opacity: 0.6 }]}
+              onPress={handleAskQuestion}
+              disabled={askingQuestion}
+            >
+              {askingQuestion ? (
+                <ActivityIndicator size="small" color={GoldSystem.primaryGold} />
+              ) : (
+                <>
+                  <Text style={styles.askQuestionIcon}>💬</Text>
+                  <Text style={styles.askQuestionText}>Ask a question about this property</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          )}
 
           <View style={styles.highlightsGrid}>
             <View style={styles.highlightBox}>
@@ -524,6 +579,24 @@ const styles = StyleSheet.create({
   scoreContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  askQuestionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: GoldSystem.primaryGold,
+    borderRadius: Radius.md,
+    paddingVertical: 12,
+    marginBottom: 24,
+  },
+  askQuestionIcon: {
+    fontSize: 16,
+    marginRight: 8,
+  },
+  askQuestionText: {
+    ...Typography.labelLarge,
+    color: GoldSystem.darkGold,
   },
   highlightsGrid: {
     flexDirection: 'row',

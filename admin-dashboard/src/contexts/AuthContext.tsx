@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { disconnectSocket } from '@/lib/socket';
 import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
@@ -14,7 +15,14 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true, logout: async () => {} });
 
 const publicPaths = ['/login', '/signup', '/agent-login'];
+// Pages that manage their own unauthenticated-access flow (exempted from the
+// pre-auth redirect below) and are an authenticated agent's home base.
 const agentPaths = ['/agent-login', '/agent-portal'];
+// Everywhere an authenticated agent is allowed to browse -- agentPaths plus
+// the shared Messages inbox, so an agent can reply to their investors'
+// advisor conversations from desktop without being bounced back to the
+// portal. Deliberately does NOT include /tickets or other admin-only pages.
+const agentAllowedPaths = [...agentPaths, '/messages'];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -77,7 +85,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             router.push('/');
           }
         } else if (role === 'agent') {
-          if (!agentPaths.includes(pathname)) {
+          if (!agentAllowedPaths.includes(pathname)) {
             router.push('/agent-portal');
           }
         } else {
@@ -98,6 +106,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }, [user, loading, pathname, router]);
 
   const logout = async () => {
+    disconnectSocket();
     await signOut(auth);
     router.push('/login');
   };

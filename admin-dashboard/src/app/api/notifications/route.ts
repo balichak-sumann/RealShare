@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
+import { sendExpoPushTickets } from '@/lib/push';
 
 export async function GET(request: Request) {
   try {
@@ -56,35 +57,24 @@ export async function POST(request: Request) {
     let pushSent = 0;
     let pushFailed = 0;
     if (recipients.length > 0) {
-      try {
-        const pushRes = await fetch('https://exp.host/--/api/v2/push/send', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
-          body: JSON.stringify(
-            recipients.map((r) => ({
-              to: r.expo_push_token,
-              title,
-              body: message,
-            }))
-          ),
-        });
-        // Expo's push API returns { data: [{ status: 'ok' | 'error', ... }, ...] }
-        // with one ticket per submitted token, in order -- that's the real
-        // per-recipient success/failure signal, not just the HTTP status.
-        const pushJson = await pushRes.json().catch(() => null);
-        const tickets: any[] = Array.isArray(pushJson?.data) ? pushJson.data : [];
-        for (const ticket of tickets) {
-          if (ticket?.status === 'ok') pushSent++;
-          else pushFailed++;
-        }
-        // Any recipient that didn't get a ticket back at all (malformed
-        // response, or the whole call failed) counts as failed too.
-        const unaccounted = recipients.length - tickets.length;
-        if (unaccounted > 0) pushFailed += unaccounted;
-      } catch (e) {
-        console.error('Push delivery failed (notification still logged):', e);
-        pushFailed = recipients.length;
+      // Expo's push API returns { data: [{ status: 'ok' | 'error', ... }, ...] }
+      // with one ticket per submitted token, in order -- that's the real
+      // per-recipient success/failure signal, not just the HTTP status.
+      const tickets = await sendExpoPushTickets(
+        recipients.map((r) => ({
+          to: r.expo_push_token as string,
+          title,
+          body: message,
+        }))
+      );
+      for (const ticket of tickets) {
+        if (ticket?.status === 'ok') pushSent++;
+        else pushFailed++;
       }
+      // Any recipient that didn't get a ticket back at all (malformed
+      // response, or the whole call failed) counts as failed too.
+      const unaccounted = recipients.length - tickets.length;
+      if (unaccounted > 0) pushFailed += unaccounted;
     }
 
     const notification = await prisma.notification.create({

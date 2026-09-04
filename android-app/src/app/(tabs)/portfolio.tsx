@@ -64,6 +64,45 @@ export default function PortfolioScreen() {
     }
   };
 
+  const [connectingAdvisor, setConnectingAdvisor] = useState(false);
+
+  const handleConnectAdvisor = async () => {
+    if (connectingAdvisor) return;
+    setConnectingAdvisor(true);
+    try {
+      const currentUser = auth.currentUser;
+      if (!currentUser) {
+        router.push('/(auth)/sign-in' as any);
+        return;
+      }
+      const token = await currentUser.getIdToken();
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ type: 'advisor' }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (res.ok && data?.id) {
+        router.push(('/conversations/' + data.id) as any);
+      } else if (res.status === 400) {
+        Alert.alert(
+          'No Advisor Assigned Yet',
+          "You don't have a personal wealth advisor assigned to your account yet. This usually happens automatically after your first investment -- check back soon, or reach out via Support in the meantime."
+        );
+      } else {
+        Alert.alert('Concierge', data?.error || 'Could not connect to your advisor right now. Please try again.');
+      }
+    } catch (err) {
+      console.warn('Failed to start advisor conversation:', err);
+      Alert.alert('Concierge', 'Could not connect to your advisor right now. Please try again.');
+    } finally {
+      setConnectingAdvisor(false);
+    }
+  };
+
   const filteredPortfolio = portfolio.filter(item => {
     if (activeTab === 'All') return true;
     return item.status.toLowerCase() === activeTab.toLowerCase();
@@ -372,8 +411,16 @@ export default function PortfolioScreen() {
               <Text style={styles.conciergeTitle}>VIP Concierge</Text>
               <Text style={styles.conciergeDesc}>Schedule a site visit or chat with your wealth advisor.</Text>
             </View>
-            <TouchableOpacity style={styles.conciergeBtn} onPress={() => Alert.alert('Concierge', 'Connecting to your advisor...')}>
-              <Text style={styles.conciergeBtnText}>Connect</Text>
+            <TouchableOpacity
+              style={[styles.conciergeBtn, connectingAdvisor && { opacity: 0.6 }]}
+              onPress={handleConnectAdvisor}
+              disabled={connectingAdvisor}
+            >
+              {connectingAdvisor ? (
+                <ActivityIndicator size="small" color={Neutrals.obsidian} />
+              ) : (
+                <Text style={styles.conciergeBtnText}>Connect</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>

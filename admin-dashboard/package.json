@@ -5,10 +5,10 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "start": "NODE_ENV=production node server.js",
     "start:cpanel": "NODE_ENV=production node server.js",
     "lint": "eslint",
-    "zip": "npm run build && cd .. && zip -q -r admin-dashboard-deploy.zip admin-dashboard -x \"admin-dashboard/node_modules/*\" -x \"admin-dashboard/.git/*\" -x \"admin-dashboard/.vscode/*\" && echo '✅ Deployment ZIP created at Desktop/RealShare/admin-dashboard-deploy.zip'"
+    "zip": "npm run build && cd .. && zip -q -r admin-dashboard-deploy.zip admin-dashboard -x \"admin-dashboard/node_modules/*\" -x \"admin-dashboard/.git/*\" -x \"admin-dashboard/.vscode/*\" && echo '\u2705 Deployment ZIP created at Desktop/RealShare/admin-dashboard-deploy.zip'"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.0",
@@ -23,7 +23,9 @@
     "razorpay": "^2.9.8",
     "react": "19.2.8",
     "react-dom": "19.2.8",
-    "react-leaflet": "^5.0.0"
+    "react-leaflet": "^5.0.0",
+    "socket.io": "^4.8.3",
+    "socket.io-client": "^4.8.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",

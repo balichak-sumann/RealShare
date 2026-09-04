@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { auth } from '@/lib/firebase-admin';
 import crypto from 'crypto';
 import { sendInvestmentSuccessEmail } from '@/lib/mailer';
+import { sendPushToProfile } from '@/lib/push';
 
 import prisma from '@/lib/prisma';
 export async function POST(req: Request) {
@@ -144,25 +145,10 @@ export async function POST(req: Request) {
           }
         });
 
-        if (agent.expo_push_token) {
-          try {
-            await fetch('https://exp.host/--/api/v2/push/send', {
-              method: 'POST',
-              headers: {
-                'Accept': 'application/json',
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                to: agent.expo_push_token,
-                sound: 'default',
-                title: 'New Commission Earned! 🎉',
-                body: `You just earned ₹${commissionAmount.toLocaleString('en-IN')} from a referral!`,
-              })
-            });
-          } catch (e) {
-            console.error('Failed to send push notification', e);
-          }
-        }
+        await sendPushToProfile(agent.id, {
+          title: 'New Commission Earned! 🎉',
+          body: `You just earned ₹${commissionAmount.toLocaleString('en-IN')} from a referral!`,
+        });
       }
     }
 

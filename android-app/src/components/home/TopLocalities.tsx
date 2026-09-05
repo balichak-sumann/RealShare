@@ -4,6 +4,7 @@ import { SectionHeader } from '../ui/SectionHeader';
 import { LocalityCard } from '../ui/LocalityCard';
 import { formatPrice } from '@/lib/formatters';
 import { useRouter } from 'expo-router';
+import { ResponsiveRail } from '../layout/ResponsiveRail';
 
 // Derived from real listed properties, grouped by locality — there's no
 // separate Locality table (or tracked rent/sale-per-sqft market data), so
@@ -62,11 +63,11 @@ export function TopLocalities() {
   return (
     <View style={styles.container}>
       <SectionHeader title="Top Localities" onViewAll={() => router.push('/(tabs)/search')} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ResponsiveRail contentContainerStyle={styles.scrollContent}>
         {localities.map((locality) => (
           <LocalityCard key={locality.id} {...locality} />
         ))}
-      </ScrollView>
+      </ResponsiveRail>
     </View>
   );
 }

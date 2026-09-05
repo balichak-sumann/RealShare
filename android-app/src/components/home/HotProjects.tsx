@@ -4,6 +4,7 @@ import { SectionHeader } from '../ui/SectionHeader';
 import { PropertyCard } from '../ui/PropertyCard';
 import { propertyToCardProps } from '@/lib/formatters';
 import { useRouter } from 'expo-router';
+import { ResponsiveRail } from '../layout/ResponsiveRail';
 
 export function HotProjects() {
   const router = useRouter();
@@ -26,13 +27,11 @@ export function HotProjects() {
   return (
     <View style={styles.container}>
       <SectionHeader title="New Projects" onViewAll={() => router.push('/(tabs)/search')} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      <ResponsiveRail contentContainerStyle={styles.scrollContent}>
         {properties.map((prop) => (
-          <View key={prop.id} style={{ width: 220, marginRight: 12 }}>
-            <PropertyCard {...propertyToCardProps(prop)} compact />
-          </View>
+          <PropertyCard key={prop.id} {...propertyToCardProps(prop)} compact />
         ))}
-      </ScrollView>
+      </ResponsiveRail>
     </View>
   );
 }

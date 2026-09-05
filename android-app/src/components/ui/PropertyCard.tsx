@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
 import { Neutrals, GoldSystem, Radius, Typography } from '@/constants/design';
+import { useResponsive } from '@/hooks/useResponsive';
 import { PremiumCard } from './PremiumCard';
 import { useRouter } from 'expo-router';
 import { TrustBadge } from './TrustBadge';
@@ -22,6 +23,7 @@ interface PropertyCardProps {
   agentCommission?: string;
   onShare?: () => void;
   areaSuffix?: string;
+  description?: string;
 }
 
 export function PropertyCard({
@@ -39,8 +41,10 @@ export function PropertyCard({
   agentCommission,
   onShare,
   areaSuffix = 'sq.ft',
+  description,
 }: PropertyCardProps) {
   const router = useRouter();
+  const { isDesktop } = useResponsive();
   const { isShortlisted, toggleShortlist } = useShortlist();
   
   const isSaved = isShortlisted(id);
@@ -51,11 +55,11 @@ export function PropertyCard({
   };
 
   return (
-    <PremiumCard style={[styles.card, compact && styles.compactCard] as any} onPress={() => router.push(`/property/${id}` as any)}>
+    <PremiumCard style={[styles.card, compact && styles.compactCard, compact && isDesktop && styles.compactCardDesktop] as any} onPress={() => router.push(`/property/${id}` as any)}>
       <View style={styles.imageContainer}>
         <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
           {images.map((img, idx) => (
-            <Image key={idx} source={{ uri: img }} style={[styles.image, compact && styles.compactImage]} />
+            <Image key={idx} source={{ uri: img }} style={[styles.image, compact && styles.compactImage, compact && isDesktop && styles.compactImageDesktop]} />
           ))}
         </ScrollView>
         <View style={styles.badgesTop}>
@@ -89,6 +93,12 @@ export function PropertyCard({
           <Text style={styles.dot}>•</Text>
           <Text style={styles.feature}>{area}{areaSuffix ? ` ${areaSuffix}` : ''}</Text>
         </View>
+
+        {description && (
+          <Text style={styles.descriptionText} numberOfLines={2}>
+            {description}
+          </Text>
+        )}
 
         {agentCommission && (
           <View style={{ marginTop: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -125,8 +135,13 @@ const styles = StyleSheet.create({
   },
   compactCard: {
     width: 280,
+    minHeight: 340,
     marginRight: 16,
     marginBottom: 8,
+  },
+  compactCardDesktop: {
+    width: 320,
+    marginRight: 24,
   },
   imageContainer: {
     width: '100%',
@@ -142,6 +157,10 @@ const styles = StyleSheet.create({
   compactImage: {
     width: 280,
     height: 160,
+  },
+  compactImageDesktop: {
+    width: 320,
+    height: 180,
   },
   badgesTop: {
     position: 'absolute',

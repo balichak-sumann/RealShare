@@ -21,23 +21,16 @@ interface ResponsiveRailProps {
 export function ResponsiveRail({
   children,
   contentContainerStyle,
-  gridStyle,
 }: ResponsiveRailProps) {
-  const { isDesktop } = useResponsive();
-
-  if (!isDesktop) {
-    return (
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={contentContainerStyle}
-      >
-        {children}
-      </ScrollView>
-    );
-  }
-
-  return <View style={[styles.grid, gridStyle]}>{children}</View>;
+  return (
+    <ScrollView
+      horizontal
+      showsHorizontalScrollIndicator={false}
+      contentContainerStyle={contentContainerStyle}
+    >
+      {children}
+    </ScrollView>
+  );
 }
 
 const styles = StyleSheet.create({

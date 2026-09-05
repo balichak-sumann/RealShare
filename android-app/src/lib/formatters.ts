@@ -33,6 +33,7 @@ export const propertyToCardProps = (p: any) => {
     area: isOutright ? 'Outright' : `${p.sold_fractions ?? 0}/${p.total_fractions ?? 0} sold`,
     areaSuffix: '',
     score: p.assured_yield ? Number(p.assured_yield) : 4.5,
+    description: p.description || 'A beautiful, premium property offering exceptional yields and modern amenities.',
   };
 };
 

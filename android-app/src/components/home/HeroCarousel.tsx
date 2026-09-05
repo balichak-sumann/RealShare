@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, Dimensions, Animated } from 'react-native';
 import { Neutrals, GoldSystem, Typography } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GoldButton } from '../ui/GoldButton';
@@ -14,21 +14,48 @@ type Banner = {
   link_url?: string | null;
 };
 
-const FALLBACK_SLIDE: Banner = {
-  id: 'fallback',
-  title: 'Own a Piece of Premium Real Estate',
-  subtitle: 'Start investing in fractional property ownership today',
-  image_url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=1200&fit=crop',
-  link_url: '/search',
-};
+const FALLBACK_SLIDES: Banner[] = [
+  {
+    id: 'slide1',
+    title: 'Own a Piece of Premium Real Estate',
+    subtitle: 'Start investing in fractional property ownership today',
+    image_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=1600&fit=crop',
+    link_url: '/search',
+  },
+  {
+    id: 'slide2',
+    title: 'Luxury Holiday Homes, Simplified',
+    subtitle: 'Earn passive income while enjoying exclusive access.',
+    image_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=1600&fit=crop',
+    link_url: '/search',
+  },
+  {
+    id: 'slide3',
+    title: 'High-Yield Commercial Spaces',
+    subtitle: 'Institutional grade assets now accessible to retail investors.',
+    image_url: 'https://images.unsplash.com/photo-1613977257363-707ba9348227?w=1600&fit=crop',
+    link_url: '/search',
+  }
+];
 
 export function HeroCarousel() {
   const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width || 400);
   const { isDesktop } = useResponsive();
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [slides, setSlides] = useState<Banner[]>([FALLBACK_SLIDE]);
+  const [slides, setSlides] = useState<Banner[]>(FALLBACK_SLIDES);
   const scrollRef = useRef<ScrollView>(null);
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  // Trigger animation on slide change
+  useEffect(() => {
+    fadeAnim.setValue(0);
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: false, // fallback to false for web layout compatibility
+    }).start();
+  }, [activeIndex]);
 
   useEffect(() => {
     const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
@@ -80,20 +107,23 @@ export function HeroCarousel() {
           <View key={slide.id} style={[styles.slide, isDesktop && styles.slideDesktop, { width: containerWidth }]}>
             <Image source={{ uri: slide.image_url }} style={styles.image} />
             <LinearGradient
-              colors={['transparent', 'rgba(0,0,0,0.8)']}
+              colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.9)']}
               style={styles.gradient}
             />
-            <View style={styles.content}>
-              <Text style={styles.title}>{slide.title}</Text>
-              {!!slide.subtitle && <Text style={styles.subtitle}>{slide.subtitle}</Text>}
-              {index === 0 && (
+            {index === activeIndex && (
+              <Animated.View style={[styles.content, { 
+                opacity: fadeAnim, 
+                transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] 
+              }]}>
+                <Text style={[styles.title, isDesktop && styles.titleDesktop]}>{slide.title}</Text>
+                {!!slide.subtitle && <Text style={[styles.subtitle, isDesktop && styles.subtitleDesktop]}>{slide.subtitle}</Text>}
                 <GoldButton
                   title="Explore Properties"
                   onPress={() => router.push((slide.link_url || '/search') as any)}
                   style={styles.button}
                 />
-              )}
-            </View>
+              </Animated.View>
+            )}
           </View>
         ))}
       </ScrollView>
@@ -144,7 +174,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 250,
+    height: 350,
   },
   content: {
     position: 'absolute',
@@ -156,11 +186,25 @@ const styles = StyleSheet.create({
     ...Typography.displayLarge,
     color: Neutrals.white,
     marginBottom: 8,
+    textShadowColor: 'rgba(0, 0, 0, 0.7)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+  },
+  titleDesktop: {
+    fontSize: 48,
+    lineHeight: 56,
   },
   subtitle: {
     ...Typography.bodyLarge,
-    color: Neutrals.gray300,
+    color: Neutrals.gray200,
     marginBottom: 24,
+    textShadowColor: 'rgba(0, 0, 0, 0.5)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 2,
+  },
+  subtitleDesktop: {
+    fontSize: 20,
+    marginBottom: 32,
   },
   button: {
     width: 200,

@@ -40,6 +40,9 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { LocationPickerModal } from '@/components/ui/LocationPickerModal';
 import { WebFooter } from '@/components/layout/WebFooter';
+import { WealthMarketingSection } from '@/components/home/WealthMarketingSection';
+import { QuoteSection } from '@/components/home/QuoteSection';
+import { BenefitsSection } from '@/components/home/BenefitsSection';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -61,7 +64,7 @@ export default function HomeScreen() {
           // Filter out rental/resale from hot properties
           const primaryProps = data.filter(p => p.listing_type !== 'rental' && p.listing_type !== 'resale');
           const sorted = [...primaryProps].sort((a, b) => (b.sold_fractions ?? 0) - (a.sold_fractions ?? 0));
-          setHotProperties(sorted.slice(0, 8));
+          setHotProperties(sorted.slice(0, 10));
         }
       })
       .catch(() => {});
@@ -69,13 +72,13 @@ export default function HomeScreen() {
     fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=rental`)
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) setRentalProperties(data);
+        if (Array.isArray(data)) setRentalProperties(data.slice(0, 10));
       }).catch(() => {});
 
     fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=resale`)
       .then((res) => res.json())
       .then((data) => {
-        if (Array.isArray(data)) setResaleProperties(data);
+        if (Array.isArray(data)) setResaleProperties(data.slice(0, 10));
       }).catch(() => {});
   }, []);
 
@@ -202,7 +205,12 @@ export default function HomeScreen() {
 
         <TopDevelopers />
 
+        {isDesktop && <QuoteSection />}
+
         <HotProjects />
+
+        {isDesktop && <WealthMarketingSection />}
+
 
         <View style={styles.featuredSection}>
           <SectionHeader title="Resale Properties" onViewAll={() => router.push('/(tabs)/search')} />
@@ -238,6 +246,9 @@ export default function HomeScreen() {
           )}
         </View>
         <TopLocalities />
+
+        {isDesktop && <BenefitsSection />}
+
         <ServicesStrip />
 
         {/* Trust Banner */}

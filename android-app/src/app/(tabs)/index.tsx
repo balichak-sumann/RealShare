@@ -52,12 +52,37 @@ export default function HomeScreen() {
   const { toggleDrawer } = useDrawer();
   const [userName, setUserName] = useState('Investor');
   const [showLocationPicker, setShowLocationPicker] = useState(false);
+  const [activeCategory, setActiveCategory] = useState('All');
   const [hotProperties, setHotProperties] = useState<any[]>([]);
   const [rentalProperties, setRentalProperties] = useState<any[]>([]);
   const [resaleProperties, setResaleProperties] = useState<any[]>([]);
+  const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+    const checkUnread = async () => {
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      try {
+        const token = await currentUser.getIdToken();
+        const res = await fetch(
+          `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/notifications/feed`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setHasUnread(true);
+          }
+        }
+      } catch (e) {}
+    };
+    checkUnread();
+  }, [auth.currentUser]);
+
+  useEffect(() => {
+    const categoryParam = activeCategory !== 'All' ? `&property_type=${activeCategory}` : '';
+
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?district=${city}${categoryParam}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -69,18 +94,18 @@ export default function HomeScreen() {
       })
       .catch(() => {});
 
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=rental`)
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=rental&district=${city}${categoryParam}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setRentalProperties(data.slice(0, 10));
       }).catch(() => {});
 
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=resale`)
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=resale&district=${city}${categoryParam}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setResaleProperties(data.slice(0, 10));
       }).catch(() => {});
-  }, []);
+  }, [city, activeCategory]);
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -146,7 +171,7 @@ export default function HomeScreen() {
           </View>
 
           <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.headerIconBtnRight}>
-            <View style={styles.notificationBadge} />
+            {hasUnread && <View style={styles.notificationBadge} />}
             <Ionicons name="notifications-outline" size={22} color={Neutrals.obsidian} />
           </TouchableOpacity>
         </View>
@@ -184,7 +209,7 @@ export default function HomeScreen() {
         scrollEventThrottle={16}
       >
         <HeroCarousel />
-        <CategoryGrid />
+        <CategoryGrid activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
         
         <View style={styles.welcomeSection}>
           <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>

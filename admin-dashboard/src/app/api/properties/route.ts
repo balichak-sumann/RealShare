@@ -29,6 +29,8 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const featured = searchParams.get('featured') === 'true';
     const listingType = searchParams.get('listing_type');
+    const district = searchParams.get('district');
+    const propertyType = searchParams.get('property_type');
 
     const admin = await isAuthenticatedAdmin(request);
 
@@ -36,6 +38,8 @@ export async function GET(request: Request) {
       where: {
         ...(featured ? { featured: true } : {}),
         ...(listingType ? { listing_type: listingType } : {}),
+        ...(district ? { district } : {}),
+        ...(propertyType ? { property_type: propertyType } : {}),
         // Non-admin callers (including the public mobile app) only ever see
         // approved listings. Admins can see every status for the admin
         // properties page.

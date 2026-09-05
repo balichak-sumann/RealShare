@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
+import { sendServiceInquiryEmail } from '@/lib/email';
 
 // GET: admin-only list of service inquiries.
 // (There is currently no user-facing intake flow that creates these —
@@ -38,6 +39,10 @@ export async function POST(request: Request) {
     const inquiry = await prisma.serviceInquiry.create({
       data: { customer_name, phone, email, service_type, property_reference, notes },
     });
+    
+    // Send email notification to admin asynchronously (don't await so we respond faster to client)
+    sendServiceInquiryEmail({ customer_name, phone, email, service_type });
+
     return NextResponse.json(inquiry);
   } catch (error: any) {
     console.error('Failed to create service inquiry:', error);

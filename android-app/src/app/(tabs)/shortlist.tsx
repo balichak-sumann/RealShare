@@ -12,6 +12,7 @@ import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { useUser } from '@/contexts/UserContext';
 import { AgentListingsScreen } from '@/components/agent/AgentListingsScreen';
 import { Ionicons } from '@expo/vector-icons';
+import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
 
 const COLLECTIONS = ['All Saved', 'Dream Home', 'Investment', 'Compare Later'];
 
@@ -216,6 +217,7 @@ export default function ShortlistScreen() {
                 </TouchableOpacity>
               </View>
 
+              <ResponsiveGrid>
               {properties.map(prop => (
                 <View key={prop.id} style={styles.cardWrapper}>
                   <PropertyCard {...prop} />
@@ -242,6 +244,7 @@ export default function ShortlistScreen() {
                   )}
                 </View>
               ))}
+              </ResponsiveGrid>
             </>
           )}
         </ScrollView>

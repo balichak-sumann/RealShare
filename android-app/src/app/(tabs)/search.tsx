@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text, ActivityIndicator, Platform } from 'react-native';
 import { Neutrals, GoldSystem, Typography } from '@/constants/design';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { CategoryPill } from '@/components/ui/CategoryPill';
@@ -7,6 +7,7 @@ import { PropertyCard } from '@/components/ui/PropertyCard';
 import { PROPERTY_CATEGORIES } from '@/constants/uiConstants';
 import { propertyToCardProps } from '@/lib/formatters';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
+import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
 
 // Category chips map loosely onto property_type where a real equivalent exists.
 // Categories with no direct backend equivalent (Rent, PG/Hostels, Plot & Land, Luxury)
@@ -86,12 +87,14 @@ export default function SearchScreen() {
             No properties match your search.
           </Text>
         ) : (
-          filtered.map((prop) => (
-            <PropertyCard
-              key={prop.id}
-              {...propertyToCardProps(prop)}
-            />
-          ))
+          <ResponsiveGrid>
+            {filtered.map((prop) => (
+              <PropertyCard
+                key={prop.id}
+                {...propertyToCardProps(prop)}
+              />
+            ))}
+          </ResponsiveGrid>
         )}
       </ScrollView>
     </View>
@@ -106,7 +109,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'web' ? 18 : 60,
     backgroundColor: Neutrals.surface,
     borderBottomWidth: 1,
     borderBottomColor: Neutrals.border,

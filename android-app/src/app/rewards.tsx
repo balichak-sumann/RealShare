@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Share } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Share, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { GoldButton } from '@/components/ui/GoldButton';
@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    paddingTop: 50,
+    paddingTop: Platform.OS === 'web' ? 18 : 50,
     backgroundColor: Neutrals.surface,
     borderBottomWidth: 1,
     borderBottomColor: Neutrals.border,

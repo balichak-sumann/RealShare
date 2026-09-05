@@ -170,24 +170,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
         throw new Error('Failed to fetch dashboard data');
       }
 
-      let data = await res.json();
-      
-      // Inject rich demo fallback data if the agent is new and has no history
-      if (data.totalEarned === '₹0' && data.clientLeads.length === 0) {
-        data = {
-          ...data,
-          totalEarned: '₹2,50,000',
-          pendingPayout: '₹37,500',
-          totalSales: 8,
-          salesTrend: [30000, 45000, 20000, 60000, 35000, 60000],
-          clientLeads: [
-            { id: 1, name: 'Vikram Singh', date: '2026-08-20', status: 'Commission Paid', property: 'Goa Beachfront Villa', commission: '₹12,500' },
-            { id: 2, name: 'Anjali Desai', date: '2026-08-22', status: 'Pending Payout', property: 'Cyber Pearl Tech Park', commission: '₹15,000' },
-            { id: 3, name: 'Rahul Sharma', date: '2026-08-24', status: 'Under Review', property: 'Marina Bay Condo', commission: '₹10,000' },
-          ]
-        };
-      }
-      
+      const data = await res.json();
       setDashboardData(data);
 
       // Fetch Properties
@@ -438,7 +421,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#F3F4F6', // Light gray bg for contrast against dark cards
   },
   header: {
-    paddingTop: 55,
+    paddingTop: Platform.OS === 'web' ? 18 : 55,
     paddingBottom: 30,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,

@@ -29,7 +29,7 @@ export default function SignUpScreen() {
     try {
       if (user) {
         const token = await user.getIdToken();
-        const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+        const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
         const url = `${apiUrl}/api/users/sync`;
         console.log('[syncUserToBackend] Fetching URL:', url);
         console.log('[syncUserToBackend] Token prefix:', token?.substring(0, 20));

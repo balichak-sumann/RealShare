@@ -7,7 +7,8 @@ import {
   TouchableOpacity,
   Image,
   ActivityIndicator,
-  Alert
+  Alert,
+  Platform,
 } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { auth } from '@/lib/firebase';
@@ -441,7 +442,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'web' ? 18 : 60,
     paddingBottom: 15,
     backgroundColor: Neutrals.surface,
   },

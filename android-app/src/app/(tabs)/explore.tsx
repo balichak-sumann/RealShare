@@ -4,6 +4,7 @@ import { useRouter, Link } from 'expo-router';
 import { useUser } from '@/contexts/UserContext';
 import { useShortlist } from '@/contexts/ShortlistContext';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
+import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
 
 export default function ExploreScreen() {
   const { width } = useWindowDimensions();
@@ -387,6 +388,8 @@ export default function ExploreScreen() {
             {filteredProperties.length === 0 && (
               <Text style={{ textAlign: 'center', marginTop: 40, color: '#6B7280', width: '100%' }}>No properties found.</Text>
             )}
+            {/* narrow side panel beside the map: fewer columns than a full-width page */}
+            <ResponsiveGrid desktopColumns={2} tabletColumns={1}>
             {filteredProperties.map((prop) => (
               <View key={prop.id} style={styles.card}>
                   <View style={{ position: 'relative' }}>
@@ -468,6 +471,7 @@ export default function ExploreScreen() {
                   </View>
               </View>
             ))}
+            </ResponsiveGrid>
           </View>
         </ScrollView>
       </View>
@@ -483,7 +487,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: Platform.OS === 'web' ? 18 : 50,
     paddingBottom: 16,
     backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,

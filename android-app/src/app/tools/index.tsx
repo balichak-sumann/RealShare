@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 
@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    paddingTop: 50,
+    paddingTop: Platform.OS === 'web' ? 18 : 50,
     backgroundColor: Neutrals.surface,
     borderBottomWidth: 1,
     borderBottomColor: Neutrals.border,

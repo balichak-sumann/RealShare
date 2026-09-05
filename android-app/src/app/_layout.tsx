@@ -1,6 +1,7 @@
 import { DarkTheme, DefaultTheme, ThemeProvider, Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useColorScheme, View, Text, Platform } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
@@ -80,7 +81,7 @@ function RootLayoutNav() {
         } catch(e) {
           console.log(e);
         }
-        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/users/sync`, {
+        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -139,26 +140,33 @@ import { LocationProvider } from '@/contexts/LocationContext';
 import { ShortlistProvider } from '@/contexts/ShortlistContext';
 import { DrawerProvider } from '@/contexts/DrawerContext';
 import { DrawerWrapper } from '@/components/navigation/DrawerMenu';
+import { WebShell } from '@/components/layout/WebShell';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
+    <SafeAreaProvider>
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <AppThemeProvider>
         <LocationProvider>
           <UserProvider>
             <DrawerProvider>
-              <DrawerWrapper>
-                <ShortlistProvider>
-                  <AnimatedSplashOverlay />
-                  <RootLayoutNav />
-                </ShortlistProvider>
-              </DrawerWrapper>
+              <ShortlistProvider>
+                <WebShell>
+                  <DrawerWrapper>
+                    <RootLayoutNav />
+                  </DrawerWrapper>
+                </WebShell>
+                {/* Outside WebShell so the splash always covers the whole
+                    viewport, not just a route's centred content column. */}
+                <AnimatedSplashOverlay />
+              </ShortlistProvider>
             </DrawerProvider>
           </UserProvider>
         </LocationProvider>
       </AppThemeProvider>
     </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

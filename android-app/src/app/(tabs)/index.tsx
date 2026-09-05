@@ -35,14 +35,19 @@ import { TopDevelopers } from '@/components/home/TopDevelopers';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { propertyToCardProps } from '@/lib/formatters';
+import { ResponsiveRail } from '@/components/layout/ResponsiveRail';
+import { useResponsive } from '@/hooks/useResponsive';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
+import { LocationPickerModal } from '@/components/ui/LocationPickerModal';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { profile } = useUser();
+  const { isDesktop } = useResponsive();
   const { city } = useLocation();
   const { toggleDrawer } = useDrawer();
   const [userName, setUserName] = useState('Investor');
+  const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [hotProperties, setHotProperties] = useState<any[]>([]);
   const [rentalProperties, setRentalProperties] = useState<any[]>([]);
   const [resaleProperties, setResaleProperties] = useState<any[]>([]);
@@ -124,7 +129,8 @@ export default function HomeScreen() {
   return (
     <TabAnimationWrapper>
     <View style={styles.container}>
-      {/* Header */}
+      {/* Header — phone only; desktop is navigated from DesktopNav */}
+      {!isDesktop && (
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity onPress={toggleDrawer} style={styles.headerIconBtn}>
@@ -143,7 +149,7 @@ export default function HomeScreen() {
 
         <Animated.View style={{ height: headerBottomHeight, opacity: headerBottomOpacity, marginTop: headerBottomMargin, overflow: 'hidden' }}>
           <View style={styles.headerBottom}>
-            <TouchableOpacity style={styles.locationSelector}>
+            <TouchableOpacity style={styles.locationSelector} onPress={() => setShowLocationPicker(true)}>
               <Ionicons name="location-outline" size={16} color={GoldSystem.primaryGold} style={{ marginRight: 4 }} />
               <Text style={styles.locationText}>{city}</Text>
               <Ionicons name="chevron-down" size={14} color={Neutrals.gray500} style={{ marginLeft: 4 }} />
@@ -156,11 +162,17 @@ export default function HomeScreen() {
           </View>
         </Animated.View>
       </View>
+      )}
+
+      <LocationPickerModal visible={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
 
       <Animated.ScrollView 
         style={styles.scrollContent} 
         showsVerticalScrollIndicator={false} 
-        contentContainerStyle={{ paddingBottom: 120 }}
+        contentContainerStyle={[
+          { paddingBottom: isDesktop ? 64 : 120 },
+          isDesktop && { maxWidth: 1240, width: '100%', alignSelf: 'center' },
+        ] as any}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: false }
@@ -180,11 +192,11 @@ export default function HomeScreen() {
         
         <View style={styles.featuredSection}>
           <SectionHeader title="Hot Selling Projects" onViewAll={() => router.push('/(tabs)/search')} />
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
+          <ResponsiveRail contentContainerStyle={styles.featuredScroll}>
             {hotProperties.map((prop) => (
               <PropertyCard key={prop.id} {...propertyToCardProps(prop)} compact />
             ))}
-          </ScrollView>
+          </ResponsiveRail>
         </View>
 
         <TopDevelopers />
@@ -194,11 +206,11 @@ export default function HomeScreen() {
         <View style={styles.featuredSection}>
           <SectionHeader title="Resale Properties" onViewAll={() => router.push('/(tabs)/search')} />
           {resaleProperties.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
+            <ResponsiveRail contentContainerStyle={styles.featuredScroll}>
               {resaleProperties.map((prop) => (
                 <PropertyCard key={prop.id} {...propertyToCardProps(prop)} compact />
               ))}
-            </ScrollView>
+            </ResponsiveRail>
           ) : (
             <View style={styles.comingSoonCard}>
               <Text style={styles.comingSoonIcon}>🏠</Text>
@@ -211,11 +223,11 @@ export default function HomeScreen() {
         <View style={styles.featuredSection}>
           <SectionHeader title="Properties for Rent" onViewAll={() => router.push('/(tabs)/search')} />
           {rentalProperties.length > 0 ? (
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.featuredScroll}>
+            <ResponsiveRail contentContainerStyle={styles.featuredScroll}>
               {rentalProperties.map((prop) => (
                 <PropertyCard key={prop.id} {...propertyToCardProps(prop)} compact />
               ))}
-            </ScrollView>
+            </ResponsiveRail>
           ) : (
             <View style={styles.comingSoonCard}>
               <Text style={styles.comingSoonIcon}>🔑</Text>

@@ -1,17 +1,25 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Platform } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/contexts/UserContext';
 import { Ionicons } from '@expo/vector-icons';
+import { useResponsive } from '@/hooks/useResponsive';
 
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
   const { profile } = useUser();
+  const { isDesktop } = useResponsive();
 
   if (profile?.role === 'builder') {
+    return null;
+  }
+
+  // A bottom tab bar is phone navigation. On desktop the app is navigated from
+  // DesktopNav instead, so the bar is not rendered at all.
+  if (isDesktop) {
     return null;
   }
 
@@ -19,6 +27,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
 
   return (
     <View style={styles.tabBar}>
+      <View style={styles.tabBarInner}>
       {(() => {
         // Explicitly hide these tabs from the bottom bar
         const hiddenRoutes = ['search', 'profile', 'clients'];
@@ -132,13 +141,13 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
           );
         });
       })()}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   tabBar: {
-    flexDirection: 'row',
     backgroundColor: Neutrals.obsidian,
     height: 80,
     paddingBottom: 20,
@@ -146,7 +155,16 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Neutrals.charcoal,
     alignItems: 'center',
+  },
+  // Holds the tabs. Identical flex behaviour to the old bar on native; on web it
+  // caps its width so tabs stay grouped instead of spreading across a wide frame.
+  tabBarInner: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'space-around',
+    width: '100%',
+    ...(Platform.OS === 'web' ? { maxWidth: 520 } : {}),
   },
   tabContainer: {
     flex: 1,

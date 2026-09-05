@@ -7,11 +7,14 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Animated,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { useUser } from '@/contexts/UserContext';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useResponsive } from '@/hooks/useResponsive';
 import { auth } from '@/lib/firebase';
 
 interface Ticket {
@@ -28,6 +31,8 @@ interface Ticket {
 export default function MyTicketsScreen() {
   const router = useRouter();
   const { profile } = useUser();
+  const insets = useSafeAreaInsets();
+  const { isDesktop } = useResponsive();
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -132,7 +137,7 @@ export default function MyTicketsScreen() {
   return (
     <View style={styles.container}>
       {/* Header */}
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : insets.top + 10 }]}>
         <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
           <Text style={styles.backBtnText}>‹</Text>
         </TouchableOpacity>
@@ -141,7 +146,11 @@ export default function MyTicketsScreen() {
       </View>
 
       <Animated.ScrollView 
-        contentContainerStyle={styles.content}
+        contentContainerStyle={[
+          styles.content,
+          { paddingBottom: Platform.OS === 'web' ? 60 : insets.bottom + 32 },
+          isDesktop && styles.contentDesktop,
+        ]}
         style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}
       >
         {loading ? (
@@ -260,7 +269,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 54,
     paddingHorizontal: 20,
     paddingBottom: 16,
     backgroundColor: Neutrals.obsidian,
@@ -284,6 +292,11 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  contentDesktop: {
+    maxWidth: 760,
+    width: '100%',
+    alignSelf: 'center',
   },
   center: {
     flex: 1,

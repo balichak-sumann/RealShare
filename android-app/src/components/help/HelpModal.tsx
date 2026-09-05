@@ -16,6 +16,8 @@ import {
 } from 'react-native';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { useUser } from '@/contexts/UserContext';
+import { useResponsive } from '@/hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { auth } from '@/lib/firebase';
 
 interface HelpModalProps {
@@ -34,7 +36,12 @@ const CATEGORIES = [
 
 export function HelpModal({ visible, onClose }: HelpModalProps) {
   const { profile } = useUser();
+  const { isDesktop, width: viewportWidth, height: viewportHeight } = useResponsive();
+  const insets = useSafeAreaInsets();
   const [step, setStep] = useState<1 | 2 | 3>(1);
+  // Measured width of the content column itself (not the raw browser viewport),
+  // so the category grid sizes to the dialog on desktop instead of the screen.
+  const [contentWidth, setContentWidth] = useState(Dimensions.get('window').width);
   const [category, setCategory] = useState('');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
@@ -136,11 +143,15 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
       animationType="fade"
       onRequestClose={onClose}
     >
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, isDesktop && styles.overlayDesktop]}>
         <Animated.View 
           style={[
             styles.modalContainer,
-            { transform: [{ translateY: slideAnim }] }
+            isDesktop && styles.modalContainerDesktop,
+            isDesktop
+              ? { maxHeight: Math.min(680, viewportHeight - 64) }
+              : { height: viewportHeight * 0.85 },
+            { transform: [{ translateY: isDesktop ? 0 : slideAnim }] },
           ]}
         >
           {/* Header */}
@@ -165,20 +176,30 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
             behavior={Platform.OS === 'ios' ? 'padding' : 'height'} 
             style={{ flex: 1 }}
           >
-              <ScrollView contentContainerStyle={styles.contentContainer}>
+              <ScrollView
+                contentContainerStyle={[
+                  styles.contentContainer,
+                  { paddingBottom: Platform.OS === 'web' ? 40 : insets.bottom + 24 },
+                ]}
+              >
                 
                 {step === 1 && (
                   <View style={styles.stepContainer}>
                     <Text style={styles.subtitle}>Please select a category that best describes your issue.</Text>
                     
-                    <View style={styles.grid}>
+                    <View
+                      style={styles.grid}
+                      onLayout={(e) => setContentWidth(e.nativeEvent.layout.width)}
+                    >
                       {CATEGORIES.map((item) => {
                         const isSelected = category === item.id;
+                        const cardWidth = (contentWidth - 16) / 2;
                         return (
                           <TouchableOpacity
                             key={item.id}
                             style={[
                               styles.categoryCard,
+                              { width: cardWidth },
                               isSelected && styles.categoryCardSelected
                             ]}
                             onPress={() => setCategory(item.id)}
@@ -298,13 +319,26 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0,0,0,0.5)',
     justifyContent: 'flex-end',
   },
+  // Desktop: a real centered dialog instead of a mobile sheet pinned to the
+  // bottom of the whole browser viewport.
+  overlayDesktop: {
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
   modalContainer: {
     backgroundColor: Neutrals.white,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    height: Dimensions.get('window').height * 0.85,
     overflow: 'hidden',
     ...Shadows.strong,
+  },
+  modalContainerDesktop: {
+    width: '100%',
+    maxWidth: 520,
+    borderRadius: 24,
+    ...(Platform.OS === 'web'
+      ? ({ boxShadow: '0 24px 60px rgba(0,0,0,0.35)' } as any)
+      : {}),
   },
   header: {
     flexDirection: 'row',
@@ -365,6 +399,8 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   categoryCard: {
+    // overridden inline per-render from measured contentWidth; this is just a
+    // safe fallback before the first onLayout fires.
     width: (Dimensions.get('window').width - 56) / 2,
     backgroundColor: Neutrals.white,
     borderWidth: 1.5,

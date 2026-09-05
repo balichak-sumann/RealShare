@@ -435,7 +435,7 @@ export default function EmployeePortalScreen({ isEmbedded = false }: { isEmbedde
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F3F4F6' },
   header: {
-    paddingTop: 55,
+    paddingTop: Platform.OS === 'web' ? 18 : 55,
     paddingBottom: 30,
     borderBottomLeftRadius: 24,
     borderBottomRightRadius: 24,

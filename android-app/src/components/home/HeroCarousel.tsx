@@ -4,6 +4,7 @@ import { Neutrals, GoldSystem, Typography } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
 import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
+import { useResponsive } from '@/hooks/useResponsive';
 
 type Banner = {
   id: string;
@@ -23,6 +24,7 @@ const FALLBACK_SLIDE: Banner = {
 
 export function HeroCarousel() {
   const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width || 400);
+  const { isDesktop } = useResponsive();
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const [slides, setSlides] = useState<Banner[]>([FALLBACK_SLIDE]);
@@ -63,7 +65,7 @@ export function HeroCarousel() {
   };
 
   return (
-    <View style={styles.container} onLayout={(e) => {
+    <View style={[styles.container, isDesktop && styles.containerDesktop]} onLayout={(e) => {
       const { width } = e.nativeEvent.layout;
       if (width > 0) setContainerWidth(width);
     }}>
@@ -75,7 +77,7 @@ export function HeroCarousel() {
         onMomentumScrollEnd={handleScroll}
       >
         {slides.map((slide, index) => (
-          <View key={slide.id} style={[styles.slide, { width: containerWidth }]}>
+          <View key={slide.id} style={[styles.slide, isDesktop && styles.slideDesktop, { width: containerWidth }]}>
             <Image source={{ uri: slide.image_url }} style={styles.image} />
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.8)']}
@@ -110,14 +112,28 @@ export function HeroCarousel() {
   );
 }
 
+const HERO_H = 450;
+const HERO_H_DESKTOP = 400;
+
 const styles = StyleSheet.create({
   container: {
-    height: 450,
+    height: HERO_H,
     width: '100%',
   },
+  containerDesktop: {
+    height: HERO_H_DESKTOP,
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginHorizontal: 24,
+    marginTop: 20,
+    width: 'auto',
+  },
   slide: {
-    height: 450,
+    height: HERO_H,
     position: 'relative',
+  },
+  slideDesktop: {
+    height: HERO_H_DESKTOP,
   },
   image: {
     width: '100%',

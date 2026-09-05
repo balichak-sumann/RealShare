@@ -28,10 +28,10 @@ export default function BankDetailsScreen() {
       if (res.ok) {
         const data = await res.json();
         if (data.bankDetails) {
-          setAccName(data.bankDetails.bank_account_name || '');
-          setAccNumber(data.bankDetails.bank_account_number || '');
-          setIfsc(data.bankDetails.bank_ifsc || '');
-          if (data.bankDetails.bank_account_number) {
+          setAccName(data.bankDetails.accountName || '');
+          setAccNumber(data.bankDetails.accountNumber || '');
+          setIfsc(data.bankDetails.ifsc || '');
+          if (data.bankDetails.accountNumber) {
             setBankSaved(true);
           }
         }
@@ -50,7 +50,7 @@ export default function BankDetailsScreen() {
       if (!user) return;
       const token = await user.getIdToken();
       
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/dashboard`, {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/bank`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

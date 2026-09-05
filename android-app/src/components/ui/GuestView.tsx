@@ -49,6 +49,8 @@ const styles = StyleSheet.create({
     padding: 32,
     borderRadius: Radius.xl,
     width: '100%',
+    // keeps the card a sane dialog width on desktop instead of spanning the page
+    maxWidth: 460,
     alignItems: 'center',
     ...Shadows.medium,
     borderWidth: 1,

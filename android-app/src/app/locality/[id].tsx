@@ -84,25 +84,20 @@ export default function LocalityDetailsScreen() {
         
         <View style={styles.heroContent}>
           <Text style={styles.title}>{locality.name}</Text>
-          <View style={styles.rankBadge}>
-            <Text style={styles.rankText}>#{locality.rank} Locality in City</Text>
-          </View>
         </View>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
-        {/* Market Stats */}
+        {/* Market Stats — derived from real listed properties, no invented trend data */}
         <View style={styles.statsGrid}>
           <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Avg. Rent</Text>
-            <Text style={styles.statValue}>{locality.avgRent}/sqft</Text>
-            <Text style={styles.trendUp}>↑ 5.2% YoY</Text>
+            <Text style={styles.statLabel}>Avg. Sale Price</Text>
+            <Text style={styles.statValue}>{locality.avgSale}</Text>
           </View>
           <View style={styles.statBox}>
-            <Text style={styles.statLabel}>Avg. Sale</Text>
-            <Text style={styles.statValue}>{locality.avgSale}/sqft</Text>
-            <Text style={styles.trendUp}>↑ 8.4% YoY</Text>
+            <Text style={styles.statLabel}>Assured Yield</Text>
+            <Text style={styles.statValue}>{locality.avgYield}</Text>
           </View>
         </View>
 

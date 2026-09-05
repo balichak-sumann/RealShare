@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, ActivityIndicator, Platform } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Neutrals, Typography, GoldSystem } from '@/constants/design';
 import { propertyToCardProps } from '@/lib/formatters';
@@ -74,7 +74,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    paddingTop: 50,
+    paddingTop: Platform.OS === 'web' ? 18 : 50,
     backgroundColor: Neutrals.surface,
     borderBottomWidth: 1,
     borderBottomColor: Neutrals.border,

@@ -6,13 +6,31 @@ import {
   ScrollView,
   TouchableOpacity,
   TextInput,
-  Alert
+  Alert,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
+import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { auth } from '@/lib/firebase';
+import { useResponsive } from '@/hooks/useResponsive';
+
+const CONTACT_METHODS = [
+  { icon: 'chatbubble-ellipses-outline' as const, label: 'Chat with us' },
+  { icon: 'logo-whatsapp' as const, label: 'WhatsApp' },
+  { icon: 'mail-outline' as const, label: 'Email us' },
+];
+
+const FAQS = [
+  'How do I withdraw my earnings?',
+  'Can I sell my property fractions?',
+];
 
 export default function SupportScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
+  const { isDesktop } = useResponsive();
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
@@ -50,165 +68,190 @@ export default function SupportScreen() {
     }
   };
 
+  const ContactRow = (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Get in Touch</Text>
+      <View style={styles.contactGrid}>
+        {CONTACT_METHODS.map((c) => (
+          <TouchableOpacity key={c.label} style={styles.contactBtn} activeOpacity={0.7}>
+            <View style={styles.contactIconBox}>
+              <Ionicons name={c.icon} size={22} color={GoldSystem.darkGold} />
+            </View>
+            <Text style={styles.contactLabel}>{c.label}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </View>
+  );
+
+  const FaqCard = (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
+      <View style={styles.card}>
+        {FAQS.map((q, i) => (
+          <View key={q}>
+            <TouchableOpacity style={styles.faqRow} activeOpacity={0.7}>
+              <Text style={styles.faqQuestion}>{q}</Text>
+              <Ionicons name="add" size={18} color={Neutrals.gray500} />
+            </TouchableOpacity>
+            {i < FAQS.length - 1 && <View style={styles.divider} />}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+
+  const TicketForm = (
+    <View style={styles.section}>
+      <Text style={styles.sectionTitle}>Send us a message</Text>
+      <View style={styles.formCard}>
+        <Text style={styles.label}>How can we help you?</Text>
+        <TextInput
+          style={styles.textArea}
+          placeholder="Describe your issue in detail…"
+          placeholderTextColor={Neutrals.gray400}
+          multiline
+          numberOfLines={5}
+          textAlignVertical="top"
+          value={message}
+          onChangeText={setMessage}
+        />
+        <TouchableOpacity
+          style={[styles.submitBtn, (!message || submitting) && styles.submitBtnDisabled]}
+          onPress={handleSubmit}
+          disabled={!message || submitting}
+          activeOpacity={0.85}
+        >
+          <Text style={styles.submitBtnText}>{submitting ? 'Submitting…' : 'Submit Ticket'}</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
-      {/* Header */}
-      <View style={styles.header}>
+      {/* Header — safe-area aware so it's never covered by the status bar / notch */}
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : insets.top + 12 }]}>
         <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.back()}>
-          <Text style={styles.headerIconText}>&lt;</Text>
+          <Ionicons name="arrow-back" size={22} color={Neutrals.white} />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Help & Support</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>Help &amp; Support</Text>
+        <View style={{ width: 32 }} />
       </View>
 
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
-        
-        {/* Contact Methods */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Get in Touch</Text>
-          <View style={styles.contactGrid}>
-            <TouchableOpacity style={styles.contactBtn}>
-              <View style={[styles.contactIconBox, { backgroundColor: '#E0F2FE' }]}>
-                <Text style={styles.contactIcon}>💬</Text>
-              </View>
-              <Text style={styles.contactLabel}>Chat with us</Text>
-            </TouchableOpacity>
-            
-            <TouchableOpacity style={styles.contactBtn}>
-              <View style={[styles.contactIconBox, { backgroundColor: '#DCFCE7' }]}>
-                <Text style={styles.contactIcon}>📱</Text>
-              </View>
-              <Text style={styles.contactLabel}>WhatsApp</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity style={styles.contactBtn}>
-              <View style={[styles.contactIconBox, { backgroundColor: '#F3E8FF' }]}>
-                <Text style={styles.contactIcon}>📧</Text>
-              </View>
-              <Text style={styles.contactLabel}>Email us</Text>
-            </TouchableOpacity>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: Platform.OS === 'web' ? 80 : insets.bottom + 40 }}
+      >
+        {isDesktop ? (
+          <View style={styles.desktopLayout}>
+            <View style={styles.desktopLeft}>
+              {ContactRow}
+              {FaqCard}
+            </View>
+            <View style={styles.desktopRight}>{TicketForm}</View>
           </View>
-        </View>
-
-        {/* FAQ Section */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Frequently Asked Questions</Text>
-          <View style={styles.card}>
-            <TouchableOpacity style={styles.faqRow}>
-              <Text style={styles.faqQuestion}>How do I withdraw my earnings?</Text>
-              <Text style={styles.faqArrow}>+</Text>
-            </TouchableOpacity>
-
-            <View style={styles.divider} />
-            <TouchableOpacity style={styles.faqRow}>
-              <Text style={styles.faqQuestion}>Can I sell my property fractions?</Text>
-              <Text style={styles.faqArrow}>+</Text>
-            </TouchableOpacity>
+        ) : (
+          <View style={styles.mobileLayout}>
+            {ContactRow}
+            {FaqCard}
+            {TicketForm}
           </View>
-        </View>
-
-        {/* Support Ticket Form */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Send us a message</Text>
-          <View style={styles.formCard}>
-            <Text style={styles.label}>How can we help you?</Text>
-            <TextInput
-              style={styles.textArea}
-              placeholder="Describe your issue in detail..."
-              placeholderTextColor="#9CA3AF"
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-              value={message}
-              onChangeText={setMessage}
-            />
-            <TouchableOpacity 
-              style={[styles.submitBtn, !message && styles.submitBtnDisabled]}
-              onPress={handleSubmit}
-              disabled={!message}
-            >
-              <Text style={styles.submitBtnText}>Submit Ticket</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
+        )}
       </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: Neutrals.cream },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 50,
-    paddingBottom: 15,
-    backgroundColor: '#FFFFFF',
-    borderBottomWidth: 1,
-    borderBottomColor: '#F3F4F6',
+    paddingBottom: 16,
+    backgroundColor: Neutrals.obsidian,
   },
-  headerIconBtn: { padding: 5 },
-  headerIconText: { fontSize: 20, color: '#111827' },
-  headerTitle: { fontSize: 18, fontWeight: '700', color: '#111827' },
+  headerIconBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.white,
+  },
+
+  // Layout wrappers
+  mobileLayout: {
+    width: '100%',
+  },
+  desktopLayout: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    maxWidth: 1000,
+    width: '100%',
+    alignSelf: 'center',
+    paddingHorizontal: 24,
+    gap: 32,
+  },
+  desktopLeft: {
+    flex: 1,
+  },
+  desktopRight: {
+    flex: 1,
+    // keeps the ticket form pinned near the top instead of stretching full height
+  },
+
   section: {
     paddingHorizontal: 20,
     marginTop: 24,
   },
   sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: '#111827',
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
     marginBottom: 16,
   },
   contactGrid: {
     flexDirection: 'row',
     justifyContent: 'space-between',
+    gap: 12,
   },
   contactBtn: {
-    backgroundColor: '#FFFFFF',
-    width: '31%',
-    paddingVertical: 16,
-    borderRadius: 16,
+    backgroundColor: Neutrals.surface,
+    flex: 1,
+    paddingVertical: 18,
+    borderRadius: Radius.lg,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: Neutrals.border,
+    ...Shadows.soft,
   },
   contactIconBox: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 8,
-  },
-  contactIcon: {
-    fontSize: 24,
+    backgroundColor: GoldSystem.paleGold,
+    marginBottom: 10,
   },
   contactLabel: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: '#4B5563',
+    ...Typography.labelSmall,
+    color: Neutrals.textSecondary,
     textAlign: 'center',
   },
   card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: Neutrals.surface,
+    borderRadius: Radius.lg,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: Neutrals.border,
     overflow: 'hidden',
+    ...Shadows.soft,
   },
   faqRow: {
     flexDirection: 'row',
@@ -217,62 +260,56 @@ const styles = StyleSheet.create({
     padding: 16,
   },
   faqQuestion: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: '#111827',
+    ...Typography.bodyMedium,
+    color: Neutrals.text,
     flex: 1,
-  },
-  faqArrow: {
-    fontSize: 20,
-    color: '#6B7280',
-    marginLeft: 12,
+    marginRight: 12,
   },
   divider: {
     height: 1,
-    backgroundColor: '#F3F4F6',
+    backgroundColor: Neutrals.border,
     marginHorizontal: 16,
   },
   formCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
+    backgroundColor: Neutrals.surface,
+    borderRadius: Radius.lg,
     padding: 20,
     borderWidth: 1,
-    borderColor: '#F3F4F6',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    borderColor: Neutrals.border,
+    ...Shadows.soft,
   },
   label: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: '#4B5563',
+    ...Typography.labelMedium,
+    color: Neutrals.textSecondary,
     marginBottom: 8,
   },
   textArea: {
-    backgroundColor: '#F8FAFC',
+    backgroundColor: Neutrals.cream,
     borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 12,
+    borderColor: Neutrals.border,
+    borderRadius: Radius.md,
     padding: 16,
-    height: 120,
+    height: 130,
     fontSize: 15,
-    color: '#0F172A',
+    color: Neutrals.text,
     marginBottom: 20,
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}),
   },
   submitBtn: {
-    backgroundColor: '#1A56DB',
+    backgroundColor: GoldSystem.metallicGold,
     paddingVertical: 14,
-    borderRadius: 12,
+    borderRadius: Radius.md,
     alignItems: 'center',
+    ...Shadows.gold,
   },
   submitBtnDisabled: {
-    backgroundColor: '#93C5FD',
+    backgroundColor: Neutrals.gray300,
+    shadowOpacity: 0,
+    elevation: 0,
   },
   submitBtnText: {
-    color: '#FFFFFF',
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
     fontWeight: '700',
-    fontSize: 15,
   },
 });

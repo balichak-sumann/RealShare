@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, ScrollView, TouchableOpacity, Text, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ScrollView, TouchableOpacity, Text, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, Typography, GoldSystem } from '@/constants/design';
 import { SearchBar } from '@/components/ui/SearchBar';
@@ -78,7 +78,7 @@ const styles = StyleSheet.create({
   },
   header: {
     padding: 16,
-    paddingTop: 50,
+    paddingTop: Platform.OS === 'web' ? 18 : 50,
     backgroundColor: Neutrals.surface,
     borderBottomWidth: 1,
     borderBottomColor: Neutrals.border,

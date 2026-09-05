@@ -89,7 +89,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         return;
       }
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/properties/builder`, {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties/builder`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -224,7 +224,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
       const user = auth.currentUser;
       const token = await user?.getIdToken();
 
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/properties`, {
+      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

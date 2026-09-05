@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Alert, TextInput, Platform } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { auth } from '@/lib/firebase';
@@ -232,7 +232,7 @@ const styles = StyleSheet.create({
   centerContainer: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: Neutrals.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 16, paddingTop: 50, backgroundColor: Neutrals.surface,
+    padding: 16, paddingTop: Platform.OS === 'web' ? 18 : 50, backgroundColor: Neutrals.surface,
     borderBottomWidth: 1, borderBottomColor: Neutrals.border,
   },
   backBtn: { padding: 8, marginLeft: -8 },

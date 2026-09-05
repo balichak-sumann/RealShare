@@ -62,6 +62,31 @@ export function AgentClientsScreen() {
   // Assuming 2.5% commission, total investment is commission * 40
   const totalClientInvestments = totalCommission > 0 ? totalCommission * 40 : 0;
 
+  // Real monthly commission trend from the backend (labels + data), no invented numbers
+  const monthlyTrends = dashboardData?.monthlyTrends || { labels: [], data: [] };
+  const trendMax = Math.max(1, ...(monthlyTrends.data || [0]));
+  const trendMonths = (monthlyTrends.labels || []).map((label: string, i: number) => ({
+    month: label,
+    amount: monthlyTrends.data?.[i] || 0,
+    active: i === (monthlyTrends.labels?.length || 1) - 1,
+  }));
+  const lastMonthAmt = monthlyTrends.data?.[monthlyTrends.data.length - 1] || 0;
+  const prevMonthAmt = monthlyTrends.data?.[monthlyTrends.data.length - 2] || 0;
+  const growthPercent = prevMonthAmt > 0 ? Math.round(((lastMonthAmt - prevMonthAmt) / prevMonthAmt) * 100) : null;
+
+  // Real upcoming payout — the highest-value client lead still pending, if any
+  const pendingLeads = clientLeads.filter((c: any) => c.status === 'Pending Payout');
+  const nextPayout = pendingLeads.length > 0
+    ? [...pendingLeads].sort((a: any, b: any) => parseCurrency(b.commission) - parseCurrency(a.commission))[0]
+    : null;
+
+  // Real client pipeline breakdown from actual lead statuses
+  const pipelineTotal = clientLeads.length;
+  const activeCount = clientLeads.filter((c: any) => c.status === 'Commission Paid').length;
+  const pendingCount = clientLeads.filter((c: any) => c.status === 'Pending Payout').length;
+  const leadsCount = pipelineTotal - activeCount - pendingCount;
+  const pct = (n: number) => (pipelineTotal > 0 ? Math.round((n / pipelineTotal) * 100) : 0);
+
   return (
     <TabAnimationWrapper>
     <View style={styles.container}>
@@ -81,9 +106,11 @@ export function AgentClientsScreen() {
                 <Text style={styles.heroSubtitle}>Total Commission</Text>
                 <Text style={styles.heroTitle}>₹ {totalCommission.toLocaleString('en-IN')}</Text>
               </View>
-              <View style={styles.growthBadge}>
-                <Text style={styles.growthBadgeText}>↑ +12.4%</Text>
-              </View>
+              {growthPercent !== null && (
+                <View style={styles.growthBadge}>
+                  <Text style={styles.growthBadgeText}>{growthPercent >= 0 ? '↑' : '↓'} {growthPercent >= 0 ? '+' : ''}{growthPercent}%</Text>
+                </View>
+              )}
             </View>
             
             <View style={styles.heroSplit}>
@@ -112,30 +139,31 @@ export function AgentClientsScreen() {
           <View style={styles.chartCard}>
             <View style={styles.chartHeader}>
               <Text style={styles.chartSubtitle}>Monthly Commission Earned</Text>
-              <Text style={styles.chartHighlight}>+24% vs Last 6M</Text>
+              {growthPercent !== null && (
+                <Text style={styles.chartHighlight}>{growthPercent >= 0 ? '+' : ''}{growthPercent}% vs Last Month</Text>
+              )}
             </View>
             <View style={styles.chartArea}>
-              {/* Bars */}
-              {[
-                { month: 'MAY', height: 40, value: '₹12k' },
-                { month: 'JUN', height: 60, value: '₹18k' },
-                { month: 'JUL', height: 45, value: '₹14k' },
-                { month: 'AUG', height: 80, value: '₹24k' },
-                { month: 'SEP', height: 100, value: '₹30k', active: true },
-                { month: 'OCT', height: 75, value: '₹22k' },
-              ].map((data, index) => (
-                <View key={index} style={styles.barColumn}>
-                  <Text style={[styles.barValue, data.active && styles.barValueActive]}>{data.value}</Text>
-                  <View style={styles.barTrack}>
-                    <View style={[
-                      styles.barFill, 
-                      { height: `${data.height}%` },
-                      data.active && { backgroundColor: GoldSystem.primaryGold }
-                    ]} />
+              {/* Bars — real data from the last 6 months of paid commissions */}
+              {trendMonths.length === 0 ? (
+                <Text style={{ color: Neutrals.gray400, fontSize: 13, paddingVertical: 20 }}>No commission history yet.</Text>
+              ) : (
+                trendMonths.map((data: any, index: number) => (
+                  <View key={index} style={styles.barColumn}>
+                    <Text style={[styles.barValue, data.active && styles.barValueActive]}>
+                      {data.amount >= 1000 ? `₹${Math.round(data.amount / 1000)}k` : `₹${data.amount}`}
+                    </Text>
+                    <View style={styles.barTrack}>
+                      <View style={[
+                        styles.barFill,
+                        { height: `${Math.max(4, Math.round((data.amount / trendMax) * 100))}%` },
+                        data.active && { backgroundColor: GoldSystem.primaryGold }
+                      ]} />
+                    </View>
+                    <Text style={[styles.barLabel, data.active && styles.barLabelActive]}>{data.month}</Text>
                   </View>
-                  <Text style={[styles.barLabel, data.active && styles.barLabelActive]}>{data.month}</Text>
-                </View>
-              ))}
+                ))
+              )}
             </View>
           </View>
         </View>
@@ -147,7 +175,7 @@ export function AgentClientsScreen() {
             <View style={styles.incomeMain}>
               <Text style={styles.incomeLabel}>Total Client Investments</Text>
               <Text style={styles.incomeValue}>₹ {totalClientInvestments.toLocaleString('en-IN')}</Text>
-              <Text style={styles.incomeBadge}>{totalClientInvestments > 0 ? 'Top 10% Agent' : 'Getting Started'}</Text>
+              <Text style={styles.incomeBadge}>{totalClientInvestments > 0 ? 'Active Agent' : 'Getting Started'}</Text>
             </View>
             <View style={styles.incomeDivider} />
             <View style={styles.incomeSecondary}>
@@ -171,42 +199,54 @@ export function AgentClientsScreen() {
               <Text style={styles.sectionLink}>View Calendar</Text>
             </TouchableOpacity>
           </View>
-          <View style={styles.payoutCard}>
-            <View style={styles.payoutDateBox}>
-              <Text style={styles.payoutDateMonth}>NOV</Text>
-              <Text style={styles.payoutDateDay}>01</Text>
+          {nextPayout ? (
+            <View style={styles.payoutCard}>
+              <View style={styles.payoutDateBox}>
+                <Text style={styles.payoutDateMonth}>{nextPayout.date ? new Date(nextPayout.date).toLocaleDateString('en-IN', { month: 'short' }).toUpperCase() : 'TBD'}</Text>
+                <Text style={styles.payoutDateDay}>{nextPayout.date ? new Date(nextPayout.date).getDate() : '--'}</Text>
+              </View>
+              <View style={styles.payoutContent}>
+                <Text style={styles.payoutTitle}>Referral Commission</Text>
+                <Text style={styles.payoutSub}>{nextPayout.name} - {nextPayout.property}</Text>
+              </View>
+              <Text style={styles.payoutAmount}>+{nextPayout.commission}</Text>
             </View>
-            <View style={styles.payoutContent}>
-              <Text style={styles.payoutTitle}>Referral Commission</Text>
-              <Text style={styles.payoutSub}>Anjali Desai - Aura IT Park</Text>
+          ) : (
+            <View style={[styles.payoutCard, { justifyContent: 'center' }]}>
+              <Text style={{ color: Neutrals.gray400, fontSize: 13 }}>No pending payouts right now.</Text>
             </View>
-            <Text style={styles.payoutAmount}>+₹ 37,500</Text>
-          </View>
+          )}
         </View>
 
         {/* Asset Allocation - Repurposed for Client Pipeline */}
         <View style={styles.sectionContainer}>
           <Text style={styles.sectionTitle}>Client Pipeline</Text>
           <View style={styles.allocationCard}>
-            <View style={styles.allocationBar}>
-              <View style={[styles.allocationSegment, { flex: 1, backgroundColor: GoldSystem.primaryGold }]} />
-              <View style={[styles.allocationSegment, { flex: 2, backgroundColor: Neutrals.obsidian }]} />
-              <View style={[styles.allocationSegment, { flex: 7, backgroundColor: Neutrals.gray400 }]} />
-            </View>
-            <View style={styles.allocationLegend}>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: GoldSystem.primaryGold }]} />
-                <Text style={styles.legendText}>Active (10%)</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: Neutrals.obsidian }]} />
-                <Text style={styles.legendText}>Pending (20%)</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View style={[styles.legendDot, { backgroundColor: Neutrals.gray400 }]} />
-                <Text style={styles.legendText}>Leads (70%)</Text>
-              </View>
-            </View>
+            {pipelineTotal === 0 ? (
+              <Text style={{ color: Neutrals.gray400, fontSize: 13 }}>No clients yet — leads you bring in will show up here.</Text>
+            ) : (
+              <>
+                <View style={styles.allocationBar}>
+                  <View style={[styles.allocationSegment, { flex: Math.max(activeCount, 0.001), backgroundColor: GoldSystem.primaryGold }]} />
+                  <View style={[styles.allocationSegment, { flex: Math.max(pendingCount, 0.001), backgroundColor: Neutrals.obsidian }]} />
+                  <View style={[styles.allocationSegment, { flex: Math.max(leadsCount, 0.001), backgroundColor: Neutrals.gray400 }]} />
+                </View>
+                <View style={styles.allocationLegend}>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: GoldSystem.primaryGold }]} />
+                    <Text style={styles.legendText}>Active ({pct(activeCount)}%)</Text>
+                  </View>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: Neutrals.obsidian }]} />
+                    <Text style={styles.legendText}>Pending ({pct(pendingCount)}%)</Text>
+                  </View>
+                  <View style={styles.legendItem}>
+                    <View style={[styles.legendDot, { backgroundColor: Neutrals.gray400 }]} />
+                    <Text style={styles.legendText}>Leads ({pct(leadsCount)}%)</Text>
+                  </View>
+                </View>
+              </>
+            )}
           </View>
         </View>
 

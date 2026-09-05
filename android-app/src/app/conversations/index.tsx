@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   RefreshControl,
+  Platform,
 } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { auth } from '@/lib/firebase';
@@ -215,7 +216,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 54,
+    paddingTop: Platform.OS === 'web' ? 18 : 54,
     paddingHorizontal: 20,
     paddingBottom: 16,
     backgroundColor: Neutrals.obsidian,

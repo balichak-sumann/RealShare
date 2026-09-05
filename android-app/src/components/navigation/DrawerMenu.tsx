@@ -20,7 +20,10 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { Ionicons } from '@expo/vector-icons';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const DRAWER_WIDTH = SCREEN_WIDTH * 0.78;
+/** Native keeps the original screen-relative width. */
+const NATIVE_DRAWER_WIDTH = SCREEN_WIDTH * 0.78;
+/** Web caps the drawer so it stays sane inside the centered desktop frame. */
+const WEB_DRAWER_MAX = 340;
 
 interface DrawerWrapperProps {
   children: React.ReactNode;
@@ -43,6 +46,14 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
   const pathname = usePathname();
   const { profile, setProfile } = useUser();
   const slideAnim = useRef(new Animated.Value(0)).current;
+
+  // On web the drawer lives inside the centered app frame, so it must size to
+  // that container rather than the browser viewport. Native is untouched.
+  const [containerWidth, setContainerWidth] = useState(SCREEN_WIDTH);
+  const DRAWER_WIDTH =
+    Platform.OS === 'web'
+      ? Math.min(containerWidth * 0.78, WEB_DRAWER_MAX)
+      : NATIVE_DRAWER_WIDTH;
 
   const currentUser = auth.currentUser;
   const isGuest = !currentUser;
@@ -152,12 +163,20 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
   };
 
   return (
-    <View style={styles.root}>
+    <View
+      style={styles.root}
+      onLayout={
+        Platform.OS === 'web'
+          ? (e) => setContainerWidth(e.nativeEvent.layout.width)
+          : undefined
+      }
+    >
       {/* Drawer Menu (behind main content) */}
       <Animated.View
         style={[
           styles.drawer,
           {
+            width: DRAWER_WIDTH,
             transform: [{ translateX: drawerTranslateX }],
             opacity: drawerOpacity,
           },
@@ -354,7 +373,6 @@ const styles = StyleSheet.create({
     top: 0,
     bottom: 0,
     left: 0,
-    width: DRAWER_WIDTH,
     paddingTop: Platform.OS === 'web' ? 40 : Platform.OS === 'android' ? 50 : 60,
     paddingHorizontal: 24,
     paddingBottom: 30,

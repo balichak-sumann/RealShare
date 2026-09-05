@@ -50,6 +50,10 @@ export function DesktopNav() {
     ...(isAgent
       ? [{ label: 'Clients', route: '/clients', match: /^\/clients/ }]
       : []),
+    { label: 'How It Works', route: '/how-it-works', match: /^\/how-it-works/ },
+    { label: 'About', route: '/about', match: /^\/about/ },
+    { label: 'Partners', route: '/partners', match: /^\/partners/ },
+    { label: 'Contact', route: '/contact', match: /^\/contact/ },
   ];
 
   const displayName =

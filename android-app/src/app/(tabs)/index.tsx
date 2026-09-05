@@ -39,6 +39,7 @@ import { ResponsiveRail } from '@/components/layout/ResponsiveRail';
 import { useResponsive } from '@/hooks/useResponsive';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { LocationPickerModal } from '@/components/ui/LocationPickerModal';
+import { WebFooter } from '@/components/layout/WebFooter';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -245,6 +246,8 @@ export default function HomeScreen() {
           <Text style={styles.trustItem}>✓ Zero Brokerage</Text>
           <Text style={styles.trustItem}>✓ Fractional Investing</Text>
         </View>
+
+        {isDesktop && <WebFooter />}
 
       </Animated.ScrollView>
     </View>

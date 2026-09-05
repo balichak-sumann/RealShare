@@ -11,6 +11,7 @@
     "zip": "npm run build && cd .. && zip -q -r admin-dashboard-deploy.zip admin-dashboard -x \"admin-dashboard/node_modules/*\" -x \"admin-dashboard/.git/*\" -x \"admin-dashboard/.vscode/*\" && echo '✅ Deployment ZIP created at Desktop/RealShare/admin-dashboard-deploy.zip'"
   },
   "dependencies": {
+    "@prisma/adapter-mariadb": "^7.10.0",
     "@prisma/adapter-pg": "^7.10.0",
     "@prisma/client": "^7.10.0",
     "@tailwindcss/postcss": "^4",

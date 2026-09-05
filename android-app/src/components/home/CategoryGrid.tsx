@@ -1,11 +1,14 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, StyleSheet, ScrollView } from 'react-native';
 import { PROPERTY_CATEGORIES } from '@/constants/uiConstants';
 import { CategoryPill } from '../ui/CategoryPill';
 
-export function CategoryGrid() {
-  const [activeId, setActiveId] = useState(PROPERTY_CATEGORIES[0].id);
+interface CategoryGridProps {
+  activeCategory: string;
+  onCategoryChange: (categoryId: string) => void;
+}
 
+export function CategoryGrid({ activeCategory, onCategoryChange }: CategoryGridProps) {
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -14,8 +17,8 @@ export function CategoryGrid() {
             key={category.id}
             label={category.label}
             icon={category.icon}
-            isActive={activeId === category.id}
-            onPress={() => setActiveId(category.id)}
+            isActive={activeCategory === category.id}
+            onPress={() => onCategoryChange(category.id)}
           />
         ))}
       </ScrollView>

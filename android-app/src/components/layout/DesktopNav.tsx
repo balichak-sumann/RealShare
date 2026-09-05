@@ -38,9 +38,33 @@ export function DesktopNav() {
   const { city } = useLocation();
   const [query, setQuery] = React.useState('');
   const [showLocationPicker, setShowLocationPicker] = React.useState(false);
+  const [hasUnread, setHasUnread] = React.useState(false);
 
   const currentUser = auth.currentUser;
   const isAgent = profile?.role === 'agent';
+
+  React.useEffect(() => {
+    if (!currentUser) {
+      setHasUnread(false);
+      return;
+    }
+    const checkUnread = async () => {
+      try {
+        const token = await currentUser.getIdToken();
+        const res = await fetch(
+          `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/notifications/feed`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setHasUnread(true);
+          }
+        }
+      } catch (e) {}
+    };
+    checkUnread();
+  }, [currentUser]);
 
   const navItems: NavItem[] = [
     { label: 'Home', route: '/', match: /^\/$|^\/\(tabs\)$/ },
@@ -135,7 +159,7 @@ export function DesktopNav() {
           onPress={() => router.push('/notifications' as any)}
           activeOpacity={0.7}
         >
-          <View style={styles.dot} />
+          {hasUnread && <View style={styles.dot} />}
           <Ionicons
             name="notifications-outline"
             size={21}

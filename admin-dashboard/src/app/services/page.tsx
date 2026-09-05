@@ -4,15 +4,19 @@ import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "../properties/Properties.module.css";
 import { getAuthHeader } from "@/lib/api-auth";
 
-// These 4 values are exactly what the mobile app's Home Services screen
-// submits as service_type (android-app/src/app/services.tsx) -- keep this
-// list in sync with that file, not with any hoped-for future catalog.
+// These values are exactly what the app submits as service_type:
+// "Interior Design" | "Property Mgmt" | "Home Loans" | "General Consultation"
+// come from the mobile Home Services screen (android-app/src/app/services.tsx);
+// "Website Contact" and "Partner Application" come from the web-only public
+// Contact Us and Partners pages (android-app/src/app/contact.tsx,
+// android-app/src/app/partners.tsx). Keep this list in sync with those files,
+// not with any hoped-for future catalog.
 interface ServiceInquiry {
   id: string;
   customerName: string;
   phone: string;
   email: string;
-  serviceType: "Interior Design" | "Property Mgmt" | "Home Loans" | "General Consultation";
+  serviceType: "Interior Design" | "Property Mgmt" | "Home Loans" | "General Consultation" | "Website Contact" | "Partner Application";
   propertyReference?: string;
   estimatedBudget: string;
   assignedTo: string; // profile id of the assignee, or "" when unassigned
@@ -47,9 +51,11 @@ const serviceTypeColors: Record<string, string> = {
   'Property Mgmt': '#DC2626',
   'Home Loans': '#2563EB',
   'General Consultation': '#059669',
+  'Website Contact': '#D97706',
+  'Partner Application': '#0891B2',
 };
 
-const SERVICE_TYPES = ["Interior Design", "Property Mgmt", "Home Loans", "General Consultation"] as const;
+const SERVICE_TYPES = ["Interior Design", "Property Mgmt", "Home Loans", "General Consultation", "Website Contact", "Partner Application"] as const;
 
 export default function AdditionalServicesPage() {
   const [inquiries, setInquiries] = useState<ServiceInquiry[]>([]);

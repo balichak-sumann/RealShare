@@ -1,0 +1,50 @@
+import React from 'react';
+import { Pressable, ViewStyle, StyleProp } from 'react-native';
+import Animated from 'react-native-reanimated';
+import { useAnimatedPress } from '@/hooks/useAnimatedPress';
+import { Motion } from '@/constants/design';
+
+interface AnimatedPressableProps {
+  onPress?: () => void;
+  disabled?: boolean;
+  scaleTo?: number;
+  style?: StyleProp<ViewStyle>;
+  hitSlop?: number | { top?: number; bottom?: number; left?: number; right?: number };
+  children: React.ReactNode;
+}
+
+/**
+ * Ready-made wrapper around useAnimatedPress for simple call sites that
+ * don't need to compose the animated style into a custom render (e.g. a
+ * GoldButton's own LinearGradient wrapping) -- just a Pressable that scales
+ * down subtly on press. Use useAnimatedPress directly when a component
+ * needs the animated style itself rather than a wrapper component.
+ */
+export function AnimatedPressable({
+  onPress,
+  disabled,
+  scaleTo,
+  style,
+  hitSlop,
+  children,
+}: AnimatedPressableProps) {
+  const { style: animStyle, onPressIn, onPressOut } = useAnimatedPress(
+    scaleTo ?? Motion.scale.pressSubtle
+  );
+
+  return (
+    <Animated.View style={[animStyle, style]}>
+      <Pressable
+        onPress={onPress}
+        onPressIn={onPressIn}
+        onPressOut={onPressOut}
+        disabled={disabled}
+        hitSlop={hitSlop}
+      >
+        {children}
+      </Pressable>
+    </Animated.View>
+  );
+}
+
+export default AnimatedPressable;

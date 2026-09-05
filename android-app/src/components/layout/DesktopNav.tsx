@@ -108,10 +108,10 @@ export function DesktopNav() {
           <Ionicons
             name="location-outline"
             size={15}
-            color={GoldSystem.primaryGold}
+            color={Neutrals.white}
           />
           <Text style={styles.locationText}>{city}</Text>
-          <Ionicons name="chevron-down" size={13} color={Neutrals.gray500} />
+          <Ionicons name="chevron-down" size={13} color="rgba(255,255,255,0.75)" />
         </TouchableOpacity>
         <LocationPickerModal visible={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
 
@@ -139,7 +139,7 @@ export function DesktopNav() {
           <Ionicons
             name="notifications-outline"
             size={21}
-            color={Neutrals.obsidian}
+            color={Neutrals.white}
           />
         </TouchableOpacity>
 
@@ -152,7 +152,7 @@ export function DesktopNav() {
           >
             <LinearGradient
               colors={GoldSystem.goldGradient}
-              style={styles.avatar}
+              style={[styles.avatar, styles.avatarRing]}
             >
               <Text style={styles.avatarText}>
                 {(displayName || 'U').charAt(0).toUpperCase()}
@@ -168,7 +168,7 @@ export function DesktopNav() {
             activeOpacity={0.85}
           >
             <LinearGradient
-              colors={GoldSystem.goldGradient}
+              colors={[Neutrals.white, GoldSystem.paleGold]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.signInBtn}
@@ -184,15 +184,13 @@ export function DesktopNav() {
 
 const styles = StyleSheet.create({
   bar: {
-    backgroundColor: Neutrals.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Neutrals.border,
+    backgroundColor: GoldSystem.darkGold,
     ...(Platform.OS === 'web'
       ? ({
           position: 'sticky',
           top: 0,
           zIndex: 100,
-          boxShadow: '0 1px 3px rgba(16,24,40,0.04)',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.14)',
         } as any)
       : {}),
   },
@@ -201,17 +199,25 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 68,
     width: '100%',
-    maxWidth: 1240,
-    alignSelf: 'center',
     paddingHorizontal: 28,
     gap: 8,
   },
   brand: {
     marginRight: 28,
+    justifyContent: 'center',
+    backgroundColor: Neutrals.warmIvory,
+    borderRadius: Radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 2,
   },
   logo: {
-    width: 132,
-    height: 38,
+    width: 165,
+    height: 50,
   },
   navLinks: {
     flexDirection: 'row',
@@ -228,10 +234,10 @@ const styles = StyleSheet.create({
   navLabel: {
     ...Typography.labelLarge,
     fontSize: 15,
-    color: Neutrals.gray600,
+    color: GoldSystem.paleGold,
   },
   navLabelActive: {
-    color: Neutrals.obsidian,
+    color: Neutrals.white,
     fontWeight: '700',
   },
   navUnderline: {
@@ -242,7 +248,7 @@ const styles = StyleSheet.create({
     height: 3,
     borderTopLeftRadius: 3,
     borderTopRightRadius: 3,
-    backgroundColor: GoldSystem.metallicGold,
+    backgroundColor: Neutrals.white,
   },
   spacer: {
     flex: 1,
@@ -255,12 +261,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: Radius.full,
-    backgroundColor: Neutrals.gray100,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
   },
   locationText: {
     ...Typography.labelMedium,
     fontSize: 13,
-    color: Neutrals.text,
+    color: Neutrals.white,
   },
   searchBox: {
     flexDirection: 'row',
@@ -270,7 +278,7 @@ const styles = StyleSheet.create({
     height: 40,
     width: 260,
     borderRadius: Radius.full,
-    backgroundColor: Neutrals.gray100,
+    backgroundColor: Neutrals.warmIvory,
     borderWidth: 1,
     borderColor: 'transparent',
   },
@@ -306,7 +314,9 @@ const styles = StyleSheet.create({
     paddingRight: 12,
     paddingVertical: 5,
     borderRadius: Radius.full,
-    backgroundColor: Neutrals.gray100,
+    backgroundColor: 'rgba(255,255,255,0.16)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.22)',
     maxWidth: 190,
   },
   avatar: {
@@ -316,6 +326,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarRing: {
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.7)',
+  },
   avatarText: {
     fontSize: 14,
     fontWeight: '700',
@@ -324,7 +338,7 @@ const styles = StyleSheet.create({
   accountName: {
     ...Typography.labelMedium,
     fontSize: 13,
-    color: Neutrals.text,
+    color: Neutrals.white,
     flexShrink: 1,
   },
   signInBtn: {
@@ -334,7 +348,7 @@ const styles = StyleSheet.create({
   },
   signInText: {
     ...Typography.labelLarge,
-    color: Neutrals.obsidian,
+    color: GoldSystem.darkGold,
     fontWeight: '700',
   },
 });

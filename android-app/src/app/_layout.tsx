@@ -71,7 +71,7 @@ function RootLayoutNav() {
     if (!isLoaded) return;
 
     const inAuthGroup = segments[0] === '(auth)';
-    const isSignUp = segments[1] === 'sign-up';
+    const isSignUp = (segments[1] as string) === 'sign-up';
 
     if (user) {
       // Prevent race condition: If the user is currently signing up, let the sign-up 
@@ -100,7 +100,7 @@ function RootLayoutNav() {
         .then(data => {
           if (data?.success && data?.profile) {
             setProfile(data.profile);
-            const isSignUp = segments[1] === 'sign-up';
+            const isSignUp = (segments[1] as string) === 'sign-up';
             if (inAuthGroup && !isSignUp) {
               if (data.profile.role === 'builder') {
                 router.replace('/builder-portal');
@@ -118,13 +118,13 @@ function RootLayoutNav() {
                 // Let it stay on / (which renders tabs/index which embeds agent portal)
               }
             }
-          } else if (inAuthGroup && segments[1] !== 'sign-up') {
+          } else if (inAuthGroup && (segments[1] as string) !== 'sign-up') {
             router.replace('/');
           }
         })
         .catch(err => {
           console.warn('Failed to sync user:', err.message);
-          if (inAuthGroup && segments[1] !== 'sign-up') router.replace('/');
+          if (inAuthGroup && (segments[1] as string) !== 'sign-up') router.replace('/');
         });
       });
     }

@@ -21,12 +21,14 @@ export async function GET(request: Request) {
 
 // POST: public intake -- the mobile app's Home Services screen submits a real
 // inquiry here (e.g. "Talk to an Expert" / tapping a service card) instead of
-// firing a dead button. No auth required so a not-yet-signed-in visitor can
+// firing a dead button. The web-only Contact Us (service_type: "Website
+// Contact") and Partner With Us (service_type: "Partner Application") pages
+// use the same endpoint. No auth required so a not-yet-signed-in visitor can
 // still request a callback.
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { customer_name, phone, email, service_type, notes } = body;
+    const { customer_name, phone, email, service_type, property_reference, notes } = body;
     if (!customer_name || !service_type || (!phone && !email)) {
       return NextResponse.json(
         { error: 'customer_name, service_type and at least one of phone/email are required' },
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
       );
     }
     const inquiry = await prisma.serviceInquiry.create({
-      data: { customer_name, phone, email, service_type, notes },
+      data: { customer_name, phone, email, service_type, property_reference, notes },
     });
     return NextResponse.json(inquiry);
   } catch (error: any) {

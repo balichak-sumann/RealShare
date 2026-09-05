@@ -1,0 +1,63 @@
+import React, { useEffect } from 'react';
+import { View, StyleProp, ViewStyle, DimensionValue } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withRepeat,
+  withSequence,
+  withTiming,
+} from 'react-native-reanimated';
+import { Neutrals, Radius } from '@/constants/design';
+
+interface SkeletonProps {
+  width?: DimensionValue;
+  height?: number;
+  radius?: number;
+  style?: StyleProp<ViewStyle>;
+}
+
+/**
+ * Shimmer loading placeholder -- a subtle opacity pulse rather than a
+ * translating gradient sweep, matching the "subtle & premium" motion brief
+ * at lower implementation cost. Replaces bare ActivityIndicator spinners
+ * for card-shaped loading content.
+ */
+export function Skeleton({ width = '100%', height = 16, radius = Radius.sm, style }: SkeletonProps) {
+  const opacity = useSharedValue(0.4);
+
+  useEffect(() => {
+    opacity.value = withRepeat(
+      withSequence(withTiming(1, { duration: 700 }), withTiming(0.4, { duration: 700 })),
+      -1,
+      true
+    );
+  }, []);
+
+  const animStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  return (
+    <Animated.View
+      style={[
+        { width, height, borderRadius: radius, backgroundColor: Neutrals.gray200 },
+        animStyle,
+        style,
+      ]}
+    />
+  );
+}
+
+/** Composed placeholder matching PropertyCard's shape -- the highest-leverage loading state in the app. */
+export function PropertyCardSkeleton() {
+  return (
+    <View style={{ borderRadius: Radius.lg, overflow: 'hidden', backgroundColor: Neutrals.surface, marginBottom: 16 }}>
+      <Skeleton height={200} radius={0} />
+      <View style={{ padding: 16, gap: 8 }}>
+        <Skeleton width="60%" height={22} />
+        <Skeleton width="40%" height={14} />
+        <Skeleton width="80%" height={14} />
+      </View>
+    </View>
+  );
+}
+
+export default Skeleton;

@@ -193,10 +193,8 @@ const styles = StyleSheet.create({
   desktopLayout: {
     flexDirection: 'row',
     alignItems: 'flex-start',
-    maxWidth: 1000,
     width: '100%',
-    alignSelf: 'center',
-    paddingHorizontal: 24,
+    paddingHorizontal: 40,
     gap: 32,
   },
   desktopLeft: {

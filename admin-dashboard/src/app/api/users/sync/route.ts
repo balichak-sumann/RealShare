@@ -76,6 +76,9 @@ export async function POST(req: Request) {
         referred_by_code: referredByCode || null,
         expo_push_token: expoPushToken || null,
       },
+      include: {
+        kyc_documents: true,
+      }
     });
 
     return NextResponse.json({ success: true, profile });

@@ -16,7 +16,8 @@ import {
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { auth, app } from '@/lib/firebase';
+import { auth, app, storage } from '@/lib/firebase';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { PhoneAuthProvider, linkWithCredential, verifyBeforeUpdateEmail, RecaptchaVerifier } from 'firebase/auth';
 // Removed expo-firebase-recaptcha
 import { useUser } from '@/contexts/UserContext';
@@ -126,9 +127,16 @@ export default function ProfileScreen() {
   };
 
   const handleSendOtp = async () => {
-    if (otpType === 'phone' && inputValue.length < 10) {
-      Alert.alert('Invalid Number', 'Please enter a valid 10-digit mobile number.');
-      return;
+    if (otpType === 'phone') {
+      const cleanedPhone = inputValue.replace(/\D/g, '').slice(-10);
+      if (cleanedPhone.length !== 10) {
+        Alert.alert('Invalid Number', 'Please enter a valid 10-digit mobile number.');
+        return;
+      }
+      if (!/^[6-9]/.test(cleanedPhone)) {
+        Alert.alert('Invalid Number', 'Mobile number must start with 7, 8, 9, or 6.');
+        return;
+      }
     }
     if (otpType === 'email' && !inputValue.includes('@')) {
       Alert.alert('Invalid Email', 'Please enter a valid email address.');
@@ -456,15 +464,133 @@ export default function ProfileScreen() {
           <Text style={styles.sectionTitle}>My Documents</Text>
           <View style={styles.card}>
             {[
-              { icon: 'card-outline' as const, title: 'Aadhar Card', sub: 'Identity proof', status: 'Not Uploaded', statusColor: '#DC2626', statusBg: '#FEE2E2' },
-              { icon: 'business-outline' as const, title: 'PAN Card', sub: 'Tax & compliance', status: 'Pending Review', statusColor: '#D97706', statusBg: '#FEF3C7' },
-              { icon: 'globe-outline' as const, title: 'Passport', sub: 'Optional', status: 'Uploaded', statusColor: '#059669', statusBg: '#D1FAE5' },
-            ].map((doc, idx) => (
+              { icon: 'card-outline' as const, title: 'Aadhar Card', type: 'aadhaar', sub: 'Identity proof' },
+              { icon: 'business-outline' as const, title: 'PAN Card', type: 'pan', sub: 'Tax & compliance' },
+              { icon: 'globe-outline' as const, title: 'Passport', type: 'passport', sub: 'Optional' },
+            ].map((doc, idx) => {
+              const kycDoc = user?.kyc_documents?.find(d => d.document_type === doc.type);
+              let status = 'Not Uploaded';
+              let statusColor = '#DC2626';
+              let statusBg = '#FEE2E2';
+
+              if (kycDoc) {
+                if (kycDoc.verification_status === 'verified') {
+                  status = 'Verified';
+                  statusColor = '#059669';
+                  statusBg = '#D1FAE5';
+                } else if (kycDoc.verification_status === 'rejected') {
+                  status = 'Rejected';
+                  statusColor = '#DC2626';
+                  statusBg = '#FEE2E2';
+                } else {
+                  status = 'Pending Review';
+                  statusColor = '#D97706';
+                  statusBg = '#FEF3C7';
+                }
+              }
+
+              return (
               <React.Fragment key={doc.title}>
                 {idx > 0 && <View style={styles.divider} />}
                 <TouchableOpacity 
                   style={styles.docRow}
-                  onPress={() => Alert.alert('Upload', `${doc.title} upload coming soon`)}
+                  onPress={async () => {
+                    try {
+                      const result = await ImagePicker.launchImageLibraryAsync({
+                        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                        allowsEditing: true,
+                        aspect: [4, 3],
+                        quality: 0.8,
+                        base64: true,
+                      });
+                      
+                      if (!result.canceled && result.assets.length > 0) {
+                        let base64Data = result.assets[0].base64;
+                        
+                        // Fallback for Web if base64 is not provided by expo-image-picker
+                        if (!base64Data && result.assets[0].uri) {
+                          try {
+                            const res = await fetch(result.assets[0].uri);
+                            const blob = await res.blob();
+                            base64Data = await new Promise((resolve, reject) => {
+                              const reader = new FileReader();
+                              reader.onloadend = () => {
+                                const dataUrl = reader.result as string;
+                                // we can just pass the data url directly, the backend strips the prefix
+                                resolve(dataUrl);
+                              };
+                              reader.onerror = reject;
+                              reader.readAsDataURL(blob);
+                            });
+                          } catch (e) {
+                            console.error('Failed to convert blob to base64', e);
+                          }
+                        }
+
+                        if (!base64Data) {
+                          Alert.alert('Error', 'Could not read image data.');
+                          return;
+                        }
+
+                        const token = await auth.currentUser?.getIdToken();
+                        const userId = auth.currentUser?.uid || 'guest';
+                        
+                        // 1. Upload Base64 to Local Admin Dashboard Server
+                        const uploadRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/upload`, {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({
+                            imageBase64: base64Data,
+                            fileName: `kyc_${doc.type}.jpg`
+                          })
+                        });
+                        
+                        const uploadData = await uploadRes.json();
+                        if (!uploadData.success) {
+                          Alert.alert('Error', 'Failed to upload image to server.');
+                          return;
+                        }
+
+                        const downloadUrl = uploadData.url;
+
+                        // 2. Submit real URL to Admin API
+                        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/kyc/submit`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            Authorization: `Bearer ${token}`
+                          },
+                          body: JSON.stringify({
+                            document_type: doc.type,
+                            document_number: 'UPLOADED-VIA-APP',
+                            document_front_url: downloadUrl,
+                            document_back_url: null
+                          })
+                        });
+                        
+                        if (res.ok) {
+                          const existingDocs = user?.kyc_documents || [];
+                          const updatedDocs = existingDocs.filter(d => d.document_type !== doc.type);
+                          updatedDocs.push({
+                            document_type: doc.type,
+                            verification_status: 'pending'
+                          });
+
+                          setProfile({ 
+                            ...user, 
+                            kyc_status: 'pending',
+                            kyc_documents: updatedDocs
+                          });
+                          Alert.alert('Success', `${doc.title} uploaded successfully! It is now pending Admin approval.`);
+                        } else {
+                          Alert.alert('Error', 'Failed to submit document to Admin Portal.');
+                        }
+                      }
+                    } catch (err) {
+                      console.error(err);
+                      Alert.alert('Error', 'Something went wrong while uploading the image.');
+                    }
+                  }}
                   activeOpacity={0.7}
                 >
                   <View style={[styles.docIconBox, { backgroundColor: GoldSystem.paleGold }]}>
@@ -474,12 +600,13 @@ export default function ProfileScreen() {
                     <Text style={styles.docTitle}>{doc.title}</Text>
                     <Text style={styles.docSub}>{doc.sub}</Text>
                   </View>
-                  <View style={[styles.statusPill, { backgroundColor: doc.statusBg }]}>
-                    <Text style={[styles.statusText, { color: doc.statusColor }]}>{doc.status}</Text>
+                  <View style={[styles.statusPill, { backgroundColor: statusBg }]}>
+                    <Text style={[styles.statusText, { color: statusColor }]}>{status}</Text>
                   </View>
                 </TouchableOpacity>
               </React.Fragment>
-            ))}
+            );
+          })}
           </View>
         </Animated.View>
 

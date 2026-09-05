@@ -130,7 +130,7 @@ export default function InvestorsPage() {
       prev.map((inv) => (inv.id === id ? { ...inv, kyc: "Verified" } : inv))
     );
     if (selectedInvestor?.id === id) {
-      setSelectedInvestor((prev) => prev ? { ...prev, kyc: "Verified" } : null);
+      setSelectedInvestor(null);
     }
     setActionSuccess(`KYC approved successfully for ${selectedInvestor?.name || id}`);
     setTimeout(() => setActionSuccess(null), 4000);
@@ -157,17 +157,7 @@ export default function InvestorsPage() {
       )
     );
     if (selectedInvestor?.id === id) {
-      setSelectedInvestor((prev) =>
-        prev
-          ? {
-              ...prev,
-              kyc: "Rejected",
-              kycDetails: prev.kycDetails
-                ? { ...prev.kycDetails, notes: rejectionReason }
-                : undefined,
-            }
-          : null
-      );
+      setSelectedInvestor(null);
     }
     setActionSuccess(`KYC rejected with notes: "${rejectionReason}"`);
     setRejectionReason("");
@@ -747,17 +737,23 @@ export default function InvestorsPage() {
                         {selectedInvestor.kycDetails.aadhaarNumber}
                       </span>
                     </div>
-                    <img
-                      src={selectedInvestor.kycDetails.aadhaarFront}
-                      alt="Aadhaar Front"
-                      style={{
-                        width: "100%",
-                        height: "140px",
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                      }}
-                    />
+                    {selectedInvestor.kycDetails.aadhaarFront ? (
+                      <img
+                        src={selectedInvestor.kycDetails.aadhaarFront}
+                        alt="Aadhaar Front"
+                        style={{
+                          width: "100%",
+                          height: "140px",
+                          objectFit: "cover",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                        }}
+                      />
+                    ) : (
+                      <div style={{ width: "100%", height: "140px", backgroundColor: "#E2E8F0", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8" }}>
+                        Not Uploaded
+                      </div>
+                    )}
                     <span
                       style={{
                         display: "block",
@@ -799,20 +795,26 @@ export default function InvestorsPage() {
                           borderRadius: 4,
                         }}
                       >
-                        {selectedInvestor.kycDetails.panNumber}
+                        {selectedInvestor.kycDetails.panNumber || 'N/A'}
                       </span>
                     </div>
-                    <img
-                      src={selectedInvestor.kycDetails.panFront}
-                      alt="PAN Front"
-                      style={{
-                        width: "100%",
-                        height: "140px",
-                        objectFit: "cover",
-                        borderRadius: "8px",
-                        border: "1px solid #CBD5E1",
-                      }}
-                    />
+                    {selectedInvestor.kycDetails.panFront ? (
+                      <img
+                        src={selectedInvestor.kycDetails.panFront}
+                        alt="PAN Front"
+                        style={{
+                          width: "100%",
+                          height: "140px",
+                          objectFit: "cover",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                        }}
+                      />
+                    ) : (
+                      <div style={{ width: "100%", height: "140px", backgroundColor: "#E2E8F0", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8" }}>
+                        Not Uploaded
+                      </div>
+                    )}
                     <span
                       style={{
                         display: "block",

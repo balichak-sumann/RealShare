@@ -108,7 +108,7 @@ export default function ExploreScreen() {
                           prop.state.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesLocation = activeLocation === 'Location' || prop.state === activeLocation;
-    const matchesType = activeType === 'Property Type' || prop.property_type === activeType;
+    const matchesType = activeType === 'Property Type' || prop.property_type?.toLowerCase() === activeType.toLowerCase();
     
     let matchesPrice = true;
     const price = Number(prop.price_per_fraction);

@@ -54,16 +54,21 @@ export default function PropertiesPage() {
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    fetch('/api/properties')
-      .then(res => res.json())
-      .then(data => {
+    const fetchProperties = async () => {
+      try {
+        const authHeader = await getAuthHeader();
+        const res = await fetch('/api/properties', {
+          headers: authHeader || undefined
+        });
+        const data = await res.json();
         setProperties(data);
-        setLoading(false);
-      })
-      .catch(err => {
+      } catch (err) {
         console.error('Failed to fetch properties:', err);
+      } finally {
         setLoading(false);
-      });
+      }
+    };
+    fetchProperties();
   }, []);
 
   // New Property Form State
@@ -122,9 +127,14 @@ export default function PropertiesPage() {
       });
       if (res.ok) {
         setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, approval_status: "approved" } : p)));
-        showToast(`Property ${id} approved and listed live on Web & Mobile Apps!`);
+        showToast(`Property approved and listed live on Web & Mobile Apps!`);
+      } else {
+        const data = await res.json();
+        alert(`Failed to approve: ${data.error || res.status}`);
       }
-    } catch(e) {}
+    } catch(e: any) {
+      alert(`Network error: ${e.message}`);
+    }
   };
 
   const handleRejectProperty = async (id: string) => {
@@ -138,9 +148,14 @@ export default function PropertiesPage() {
       });
       if (res.ok) {
         setProperties((prev) => prev.map((p) => (p.id === id ? { ...p, approval_status: "rejected" } : p)));
-        showToast(`Property ${id} submission rejected.`);
+        showToast(`Property submission rejected.`);
+      } else {
+        const data = await res.json();
+        alert(`Failed to reject: ${data.error || res.status}`);
       }
-    } catch(e) {}
+    } catch(e: any) {
+      alert(`Network error: ${e.message}`);
+    }
   };
 
   const handleDeleteProperty = async (id: string) => {
@@ -495,7 +510,9 @@ export default function PropertiesPage() {
           <tbody>
             {properties
             .filter((p) => {
-              if (statusTab !== "All" && p.approval_status !== statusTab) return false;
+              if (statusTab === "Pending Approval" && p.approval_status !== "pending_approval") return false;
+              if (statusTab === "Active" && p.approval_status !== "approved") return false;
+              if (statusTab === "Sold Out" && p.approval_status !== "sold_out") return false;
               if (typeFilter !== "All" && p.property_type !== typeFilter) return false;
               if (
                 search &&

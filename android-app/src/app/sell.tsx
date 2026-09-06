@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { auth } from '@/lib/firebase';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadImageToFirebase } from '@/lib/uploadImage';
+import { Ionicons } from '@expo/vector-icons';
 
 export default function SellScreen() {
   const router = useRouter();
@@ -31,20 +34,43 @@ export default function SellScreen() {
   ];
 
   const handleSave = async () => {
+    console.log("Submit clicked!", formData);
     if (!formData.title || !formData.price || !formData.state || !formData.district || !formData.locality) {
+      console.error("Missing required fields:", { title: formData.title, price: formData.price, state: formData.state, district: formData.district, locality: formData.locality });
       Alert.alert('Missing Fields', 'Please fill in all the required details (Title, Price, and Location).');
       return;
     }
 
     try {
+      console.log("Form valid, starting submission...");
       setLoading(true);
       const user = auth.currentUser;
       if (!user) {
+        console.error("User not authenticated.");
         Alert.alert('Authentication Required', 'Please sign in to list a property.');
+        setLoading(false);
         return;
       }
 
+      let finalImageUrl = formData.image_url;
+
+      // If they selected a local image, upload it first
+      if (formData.image_url && !formData.image_url.startsWith('http')) {
+        try {
+          console.log("Uploading image...");
+          finalImageUrl = await uploadImageToFirebase(formData.image_url, 'property_images');
+          console.log("Image uploaded successfully:", finalImageUrl);
+        } catch (error) {
+          console.error("Image upload error:", error);
+          Alert.alert('Upload Failed', 'Failed to upload the image. Please try again.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      console.log("Getting ID token...");
       const token = await user.getIdToken();
+      console.log("Sending POST request to API...");
       const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`, {
         method: 'POST',
         headers: {
@@ -62,22 +88,29 @@ export default function SellScreen() {
           state: formData.state,
           district: formData.district,
           locality: formData.locality,
-          image_url: formData.image_url || undefined,
+          image_url: finalImageUrl || undefined,
         })
       });
 
       if (res.ok) {
-        Alert.alert(
-          'Property Submitted!', 
-          'Your property has been successfully submitted and is pending admin approval.',
-          [{ text: 'OK', onPress: () => router.back() }]
-        );
+        console.log("Property successfully submitted!");
+        if (Platform.OS === 'web') {
+          window.alert("Property Submitted! Your property has been successfully submitted and is pending admin approval.");
+          router.back();
+        } else {
+          Alert.alert(
+            'Property Submitted!', 
+            'Your property has been successfully submitted and is pending admin approval.',
+            [{ text: 'OK', onPress: () => router.back() }]
+          );
+        }
       } else {
         const err = await res.json();
+        console.error("API returned error:", err);
         Alert.alert('Submission Error', err.error || 'Failed to submit property.');
       }
     } catch (err) {
-      console.error(err);
+      console.error("Network or execution error:", err);
       Alert.alert('Error', 'Network error. Please try again.');
     } finally {
       setLoading(false);
@@ -210,13 +243,43 @@ export default function SellScreen() {
 
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Media</Text>
-          <Text style={styles.label}>Main Image URL (Optional)</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="https://example.com/image.jpg"
-            value={formData.image_url}
-            onChangeText={(val) => setFormData({ ...formData, image_url: val })}
-          />
+          <Text style={styles.label}>Property Image (Optional)</Text>
+          
+          <TouchableOpacity 
+            style={styles.imagePickerBtn}
+            onPress={async () => {
+              const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+              if (permissionResult.granted === false) {
+                Alert.alert("Permission Refused", "You need to grant permission to access your photos.");
+                return;
+              }
+              const pickerResult = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                allowsEditing: true,
+                aspect: [16, 9],
+                quality: 0.8,
+              });
+              if (!pickerResult.canceled && pickerResult.assets && pickerResult.assets.length > 0) {
+                setFormData({ ...formData, image_url: pickerResult.assets[0].uri });
+              }
+            }}
+          >
+            {formData.image_url ? (
+              <View style={styles.imagePreviewContainer}>
+                <Image source={{ uri: formData.image_url }} style={styles.imagePreview} />
+                <View style={styles.changeImageOverlay}>
+                  <Ionicons name="camera-reverse-outline" size={24} color="#FFF" />
+                  <Text style={styles.changeImageText}>Change Photo</Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <Ionicons name="cloud-upload-outline" size={48} color={Neutrals.gray400} />
+                <Text style={styles.imagePlaceholderText}>Tap to select a photo</Text>
+                <Text style={styles.imagePlaceholderSub}>Supported formats: JPG, PNG, WEBP</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={loading}>
@@ -297,5 +360,56 @@ const styles = StyleSheet.create({
   },
   saveBtnText: {
     ...Typography.labelLarge, color: Neutrals.obsidian, fontWeight: '700'
+  },
+  imagePickerBtn: {
+    width: '100%',
+    height: 200,
+    borderRadius: Radius.lg,
+    borderWidth: 2,
+    borderColor: Neutrals.border,
+    borderStyle: 'dashed',
+    overflow: 'hidden',
+    backgroundColor: Neutrals.gray100,
+  },
+  imagePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  imagePlaceholderText: {
+    ...Typography.bodyLarge,
+    color: Neutrals.gray600,
+    fontWeight: '600',
+    marginTop: 12,
+  },
+  imagePlaceholderSub: {
+    ...Typography.bodySmall,
+    color: Neutrals.gray400,
+    marginTop: 4,
+  },
+  imagePreviewContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  changeImageOverlay: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingVertical: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+  },
+  changeImageText: {
+    color: '#FFF',
+    ...Typography.labelMedium,
+    fontWeight: '700',
   }
 });

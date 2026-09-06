@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   StyleSheet,
   View,
@@ -53,9 +53,7 @@ export default function HomeScreen() {
   const [userName, setUserName] = useState('Investor');
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
-  const [hotProperties, setHotProperties] = useState<any[]>([]);
-  const [rentalProperties, setRentalProperties] = useState<any[]>([]);
-  const [resaleProperties, setResaleProperties] = useState<any[]>([]);
+  const [allCityProperties, setAllCityProperties] = useState<any[]>([]);
   const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
@@ -79,33 +77,38 @@ export default function HomeScreen() {
     checkUnread();
   }, [auth.currentUser]);
 
+  // Single fetch when city changes — all category filtering happens in memory
   useEffect(() => {
-    const categoryParam = activeCategory !== 'All' ? `&property_type=${activeCategory}` : '';
-
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?district=${city}${categoryParam}`)
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?district=${city}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
-          // Filter out rental/resale from hot properties
-          const primaryProps = data.filter(p => p.listing_type !== 'rental' && p.listing_type !== 'resale');
-          const sorted = [...primaryProps].sort((a, b) => (b.sold_fractions ?? 0) - (a.sold_fractions ?? 0));
-          setHotProperties(sorted.slice(0, 10));
+          setAllCityProperties(data);
         }
       })
       .catch(() => {});
+  }, [city]);
 
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=rental&district=${city}${categoryParam}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setRentalProperties(data.slice(0, 10));
-      }).catch(() => {});
+  // Derive filtered lists instantly in memory — no network call on category change
+  const filtered = useMemo(() => {
+    const byCategory = activeCategory === 'All'
+      ? allCityProperties
+      : allCityProperties.filter(p => p.property_type?.toLowerCase() === activeCategory.toLowerCase());
 
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=resale&district=${city}${categoryParam}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) setResaleProperties(data.slice(0, 10));
-      }).catch(() => {});
-  }, [city, activeCategory]);
+    const primaryProps = byCategory.filter(p => p.listing_type !== 'rental' && p.listing_type !== 'resale');
+    const sorted = [...primaryProps].sort((a, b) => (b.sold_fractions ?? 0) - (a.sold_fractions ?? 0));
+
+    return {
+      hot: sorted.slice(0, 10),
+      rental: byCategory.filter(p => p.listing_type === 'rental').slice(0, 10),
+      resale: byCategory.filter(p => p.listing_type === 'resale').slice(0, 10),
+      newProjects: byCategory.slice(0, 8),
+    };
+  }, [allCityProperties, activeCategory]);
+
+  const hotProperties = filtered.hot;
+  const rentalProperties = filtered.rental;
+  const resaleProperties = filtered.resale;
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -232,7 +235,7 @@ export default function HomeScreen() {
 
         {isDesktop && <QuoteSection />}
 
-        <HotProjects />
+        <HotProjects properties={filtered.newProjects} />
 
         {isDesktop && <WealthMarketingSection />}
 
@@ -270,7 +273,7 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
-        <TopLocalities />
+        <TopLocalities properties={filtered.newProjects} />
 
         {isDesktop && <BenefitsSection />}
 

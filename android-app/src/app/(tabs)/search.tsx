@@ -9,6 +9,10 @@ import { propertyToCardProps } from '@/lib/formatters';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
 
+import { useLocation } from '@/contexts/LocationContext';
+import { useLocalSearchParams } from 'expo-router';
+import { useActivityHistory } from '@/hooks/useActivityHistory';
+
 // Category chips map loosely onto property_type where a real equivalent exists.
 // Categories with no direct backend equivalent (Rent, PG/Hostels, Plot & Land, Luxury)
 // intentionally fall through to "show everything" rather than a misleading empty state.
@@ -19,24 +23,45 @@ const CATEGORY_TYPE_MAP: Record<string, string> = {
 };
 
 export default function SearchScreen() {
-  const [query, setQuery] = useState('');
+  const { city } = useLocation();
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  const [query, setQuery] = useState(q || '');
   const [activeCategory, setActiveCategory] = useState(PROPERTY_CATEGORIES[0].id);
   const [properties, setProperties] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const { addSearch } = useActivityHistory();
 
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+    if (typeof q === 'string') {
+      setQuery(q);
+      addSearch(q);
+    }
+  }, [q]);
+
+  // Debounce search saving
+  useEffect(() => {
+    if (query.trim().length > 2) {
+      const timer = setTimeout(() => {
+        addSearch(query);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [query]);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?district=${city}`)
       .then((res) => res.json())
       .then((data) => {
         setProperties(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [city]);
 
   const mappedType = CATEGORY_TYPE_MAP[activeCategory];
   const filtered = properties.filter((p) => {
-    const matchesCategory = !mappedType || p.property_type === mappedType;
+    const matchesCategory = !mappedType || p.property_type?.toLowerCase() === mappedType.toLowerCase();
     if (!matchesCategory) return false;
     if (!query.trim()) return true;
     const haystack = `${p.title} ${p.description || ''} ${p.locality} ${p.district} ${p.state} ${p.full_address || ''} ${p.property_type} ${p.listing_type} ${p.developer?.name || ''}`.toLowerCase();

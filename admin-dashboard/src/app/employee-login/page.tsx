@@ -1,12 +1,12 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import { signInWithEmailAndPassword, sendPasswordResetEmail, signInWithPopup } from 'firebase/auth';
 import { auth, googleProvider } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-export default function AgentLogin() {
+function EmployeeLoginForm() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -25,7 +25,7 @@ export default function AgentLogin() {
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const token = await userCredential.user.getIdToken();
       
-      // Enforce Agent Role Verification
+      // Enforce Employee Role Verification
       const res = await fetch('/api/users/sync', {
         method: 'POST',
         headers: {
@@ -37,14 +37,15 @@ export default function AgentLogin() {
       const data = await res.json();
       
       if (data.success && data.profile) {
-        if (data.profile.role === 'agent') {
-          router.push('/agent-portal');
+        if (data.profile.role === 'employee' || data.profile.role === 'admin') {
+          // Employee (or admin) successfully authenticated, route to main dashboard
+          router.push('/');
         } else {
-          auth.signOut();
-          setError('Access Denied. This portal is strictly for registered Agents.');
+          await auth.signOut();
+          setError('Access Denied. This portal is strictly for registered Employees.');
         }
       } else {
-        auth.signOut();
+        await auth.signOut();
         setError('Failed to verify user profile.');
       }
     } catch (err: any) {
@@ -83,7 +84,7 @@ export default function AgentLogin() {
       const userCredential = await signInWithPopup(auth, googleProvider);
       const token = await userCredential.user.getIdToken();
       
-      // Enforce Agent Role Verification
+      // Enforce Employee Role Verification
       const res = await fetch('/api/users/sync', {
         method: 'POST',
         headers: {
@@ -95,11 +96,11 @@ export default function AgentLogin() {
       const data = await res.json();
       
       if (data.success && data.profile) {
-        if (data.profile.role === 'agent') {
-          router.push('/agent-portal');
+        if (data.profile.role === 'employee' || data.profile.role === 'admin') {
+          router.push('/');
         } else {
-          auth.signOut();
-          setError('Access Denied. This portal is strictly for registered Agents.');
+          await auth.signOut();
+          setError('Access Denied. This portal is strictly for registered Employees.');
         }
       }
     } catch (err: any) {
@@ -116,7 +117,7 @@ export default function AgentLogin() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px' }}>
             <img src="/logo.png" alt="RealShare Logo" style={{ height: '48px', objectFit: 'contain' }} />
           </div>
-          <h2 style={{ fontSize: '18px', color: '#475569', margin: 0 }}>Agent Portal Login</h2>
+          <h2 style={{ fontSize: '18px', color: '#475569', margin: 0 }}>Employee Login</h2>
         </div>
 
         {error && (
@@ -133,14 +134,14 @@ export default function AgentLogin() {
 
         <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Agent Email Address</label>
+            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Employee Email</label>
             <input 
               type="email" 
               required 
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
-              placeholder="agent@realshare.com"
+              placeholder="employee@realshare.com"
             />
           </div>
           <div>
@@ -171,7 +172,7 @@ export default function AgentLogin() {
               marginTop: '8px', 
               width: '100%', 
               padding: '12px', 
-              backgroundColor: '#D97706', // Gold/Amber accent for Agents
+              backgroundColor: '#059669', // Emerald accent for Employees
               color: '#FFF', 
               border: 'none', 
               borderRadius: '8px', 
@@ -181,7 +182,7 @@ export default function AgentLogin() {
               opacity: loading ? 0.7 : 1
             }}
           >
-            {loading ? 'Authenticating...' : 'Sign In as Agent'}
+            {loading ? 'Authenticating...' : 'Sign In as Employee'}
           </button>
         </form>
 
@@ -220,9 +221,17 @@ export default function AgentLogin() {
         </button>
 
         <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '14px', color: '#64748B' }}>
-          Not an Agent? <Link href="/login" style={{ color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}>Admin Login</Link>
+          Are you an Admin? <Link href="/login" style={{ color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}>Admin Login</Link>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function EmployeeLogin() {
+  return (
+    <Suspense fallback={null}>
+      <EmployeeLoginForm />
+    </Suspense>
   );
 }

@@ -164,7 +164,7 @@ function LoginForm() {
         </div>
 
         <div style={{ marginTop: '16px', textAlign: 'center', fontSize: '14px', color: '#64748B' }}>
-          Are you a Wealth Partner? <Link href="/agent-login" style={{ color: '#D97706', fontWeight: 600, textDecoration: 'none' }}>Agent Portal Login →</Link>
+          Are you an Employee? <Link href="/employee-login" style={{ color: '#059669', fontWeight: 600, textDecoration: 'none' }}>Employee Login →</Link>
         </div>
       </div>
     </div>

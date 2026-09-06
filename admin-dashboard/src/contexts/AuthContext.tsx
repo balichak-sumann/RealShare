@@ -14,15 +14,7 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType>({ user: null, loading: true, logout: async () => {} });
 
-const publicPaths = ['/login', '/signup', '/agent-login'];
-// Pages that manage their own unauthenticated-access flow (exempted from the
-// pre-auth redirect below) and are an authenticated agent's home base.
-const agentPaths = ['/agent-login', '/agent-portal'];
-// Everywhere an authenticated agent is allowed to browse -- agentPaths plus
-// the shared Messages inbox, so an agent can reply to their investors'
-// advisor conversations from desktop without being bounced back to the
-// portal. Deliberately does NOT include /tickets or other admin-only pages.
-const agentAllowedPaths = [...agentPaths, '/messages'];
+const publicPaths = ['/login', '/signup', '/employee-login'];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -36,7 +28,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setUser(firebaseUser);
       setLoading(false);
 
-      if (!firebaseUser && !publicPaths.includes(pathname) && !agentPaths.includes(pathname)) {
+      if (!firebaseUser && !publicPaths.includes(pathname)) {
         router.push('/login');
       }
     });
@@ -52,9 +44,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   useEffect(() => {
     if (loading || !user) return;
 
-    // Let the agent-login page run its own role check/sign-out flow without
+    // Let the employee-login page run its own role check/sign-out flow without
     // us racing it (it already verifies role via /api/users/sync).
-    if (pathname === '/agent-login') return;
+    if (pathname === '/employee-login') return;
 
     let cancelled = false;
 
@@ -81,15 +73,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         const role = profile?.role;
 
         if (role === 'admin' || role === 'employee') {
-          if (pathname === '/login' || pathname === '/signup') {
+          if (pathname === '/login' || pathname === '/signup' || pathname === '/employee-login') {
             router.push('/');
           }
-        } else if (role === 'agent') {
-          if (!agentAllowedPaths.includes(pathname)) {
-            router.push('/agent-portal');
-          }
         } else {
-          // investor, builder, or any other role not permitted in this dashboard
+          // investor, builder, agent, or any other role not permitted in this dashboard
           await signOut(auth);
           router.push('/login?unauthorized=1');
         }

@@ -80,6 +80,15 @@ function RootLayoutNav() {
         return;
       }
 
+      // Check email verification gate
+      if (!user.emailVerified && !user.email?.endsWith('@realshare.test')) {
+        const currentRoute = segments[1] as string;
+        if (currentRoute !== 'verify-email' && currentRoute !== 'sign-up') {
+          router.replace('/verify-email');
+        }
+        return; // Halt further sync/routing until verified
+      }
+
       // Sync user to DB
       user.getIdToken().then(async token => {
         let pushToken = null;

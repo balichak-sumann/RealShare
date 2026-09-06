@@ -6,6 +6,10 @@ import { useRouter } from 'expo-router';
 
 import { useUser } from '@/contexts/UserContext';
 
+// Email regex — must have valid format (user@domain.tld)
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const MIN_PASSWORD_LENGTH = 8;
+
 // Premium dark luxury real estate background
 const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2000&auto=format&fit=crop';
 
@@ -31,13 +35,10 @@ export default function SignUpScreen() {
         const token = await user.getIdToken();
         const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
         const url = `${apiUrl}/api/users/sync`;
-        console.log('[syncUserToBackend] Fetching URL:', url);
-        console.log('[syncUserToBackend] Token prefix:', token?.substring(0, 20));
         const body: any = { role };
         if (referralCode) {
           body.referred_by_code = referralCode;
         }
-        console.log('[syncUserToBackend] Body:', JSON.stringify(body));
         const res = await fetch(url, {
           method: 'POST',
           headers: {
@@ -46,7 +47,6 @@ export default function SignUpScreen() {
           },
           body: JSON.stringify(body)
         });
-        console.log('[syncUserToBackend] Response status:', res.status);
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.profile) {
@@ -63,8 +63,7 @@ export default function SignUpScreen() {
         }
       }
     } catch (e: any) {
-      console.error("Failed to sync role/referral", e);
-      console.error("[syncUserToBackend] Error name:", e?.name, "message:", e?.message);
+      console.error("Failed to sync role/referral", e?.message);
     }
   };
 
@@ -79,27 +78,48 @@ export default function SignUpScreen() {
 
     try {
       if (isEmail) {
+        // Validate email format
+        if (!EMAIL_REGEX.test(identifier.trim())) {
+          setError('Please enter a valid email address (e.g. john@gmail.com).');
+          setLoading(false);
+          return;
+        }
         if (!password) {
           setError('Please enter a password.');
           setLoading(false);
           return;
         }
+        if (password.length < MIN_PASSWORD_LENGTH) {
+          setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
+          setLoading(false);
+          return;
+        }
+        if (!/[A-Z]/.test(password)) {
+          setError('Password must contain at least one uppercase letter.');
+          setLoading(false);
+          return;
+        }
+        if (!/[0-9]/.test(password)) {
+          setError('Password must contain at least one number.');
+          setLoading(false);
+          return;
+        }
+
         const userCredential = await createUserWithEmailAndPassword(auth, identifier.trim(), password);
         await syncUserToBackend(userCredential.user);
         
         // Send Email Verification
         try {
           await sendEmailVerification(userCredential.user);
-          if (Platform.OS !== 'web') {
-            Alert.alert('Verification Email Sent', 'Please check your inbox to verify your email address.');
-          } else {
-            window.alert('Verification Email Sent. Please check your inbox to verify your email address.');
-          }
         } catch (e) {
           console.error("Failed to send verification email", e);
         }
 
-        // onAuthStateChanged in _layout.tsx handles redirection
+        // Sign out and redirect to verify-email screen
+        // User must verify their email before they can use the app
+        await signOut(auth);
+        setProfile(null);
+        router.replace('/verify-email' as any);
       } else {
         // Phone Number Validation
         const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
@@ -121,7 +141,13 @@ export default function SignUpScreen() {
         }, 800);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to sign up.');
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email is already registered. Please sign in instead.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password is too weak. Please use at least 8 characters with uppercase and numbers.');
+      } else {
+        setError(err.message || 'Failed to sign up.');
+      }
       setLoading(false);
     }
   };

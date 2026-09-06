@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, ImageBackground, KeyboardAvoidingView, ScrollView, Image } from 'react-native';
-import { signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
+
+// Email regex — must have valid format (user@domain.tld)
+const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
 // Premium dark luxury real estate background
 const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2000&auto=format&fit=crop';
@@ -31,12 +34,26 @@ export default function SignInScreen() {
 
     try {
       if (isEmail) {
+        // Validate email format
+        if (!EMAIL_REGEX.test(identifier.trim())) {
+          setError('Please enter a valid email address (e.g. john@gmail.com).');
+          setLoading(false);
+          return;
+        }
         if (!password) {
           setError('Please enter your password.');
           setLoading(false);
           return;
         }
-        await signInWithEmailAndPassword(auth, identifier.trim(), password);
+        const userCredential = await signInWithEmailAndPassword(auth, identifier.trim(), password);
+        
+        // Check if email is verified (skip for @realshare.test phone-based accounts)
+        if (!userCredential.user.emailVerified && !identifier.trim().endsWith('@realshare.test')) {
+          await signOut(auth);
+          setError('Please verify your email before signing in. Check your inbox for a verification link.');
+          setLoading(false);
+          return;
+        }
         // onAuthStateChanged in _layout.tsx handles redirection
       } else {
         // Phone Number Validation
@@ -59,7 +76,15 @@ export default function SignInScreen() {
         }, 800);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in.');
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
+        setError('Invalid email or password. Please check your credentials or create an account.');
+      } else if (err.code === 'auth/wrong-password') {
+        setError('Incorrect password. Please try again.');
+      } else if (err.code === 'auth/too-many-requests') {
+        setError('Too many failed attempts. Please try again later.');
+      } else {
+        setError(err.message || 'Failed to sign in.');
+      }
       setLoading(false);
     }
   };
@@ -147,16 +172,31 @@ export default function SignInScreen() {
 
                   <TouchableOpacity style={styles.googleButton} onPress={async () => {
                     setLoading(true);
+                    setError('');
                     try {
                       if (Platform.OS === 'web') {
-                        const { signInWithPopup } = await import('firebase/auth');
+                        const { signInWithPopup, getAdditionalUserInfo } = await import('firebase/auth');
                         const { googleProvider } = await import('@/lib/firebase');
-                        await signInWithPopup(auth, googleProvider);
+                        const result = await signInWithPopup(auth, googleProvider);
+                        const additionalInfo = getAdditionalUserInfo(result);
+                        
+                        if (additionalInfo?.isNewUser) {
+                          // This Google account was never registered — delete it and show error
+                          await result.user.delete();
+                          setError('No account found with this Google account. Please create an account first.');
+                          setLoading(false);
+                          return;
+                        }
+                        // Existing user — sign-in proceeds via onAuthStateChanged
                       } else {
                         alert("Google Sign in on native requires Expo AuthSession");
                       }
                     } catch (err: any) {
-                      setError(err.message || "Google sign in failed");
+                      if (err.code === 'auth/popup-closed-by-user') {
+                        // User closed the popup, not an error
+                      } else {
+                        setError(err.message || "Google sign in failed");
+                      }
                     } finally {
                       setLoading(false);
                     }

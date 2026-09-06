@@ -314,7 +314,7 @@ const styles = StyleSheet.create({
     borderColor: Neutrals.border,
   },
   sectionTitle: {
-    ...Typography.titleLarge,
+    ...Typography.headlineMedium,
     color: Neutrals.obsidian,
     marginBottom: 16,
     borderBottomWidth: 1,
@@ -384,7 +384,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
   },
   imagePlaceholderSub: {
-    ...Typography.bodySmall,
+    ...Typography.caption,
     color: Neutrals.gray400,
     marginTop: 4,
   },

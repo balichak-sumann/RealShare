@@ -19,7 +19,7 @@ export function RecentActivity() {
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
         
         {hasNoActivity && (
-          <View style={[styles.activityCard, { width: 320, backgroundColor: Neutrals.gray50, justifyContent: 'center', borderColor: 'transparent' }]}>
+          <View style={[styles.activityCard, { width: 320, backgroundColor: Neutrals.gray100, justifyContent: 'center', borderColor: 'transparent' }]}>
             <Text style={{ color: Neutrals.gray500, textAlign: 'center', ...Typography.bodyMedium }}>
               You have no recent activity. Start exploring properties!
             </Text>

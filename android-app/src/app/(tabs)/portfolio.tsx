@@ -59,7 +59,7 @@ export default function PortfolioScreen() {
 
   const handleBack = () => {
     if (params?.from === 'profile') {
-      router.push('/profile' as any);
+      router.push('/(tabs)/profile' as any);
     } else {
       router.back();
     }

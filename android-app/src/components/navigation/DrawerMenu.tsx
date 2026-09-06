@@ -32,7 +32,7 @@ interface DrawerWrapperProps {
 type IoniconName = React.ComponentProps<typeof Ionicons>['name'];
 
 const BASE_MENU_ITEMS: { icon: IoniconName; label: string; route: string }[] = [
-  { icon: 'person-outline', label: 'Profile', route: '/profile' },
+  { icon: 'person-outline', label: 'Profile', route: '/(tabs)/profile' },
   { icon: 'card-outline', label: 'Bank Details', route: '/bank-details' },
   { icon: 'construct-outline', label: 'Services', route: '/services' },
   { icon: 'settings-outline', label: 'Settings', route: '/settings' },

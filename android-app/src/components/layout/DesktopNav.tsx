@@ -176,7 +176,7 @@ export function DesktopNav() {
         {currentUser ? (
           <TouchableOpacity
             style={styles.account}
-            onPress={() => router.push('/profile' as any)}
+            onPress={() => router.push('/(tabs)/profile' as any)}
             activeOpacity={0.8}
           >
             <LinearGradient

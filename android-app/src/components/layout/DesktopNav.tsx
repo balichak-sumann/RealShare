@@ -97,10 +97,11 @@ export function DesktopNav() {
     <View style={styles.bar}>
       <View style={styles.inner}>
         {/* Brand */}
+        <View style={styles.brandPlaceholder} />
         <TouchableOpacity
           style={styles.brand}
           onPress={() => router.push('/' as any)}
-          activeOpacity={0.7}
+          activeOpacity={1}
         >
           <Image
             source={require('../../../assets/logo.png')}
@@ -227,25 +228,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 68,
     width: '100%',
-    paddingHorizontal: 28,
-    gap: 8,
+    paddingHorizontal: 16,
+    gap: 6,
+  },
+  brandPlaceholder: {
+    width: 110,
+    marginRight: 12,
   },
   brand: {
-    marginRight: 28,
+    position: 'absolute',
+    top: 0,
+    left: 16,
+    width: 110,
+    height: 105,
+    backgroundColor: Neutrals.white,
     justifyContent: 'center',
-    backgroundColor: Neutrals.warmIvory,
-    borderRadius: Radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    alignItems: 'center',
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
+    zIndex: 200,
   },
   logo: {
-    width: 165,
-    height: 50,
+    width: '100%',
+    height: '100%',
   },
   navLinks: {
     flexDirection: 'row',
@@ -254,14 +264,14 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   navLink: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
     height: '100%',
     justifyContent: 'center',
     position: 'relative',
   },
   navLabel: {
     ...Typography.labelLarge,
-    fontSize: 15,
+    fontSize: 14,
     color: GoldSystem.paleGold,
   },
   navLabelActive: {
@@ -301,10 +311,10 @@ const styles = StyleSheet.create({
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 14,
-    height: 40,
-    width: 260,
+    gap: 6,
+    paddingHorizontal: 12,
+    height: 38,
+    width: 190,
     borderRadius: Radius.full,
     backgroundColor: Neutrals.warmIvory,
     borderWidth: 1,

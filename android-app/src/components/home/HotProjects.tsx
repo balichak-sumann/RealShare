@@ -5,13 +5,14 @@ import { PropertyCard } from '../ui/PropertyCard';
 import { propertyToCardProps } from '@/lib/formatters';
 import { useRouter } from 'expo-router';
 import { ResponsiveRail } from '../layout/ResponsiveRail';
+import { getApiUrl } from '@/lib/api';
 
 export function HotProjects() {
   const router = useRouter();
   const [properties, setProperties] = useState<any[]>([]);
 
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+    fetch(`${getApiUrl()}/api/properties`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

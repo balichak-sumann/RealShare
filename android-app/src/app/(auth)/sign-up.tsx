@@ -5,6 +5,7 @@ import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 
 import { useUser } from '@/contexts/UserContext';
+import { getApiUrl } from '@/lib/api';
 
 // Premium dark luxury real estate background
 const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2000&auto=format&fit=crop';
@@ -29,30 +30,33 @@ export default function SignUpScreen() {
     try {
       if (user) {
         const token = await user.getIdToken();
-        const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+        const apiUrl = getApiUrl();
         const url = `${apiUrl}/api/users/sync`;
-        console.log('[syncUserToBackend] Fetching URL:', url);
-        console.log('[syncUserToBackend] Token prefix:', token?.substring(0, 20));
         const body: any = { role };
         if (referralCode) {
           body.referred_by_code = referralCode;
         }
-        console.log('[syncUserToBackend] Body:', JSON.stringify(body));
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
+
         const res = await fetch(url, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(body)
+          body: JSON.stringify(body),
+          signal: controller.signal,
         });
-        console.log('[syncUserToBackend] Response status:', res.status);
+        clearTimeout(timeoutId);
+
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.profile) {
             if (role === 'builder') {
               // Sign out from client so builder logs in explicitly via login page
-              await signOut(auth);
+              await signOut(auth).catch(() => {});
               setProfile(null);
               setShowSuccessModal(true);
             } else {
@@ -60,11 +64,25 @@ export default function SignUpScreen() {
               router.replace('/');
             }
           }
+        } else {
+          if (role === 'builder') {
+            await signOut(auth).catch(() => {});
+            setProfile(null);
+            setShowSuccessModal(true);
+          } else {
+            router.replace('/');
+          }
         }
       }
     } catch (e: any) {
       console.error("Failed to sync role/referral", e);
-      console.error("[syncUserToBackend] Error name:", e?.name, "message:", e?.message);
+      if (role === 'builder') {
+        await signOut(auth).catch(() => {});
+        setProfile(null);
+        setShowSuccessModal(true);
+      } else {
+        router.replace('/');
+      }
     }
   };
 
@@ -84,22 +102,18 @@ export default function SignUpScreen() {
           setLoading(false);
           return;
         }
+        if (password.length < 6) {
+          setError('Password must be at least 6 characters.');
+          setLoading(false);
+          return;
+        }
         const userCredential = await createUserWithEmailAndPassword(auth, identifier.trim(), password);
         await syncUserToBackend(userCredential.user);
         
-        // Send Email Verification
-        try {
-          await sendEmailVerification(userCredential.user);
-          if (Platform.OS !== 'web') {
-            Alert.alert('Verification Email Sent', 'Please check your inbox to verify your email address.');
-          } else {
-            window.alert('Verification Email Sent. Please check your inbox to verify your email address.');
-          }
-        } catch (e) {
-          console.error("Failed to send verification email", e);
-        }
-
-        // onAuthStateChanged in _layout.tsx handles redirection
+        // Send Email Verification non-blocking in background
+        sendEmailVerification(userCredential.user).catch((e) => {
+          console.warn("Background email verification notice:", e?.message);
+        });
       } else {
         // Phone Number Validation
         const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
@@ -118,10 +132,19 @@ export default function SignUpScreen() {
         setTimeout(() => {
           setPendingVerification(true);
           setLoading(false);
-        }, 800);
+        }, 500);
       }
     } catch (err: any) {
-      setError(err.message || 'Failed to sign up.');
+      if (err.code === 'auth/email-already-in-use') {
+        setError('This email address is already registered. Please log in.');
+      } else if (err.code === 'auth/weak-password') {
+        setError('Password is too weak. Please use at least 6 characters.');
+      } else if (err.code === 'auth/invalid-email') {
+        setError('Please enter a valid email address.');
+      } else {
+        setError(err.message || 'Failed to sign up.');
+      }
+    } finally {
       setLoading(false);
     }
   };

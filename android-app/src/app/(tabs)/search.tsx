@@ -8,6 +8,7 @@ import { PROPERTY_CATEGORIES } from '@/constants/uiConstants';
 import { propertyToCardProps } from '@/lib/formatters';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
+import { getApiUrl } from '@/lib/api';
 
 // Category chips map loosely onto property_type where a real equivalent exists.
 // Categories with no direct backend equivalent (Rent, PG/Hostels, Plot & Land, Luxury)
@@ -25,7 +26,7 @@ export default function SearchScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+    fetch(`${getApiUrl()}/api/properties`)
       .then((res) => res.json())
       .then((data) => {
         setProperties(Array.isArray(data) ? data : []);

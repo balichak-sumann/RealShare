@@ -5,6 +5,7 @@ import { LocalityCard } from '../ui/LocalityCard';
 import { formatPrice } from '@/lib/formatters';
 import { useRouter } from 'expo-router';
 import { ResponsiveRail } from '../layout/ResponsiveRail';
+import { getApiUrl } from '@/lib/api';
 
 // Derived from real listed properties, grouped by locality — there's no
 // separate Locality table (or tracked rent/sale-per-sqft market data), so
@@ -15,10 +16,9 @@ export function TopLocalities() {
   const [localities, setLocalities] = useState<any[]>([]);
 
   useEffect(() => {
-    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/properties`);
+        const res = await fetch(`${getApiUrl()}/api/properties`);
         if (!res.ok) return;
         const data = await res.json();
         const list = Array.isArray(data) ? data : data.properties || [];

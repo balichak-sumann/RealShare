@@ -2,9 +2,9 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
 
-// Same rules as the create route: image_url must be an absolute URL,
-// link_url may be an absolute URL or an in-app path (e.g. "/properties").
-function isValidAbsoluteUrl(value: string): boolean {
+function isValidImageUrl(value: string): boolean {
+  if (!value || typeof value !== 'string') return false;
+  if (value.startsWith('/') || value.startsWith('data:')) return true;
   try {
     new URL(value);
     return true;
@@ -15,7 +15,12 @@ function isValidAbsoluteUrl(value: string): boolean {
 
 function isValidLinkTarget(value: string): boolean {
   if (value.startsWith('/')) return true;
-  return isValidAbsoluteUrl(value);
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 // PATCH: supports both the quick active/inactive toggle (is_active only) and
@@ -45,7 +50,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (subtitle !== undefined) data.subtitle = subtitle;
     if (badge !== undefined) data.badge = badge;
     if (image_url !== undefined) {
-      if (typeof image_url !== 'string' || !isValidAbsoluteUrl(image_url)) {
+      if (typeof image_url !== 'string' || !isValidImageUrl(image_url)) {
         return NextResponse.json({ error: 'image_url must be a valid URL' }, { status: 400 });
       }
       data.image_url = image_url;

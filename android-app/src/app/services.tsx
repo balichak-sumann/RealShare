@@ -1,13 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, Modal, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/contexts/UserContext';
+import { getApiUrl } from '@/lib/api';
 
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
-
-const SERVICES = [
+const DEFAULT_SERVICES = [
   { id: '1', title: 'Interior Design', image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Premium design consultations and execution.', price: 'Free Consultation' },
   { id: '2', title: 'Property Mgmt', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Full lifecycle tenant & property management.', price: 'Starts ₹800/mo' },
   { id: '3', title: 'Home Loans', image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Instant approvals with lowest interest rates.', price: 'Coming Soon' },
@@ -16,13 +15,40 @@ const SERVICES = [
 export default function ServicesScreen() {
   const router = useRouter();
   const { profile } = useUser();
+  const [services, setServices] = useState<any[]>(DEFAULT_SERVICES);
   const [inquiryFor, setInquiryFor] = useState<string | null>(null);
   const [name, setName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone_number || '');
+  const [budget, setBudget] = useState('');
+  const [notes, setNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${getApiUrl()}/api/services/catalog?active=true`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setServices(data.map(s => ({
+              id: s.id,
+              title: s.title,
+              image: s.image_url,
+              desc: s.description || s.category,
+              price: s.pricing || 'Free Consultation'
+            })));
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to load dynamic services catalog', err);
+      }
+    })();
+  }, []);
 
   const openInquiry = (serviceTitle: string) => {
     setInquiryFor(serviceTitle);
+    if (profile?.full_name && !name) setName(profile.full_name);
+    if (profile?.phone_number && !phone) setPhone(profile.phone_number);
   };
 
   const submitInquiry = async () => {
@@ -34,14 +60,16 @@ export default function ServicesScreen() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch(`${API_URL}/api/services`, {
+      const res = await fetch(`${getApiUrl()}/api/services`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_name: name,
-          phone,
+          customer_name: name.trim() || 'Valued Investor',
+          phone: cleanedPhone,
           email: profile?.email || undefined,
           service_type: inquiryFor,
+          estimated_budget: budget.trim() || undefined,
+          notes: notes.trim() || undefined,
         }),
       });
       if (!res.ok) {
@@ -49,8 +77,10 @@ export default function ServicesScreen() {
         Alert.alert('Error', err.error || 'Failed to submit your request. Please try again.');
         return;
       }
-      Alert.alert('Request received', `Our team will reach out about ${inquiryFor} shortly.`);
+      Alert.alert('Request Received 🎉', `Thank you! Our concierge team will reach out regarding ${inquiryFor} shortly.`);
       setInquiryFor(null);
+      setBudget('');
+      setNotes('');
     } catch (e) {
       Alert.alert('Error', 'Failed to submit your request. Please try again.');
     } finally {
@@ -85,7 +115,7 @@ export default function ServicesScreen() {
         <Text style={styles.sectionTitle}>Browse Services</Text>
         
         <View style={styles.servicesGrid}>
-          {SERVICES.map(service => (
+          {services.map(service => (
             <TouchableOpacity key={service.id} style={styles.serviceCard} activeOpacity={0.9} onPress={() => openInquiry(service.title)}>
               <ImageBackground 
                 source={{ uri: service.image }} 
@@ -98,7 +128,7 @@ export default function ServicesScreen() {
               </ImageBackground>
               <View style={styles.serviceContent}>
                 <Text style={styles.serviceTitle}>{service.title}</Text>
-                <Text style={styles.serviceDesc}>{service.desc}</Text>
+                <Text style={styles.serviceDesc} numberOfLines={2}>{service.desc}</Text>
                 <View style={{ flex: 1 }} />
                 <View style={styles.serviceFooter}>
                   <Text style={styles.servicePrice}>{service.price}</Text>
@@ -118,17 +148,32 @@ export default function ServicesScreen() {
             <Text style={styles.modalSubtitle}>Leave your details and our team will call you back.</Text>
             <TextInput
               style={styles.input}
-              placeholder="Your name"
+              placeholder="Your full name"
               value={name}
               onChangeText={setName}
               placeholderTextColor={Neutrals.gray400}
             />
             <TextInput
               style={styles.input}
-              placeholder="Phone number"
+              placeholder="10-digit mobile number"
               value={phone}
               onChangeText={setPhone}
               keyboardType="phone-pad"
+              placeholderTextColor={Neutrals.gray400}
+            />
+            <TextInput
+              style={styles.input}
+              placeholder="Estimated budget (optional)"
+              value={budget}
+              onChangeText={setBudget}
+              placeholderTextColor={Neutrals.gray400}
+            />
+            <TextInput
+              style={[styles.input, { height: 60, textAlignVertical: 'top' }]}
+              placeholder="Additional notes / specific requirements"
+              value={notes}
+              onChangeText={setNotes}
+              multiline
               placeholderTextColor={Neutrals.gray400}
             />
             <View style={styles.modalActions}>

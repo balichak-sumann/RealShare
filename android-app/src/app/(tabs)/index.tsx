@@ -43,6 +43,7 @@ import { WebFooter } from '@/components/layout/WebFooter';
 import { WealthMarketingSection } from '@/components/home/WealthMarketingSection';
 import { QuoteSection } from '@/components/home/QuoteSection';
 import { BenefitsSection } from '@/components/home/BenefitsSection';
+import { getApiUrl } from '@/lib/api';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -59,13 +60,13 @@ export default function HomeScreen() {
   const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
     const checkUnread = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
       try {
         const token = await currentUser.getIdToken();
         const res = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/notifications/feed`,
+          `${getApiUrl()}/api/notifications/feed`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (res.ok) {
@@ -82,7 +83,7 @@ export default function HomeScreen() {
   useEffect(() => {
     const categoryParam = activeCategory !== 'All' ? `&property_type=${activeCategory}` : '';
 
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?district=${city}${categoryParam}`)
+    fetch(`${getApiUrl()}/api/properties?district=${city}${categoryParam}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -94,13 +95,13 @@ export default function HomeScreen() {
       })
       .catch(() => {});
 
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=rental&district=${city}${categoryParam}`)
+    fetch(`${getApiUrl()}/api/properties?listing_type=rental&district=${city}${categoryParam}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setRentalProperties(data.slice(0, 10));
       }).catch(() => {});
 
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?listing_type=resale&district=${city}${categoryParam}`)
+    fetch(`${getApiUrl()}/api/properties?listing_type=resale&district=${city}${categoryParam}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) setResaleProperties(data.slice(0, 10));

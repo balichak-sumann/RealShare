@@ -1,10 +1,9 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { getAuthHeader } from "@/lib/api-auth";
+import { uploadFileToServer } from "@/lib/upload";
 import styles from "./Properties.module.css";
 
 // Dynamic import to avoid SSR issues with Leaflet
@@ -41,7 +40,24 @@ interface Property {
   raised?: string;
   description?: string;
   full_address?: string;
+  views_count?: number;
 }
+
+const MAJOR_CITIES = [
+  { name: "Hyderabad", state: "Telangana", lat: 17.3850, lng: 78.4867 },
+  { name: "Bengaluru", state: "Karnataka", lat: 12.9716, lng: 77.5946 },
+  { name: "Mumbai", state: "Maharashtra", lat: 19.0760, lng: 72.8777 },
+  { name: "Pune", state: "Maharashtra", lat: 18.5204, lng: 73.8567 },
+  { name: "Delhi NCR", state: "Delhi", lat: 28.6139, lng: 77.2090 },
+  { name: "Gurugram", state: "Haryana", lat: 28.4595, lng: 77.0266 },
+  { name: "Noida", state: "Uttar Pradesh", lat: 28.5355, lng: 77.3910 },
+  { name: "Chennai", state: "Tamil Nadu", lat: 13.0827, lng: 80.2707 },
+  { name: "Kolkata", state: "West Bengal", lat: 22.5726, lng: 88.3639 },
+  { name: "Ahmedabad", state: "Gujarat", lat: 23.0225, lng: 72.5714 },
+  { name: "Goa", state: "Goa", lat: 15.2993, lng: 74.1240 },
+  { name: "Kochi", state: "Kerala", lat: 9.9312, lng: 76.2673 },
+  { name: "Other", state: "", lat: 17.3850, lng: 78.4867 },
+];
 
 export default function PropertiesPage() {
   const [properties, setProperties] = useState<Property[]>([]);
@@ -53,17 +69,36 @@ export default function PropertiesPage() {
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
+  const isSoldOut = (p: Property) => {
+    if (p.approval_status === "sold_out") return true;
+    if (p.total_fractions > 0 && (p.available_fractions <= 0 || p.sold_fractions >= p.total_fractions)) return true;
+    return false;
+  };
+
+  const isActive = (p: Property) => {
+    const isApproved = p.approval_status === "approved" || p.approval_status === "Active";
+    return isApproved && !isSoldOut(p);
+  };
+
+  const isPending = (p: Property) => {
+    return p.approval_status === "pending_approval" || p.approval_status === "Pending Approval";
+  };
+
   useEffect(() => {
-    fetch('/api/properties')
-      .then(res => res.json())
-      .then(data => {
-        setProperties(data);
-        setLoading(false);
-      })
-      .catch(err => {
+    (async () => {
+      try {
+        const authHeader = await getAuthHeader();
+        const res = await fetch('/api/properties', { headers: authHeader || {} });
+        if (res.ok) {
+          const data = await res.json();
+          setProperties(Array.isArray(data) ? data : []);
+        }
+      } catch (err) {
         console.error('Failed to fetch properties:', err);
+      } finally {
         setLoading(false);
-      });
+      }
+    })();
   }, []);
 
   // New Property Form State
@@ -172,23 +207,18 @@ export default function PropertiesPage() {
     let videoUrl = "";
 
     try {
-      // Upload all selected images
+      // Upload all selected images to server storage (no Firebase)
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { alert('You must be signed in to do that.'); setIsUploading(false); return; }
+
       if (selectedFiles.length > 0) {
         for (const file of selectedFiles) {
           try {
-            const storageRef = ref(storage, `properties/${Date.now()}_${file.name}`);
-            await uploadBytes(storageRef, file);
-            const url = await getDownloadURL(storageRef);
+            const url = await uploadFileToServer(file, authHeader);
             uploadedImageUrls.push(url);
-          } catch (storageError) {
-            console.warn("Firebase Storage upload failed. Falling back to Base64 (PostgreSQL text insertion).", storageError);
-            const base64Str = await new Promise<string>((resolve, reject) => {
-              const reader = new FileReader();
-              reader.onload = () => resolve(reader.result as string);
-              reader.onerror = reject;
-              reader.readAsDataURL(file);
-            });
-            uploadedImageUrls.push(base64Str);
+          } catch (uploadError: any) {
+            console.error('Image upload failed:', uploadError);
+            showToast(`Failed to upload ${file.name}: ${uploadError.message}`);
           }
         }
       }
@@ -196,26 +226,16 @@ export default function PropertiesPage() {
         uploadedImageUrls.push("https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=400&h=250&fit=crop");
       }
 
-      // Upload video if selected
+      // Upload video if selected to server storage (no Firebase)
       if (selectedVideo) {
         try {
-          const videoRef = ref(storage, `properties/videos/${Date.now()}_${selectedVideo.name}`);
-          await uploadBytes(videoRef, selectedVideo);
-          videoUrl = await getDownloadURL(videoRef);
-        } catch (storageError) {
-          console.warn("Firebase Storage upload failed. Falling back to Base64 (PostgreSQL text insertion).", storageError);
-          const base64Str = await new Promise<string>((resolve, reject) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve(reader.result as string);
-            reader.onerror = reject;
-            reader.readAsDataURL(selectedVideo);
-          });
-          videoUrl = base64Str;
+          videoUrl = await uploadFileToServer(selectedVideo, authHeader);
+        } catch (uploadError: any) {
+          console.error('Video upload failed:', uploadError);
+          showToast(`Video upload failed: ${uploadError.message}`);
         }
       }
 
-      const authHeader = await getAuthHeader();
-      if (!authHeader) { alert('You must be signed in to do that.'); setIsUploading(false); return; }
       const res = await fetch('/api/properties', {
         method: 'POST',
         headers: { ...authHeader, 'Content-Type': 'application/json' },
@@ -259,7 +279,9 @@ export default function PropertiesPage() {
   const totalFractionsPool = properties.reduce((sum, p) => sum + (Number(p.total_fractions) || 0), 0);
   const totalSoldFractions = properties.reduce((sum, p) => sum + (Number(p.sold_fractions) || 0), 0);
   const totalAvailableFractions = properties.reduce((sum, p) => sum + (Number(p.available_fractions) || 0), 0);
-  const pendingSubmissionsCount = properties.filter((p) => p.approval_status === "pending_approval").length;
+  const pendingSubmissionsCount = properties.filter(isPending).length;
+  const activeListingsCount = properties.filter(isActive).length;
+  const soldOutCount = properties.filter(isSoldOut).length;
 
   return (
     <AdminLayout title="Property & Share Pool Management">
@@ -337,7 +359,7 @@ export default function PropertiesPage() {
             {totalSoldFractions} Fractions
           </div>
           <div style={{ fontSize: "0.75rem", color: "#16A34A", marginTop: 4 }}>
-            {((totalSoldFractions / totalFractionsPool) * 100).toFixed(1)}% Fractional Capital Raised
+            {totalFractionsPool > 0 ? ((totalSoldFractions / totalFractionsPool) * 100).toFixed(1) : "0.0"}% Fractional Capital Raised
           </div>
         </div>
 
@@ -380,14 +402,14 @@ export default function PropertiesPage() {
         </div>
       </div>
 
-      {/* Graphical Share Distribution Progress Bar */}
+      {/* Share Pool Visualizer */}
       <div
         style={{
           background: "var(--bg-secondary)",
           border: "1px solid var(--border-color)",
           borderRadius: "12px",
-          padding: "16px 20px",
-          marginBottom: "28px",
+          padding: "18px",
+          marginBottom: "24px",
         }}
       >
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px", fontSize: "0.85rem", fontWeight: 600 }}>
@@ -400,14 +422,14 @@ export default function PropertiesPage() {
         <div style={{ height: "14px", width: "100%", background: "#E2E8F0", borderRadius: "7px", overflow: "hidden", display: "flex" }}>
           <div
             style={{
-              width: `${(totalSoldFractions / totalFractionsPool) * 100}%`,
+              width: `${totalFractionsPool > 0 ? (totalSoldFractions / totalFractionsPool) * 100 : 0}%`,
               background: "linear-gradient(90deg, #10B981, #059669)",
             }}
             title={`Sold: ${totalSoldFractions}`}
           />
           <div
             style={{
-              width: `${(totalAvailableFractions / totalFractionsPool) * 100}%`,
+              width: `${totalFractionsPool > 0 ? (totalAvailableFractions / totalFractionsPool) * 100 : 0}%`,
               background: "linear-gradient(90deg, #3B82F6, #2563EB)",
             }}
             title={`Available: ${totalAvailableFractions}`}
@@ -417,7 +439,7 @@ export default function PropertiesPage() {
 
       {/* Main Table Controls */}
       <div className={styles.header}>
-        <div style={{ display: "flex", gap: "10px" }}>
+        <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
           <button
             className={`${styles.filterPill} ${statusTab === "All" ? styles.filterActive : ""}`}
             onClick={() => setStatusTab("All")}
@@ -439,13 +461,13 @@ export default function PropertiesPage() {
             className={`${styles.filterPill} ${statusTab === "Active" ? styles.filterActive : ""}`}
             onClick={() => setStatusTab("Active")}
           >
-            Active
+            Active ({activeListingsCount})
           </button>
           <button
             className={`${styles.filterPill} ${statusTab === "Sold Out" ? styles.filterActive : ""}`}
             onClick={() => setStatusTab("Sold Out")}
           >
-            Sold Out
+            Sold Out ({soldOutCount})
           </button>
         </div>
 
@@ -495,14 +517,31 @@ export default function PropertiesPage() {
           <tbody>
             {properties
             .filter((p) => {
-              if (statusTab !== "All" && p.approval_status !== statusTab) return false;
-              if (typeFilter !== "All" && p.property_type !== typeFilter) return false;
-              if (
-                search &&
-                !p.title.toLowerCase().includes(search.toLowerCase()) &&
-                !p.locality.toLowerCase().includes(search.toLowerCase())
-              ) {
-                return false;
+              if (statusTab === "Pending Approval" && !isPending(p)) return false;
+              if (statusTab === "Active" && !isActive(p)) return false;
+              if (statusTab === "Sold Out" && !isSoldOut(p)) return false;
+
+              if (typeFilter !== "All") {
+                const filterLower = typeFilter.toLowerCase();
+                const propTypeLower = (p.property_type || "").toLowerCase();
+                const listingTypeLower = (p.listing_type || "").toLowerCase();
+                if (filterLower === "fractional") {
+                  if (propTypeLower !== "fractional" && listingTypeLower !== "fractional") return false;
+                } else {
+                  if (propTypeLower !== filterLower) return false;
+                }
+              }
+
+              if (search.trim()) {
+                const q = search.toLowerCase();
+                const titleMatch = (p.title || "").toLowerCase().includes(q);
+                const localityMatch = (p.locality || "").toLowerCase().includes(q);
+                const districtMatch = (p.district || "").toLowerCase().includes(q);
+                const stateMatch = (p.state || "").toLowerCase().includes(q);
+                const postedMatch = (p.profile?.full_name || p.postedBy || "").toLowerCase().includes(q);
+                if (!titleMatch && !localityMatch && !districtMatch && !stateMatch && !postedMatch) {
+                  return false;
+                }
               }
               return true;
             })
@@ -516,15 +555,20 @@ export default function PropertiesPage() {
                       <div className={styles.propLocation}>
                         {p.locality}, {p.district}
                       </div>
+                      {p.views_count !== undefined && (
+                        <div style={{ fontSize: "0.72rem", color: "#2563EB", fontWeight: 600, marginTop: "2px" }}>
+                          👁️ {p.views_count.toLocaleString('en-IN')} views
+                        </div>
+                      )}
                     </div>
                   </div>
                 </td>
                 <td className={styles.td}>
                   <span
                     className={`${styles.badge} ${
-                      p.property_type === "Holiday"
+                      (p.property_type || "").toLowerCase() === "holiday"
                         ? styles.badgeHoliday
-                        : p.property_type === "Commercial"
+                        : (p.property_type || "").toLowerCase() === "commercial"
                         ? styles.badgeCommercial
                         : styles.badgeInternational
                     }`}
@@ -571,7 +615,7 @@ export default function PropertiesPage() {
                         <div
                           className={styles.miniFill}
                           style={{
-                            width: `${(p.sold_fractions / p.total_fractions) * 100}%`,
+                            width: `${p.total_fractions > 0 ? (p.sold_fractions / p.total_fractions) * 100 : 0}%`,
                             backgroundColor:
                               p.available_fractions === 0 ? "#DC2626" : "#16A34A",
                           }}
@@ -595,33 +639,45 @@ export default function PropertiesPage() {
                   </div>
                 </td>
                 <td className={styles.td}>
-                  <span
-                    style={{
-                      display: "inline-block",
-                      padding: "4px 8px",
-                      borderRadius: "6px",
-                      fontSize: "0.75rem",
-                      fontWeight: 700,
-                      background:
-                        p.approval_status === "approved"
-                          ? "#DCFCE7"
-                          : p.approval_status === "sold_out"
-                          ? "#FEF2F2"
-                          : p.approval_status === "rejected"
-                          ? "#FEE2E2"
-                          : "#FEF9C3",
-                      color:
-                        p.approval_status === "approved"
-                          ? "#166534"
-                          : p.approval_status === "sold_out"
-                          ? "#991B1B"
-                          : p.approval_status === "rejected"
-                          ? "#991B1B"
-                          : "#854D0E",
-                    }}
-                  >
-                    {p.approval_status}
-                  </span>
+                  {isSoldOut(p) ? (
+                    <span
+                      style={{
+                        display: "inline-block",
+                        padding: "4px 8px",
+                        borderRadius: "6px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        background: "#FEF2F2",
+                        color: "#991B1B",
+                      }}
+                    >
+                      Sold Out
+                    </span>
+                  ) : (
+                    <span
+                      style={{
+                        display: "inline-block",
+                        padding: "4px 8px",
+                        borderRadius: "6px",
+                        fontSize: "0.75rem",
+                        fontWeight: 700,
+                        background:
+                          p.approval_status === "approved"
+                            ? "#DCFCE7"
+                            : p.approval_status === "rejected"
+                            ? "#FEE2E2"
+                            : "#FEF9C3",
+                        color:
+                          p.approval_status === "approved"
+                            ? "#166534"
+                            : p.approval_status === "rejected"
+                            ? "#991B1B"
+                            : "#854D0E",
+                      }}
+                    >
+                      {p.approval_status === "approved" ? "Active" : p.approval_status === "pending_approval" ? "Pending Approval" : p.approval_status}
+                    </span>
+                  )}
                 </td>
                 <td className={styles.td}>
                   <div className={styles.actions}>
@@ -735,22 +791,53 @@ export default function PropertiesPage() {
 
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                 <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>City / District</label>
+                  <select
+                    value={MAJOR_CITIES.some(c => c.name.toLowerCase() === (newProp.district || "").toLowerCase() && c.name !== "Other") ? newProp.district : "Other"}
+                    onChange={(e) => {
+                      const selectedCityName = e.target.value;
+                      if (selectedCityName === "Other") {
+                        setNewProp(prev => ({ ...prev, district: "" }));
+                      } else {
+                        const cityObj = MAJOR_CITIES.find(c => c.name === selectedCityName);
+                        if (cityObj) {
+                          setNewProp(prev => ({
+                            ...prev,
+                            district: cityObj.name,
+                            state: cityObj.state || prev.state,
+                          }));
+                          setMapLat(cityObj.lat);
+                          setMapLng(cityObj.lng);
+                        }
+                      }
+                    }}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#FFFFFF" }}
+                  >
+                    <option value="" disabled>Select City</option>
+                    {MAJOR_CITIES.map((c) => (
+                      <option key={c.name} value={c.name}>
+                        {c.name}{c.state ? ` (${c.state})` : ""}
+                      </option>
+                    ))}
+                  </select>
+                  {(!MAJOR_CITIES.some(c => c.name.toLowerCase() === (newProp.district || "").toLowerCase() && c.name !== "Other")) && (
+                    <input
+                      type="text"
+                      required
+                      placeholder="Type custom city"
+                      value={newProp.district}
+                      onChange={(e) => setNewProp({ ...newProp, district: e.target.value })}
+                      style={{ width: "100%", padding: "6px 10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "6px", fontSize: "0.85rem" }}
+                    />
+                  )}
+                </div>
+                <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>State</label>
                   <input
                     type="text"
                     required
                     value={newProp.state}
                     onChange={(e) => setNewProp({ ...newProp, state: e.target.value })}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
-                  />
-                </div>
-                <div>
-                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>District / City</label>
-                  <input
-                    type="text"
-                    required
-                    value={newProp.district}
-                    onChange={(e) => setNewProp({ ...newProp, district: e.target.value })}
                     style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                   />
                 </div>

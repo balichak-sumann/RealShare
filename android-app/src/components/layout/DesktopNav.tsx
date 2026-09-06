@@ -16,6 +16,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useLocation } from '@/contexts/LocationContext';
 import { LocationPickerModal } from '@/components/ui/LocationPickerModal';
 import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 
 /**
  * Desktop top navigation.
@@ -52,7 +53,7 @@ export function DesktopNav() {
       try {
         const token = await currentUser.getIdToken();
         const res = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/notifications/feed`,
+          `${getApiUrl()}/api/notifications/feed`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (res.ok) {

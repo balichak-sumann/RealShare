@@ -12,40 +12,62 @@ export async function GET(request: Request) {
   try {
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
-    const inquiries = await prisma.serviceInquiry.findMany({ orderBy: { created_at: 'desc' } });
+
+    let inquiries: any[];
+    if ((prisma as any).serviceInquiry) {
+      inquiries = await (prisma as any).serviceInquiry.findMany({ orderBy: { created_at: 'desc' } });
+    } else {
+      inquiries = await prisma.$queryRaw<any[]>`SELECT * FROM service_inquiries ORDER BY created_at DESC`;
+    }
     return NextResponse.json(inquiries);
   } catch (error: any) {
     console.error('Failed to fetch service inquiries:', error);
-    return NextResponse.json({ error: 'Failed to fetch service inquiries' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to fetch service inquiries' }, { status: 500 });
   }
 }
 
-// POST: public intake -- the mobile app's Home Services screen submits a real
-// inquiry here (e.g. "Talk to an Expert" / tapping a service card) instead of
-// firing a dead button. The web-only Contact Us (service_type: "Website
-// Contact") and Partner With Us (service_type: "Partner Application") pages
-// use the same endpoint. No auth required so a not-yet-signed-in visitor can
-// still request a callback.
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const { customer_name, phone, email, service_type, property_reference, notes } = body;
+    const { customer_name, phone, email, service_type, property_reference, estimated_budget, assigned_to, status = 'New', notes } = body;
     if (!customer_name || !service_type || (!phone && !email)) {
       return NextResponse.json(
         { error: 'customer_name, service_type and at least one of phone/email are required' },
         { status: 400 }
       );
     }
-    const inquiry = await prisma.serviceInquiry.create({
-      data: { customer_name, phone, email, service_type, property_reference, notes },
-    });
+
+    let inquiry: any;
+    if ((prisma as any).serviceInquiry) {
+      inquiry = await (prisma as any).serviceInquiry.create({
+        data: {
+          customer_name: customer_name.trim(),
+          phone: phone?.trim() || null,
+          email: email?.trim() || null,
+          service_type: service_type.trim(),
+          property_reference: property_reference?.trim() || null,
+          estimated_budget: estimated_budget?.trim() || null,
+          assigned_to: assigned_to?.trim() || null,
+          status: status || 'New',
+          notes: notes?.trim() || null,
+        },
+      });
+    } else {
+      const id = `inq-${Date.now()}`;
+      const rows = await prisma.$queryRaw<any[]>`
+        INSERT INTO service_inquiries (id, customer_name, phone, email, service_type, property_reference, estimated_budget, assigned_to, status, notes, created_at)
+        VALUES (${id}, ${customer_name.trim()}, ${phone?.trim() || null}, ${email?.trim() || null}, ${service_type.trim()}, ${property_reference?.trim() || null}, ${estimated_budget?.trim() || null}, ${assigned_to?.trim() || null}, ${status || 'New'}, ${notes?.trim() || null}, NOW())
+        RETURNING *
+      `;
+      inquiry = rows[0];
+    }
     
-    // Send email notification to admin asynchronously (don't await so we respond faster to client)
+    // Send email notification to admin asynchronously
     sendServiceInquiryEmail({ customer_name, phone, email, service_type });
 
-    return NextResponse.json(inquiry);
+    return NextResponse.json(inquiry, { status: 201 });
   } catch (error: any) {
     console.error('Failed to create service inquiry:', error);
-    return NextResponse.json({ error: 'Failed to submit inquiry' }, { status: 500 });
+    return NextResponse.json({ error: error?.message || 'Failed to submit inquiry' }, { status: 500 });
   }
 }

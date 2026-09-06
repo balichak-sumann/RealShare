@@ -17,6 +17,7 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { GoldButton } from '@/components/ui/GoldButton';
 import { InvestmentScore } from '@/components/ui/InvestmentScore';
 import { TrustBadge } from '@/components/ui/TrustBadge';
+import { getApiUrl } from '@/lib/api';
 
 export default function PropertyDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -27,7 +28,7 @@ export default function PropertyDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties/${id}`)
+    fetch(`${getApiUrl()}/api/properties/${id}`)
       .then(res => res.json())
       .then(data => {
         setProperty(data);
@@ -81,7 +82,7 @@ export default function PropertyDetailsScreen() {
     setAskingQuestion(true);
     try {
       const token = await auth.currentUser.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations`, {
+      const res = await fetch(`${getApiUrl()}/api/conversations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -145,7 +146,7 @@ export default function PropertyDetailsScreen() {
       const token = await auth.currentUser.getIdToken();
 
       // 2. Create Order on Backend
-      const orderResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/transactions/create-order`, {
+      const orderResponse = await fetch(`${getApiUrl()}/api/transactions/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -166,7 +167,7 @@ export default function PropertyDetailsScreen() {
       // 3. Open Razorpay Modal (Web)
       if (Platform.OS === 'web') {
         const options = {
-          key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TSKXy2WO8gcwyH', 
+          key: orderData.keyId || process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TSKXy2WO8gcwyH', 
           amount: orderData.amount,
           currency: orderData.currency,
           name: 'RealShare',
@@ -174,7 +175,7 @@ export default function PropertyDetailsScreen() {
           order_id: orderData.orderId,
           handler: async function (response: any) {
             // 4. Verify Payment on Backend
-            const verifyRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/transactions/verify-payment`, {
+            const verifyRes = await fetch(`${getApiUrl()}/api/transactions/verify-payment`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',

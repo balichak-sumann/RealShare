@@ -17,6 +17,7 @@ import { GuestView } from '@/components/ui/GuestView';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { useUser } from '@/contexts/UserContext';
 import { AgentClientsScreen } from '@/components/agent/AgentClientsScreen';
+import { getApiUrl } from '@/lib/api';
 
 export default function PortfolioScreen() {
   const { profile } = useUser();
@@ -37,7 +38,7 @@ export default function PortfolioScreen() {
         const user = auth.currentUser;
         if (!user) { setLoading(false); return; }
         const token = await user.getIdToken();
-        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/portfolio`, {
+        const res = await fetch(`${getApiUrl()}/api/portfolio`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -77,7 +78,7 @@ export default function PortfolioScreen() {
         return;
       }
       const token = await currentUser.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations`, {
+      const res = await fetch(`${getApiUrl()}/api/conversations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

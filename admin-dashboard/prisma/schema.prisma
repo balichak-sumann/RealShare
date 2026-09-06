@@ -98,6 +98,7 @@ model Property {
   approval_status     String    @default("pending_approval") @db.VarChar(50)
   rejection_notes     String?   @db.Text
   featured            Boolean   @default(false)
+  views_count         Int       @default(0)
   created_at          DateTime  @default(now()) @db.Timestamptz(6)
   updated_at          DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
 
@@ -258,6 +259,24 @@ model Notification {
   @@map("notifications")
 }
 
+model ScheduledNotification {
+  id               String    @id @default(uuid()) @db.VarChar(36)
+  title            String    @db.VarChar(255)
+  body             String    @db.Text
+  audience         String    @default("all") @db.VarChar(50) // "all" | "investors" | "agents" | "builders"
+  repeat_type      String    @db.VarChar(20)  // "once" | "daily" | "weekly" | "monthly"
+  repeat_time      String?   @db.VarChar(10)  // "HH:MM" e.g. "09:00", "21:00"
+  repeat_day       Int?                        // 0-6 for weekly (0=Sun), 1-31 for monthly
+  next_send_at     DateTime  @db.Timestamptz(6)
+  is_active        Boolean   @default(true)
+  created_by       String?   @db.VarChar(128)
+  last_sent_at     DateTime? @db.Timestamptz(6)
+  send_count       Int       @default(0)
+  created_at       DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@map("scheduled_notifications")
+}
+
 model Banner {
   id         String   @id @default(uuid()) @db.VarChar(36)
   title      String   @db.VarChar(255)
@@ -286,6 +305,22 @@ model ServiceInquiry {
   created_at          DateTime @default(now()) @db.Timestamptz(6)
 
   @@map("service_inquiries")
+}
+
+model PremiumService {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  title       String   @db.VarChar(255)
+  category    String   @default("Premium Service") @db.VarChar(100)
+  description String?  @db.Text
+  pricing     String?  @db.VarChar(100)
+  image_url   String   @db.Text
+  icon        String?  @db.VarChar(100)
+  sort_order  Int      @default(0)
+  is_active   Boolean  @default(true)
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+  updated_at  DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  @@map("premium_services")
 }
 
 model SupportTicket {
@@ -427,3 +462,4 @@ model Message {
   @@index([conversation_id, created_at])
   @@map("messages")
 }
+

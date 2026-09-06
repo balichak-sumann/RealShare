@@ -19,6 +19,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useResponsive } from '@/hooks/useResponsive';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 
 interface HelpModalProps {
   visible: boolean;
@@ -99,8 +100,8 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
       if (!user) throw new Error('Not logged in');
       const token = await user.getIdToken();
 
-      // Ensure mock API endpoint for creating a ticket works (even if it just mocks the success)
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/tickets`, {
+      // Ensure API endpoint for creating a ticket works
+      const res = await fetch(`${getApiUrl()}/api/tickets`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

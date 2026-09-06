@@ -150,7 +150,8 @@ export default function ProfileScreen() {
         if (Platform.OS === 'web') {
           Alert.alert('Not Supported', 'Phone verification on Web is currently disabled during migration.');
         } else {
-          const rnauth = (await import('@react-native-firebase/auth')).default;
+          const rnauthModule = (await import('@react-native-firebase/auth')) as any;
+          const rnauth = rnauthModule.default || rnauthModule;
           // Use native Firebase to send the SMS and bypass recaptcha
           const confirmation = await rnauth().verifyPhoneNumber(`+91${inputValue}`);
           setVerificationId(confirmation.verificationId);
@@ -576,11 +577,13 @@ export default function ProfileScreen() {
                             verification_status: 'pending'
                           });
 
-                          setProfile({ 
-                            ...user, 
-                            kyc_status: 'pending',
-                            kyc_documents: updatedDocs
-                          });
+                          if (user && user.id) {
+                            setProfile({ 
+                              ...user, 
+                              kyc_status: 'pending',
+                              kyc_documents: updatedDocs
+                            });
+                          }
                           Alert.alert('Success', `${doc.title} uploaded successfully! It is now pending Admin approval.`);
                         } else {
                           Alert.alert('Error', 'Failed to submit document to Admin Portal.');

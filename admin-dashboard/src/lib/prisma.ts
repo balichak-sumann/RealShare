@@ -9,7 +9,7 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 let prisma: PrismaClient;
 
-if (!globalForPrisma.prisma) {
+if (!globalForPrisma.prisma || !(globalForPrisma.prisma as any).premiumService) {
   const pool = new Pool({ connectionString });
   const adapter = new PrismaPg(pool);
   prisma = new PrismaClient({ adapter });

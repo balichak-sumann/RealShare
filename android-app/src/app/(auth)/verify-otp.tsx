@@ -43,7 +43,8 @@ export default function VerifyOtpScreen() {
       if (Platform.OS === 'web') {
         setError('Phone verification on Web is currently disabled during migration.');
       } else {
-        const rnauth = (await import('@react-native-firebase/auth')).default;
+        const rnauthModule = (await import('@react-native-firebase/auth')) as any;
+        const rnauth = rnauthModule.default || rnauthModule;
         const confirmResult = await rnauth().signInWithPhoneNumber(phoneNumber);
         setVerificationId(confirmResult.verificationId);
       }

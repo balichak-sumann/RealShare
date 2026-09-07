@@ -10,7 +10,10 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 let prisma: PrismaClient;
 
 if (!globalForPrisma.prisma || !(globalForPrisma.prisma as any).premiumService) {
-  const pool = new Pool({ connectionString });
+  const pool = new Pool({
+    connectionString,
+    ssl: { rejectUnauthorized: false },
+  });
   const adapter = new PrismaPg(pool);
   prisma = new PrismaClient({ adapter });
   if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma;

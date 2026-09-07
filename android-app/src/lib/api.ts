@@ -14,3 +14,11 @@ export function getApiUrl(): string {
   }
   return process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
 }
+
+export function getFullImageUrl(url: string | null | undefined): string {
+  if (!url) return 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&fit=crop';
+  if (url.startsWith('http://') || url.startsWith('https://')) return url;
+  
+  const baseUrl = getApiUrl();
+  return url.startsWith('/') ? `${baseUrl}${url}` : `${baseUrl}/${url}`;
+}

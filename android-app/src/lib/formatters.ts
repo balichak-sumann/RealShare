@@ -1,3 +1,5 @@
+import { getFullImageUrl } from './api';
+
 export const formatPrice = (amount: number): string => {
   if (amount >= 10000000) {
     return `₹${(amount / 10000000).toFixed(2)} Cr`;
@@ -18,7 +20,7 @@ export const formatArea = (sqft: number): string => {
 export const propertyToCardProps = (p: any) => {
   const isOutright = p.listing_type === 'outright';
   const images = Array.isArray(p.images) && p.images.length > 0
-    ? p.images.map((img: any) => (typeof img === 'string' ? img : img.image_url))
+    ? p.images.map((img: any) => getFullImageUrl(typeof img === 'string' ? img : img.image_url))
     : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=400&fit=crop'];
 
   return {
@@ -44,9 +46,9 @@ export const propertyToCardProps = (p: any) => {
 // possession/completion date in the schema, so we surface when the listing
 // was posted instead of inventing a construction-completion date.
 export const propertyToProjectCardProps = (p: any) => {
-  const images = Array.isArray(p.images) && p.images.length > 0
-    ? p.images.map((img: any) => (typeof img === 'string' ? img : img.image_url))
-    : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&fit=crop'];
+  const images = Array.isArray(p.images) && p.images.length > 0 
+    ? p.images.map((img: any) => getFullImageUrl(typeof img === 'string' ? img : img.image_url))
+    : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1000'];
   const totalValue = Number(p.price_per_fraction) * (p.total_fractions || 1);
 
   return {

@@ -31,7 +31,9 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF"
+          "backgroundColor": "#FFFFFF",
+          "image": "./assets/images/transparent-1x1.png",
+          "imageWidth": 1
         }
       ],
       "@react-native-firebase/app",

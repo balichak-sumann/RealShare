@@ -2,6 +2,11 @@ import { Pool } from 'pg';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from '@prisma/client';
 
+// Accept Render's self-signed PostgreSQL TLS certificate
+if (process.env.NODE_ENV === 'production') {
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = '0';
+}
+
 const connectionString = process.env.DATABASE_URL;
 
 // Ensure we don't create multiple instances during hot reloading in dev

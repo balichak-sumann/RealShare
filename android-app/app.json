@@ -31,9 +31,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FFFFFF",
-          "image": "./assets/images/realshare-logo.png",
-          "imageWidth": 120
+          "backgroundColor": "#FFFFFF"
         }
       ],
       "@react-native-firebase/app",

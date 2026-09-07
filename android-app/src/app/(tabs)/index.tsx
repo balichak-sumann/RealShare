@@ -332,8 +332,8 @@ const styles = StyleSheet.create({
     zIndex: -1,
   },
   logoImage: {
-    width: 170,
-    height: 48,
+    width: 220,
+    height: 60,
     resizeMode: 'contain',
   },
   headerBottom: {

@@ -10,6 +10,7 @@ import {
   Image,
   TouchableWithoutFeedback,
   Modal,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -19,9 +20,6 @@ import { auth } from '@/lib/firebase';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { Ionicons } from '@expo/vector-icons';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
-/** Native keeps the original screen-relative width. */
-const NATIVE_DRAWER_WIDTH = SCREEN_WIDTH * 0.78;
 /** Web caps the drawer so it stays sane inside the centered desktop frame. */
 const WEB_DRAWER_MAX = 340;
 
@@ -46,14 +44,18 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
   const pathname = usePathname();
   const { profile, setProfile } = useUser();
   const slideAnim = useRef(new Animated.Value(0)).current;
+  const { width: screenWidth } = useWindowDimensions();
 
   // On web the drawer lives inside the centered app frame, so it must size to
   // that container rather than the browser viewport. Native is untouched.
-  const [containerWidth, setContainerWidth] = useState(SCREEN_WIDTH);
+  const [containerWidth, setContainerWidth] = useState(screenWidth);
   const DRAWER_WIDTH =
     Platform.OS === 'web'
       ? Math.min(containerWidth * 0.78, WEB_DRAWER_MAX)
-      : NATIVE_DRAWER_WIDTH;
+      : screenWidth * 0.78;
+
+  // Adaptive sizing based on drawer width
+  const isCompact = DRAWER_WIDTH < 260;
 
   const currentUser = auth.currentUser;
   const isGuest = !currentUser;
@@ -246,6 +248,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
         <View style={styles.drawerMenuList}>
           {roleMenuItems.map((item) => {
             const isActive = pathname === item.route || pathname.startsWith(item.route + '/');
+            const iconSize = isCompact ? 18 : 22;
 
             return (
               <TouchableOpacity
@@ -259,16 +262,16 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
                     colors={['rgba(212, 175, 55, 0.15)', 'rgba(212, 175, 55, 0.02)']}
                     start={{ x: 0, y: 0 }}
                     end={{ x: 1, y: 0 }}
-                    style={[styles.drawerMenuItem, styles.drawerMenuItemActive]}
+                    style={[styles.drawerMenuItem, styles.drawerMenuItemActive, isCompact && { paddingVertical: 10, paddingHorizontal: 10 }]}
                   >
                     <View style={styles.activeIndicator} />
-                    <Ionicons name={item.icon} size={22} color={GoldSystem.metallicGold} style={styles.drawerMenuIcon} />
-                    <Text style={[styles.drawerMenuLabel, styles.drawerMenuLabelActive]}>{item.label}</Text>
+                    <Ionicons name={item.icon} size={iconSize} color={GoldSystem.metallicGold} style={styles.drawerMenuIcon} />
+                    <Text style={[styles.drawerMenuLabel, styles.drawerMenuLabelActive]} numberOfLines={1}>{item.label}</Text>
                   </LinearGradient>
                 ) : (
-                  <View style={styles.drawerMenuItem}>
-                    <Ionicons name={item.icon} size={22} color={Neutrals.gray400} style={styles.drawerMenuIcon} />
-                    <Text style={styles.drawerMenuLabel}>{item.label}</Text>
+                  <View style={[styles.drawerMenuItem, isCompact && { paddingVertical: 10, paddingHorizontal: 10 }]}>
+                    <Ionicons name={item.icon} size={iconSize} color={Neutrals.gray400} style={styles.drawerMenuIcon} />
+                    <Text style={styles.drawerMenuLabel} numberOfLines={1}>{item.label}</Text>
                   </View>
                 )}
               </TouchableOpacity>
@@ -374,8 +377,8 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     paddingTop: Platform.OS === 'web' ? 40 : Platform.OS === 'android' ? 50 : 60,
-    paddingHorizontal: 24,
-    paddingBottom: 30,
+    paddingHorizontal: 20,
+    paddingBottom: 24,
     justifyContent: 'flex-start',
   },
   drawerProfile: {
@@ -475,17 +478,17 @@ const styles = StyleSheet.create({
   drawerMenuList: {
     flex: 1,
     flexShrink: 1,
-    marginTop: 8,
+    marginTop: 4,
     width: '100%',
   },
   drawerMenuBtn: {
-    marginBottom: 8,
+    marginBottom: 2,
   },
   drawerMenuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 12,
     borderRadius: Radius.lg,
     position: 'relative',
     overflow: 'hidden',
@@ -505,7 +508,8 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 4,
   },
   drawerMenuIcon: {
-    width: 36,
+    width: 32,
+    marginRight: 10,
   },
   drawerMenuLabel: {
     ...Typography.bodyLarge,
@@ -513,6 +517,7 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     letterSpacing: 0.3,
     flex: 1,
+    fontSize: 15,
   },
   drawerMenuLabelActive: {
     color: GoldSystem.metallicGold,
@@ -531,7 +536,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   drawerSignOutIcon: {
-    width: 36,
+    width: 32,
+    marginRight: 10,
   },
   drawerSignOutText: {
     ...Typography.bodyLarge,

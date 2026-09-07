@@ -8,12 +8,13 @@
     "scheme": "androidapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.indusinnovate.realshare",
+      "bundleIdentifier": "com.realshare.app",
       "icon": "./assets/expo.icon",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
-      "package": "com.realshare",
+      "package": "com.realshare.app",
+      "versionCode": 1,
       "adaptiveIcon": {
         "backgroundColor": "#E6F4FE",
         "foregroundImage": "./assets/images/android-icon-foreground.png",

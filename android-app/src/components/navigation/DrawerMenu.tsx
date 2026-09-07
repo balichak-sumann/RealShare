@@ -48,7 +48,9 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
 
   // Calculate drawer width purely based on screenWidth so it responds instantly
   // to SSR hydration and window resizes without waiting for onLayout events.
-  const DRAWER_WIDTH = Math.min(screenWidth * 0.78, WEB_DRAWER_MAX);
+  // We enforce a minimum width of 280 to prevent the layout from collapsing to 0
+  // if Dimensions API returns 0 on initial Android mount.
+  const DRAWER_WIDTH = Math.max(280, Math.min((screenWidth || 375) * 0.78, WEB_DRAWER_MAX));
 
   // Adaptive sizing based on drawer width (under 280px is compact)
   const isCompact = DRAWER_WIDTH < 280;

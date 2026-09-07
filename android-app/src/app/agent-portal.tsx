@@ -30,6 +30,8 @@ import { ServicesStrip } from '@/components/home/ServicesStrip';
 import { TopDevelopers } from '@/components/home/TopDevelopers';
 import { propertyToCardProps } from '@/lib/formatters';
 import { Ionicons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { uploadImageToFirebase } from '@/lib/uploadImage';
 const screenWidth = Dimensions.get('window').width;
 
 let LineChart: any = null;
@@ -62,6 +64,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
   const [postFractions, setPostFractions] = useState('100');
   const [postPrice, setPostPrice] = useState('500000');
   const [postYield, setPostYield] = useState('9.0');
+  const [postImageUrl, setPostImageUrl] = useState('');
   const [postSubmitting, setPostSubmitting] = useState(false);
 
   useEffect(() => {
@@ -103,6 +106,18 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
         setPostSubmitting(false);
         return;
       }
+
+      let finalImageUrl = postImageUrl;
+      if (postImageUrl && !postImageUrl.startsWith('http')) {
+        try {
+          finalImageUrl = await uploadImageToFirebase(postImageUrl, 'property_images');
+        } catch (error) {
+          alert('Failed to upload the image. Please try again.');
+          setPostSubmitting(false);
+          return;
+        }
+      }
+
       const token = await user.getIdToken();
       const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`, {
         method: 'POST',
@@ -120,13 +135,14 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
           price_per_fraction: Number(postPrice),
           booking_amount: Number(postPrice) * 0.1,
           assured_yield: Number(postYield),
-          image_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&fit=crop',
+          image_url: finalImageUrl || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&fit=crop',
         }),
       });
       if (res.ok) {
         setShowPostModal(false);
         setPostTitle('');
         setPostLocality('');
+        setPostImageUrl('');
         alert('Property submitted to RealShare Admin for approval.');
         fetchMyListings();
       } else {
@@ -281,9 +297,9 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
         </View>
 
         <TopDevelopers />
-        <HotProjects />
+        <HotProjects properties={properties.slice(0, 8)} />
 
-        <TopLocalities />
+        <TopLocalities properties={properties} />
         <ServicesStrip />
 
         {/* Referral Link Generator - Gold Accent */}
@@ -400,6 +416,42 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
 
             <Text style={styles.inputLabel}>Assured Yield (%)</Text>
             <TextInput style={styles.input} keyboardType="numeric" value={postYield} onChangeText={setPostYield} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>Property Image (Optional)</Text>
+            <TouchableOpacity 
+              style={styles.imagePickerBtn}
+              onPress={async () => {
+                const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+                if (permissionResult.granted === false) {
+                  alert("You need to grant permission to access your photos.");
+                  return;
+                }
+                const pickerResult = await ImagePicker.launchImageLibraryAsync({
+                  mediaTypes: ImagePicker.MediaTypeOptions.Images,
+                  allowsEditing: true,
+                  aspect: [16, 9],
+                  quality: 0.8,
+                });
+                if (!pickerResult.canceled && pickerResult.assets && pickerResult.assets.length > 0) {
+                  setPostImageUrl(pickerResult.assets[0].uri);
+                }
+              }}
+            >
+              {postImageUrl ? (
+                <View style={styles.imagePreviewContainer}>
+                  <Image source={{ uri: postImageUrl }} style={styles.imagePreview} />
+                  <View style={styles.changeImageOverlay}>
+                    <Ionicons name="camera-reverse-outline" size={24} color="#FFF" />
+                    <Text style={styles.changeImageText}>Change Photo</Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={styles.imagePlaceholder}>
+                  <Ionicons name="cloud-upload-outline" size={32} color="#9CA3AF" />
+                  <Text style={styles.imagePlaceholderText}>Tap to select a photo</Text>
+                </View>
+              )}
+            </TouchableOpacity>
 
             <TouchableOpacity style={styles.saveBankBtn} onPress={handlePostProperty} disabled={postSubmitting}>
               {postSubmitting ? <ActivityIndicator color="#D4AF37" /> : <Text style={styles.saveBankText}>Submit for Approval</Text>}
@@ -879,7 +931,67 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: 12, fontWeight: '700', color: '#374151', marginBottom: 6, textTransform: 'uppercase' },
   input: { backgroundColor: '#F9FAFB', borderWidth: 1, borderColor: '#E5E7EB', borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: '#0F172A', marginBottom: 16 },
   saveBankBtn: { backgroundColor: '#111827', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 8 },
-  saveBankText: { color: '#D4AF37', fontWeight: '800', fontSize: 14 },
-  cancelBankBtn: { backgroundColor: '#F3F4F6', paddingVertical: 14, borderRadius: 10, alignItems: 'center', marginTop: 8 },
-  cancelBankText: { color: '#374151', fontWeight: '700', fontSize: 14 },
+  saveBankText: {
+    color: '#111827',
+    fontWeight: '700',
+    fontSize: 14,
+  },
+  cancelBankBtn: {
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    marginBottom: 40,
+  },
+  cancelBankText: {
+    color: '#6B7280',
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  imagePickerBtn: {
+    width: '100%',
+    height: 140,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+    overflow: 'hidden',
+    backgroundColor: '#F9FAFB',
+    marginBottom: 20,
+  },
+  imagePlaceholder: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 10,
+  },
+  imagePlaceholderText: {
+    color: '#6B7280',
+    fontWeight: '600',
+    fontSize: 13,
+    marginTop: 8,
+  },
+  imagePreviewContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  imagePreview: {
+    width: '100%',
+    height: '100%',
+    resizeMode: 'cover',
+  },
+  changeImageOverlay: {
+    position: 'absolute',
+    bottom: 0, left: 0, right: 0,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    paddingVertical: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  changeImageText: {
+    color: '#FFF',
+    fontSize: 12,
+    fontWeight: '700',
+  }
 });

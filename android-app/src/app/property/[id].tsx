@@ -17,11 +17,13 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { GoldButton } from '@/components/ui/GoldButton';
 import { InvestmentScore } from '@/components/ui/InvestmentScore';
 import { TrustBadge } from '@/components/ui/TrustBadge';
+import { useActivityHistory } from '@/hooks/useActivityHistory';
 
 export default function PropertyDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { profile } = useUser();
+  const { addView } = useActivityHistory();
 
   const [property, setProperty] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -32,6 +34,9 @@ export default function PropertyDetailsScreen() {
       .then(data => {
         setProperty(data);
         setLoading(false);
+        if (data && data.id) {
+          addView(data);
+        }
       })
       .catch(err => {
         console.error('Failed to fetch property details:', err);

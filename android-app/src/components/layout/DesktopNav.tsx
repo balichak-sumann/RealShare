@@ -90,7 +90,11 @@ export function DesktopNav() {
       : '');
 
   const submitSearch = () => {
-    router.push('/search' as any);
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query.trim())}` as any);
+    } else {
+      router.push('/search' as any);
+    }
   };
 
   return (

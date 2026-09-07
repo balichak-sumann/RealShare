@@ -1,26 +1,17 @@
-import React, { useEffect, useState } from 'react';
-import { View, StyleSheet, ScrollView } from 'react-native';
+import React from 'react';
+import { View, StyleSheet } from 'react-native';
 import { SectionHeader } from '../ui/SectionHeader';
 import { PropertyCard } from '../ui/PropertyCard';
 import { propertyToCardProps } from '@/lib/formatters';
 import { useRouter } from 'expo-router';
 import { ResponsiveRail } from '../layout/ResponsiveRail';
 
-export function HotProjects() {
-  const router = useRouter();
-  const [properties, setProperties] = useState<any[]>([]);
+interface HotProjectsProps {
+  properties: any[];
+}
 
-  useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (Array.isArray(data)) {
-          // API already orders by created_at desc, so the newest listings come first.
-          setProperties(data.slice(0, 8));
-        }
-      })
-      .catch(() => {});
-  }, []);
+export function HotProjects({ properties }: HotProjectsProps) {
+  const router = useRouter();
 
   if (properties.length === 0) return null;
 

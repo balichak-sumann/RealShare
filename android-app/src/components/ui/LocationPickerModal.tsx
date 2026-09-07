@@ -7,7 +7,7 @@ import { useLocation } from '@/contexts/LocationContext';
 // RealShare is currently live (has real listings) only in Hyderabad. The rest
 // of the cities are shown honestly as upcoming markets rather than hidden or
 // silently faked with Hyderabad data under a different city's name.
-const LIVE_CITIES = ['Hyderabad'];
+const LIVE_CITIES = ['Hyderabad', 'Bengaluru', 'Mumbai'];
 
 interface LocationPickerModalProps {
   visible: boolean;
@@ -16,6 +16,23 @@ interface LocationPickerModalProps {
 
 export function LocationPickerModal({ visible, onClose }: LocationPickerModalProps) {
   const { city, setCity, availableCities } = useLocation();
+  const [liveCities, setLiveCities] = React.useState<string[]>(['Hyderabad', 'Bengaluru', 'Mumbai']);
+
+  React.useEffect(() => {
+    if (visible) {
+      fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) {
+            const uniqueDistricts = Array.from(new Set(data.map(p => p.district).filter(Boolean)));
+            if (uniqueDistricts.length > 0) {
+              setLiveCities(uniqueDistricts);
+            }
+          }
+        })
+        .catch(err => console.error("Failed to fetch live cities", err));
+    }
+  }, [visible]);
 
   const handleSelect = (selected: string) => {
     setCity(selected);
@@ -39,7 +56,7 @@ export function LocationPickerModal({ visible, onClose }: LocationPickerModalPro
           <View style={styles.list}>
             {availableCities.map((c) => {
               const isSelected = c === city;
-              const isLive = LIVE_CITIES.includes(c);
+              const isLive = liveCities.includes(c);
               return (
                 <TouchableOpacity
                   key={c}

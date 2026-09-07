@@ -109,7 +109,7 @@ export default function PropertyDetailsScreen() {
     }
   };
 
-  const fractionPrice = Number(property.price_per_fraction) || 500000;
+  const fractionPrice = Number(property.price_per_fraction) || 0;
   const bookingAmtPerFrac = Number(property.booking_amount) || 25000;
   const isOutright = property.listing_type === 'outright';
   const totalBookingAmt = isOutright ? fractionsToBuy * fractionPrice : fractionsToBuy * bookingAmtPerFrac;
@@ -274,7 +274,9 @@ export default function PropertyDetailsScreen() {
           <View style={styles.priceCard}>
             <View>
               <Text style={styles.priceLabel}>Price / Min. Investment</Text>
-              <Text style={styles.priceValue}>₹ {fractionPrice.toLocaleString('en-IN')}</Text>
+              <Text style={[styles.priceValue, fractionPrice === 0 && { fontSize: 22 }]}>
+                {fractionPrice === 0 ? 'Price on Request' : `₹ ${fractionPrice.toLocaleString('en-IN')}`}
+              </Text>
             </View>
             <View style={styles.scoreContainer}>
               <InvestmentScore score={92} size={50} showLabel={false} strokeWidth={4} />
@@ -371,8 +373,10 @@ export default function PropertyDetailsScreen() {
       {/* Bottom Action Bar */}
       <View style={styles.bottomBar}>
         <View style={styles.bottomBarText}>
-          <Text style={styles.bottomLabel}>{isOutright ? 'Full Property Price' : 'Booking Amount'}</Text>
-          <Text style={styles.bottomPrice}>₹ {(isOutright ? fractionPrice : bookingAmtPerFrac).toLocaleString('en-IN')}</Text>
+          <Text style={styles.bottomLabel}>{fractionPrice === 0 ? 'Pricing' : (isOutright ? 'Full Property Price' : 'Booking Amount')}</Text>
+          <Text style={[styles.bottomPrice, fractionPrice === 0 && { fontSize: 18 }]}>
+            {fractionPrice === 0 ? 'On Request' : `₹ ${(isOutright ? fractionPrice : bookingAmtPerFrac).toLocaleString('en-IN')}`}
+          </Text>
         </View>
         <GoldButton 
           title={isOutright ? 'Buy Now' : 'Invest Now'} 

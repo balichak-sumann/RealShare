@@ -74,9 +74,13 @@ export function PropertyCard({
 
       <View style={styles.content}>
         <View style={styles.headerRow}>
-          <View style={styles.priceContainer}>
-            <Text style={styles.price}>{price}</Text>
-          </View>
+          {price ? (
+            <View style={styles.priceContainer}>
+              <Text style={styles.price}>{price}</Text>
+            </View>
+          ) : (
+            <View style={{ flex: 1 }} />
+          )}
           <View style={styles.scoreBadge}>
             <Text style={styles.scoreText}>{score}</Text>
           </View>

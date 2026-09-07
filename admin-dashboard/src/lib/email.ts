@@ -15,6 +15,7 @@ export interface ServiceInquiryDetails {
   phone?: string | null;
   email?: string | null;
   service_type: string;
+  property_reference?: string | null;
 }
 
 export async function sendServiceInquiryEmail(details: ServiceInquiryDetails) {
@@ -51,9 +52,15 @@ export async function sendServiceInquiryEmail(details: ServiceInquiryDetails) {
               <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #1a1a1a;">${details.email || 'Not provided'}</td>
             </tr>
             <tr>
-              <td style="padding: 10px 0; color: #666;"><strong>Service Requested:</strong></td>
-              <td style="padding: 10px 0; color: #cda858; font-weight: bold;">${details.service_type}</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #666;"><strong>Service Requested:</strong></td>
+              <td style="padding: 10px 0; border-bottom: 1px solid #eee; color: #cda858; font-weight: bold;">${details.service_type}</td>
             </tr>
+            ${details.property_reference ? `
+            <tr>
+              <td style="padding: 10px 0; color: #666;"><strong>Property:</strong></td>
+              <td style="padding: 10px 0; color: #1a1a1a; font-weight: bold;">${details.property_reference}</td>
+            </tr>
+            ` : ''}
           </table>
         </div>
         

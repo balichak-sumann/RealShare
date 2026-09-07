@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     }
     
     // Send email notification to admin asynchronously
-    sendServiceInquiryEmail({ customer_name, phone, email, service_type });
+    sendServiceInquiryEmail({ customer_name, phone, email, service_type, property_reference });
 
     return NextResponse.json(inquiry, { status: 201 });
   } catch (error: any) {

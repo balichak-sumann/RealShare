@@ -17,6 +17,7 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { GoldButton } from '@/components/ui/GoldButton';
 import { InvestmentScore } from '@/components/ui/InvestmentScore';
 import { TrustBadge } from '@/components/ui/TrustBadge';
+import { PropertyInquiryModal } from '@/components/ui/PropertyInquiryModal';
 import { useActivityHistory } from '@/hooks/useActivityHistory';
 import { getApiUrl } from '@/lib/api';
 
@@ -52,6 +53,7 @@ export default function PropertyDetailsScreen() {
   const [investmentSuccess, setInvestmentSuccess] = useState(false);
   const [certificateId, setCertificateId] = useState('');
   const [askingQuestion, setAskingQuestion] = useState(false);
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
 
   if (loading) {
     return (
@@ -273,10 +275,14 @@ export default function PropertyDetailsScreen() {
 
           <View style={styles.priceCard}>
             <View>
-              <Text style={styles.priceLabel}>Price / Min. Investment</Text>
-              <Text style={[styles.priceValue, fractionPrice === 0 && { fontSize: 22 }]}>
-                {fractionPrice === 0 ? 'Price on Request' : `₹ ${fractionPrice.toLocaleString('en-IN')}`}
-              </Text>
+              {fractionPrice !== 0 && (
+                <>
+                  <Text style={styles.priceLabel}>Price / Min. Investment</Text>
+                  <Text style={styles.priceValue}>
+                    ₹ {fractionPrice.toLocaleString('en-IN')}
+                  </Text>
+                </>
+              )}
             </View>
             <View style={styles.scoreContainer}>
               <InvestmentScore score={92} size={50} showLabel={false} strokeWidth={4} />
@@ -372,23 +378,39 @@ export default function PropertyDetailsScreen() {
 
       {/* Bottom Action Bar */}
       <View style={styles.bottomBar}>
-        <View style={styles.bottomBarText}>
-          <Text style={styles.bottomLabel}>{fractionPrice === 0 ? 'Pricing' : (isOutright ? 'Full Property Price' : 'Booking Amount')}</Text>
-          <Text style={[styles.bottomPrice, fractionPrice === 0 && { fontSize: 18 }]}>
-            {fractionPrice === 0 ? 'On Request' : `₹ ${(isOutright ? fractionPrice : bookingAmtPerFrac).toLocaleString('en-IN')}`}
-          </Text>
-        </View>
-        <GoldButton 
-          title={isOutright ? 'Buy Now' : 'Invest Now'} 
-          onPress={() => {
-            if (!auth.currentUser) {
-              router.push('/(auth)/sign-in');
-              return;
-            }
-            setShowPaymentModal(true);
-          }} 
-          style={{ width: 160 }}
-        />
+        {fractionPrice === 0 ? (
+          <>
+            <View style={styles.bottomBarText}>
+              <Text style={styles.bottomLabel}>Pricing</Text>
+              <Text style={styles.bottomPrice}>On Request</Text>
+            </View>
+            <GoldButton 
+              title="Request Details"
+              onPress={() => setShowInquiryModal(true)} 
+              style={{ width: 160 }}
+            />
+          </>
+        ) : (
+          <>
+            <View style={styles.bottomBarText}>
+              <Text style={styles.bottomLabel}>{isOutright ? 'Full Property Price' : 'Booking Amount'}</Text>
+              <Text style={styles.bottomPrice}>
+                ₹ {(isOutright ? fractionPrice : bookingAmtPerFrac).toLocaleString('en-IN')}
+              </Text>
+            </View>
+            <GoldButton 
+              title={isOutright ? 'Buy Now' : 'Invest Now'} 
+              onPress={() => {
+                if (!auth.currentUser) {
+                  router.push('/(auth)/sign-in');
+                  return;
+                }
+                setShowPaymentModal(true);
+              }} 
+              style={{ width: 160 }}
+            />
+          </>
+        )}
       </View>
 
       {/* Payment Modal */}
@@ -460,6 +482,12 @@ export default function PropertyDetailsScreen() {
           </View>
         </View>
       </Modal>
+
+      <PropertyInquiryModal 
+        visible={showInquiryModal} 
+        onClose={() => setShowInquiryModal(false)} 
+        propertyTitle={property.title} 
+      />
 
     </View>
   );

@@ -28,7 +28,7 @@ export const propertyToCardProps = (p: any) => {
     title: p.title,
     location: [p.locality, p.district].filter(Boolean).join(', '),
     price: Number(p.price_per_fraction) === 0
-      ? 'Price on Request'
+      ? ''
       : isOutright
         ? formatPrice(Number(p.price_per_fraction))
         : `${formatPrice(Number(p.price_per_fraction))} / fraction`,
@@ -57,7 +57,7 @@ export const propertyToProjectCardProps = (p: any) => {
     developer: p.developer?.name || 'Independent',
     location: [p.locality, p.district].filter(Boolean).join(', '),
     image: images[0],
-    priceRange: totalValue === 0 ? 'Price on Request' : formatPrice(totalValue),
+    priceRange: totalValue === 0 ? '' : formatPrice(totalValue),
     possession: p.created_at ? `Listed ${new Date(p.created_at).toLocaleDateString()}` : 'Recently listed',
     hasRera: !!p.developer?.rera_registered,
   };

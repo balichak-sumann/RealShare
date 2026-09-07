@@ -27,10 +27,10 @@ export function TopDevelopers() {
       
       // Fallback to mock data if API fails or is empty
       setDevelopers([
-        { id: '1', name: 'DLF Group', rating: 4.8, _count: { properties: 12 }, logo_url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=120&h=120&fit=crop' },
-        { id: '2', name: 'Prestige', rating: 4.6, _count: { properties: 8 }, logo_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=120&h=120&fit=crop' },
-        { id: '3', name: 'Lodha', rating: 4.9, _count: { properties: 15 }, logo_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=120&h=120&fit=crop' },
-        { id: '4', name: 'Godrej', rating: 4.7, _count: { properties: 10 }, logo_url: 'https://images.unsplash.com/photo-1600607687920-4e2a09be15ea?w=120&h=120&fit=crop' },
+        { id: '1', name: 'DLF Group', rating: 4.8, _count: { properties: 12 }, logo_source: require('@/assets/images/developers/dlf.png') },
+        { id: '2', name: 'Prestige', rating: 4.6, _count: { properties: 8 }, logo_source: require('@/assets/images/developers/prestige.png') },
+        { id: '3', name: 'Lodha', rating: 4.9, _count: { properties: 15 }, logo_source: require('@/assets/images/developers/lodha.jpg') },
+        { id: '4', name: 'Godrej', rating: 4.7, _count: { properties: 10 }, logo_source: require('@/assets/images/developers/godrej.png') },
       ]);
     };
     fetchDevelopers();
@@ -45,7 +45,7 @@ export function TopDevelopers() {
         <View style={styles.desktopGrid}>
           {developers.map((dev) => (
             <TouchableOpacity key={dev.id} style={[styles.devCard, styles.devCardDesktop, { flex: 1, minWidth: 200 }]} activeOpacity={0.7}>
-              <Image source={{ uri: dev.logo_url || PLACEHOLDER_LOGO }} style={[styles.devLogo, styles.devLogoDesktop]} />
+              <Image source={dev.logo_source || { uri: dev.logo_url || PLACEHOLDER_LOGO }} style={[styles.devLogo, styles.devLogoDesktop]} />
               <Text style={[styles.devName, styles.devNameDesktop]} numberOfLines={1}>{dev.name}</Text>
               <Text style={[styles.devInfo, styles.devInfoDesktop]}>
                 {dev._count?.properties ?? 0} Projects · ⭐ {Number(dev.rating).toFixed(1)}
@@ -57,7 +57,7 @@ export function TopDevelopers() {
         <ResponsiveRail contentContainerStyle={styles.scrollContent}>
           {developers.map((dev) => (
             <TouchableOpacity key={dev.id} style={styles.devCard} activeOpacity={0.7}>
-              <Image source={{ uri: dev.logo_url || PLACEHOLDER_LOGO }} style={styles.devLogo} />
+              <Image source={dev.logo_source || { uri: dev.logo_url || PLACEHOLDER_LOGO }} style={styles.devLogo} />
               <Text style={styles.devName} numberOfLines={1}>{dev.name}</Text>
               <Text style={styles.devInfo}>
                 {dev._count?.properties ?? 0} Projects · ⭐ {Number(dev.rating).toFixed(1)}

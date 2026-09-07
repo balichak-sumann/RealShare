@@ -46,16 +46,12 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
   const slideAnim = useRef(new Animated.Value(0)).current;
   const { width: screenWidth } = useWindowDimensions();
 
-  // On web the drawer lives inside the centered app frame, so it must size to
-  // that container rather than the browser viewport. Native is untouched.
-  const [containerWidth, setContainerWidth] = useState(screenWidth);
-  const DRAWER_WIDTH =
-    Platform.OS === 'web'
-      ? Math.min(containerWidth * 0.78, WEB_DRAWER_MAX)
-      : screenWidth * 0.78;
+  // Calculate drawer width purely based on screenWidth so it responds instantly
+  // to SSR hydration and window resizes without waiting for onLayout events.
+  const DRAWER_WIDTH = Math.min(screenWidth * 0.78, WEB_DRAWER_MAX);
 
-  // Adaptive sizing based on drawer width
-  const isCompact = DRAWER_WIDTH < 260;
+  // Adaptive sizing based on drawer width (under 280px is compact)
+  const isCompact = DRAWER_WIDTH < 280;
 
   const currentUser = auth.currentUser;
   const isGuest = !currentUser;
@@ -165,14 +161,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
   };
 
   return (
-    <View
-      style={styles.root}
-      onLayout={
-        Platform.OS === 'web'
-          ? (e) => setContainerWidth(e.nativeEvent.layout.width)
-          : undefined
-      }
-    >
+    <View style={styles.root}>
       {/* Drawer Menu (behind main content) */}
       <Animated.View
         style={[

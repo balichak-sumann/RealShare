@@ -135,7 +135,7 @@ export default function PropertyRequestsPage() {
   });
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Property Requests">
       <div className={styles.container}>
         <div className={styles.header}>
           <div>

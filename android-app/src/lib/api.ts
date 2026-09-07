@@ -12,5 +12,5 @@ export function getApiUrl(): string {
       return 'http://localhost:3000';
     }
   }
-  return process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000';
+  return process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
 }

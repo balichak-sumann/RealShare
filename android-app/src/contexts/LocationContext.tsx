@@ -7,14 +7,14 @@ type LocationContextType = {
 };
 
 const LocationContext = createContext<LocationContextType>({
-  city: 'Hyderabad',
+  city: 'All India',
   setCity: () => {},
-  availableCities: ['Hyderabad', 'Bengaluru', 'Mumbai', 'Pune', 'Delhi NCR', 'Chennai'],
+  availableCities: ['All India', 'Hyderabad', 'Bengaluru', 'Mumbai', 'Pune', 'Delhi NCR', 'Chennai'],
 });
 
 export function LocationProvider({ children }: { children: React.ReactNode }) {
-  const [city, setCity] = useState('Hyderabad');
-  const availableCities = ['Hyderabad', 'Bengaluru', 'Mumbai', 'Pune', 'Delhi NCR', 'Chennai'];
+  const [city, setCity] = useState('All India');
+  const availableCities = ['All India', 'Hyderabad', 'Bengaluru', 'Mumbai', 'Pune', 'Delhi NCR', 'Chennai'];
 
   return (
     <LocationContext.Provider value={{ city, setCity, availableCities }}>

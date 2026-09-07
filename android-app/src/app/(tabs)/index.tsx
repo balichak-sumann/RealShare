@@ -1,14 +1,13 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import {
   StyleSheet,
   View,
   ScrollView,
   Text,
   TouchableOpacity,
-  Image,
   Platform,
   Animated,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
@@ -80,7 +79,8 @@ export default function HomeScreen() {
 
   // Single fetch when city changes — all category filtering happens in memory
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?district=${city}`)
+    const query = city === 'All India' ? '' : `?district=${city}`;
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties${query}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -171,7 +171,11 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <View style={[styles.logoContainer, { opacity: splashDone ? 1 : 0 }]} pointerEvents="none">
-            <Image source={require('../../../assets/logo.png')} style={styles.logoImage} />
+            <Image 
+              source={require('../../../assets/logo.png')} 
+              style={styles.logoImage} 
+              contentFit="contain" 
+            />
           </View>
 
           <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.headerIconBtnRight}>
@@ -334,7 +338,6 @@ const styles = StyleSheet.create({
   logoImage: {
     width: 220,
     height: 60,
-    resizeMode: 'contain',
   },
   headerBottom: {
     flexDirection: 'row',

@@ -305,28 +305,7 @@ export function AnimatedSplashOverlay() {
         style={StyleSheet.absoluteFill}
       />
 
-      {/* Soft gold glow behind the composition */}
-      <Animated.View
-        pointerEvents="none"
-        style={[
-          sp.bgGlow,
-          {
-            width: SW * 1.2,
-            height: SW * 1.2,
-            borderRadius: SW * 0.6,
-            top: SH / 2 - SW * 0.6,
-            left: -SW * 0.1,
-          },
-          glowStyle,
-        ]}
-      >
-        <LinearGradient
-          colors={['rgba(212,175,55,0.22)', 'rgba(212,175,55,0.05)', 'transparent']}
-          style={StyleSheet.absoluteFill}
-          start={{ x: 0.5, y: 0.5 }}
-          end={{ x: 0.5, y: 1 }}
-        />
-      </Animated.View>
+
 
       {/* Element "box" — all icons animate within this small central zone */}
       <View pointerEvents="none" style={sp.center}>

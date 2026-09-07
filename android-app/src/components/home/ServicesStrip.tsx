@@ -5,7 +5,7 @@ import { Neutrals, Radius, Typography, Shadows, GoldSystem } from '@/constants/d
 import { SectionHeader } from '../ui/SectionHeader';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useResponsive } from '@/hooks/useResponsive';
-import { Video, ResizeMode } from 'expo-av';
+// expo-av removed due to RN 0.86 JSI mismatch causing startup crashes
 import { getApiUrl } from '@/lib/api';
 
 const DEFAULT_SERVICES = [
@@ -60,21 +60,17 @@ const AnimatedServiceItem = ({ item, onPress, isDesktop }: { item: any, onPress:
         { transform: [{ scale: scaleAnim }], overflow: 'hidden', borderRadius: isDesktop ? Radius.xl : Radius.lg }
       ]}>
         {isDesktop && item.video ? (
-          <View style={styles.imageBg}>
-            <Video
-              source={item.video}
-              style={StyleSheet.absoluteFill}
-              resizeMode={ResizeMode.STRETCH}
-              shouldPlay
-              isLooping
-              isMuted
-            />
+          <ImageBackground 
+            source={{ uri: item.image || item.image_url }} 
+            style={styles.imageBg}
+            imageStyle={{ borderRadius: isDesktop ? Radius.xl : Radius.lg }}
+          >
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.85)']}
               style={[styles.gradient, isDesktop && styles.gradientDesktop]}
             />
             <Text style={[styles.title, isDesktop && styles.titleDesktop]}>{item.title}</Text>
-          </View>
+          </ImageBackground>
         ) : (
           <ImageBackground 
             source={{ uri: item.image || item.image_url }} 

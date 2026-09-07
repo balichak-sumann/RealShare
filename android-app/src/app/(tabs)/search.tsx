@@ -8,6 +8,7 @@ import { PROPERTY_CATEGORIES } from '@/constants/uiConstants';
 import { propertyToCardProps } from '@/lib/formatters';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
+import { getApiUrl } from '@/lib/api';
 
 import { useLocation } from '@/contexts/LocationContext';
 import { useLocalSearchParams } from 'expo-router';

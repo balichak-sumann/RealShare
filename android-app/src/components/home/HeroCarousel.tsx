@@ -5,6 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
+import { getApiUrl } from '@/lib/api';
 
 type Banner = {
   id: string;
@@ -58,10 +59,9 @@ export function HeroCarousel() {
   }, [activeIndex]);
 
   useEffect(() => {
-    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/cms/banners`);
+        const res = await fetch(`${getApiUrl()}/api/cms/banners`);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {

@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Animated, TouchableWithoutFeedback, ImageBackground, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, Radius, Typography, Shadows, GoldSystem } from '@/constants/design';
@@ -6,8 +6,9 @@ import { SectionHeader } from '../ui/SectionHeader';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useResponsive } from '@/hooks/useResponsive';
 import { Video, ResizeMode } from 'expo-av';
+import { getApiUrl } from '@/lib/api';
 
-const SERVICES = [
+const DEFAULT_SERVICES = [
   { 
     id: '1', 
     title: 'Interior Design', 
@@ -58,11 +59,11 @@ const AnimatedServiceItem = ({ item, onPress, isDesktop }: { item: any, onPress:
         isDesktop && styles.serviceItemDesktop, 
         { transform: [{ scale: scaleAnim }], overflow: 'hidden', borderRadius: isDesktop ? Radius.xl : Radius.lg }
       ]}>
-        {isDesktop ? (
+        {isDesktop && item.video ? (
           <View style={styles.imageBg}>
             <Video
               source={item.video}
-              style={StyleSheet.absoluteFillObject}
+              style={StyleSheet.absoluteFill}
               resizeMode={ResizeMode.STRETCH}
               shouldPlay
               isLooping
@@ -76,9 +77,9 @@ const AnimatedServiceItem = ({ item, onPress, isDesktop }: { item: any, onPress:
           </View>
         ) : (
           <ImageBackground 
-            source={{ uri: item.image }} 
+            source={{ uri: item.image || item.image_url }} 
             style={styles.imageBg}
-            imageStyle={{ borderRadius: Radius.lg }}
+            imageStyle={{ borderRadius: isDesktop ? Radius.xl : Radius.lg }}
           >
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.85)']}
@@ -95,6 +96,28 @@ const AnimatedServiceItem = ({ item, onPress, isDesktop }: { item: any, onPress:
 export function ServicesStrip() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
+  const [services, setServices] = useState<any[]>(DEFAULT_SERVICES);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${getApiUrl()}/api/services/catalog?active=true`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setServices(data.map((s, idx) => ({
+              id: s.id,
+              title: s.title,
+              image: s.image_url,
+              video: DEFAULT_SERVICES[idx]?.video || undefined,
+            })));
+          }
+        }
+      } catch (err) {
+        console.warn('Failed to fetch services strip catalog', err);
+      }
+    })();
+  }, []);
 
   return (
     <View style={styles.container}>
@@ -102,7 +125,7 @@ export function ServicesStrip() {
       
       {isDesktop ? (
         <View style={styles.desktopGrid}>
-          {SERVICES.map((service) => (
+          {services.map((service) => (
             <AnimatedServiceItem 
               key={service.id} 
               item={service} 
@@ -113,7 +136,7 @@ export function ServicesStrip() {
         </View>
       ) : (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
-          {SERVICES.map((service) => (
+          {services.map((service) => (
             <AnimatedServiceItem 
               key={service.id} 
               item={service} 

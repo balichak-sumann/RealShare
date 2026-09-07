@@ -13,6 +13,7 @@ import { useUser } from '@/contexts/UserContext';
 import { AgentListingsScreen } from '@/components/agent/AgentListingsScreen';
 import { Ionicons } from '@expo/vector-icons';
 import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
+import { getApiUrl } from '@/lib/api';
 
 const COLLECTIONS = ['All Saved', 'Dream Home', 'Investment', 'Compare Later'];
 
@@ -37,7 +38,7 @@ export default function ShortlistScreen() {
     const fetchData = async () => {
       try {
         // Fetch properties
-        const propRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`);
+        const propRes = await fetch(`${getApiUrl()}/api/properties`);
         if (propRes.ok) {
           const propData = await propRes.json();
           const mappedProps = propData.map((p: any) => ({
@@ -57,7 +58,7 @@ export default function ShortlistScreen() {
         // Fetch clients if agent
         if (isAgent && auth.currentUser) {
           const token = await auth.currentUser.getIdToken();
-          const clientRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/clients`, {
+          const clientRes = await fetch(`${getApiUrl()}/api/agents/clients`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (clientRes.ok) {
@@ -73,7 +74,7 @@ export default function ShortlistScreen() {
     };
     fetchData();
   }, [isAgent]);
-  
+
   if (!auth.currentUser) {
     return (
       <TabAnimationWrapper>
@@ -93,7 +94,7 @@ export default function ShortlistScreen() {
     setAssigning(true);
     try {
       const token = await auth.currentUser?.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/clients/assign`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/clients/assign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

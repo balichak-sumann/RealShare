@@ -43,6 +43,7 @@ import { WebFooter } from '@/components/layout/WebFooter';
 import { WealthMarketingSection } from '@/components/home/WealthMarketingSection';
 import { QuoteSection } from '@/components/home/QuoteSection';
 import { BenefitsSection } from '@/components/home/BenefitsSection';
+import { getApiUrl } from '@/lib/api';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -57,13 +58,13 @@ export default function HomeScreen() {
   const [hasUnread, setHasUnread] = useState(false);
 
   useEffect(() => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
     const checkUnread = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
       try {
         const token = await currentUser.getIdToken();
         const res = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/notifications/feed`,
+          `${getApiUrl()}/api/notifications/feed`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (res.ok) {

@@ -10,7 +10,12 @@ interface InvestmentScoreProps {
   showLabel?: boolean;
 }
 
-const AnimatedCircle = Animated.createAnimatedComponent(Circle);
+const CleanCircle = React.forwardRef<any, any>(({ collapsable, ...props }, ref) => (
+  <Circle ref={ref} {...props} />
+));
+CleanCircle.displayName = 'CleanCircle';
+
+const AnimatedCircle = Animated.createAnimatedComponent(CleanCircle);
 
 export function InvestmentScore({
   score,
@@ -26,7 +31,7 @@ export function InvestmentScore({
     Animated.timing(animatedValue, {
       toValue: score,
       duration: 1500,
-      useNativeDriver: true,
+      useNativeDriver: false,
     }).start();
   }, [score]);
 
@@ -65,7 +70,6 @@ export function InvestmentScore({
             strokeDashoffset={strokeDashoffset}
             strokeLinecap="round"
             transform={`rotate(-90 ${size / 2} ${size / 2})`}
-            {...({ collapsable: 'false' } as any)}
           />
         </Svg>
         <Text style={[styles.scoreText, { fontSize: size * 0.35 }]}>{score}</Text>

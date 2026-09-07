@@ -799,13 +799,6 @@ const styles = StyleSheet.create({
   shortlistIconSaved: {
     color: '#D4AF37',
   },
-  cardContent: {
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
-    paddingHorizontal: 16,
-  },
   shareBtn: {
     backgroundColor: '#F3F4F6',
     borderWidth: 1,

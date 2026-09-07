@@ -5,6 +5,7 @@ import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 
 import { useUser } from '@/contexts/UserContext';
+import { getApiUrl } from '@/lib/api';
 
 // Email regex — must have valid format (user@domain.tld)
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -33,26 +34,30 @@ export default function SignUpScreen() {
     try {
       if (user) {
         const token = await user.getIdToken();
-        const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+        const apiUrl = getApiUrl();
         const url = `${apiUrl}/api/users/sync`;
         const body: any = { role };
         if (referralCode) {
           body.referred_by_code = referralCode;
         }
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 8000);
         const res = await fetch(url, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
           },
-          body: JSON.stringify(body)
+          body: JSON.stringify(body),
+          signal: controller.signal,
         });
+        clearTimeout(timeoutId);
         if (res.ok) {
           const data = await res.json();
           if (data.success && data.profile) {
             if (role === 'builder') {
               // Sign out from client so builder logs in explicitly via login page
-              await signOut(auth);
+              await signOut(auth).catch(() => {});
               setProfile(null);
               setShowSuccessModal(true);
             } else {
@@ -60,10 +65,25 @@ export default function SignUpScreen() {
               router.replace('/');
             }
           }
+        } else {
+          if (role === 'builder') {
+            await signOut(auth).catch(() => {});
+            setProfile(null);
+            setShowSuccessModal(true);
+          } else {
+            router.replace('/');
+          }
         }
       }
     } catch (e: any) {
       console.error("Failed to sync role/referral", e?.message);
+      if (role === 'builder') {
+        await signOut(auth).catch(() => {});
+        setProfile(null);
+        setShowSuccessModal(true);
+      } else {
+        router.replace('/');
+      }
     }
   };
 
@@ -138,7 +158,7 @@ export default function SignUpScreen() {
         setTimeout(() => {
           setPendingVerification(true);
           setLoading(false);
-        }, 800);
+        }, 500);
       }
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
@@ -148,6 +168,7 @@ export default function SignUpScreen() {
       } else {
         setError(err.message || 'Failed to sign up.');
       }
+    } finally {
       setLoading(false);
     }
   };

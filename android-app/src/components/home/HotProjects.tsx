@@ -5,6 +5,7 @@ import { PropertyCard } from '../ui/PropertyCard';
 import { propertyToCardProps } from '@/lib/formatters';
 import { useRouter } from 'expo-router';
 import { ResponsiveRail } from '../layout/ResponsiveRail';
+import { getApiUrl } from '@/lib/api';
 
 interface HotProjectsProps {
   properties: any[];

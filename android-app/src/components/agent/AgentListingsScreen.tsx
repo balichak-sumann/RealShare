@@ -6,6 +6,7 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 import { useRouter } from 'expo-router';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -76,7 +77,7 @@ export function AgentListingsScreen() {
     try {
       const token = await auth.currentUser?.getIdToken();
       if (!token) return;
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/listings`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/listings`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -114,7 +115,7 @@ export function AgentListingsScreen() {
     setSubmitting(true);
     try {
       const token = await auth.currentUser?.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`, {
+      const res = await fetch(`${getApiUrl()}/api/properties`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -157,7 +158,7 @@ export function AgentListingsScreen() {
     setSubmitting(true);
     try {
       const token = await auth.currentUser?.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/listings`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/listings`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -206,7 +207,7 @@ export function AgentListingsScreen() {
             try {
               const token = await auth.currentUser?.getIdToken();
               const res = await fetch(
-                `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/listings?id=${listing.id}`,
+                `${getApiUrl()}/api/agents/listings?id=${listing.id}`,
                 { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } }
               );
               if (res.ok) {

@@ -5,6 +5,7 @@ import { LocalityCard } from '../ui/LocalityCard';
 import { formatPrice } from '@/lib/formatters';
 import { useRouter } from 'expo-router';
 import { ResponsiveRail } from '../layout/ResponsiveRail';
+import { getApiUrl } from '@/lib/api';
 
 // Derived from real listed properties, grouped by locality — there's no
 // separate Locality table (or tracked rent/sale-per-sqft market data), so

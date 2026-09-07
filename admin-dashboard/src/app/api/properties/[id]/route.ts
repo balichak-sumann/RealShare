@@ -26,13 +26,26 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Property ID is required' }, { status: 400 });
     }
 
-    const property = await prisma.property.findUnique({
+    const property = await prisma.property.update({
       where: { id },
+      data: {
+        views_count: { increment: 1 },
+      },
       include: {
         images: true,
         developer: true,
         profile: { select: { full_name: true, role: true } },
-      }
+      },
+    }).catch(async () => {
+      // Fallback to findUnique if update fails (e.g. read-only context)
+      return await prisma.property.findUnique({
+        where: { id },
+        include: {
+          images: true,
+          developer: true,
+          profile: { select: { full_name: true, role: true } },
+        },
+      });
     });
 
     if (!property) {

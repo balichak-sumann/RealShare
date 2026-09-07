@@ -247,4 +247,9 @@ const styles = StyleSheet.create({
     marginHorizontal: 8,
     color: Neutrals.gray400,
   },
+  descriptionText: {
+    ...Typography.bodySmall,
+    color: Neutrals.textSecondary,
+    marginTop: 8,
+  },
 });

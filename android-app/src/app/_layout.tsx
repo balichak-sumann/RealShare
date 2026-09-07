@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 
+import { getApiUrl } from '@/lib/api';
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -97,7 +99,7 @@ function RootLayoutNav() {
         } catch(e) {
           console.log(e);
         }
-        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
+        fetch(`${getApiUrl()}/api/users/sync`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

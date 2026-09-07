@@ -4,11 +4,11 @@ import { PROPERTY_CATEGORIES } from '@/constants/uiConstants';
 import { CategoryPill } from '../ui/CategoryPill';
 
 interface CategoryGridProps {
-  activeCategory: string;
-  onCategoryChange: (categoryId: string) => void;
+  activeCategory?: string;
+  onCategoryChange?: (categoryId: string) => void;
 }
 
-export function CategoryGrid({ activeCategory, onCategoryChange }: CategoryGridProps) {
+export function CategoryGrid({ activeCategory = 'all', onCategoryChange }: CategoryGridProps) {
   return (
     <View style={styles.container}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
@@ -18,7 +18,7 @@ export function CategoryGrid({ activeCategory, onCategoryChange }: CategoryGridP
             label={category.label}
             icon={category.icon}
             isActive={activeCategory === category.id}
-            onPress={() => onCategoryChange(category.id)}
+            onPress={() => onCategoryChange?.(category.id)}
           />
         ))}
       </ScrollView>

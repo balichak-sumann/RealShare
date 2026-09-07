@@ -9,6 +9,7 @@ import {
 } from 'react-native';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 import { ActivityIndicator } from 'react-native';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 
@@ -26,7 +27,7 @@ export function AgentClientsScreen() {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/dashboard`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/dashboard`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {

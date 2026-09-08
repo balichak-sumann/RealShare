@@ -44,7 +44,7 @@ import { LocationPickerModal } from '@/components/ui/LocationPickerModal';
 import { WebFooter } from '@/components/layout/WebFooter';
 import { QuoteSection } from '@/components/home/QuoteSection';
 import { BenefitsSection } from '@/components/home/BenefitsSection';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, resilientFetch } from '@/lib/api';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -83,7 +83,7 @@ export default function HomeScreen() {
   // Single fetch when city changes — all category filtering happens in memory
   useEffect(() => {
     const query = city === 'All India' ? '' : `?district=${encodeURIComponent(city)}`;
-    fetch(`${getApiUrl()}/api/properties${query}`)
+    resilientFetch(`${getApiUrl()}/api/properties${query}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

@@ -6,7 +6,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useShortlist } from '@/contexts/ShortlistContext';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, resilientFetch } from '@/lib/api';
 
 export default function ExploreScreen() {
   const { width } = useWindowDimensions();
@@ -42,7 +42,7 @@ export default function ExploreScreen() {
   };
 
   useEffect(() => {
-    fetch(`${getApiUrl()}/api/properties`)
+    resilientFetch(`${getApiUrl()}/api/properties`)
       .then(res => res.json())
       .then(data => {
         setProperties(Array.isArray(data) ? data : []);

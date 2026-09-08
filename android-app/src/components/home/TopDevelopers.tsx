@@ -5,7 +5,7 @@ import { useRouter } from 'expo-router';
 import { Neutrals, Typography, Radius, Shadows } from '@/constants/design';
 import { ResponsiveRail } from '../layout/ResponsiveRail';
 import { useResponsive } from '@/hooks/useResponsive';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, resilientFetch } from '@/lib/api';
 
 const PLACEHOLDER_LOGO = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=120&h=120&fit=crop';
 
@@ -17,7 +17,7 @@ export function TopDevelopers() {
   useEffect(() => {
     const fetchDevelopers = async () => {
       try {
-        const res = await fetch(`${getApiUrl()}/api/developers`);
+        const res = await resilientFetch(`${getApiUrl()}/api/developers`);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           setDevelopers(data.slice(0, 10));

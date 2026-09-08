@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, resilientFetch } from '@/lib/api';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -65,6 +65,14 @@ function RootLayoutNav() {
   const [user, setUser] = useState<User | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
   const { setProfile } = useUser();
+
+  // Wake up the Render backend immediately on app launch.
+  // This runs during the splash screen so that by the time
+  // the home screen mounts and fetches properties/banners,
+  // the backend is already warm and responds instantly.
+  useEffect(() => {
+    resilientFetch(`${getApiUrl()}/api/properties?limit=1`).catch(() => {});
+  }, []);
 
   useEffect(() => {
     // Guard: if Firebase auth failed to initialize, skip the listener

@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, resilientFetch } from '@/lib/api';
 
 type Banner = {
   id: string;
@@ -82,7 +82,7 @@ export function HeroCarousel() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${getApiUrl()}/api/cms/banners`);
+        const res = await resilientFetch(`${getApiUrl()}/api/cms/banners`);
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {

@@ -48,57 +48,8 @@ export default function ExploreScreen() {
         setLoading(false);
       })
       .catch(err => {
-        console.warn('Failed to fetch properties, using mock data:', err);
-        setProperties([
-          {
-            id: 'prop-1',
-            title: 'The Obsidian Tower',
-            locality: 'BKC, Mumbai',
-            district: 'Mumbai',
-            state: 'Maharashtra',
-            property_type: 'Commercial',
-            price_per_fraction: 5000000,
-            assured_yield: 14.2,
-            target_irr: 18.5,
-            funding_status: 85,
-            images: [
-              { image_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&q=80&w=1000' },
-              { image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000' }
-            ]
-          },
-          {
-            id: 'prop-2',
-            title: 'Aura IT Park',
-            locality: 'Whitefield, Bangalore',
-            district: 'Bangalore',
-            state: 'Karnataka',
-            property_type: 'Commercial',
-            price_per_fraction: 2500000,
-            assured_yield: 11.5,
-            target_irr: 15.0,
-            funding_status: 100,
-            images: [
-              { image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000' },
-              { image_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&q=80&w=1000' }
-            ]
-          },
-          {
-            id: 'prop-3',
-            title: 'Sapphire Residences',
-            locality: 'Jubilee Hills, Hyderabad',
-            district: 'Hyderabad',
-            state: 'Telangana',
-            property_type: 'Residential',
-            price_per_fraction: 1500000,
-            assured_yield: 8.5,
-            target_irr: 12.0,
-            funding_status: 45,
-            images: [
-              { image_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1000' },
-              { image_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1000' }
-            ]
-          }
-        ]);
+        console.warn('Failed to fetch properties:', err);
+        setProperties([]);
         setLoading(false);
       });
   }, []);

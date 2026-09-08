@@ -15,36 +15,14 @@ type Banner = {
   link_url?: string | null;
 };
 
-const FALLBACK_SLIDES: Banner[] = [
-  {
-    id: 'slide1',
-    title: 'Own a Piece of Premium Real Estate',
-    subtitle: 'Start investing in fractional property ownership today',
-    image_url: 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2560&auto=format&fit=crop',
-    link_url: '/search',
-  },
-  {
-    id: 'slide2',
-    title: 'Luxury Holiday Homes, Simplified',
-    subtitle: 'Earn passive income while enjoying exclusive access.',
-    image_url: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=2560&auto=format&fit=crop',
-    link_url: '/search',
-  },
-  {
-    id: 'slide3',
-    title: 'High-Yield Commercial Spaces',
-    subtitle: 'Institutional grade assets now accessible to retail investors.',
-    image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2560&auto=format&fit=crop',
-    link_url: '/search',
-  }
-];
+const FALLBACK_SLIDES: Banner[] = [];
 
 export function HeroCarousel() {
   const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width || 400);
   const { isDesktop } = useResponsive();
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
-  const [slides, setSlides] = useState<Banner[]>(FALLBACK_SLIDES);
+  const [slides, setSlides] = useState<Banner[]>([]);
   const scrollRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 

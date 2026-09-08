@@ -107,13 +107,13 @@ export function DesktopNav() {
             position: 'fixed',
             top: 0,
             left: 16,
-            width: 110,
-            height: 130,
+            width: 90,
+            height: 90,
             backgroundColor: '#fff',
             display: 'flex',
             justifyContent: 'center',
             alignItems: 'center',
-            padding: 8,
+            padding: 4,
             borderBottomLeftRadius: 8,
             borderBottomRightRadius: 8,
             boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
@@ -124,7 +124,7 @@ export function DesktopNav() {
           <img
             src={require('../../../assets/logo.png')}
             alt="Realshare"
-            style={{ width: '100%', height: '100%', objectFit: 'contain' }}
+            style={{ width: '115%', height: '115%', objectFit: 'contain' }}
           />
         </div>
       )}
@@ -196,15 +196,9 @@ export function DesktopNav() {
             <TouchableOpacity
               onPress={() => router.push('/sign-in' as any)}
               activeOpacity={0.85}
+              style={styles.signInBtn}
             >
-              <LinearGradient
-                colors={[GoldSystem.primaryGold, GoldSystem.darkGold]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.signInBtn}
-              >
                 <Text style={styles.signInText}>Sign In</Text>
-              </LinearGradient>
             </TouchableOpacity>
           )}
 
@@ -224,6 +218,7 @@ export function DesktopNav() {
         </View>
       </View>
     </View>
+    </>
   );
 }
 
@@ -424,12 +419,13 @@ const styles = StyleSheet.create({
   },
   signInBtn: {
     paddingHorizontal: 28,
-    paddingVertical: 12,
+    paddingVertical: 10,
     borderRadius: Radius.full,
+    backgroundColor: '#FFFFFF',
   },
   signInText: {
     ...Typography.labelLarge,
-    color: Neutrals.white,
+    color: GoldSystem.darkGold,
     fontWeight: '700',
   },
 });

@@ -214,21 +214,29 @@ export default function HomeScreen() {
 
       <LocationPickerModal visible={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
 
-      <Animated.ScrollView 
-        style={styles.scrollContent} 
-        showsVerticalScrollIndicator={false} 
-        contentContainerStyle={[
-          { paddingBottom: isDesktop ? 64 : 120 },
-          isDesktop && { width: '100%', paddingHorizontal: 24, paddingTop: 16 },
-        ] as any}
-        onScroll={Animated.event(
-          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
-          { useNativeDriver: false }
-        )}
-        scrollEventThrottle={16}
-      >
-        {isDesktop && (
-          <View style={styles.webSearchContainer}>
+      {/* Floating search bar — desktop web only, raw HTML to avoid RN Web spacing */}
+      {isDesktop && Platform.OS === 'web' && (() => {
+        const searchRef = React.useRef<HTMLDivElement>(null);
+        React.useEffect(() => {
+          const id = scrollY.addListener(({ value }) => {
+            if (!searchRef.current) return;
+            const t = Math.min(value / 80, 1);
+            searchRef.current.style.transform = `translateY(${-70 * t}px)`;
+            searchRef.current.style.opacity = `${1 - Math.min(value / 60, 1)}`;
+            searchRef.current.style.pointerEvents = t >= 1 ? 'none' : 'auto';
+          });
+          return () => scrollY.removeListener(id);
+        }, []);
+        return (
+          <div
+            ref={searchRef}
+            style={{
+              position: 'fixed',
+              top: 68,
+              left: 138,
+              zIndex: 90,
+            }}
+          >
             <View style={styles.webSearchBox}>
               <TouchableOpacity style={styles.webLocationDropdown} activeOpacity={0.7} onPress={() => setShowLocationPicker(true)}>
                 <Ionicons name="location-outline" size={18} color={Neutrals.gray600} />
@@ -249,8 +257,23 @@ export default function HomeScreen() {
                 />
               </View>
             </View>
-          </View>
+          </div>
+        );
+      })()}
+
+      <Animated.ScrollView 
+        style={styles.scrollContent} 
+        showsVerticalScrollIndicator={false} 
+        contentContainerStyle={[
+          { paddingBottom: isDesktop ? 64 : 120 },
+          isDesktop && { width: '100%', paddingHorizontal: 24, paddingTop: 76 },
+        ] as any}
+        onScroll={Animated.event(
+          [{ nativeEvent: { contentOffset: { y: scrollY } } }],
+          { useNativeDriver: false }
         )}
+        scrollEventThrottle={16}
+      >
 
         <HeroCarousel />
         <CategoryGrid activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
@@ -503,13 +526,6 @@ const styles = StyleSheet.create({
     ...Typography.bodyMedium,
     color: Neutrals.gray500,
     textAlign: 'center',
-  },
-  webSearchContainer: {
-    width: '100%',
-    alignItems: 'flex-start',
-    paddingLeft: 138,
-    marginBottom: 24,
-    zIndex: 10,
   },
   webSearchBox: {
     flexDirection: 'row',

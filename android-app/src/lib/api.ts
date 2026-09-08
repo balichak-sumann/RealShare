@@ -1,11 +1,11 @@
 import { Platform } from 'react-native';
 
-const PRODUCTION_API_URL = 'https://realshare-5l24.onrender.com';
+const PRODUCTION_API_URL = 'https://realshare-admin.onrender.com';
 
 /**
  * Returns the active API base URL.
  * On web localhost, uses http://localhost:3000 for fast dev.
- * On all other platforms (Android/iOS), always uses the production URL.
+ * On all other platforms (Android/iOS/Production Web), always uses the production URL.
  */
 export function getApiUrl(): string {
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {

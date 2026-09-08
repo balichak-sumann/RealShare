@@ -36,7 +36,7 @@ export default function SellScreen() {
 
   // Fetch properties on mount for autocomplete
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+    fetch(`${getApiUrl()}/api/properties`)
       .then(res => res.json())
       .then(data => {
         if (Array.isArray(data)) {

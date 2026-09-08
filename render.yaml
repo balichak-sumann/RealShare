@@ -52,7 +52,7 @@ services:
         destination: /index.html
     envVars:
       - key: EXPO_PUBLIC_API_URL
-        sync: false
+        value: https://realshare-admin.onrender.com
       - key: EXPO_PUBLIC_FIREBASE_API_KEY
         value: AIzaSyCDUd5PLfeEi-cdRvJwEPh0omcxfby8obI
       - key: EXPO_PUBLIC_FIREBASE_AUTH_DOMAIN

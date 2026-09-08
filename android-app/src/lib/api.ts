@@ -1,9 +1,11 @@
 import { Platform } from 'react-native';
 
+const PRODUCTION_API_URL = 'https://realshare-5l24.onrender.com';
+
 /**
  * Returns the active API base URL.
- * Automatically uses http://localhost:3000 when running on web / localhost in dev mode
- * to avoid Render free-tier cold starts (60-90s lag).
+ * On web localhost, uses http://localhost:3000 for fast dev.
+ * On all other platforms (Android/iOS), always uses the production URL.
  */
 export function getApiUrl(): string {
   if (Platform.OS === 'web' && typeof window !== 'undefined' && window.location) {
@@ -12,7 +14,7 @@ export function getApiUrl(): string {
       return 'http://localhost:3000';
     }
   }
-  return process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+  return PRODUCTION_API_URL;
 }
 
 export function getFullImageUrl(url: string | null | undefined): string {

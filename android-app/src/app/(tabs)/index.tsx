@@ -173,7 +173,7 @@ export default function HomeScreen() {
 
           <View style={[styles.logoContainer, { opacity: splashDone ? 1 : 0 }]} pointerEvents="none">
             <Image 
-              source={require('../../../../assets/logo.png')} 
+              source={require('../../../assets/logo.png')} 
               style={styles.logoImage} 
               contentFit="contain" 
             />
@@ -334,7 +334,7 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill as any,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: -1,
+    zIndex: 0,
   },
   logoImage: {
     width: 220,

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { auth } from '@/lib/firebase';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { getApiUrl } from '@/lib/api';
 
 export default function MyAssetsScreen() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function MyAssetsScreen() {
         return;
       }
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/assets`, {
+      const res = await fetch(`${getApiUrl()}/api/assets`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       

@@ -4,6 +4,7 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Neutrals, Typography, GoldSystem } from '@/constants/design';
 import { propertyToCardProps } from '@/lib/formatters';
 import { ComparisonTable } from '@/components/ui/ComparisonTable';
+import { getApiUrl } from '@/lib/api';
 
 export default function CompareScreen() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export default function CompareScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const apiUrl = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+    const apiUrl = getApiUrl();
     const requestedIds = ids ? ids.split(',').filter(Boolean) : [];
 
     const load = async () => {

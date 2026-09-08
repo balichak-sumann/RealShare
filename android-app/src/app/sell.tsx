@@ -6,6 +6,7 @@ import { auth } from '@/lib/firebase';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToFirebase } from '@/lib/uploadImage';
 import { Ionicons } from '@expo/vector-icons';
+import { getApiUrl } from '@/lib/api';
 
 export default function SellScreen() {
   const router = useRouter();
@@ -71,7 +72,7 @@ export default function SellScreen() {
       console.log("Getting ID token...");
       const token = await user.getIdToken();
       console.log("Sending POST request to API...");
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`, {
+      const res = await fetch(`${getApiUrl()}/api/properties`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

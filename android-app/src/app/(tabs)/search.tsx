@@ -51,7 +51,8 @@ export default function SearchScreen() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?district=${city}`)
+    const query = city === 'All India' ? '' : `?district=${encodeURIComponent(city)}`;
+    fetch(`${getApiUrl()}/api/properties${query}`)
       .then((res) => res.json())
       .then((data) => {
         setProperties(Array.isArray(data) ? data : []);

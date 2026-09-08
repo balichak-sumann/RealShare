@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Neutrals, Typography, GoldSystem } from '@/constants/design';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { DeveloperCard } from '@/components/ui/DeveloperCard';
+import { getApiUrl } from '@/lib/api';
 
 const mapDeveloper = (d: any) => ({
   id: d.id,
@@ -22,7 +23,7 @@ export default function DevelopersScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/developers`)
+    fetch(`${getApiUrl()}/api/developers`)
       .then((res) => res.json())
       .then((data) => {
         setDevelopers(Array.isArray(data) ? data.map(mapDeveloper) : []);

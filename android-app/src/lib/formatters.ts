@@ -23,6 +23,12 @@ export const propertyToCardProps = (p: any) => {
     ? p.images.map((img: any) => getFullImageUrl(typeof img === 'string' ? img : img.image_url))
     : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=400&fit=crop'];
 
+  const areaDisplay = p.area_sqft
+    ? `${Number(p.area_sqft).toLocaleString('en-IN')} sqft`
+    : isOutright
+      ? 'Outright Buy'
+      : `${p.sold_fractions ?? 0}/${p.total_fractions ?? 100} sold`;
+
   return {
     id: p.id,
     title: p.title,
@@ -34,10 +40,11 @@ export const propertyToCardProps = (p: any) => {
         : `${formatPrice(Number(p.price_per_fraction))} / fraction`,
     images,
     bhk: p.property_type ? p.property_type.charAt(0).toUpperCase() + p.property_type.slice(1) : 'Property',
-    area: isOutright ? 'Outright' : `${p.sold_fractions ?? 0}/${p.total_fractions ?? 0} sold`,
+    area: areaDisplay,
     areaSuffix: '',
     score: p.assured_yield ? Number(p.assured_yield) : 4.5,
     description: p.description || 'A beautiful, premium property offering exceptional yields and modern amenities.',
+    isSoldOut: p.is_sold_out || p.approval_status === 'sold_out' || (p.total_fractions > 0 && p.available_fractions <= 0),
   };
 };
 

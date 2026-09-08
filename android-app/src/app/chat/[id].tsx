@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Keyboa
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getApiUrl } from '@/lib/api';
 
 export default function ChatScreen() {
   const router = useRouter();
@@ -23,7 +24,7 @@ export default function ChatScreen() {
     try {
       const token = await auth.currentUser?.getIdToken();
       if (!token) return;
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/clients/${id}/chat`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/clients/${id}/chat`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -51,7 +52,7 @@ export default function ChatScreen() {
       setMessages(prev => [...prev, tempMsg]);
       setInputText('');
 
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/clients/${id}/chat`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/clients/${id}/chat`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

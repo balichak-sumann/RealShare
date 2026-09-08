@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import SafeStorage from '@/lib/storage';
 
 export interface RecentViewItem {
   id: string;
@@ -25,8 +25,8 @@ export function useActivityHistory() {
   useEffect(() => {
     const loadHistory = async () => {
       try {
-        const viewsStr = await AsyncStorage.getItem(VIEWS_KEY);
-        const searchesStr = await AsyncStorage.getItem(SEARCHES_KEY);
+        const viewsStr = await SafeStorage.getItem(VIEWS_KEY);
+        const searchesStr = await SafeStorage.getItem(SEARCHES_KEY);
         
         if (viewsStr) setRecentViews(JSON.parse(viewsStr));
         if (searchesStr) setRecentSearches(JSON.parse(searchesStr));
@@ -51,7 +51,7 @@ export function useActivityHistory() {
         // Remove duplicate if exists, then add to top
         const filtered = prev.filter(p => p.id !== newItem.id);
         const updated = [newItem, ...filtered].slice(0, 10); // keep last 10
-        AsyncStorage.setItem(VIEWS_KEY, JSON.stringify(updated)).catch(console.error);
+        SafeStorage.setItem(VIEWS_KEY, JSON.stringify(updated)).catch(console.error);
         return updated;
       });
     } catch (e) {
@@ -71,7 +71,7 @@ export function useActivityHistory() {
         // Remove duplicate if exists, then add to top
         const filtered = prev.filter(s => s.query.toLowerCase() !== newItem.query.toLowerCase());
         const updated = [newItem, ...filtered].slice(0, 5); // keep last 5
-        AsyncStorage.setItem(SEARCHES_KEY, JSON.stringify(updated)).catch(console.error);
+        SafeStorage.setItem(SEARCHES_KEY, JSON.stringify(updated)).catch(console.error);
         return updated;
       });
     } catch (e) {
@@ -81,7 +81,7 @@ export function useActivityHistory() {
 
   const clearHistory = async () => {
     try {
-      await AsyncStorage.multiRemove([VIEWS_KEY, SEARCHES_KEY]);
+      await SafeStorage.multiRemove([VIEWS_KEY, SEARCHES_KEY]);
       setRecentViews([]);
       setRecentSearches([]);
     } catch (e) {

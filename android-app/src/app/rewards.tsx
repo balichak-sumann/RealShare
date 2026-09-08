@@ -6,8 +6,7 @@ import { GoldButton } from '@/components/ui/GoldButton';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/contexts/UserContext';
 import { auth } from '@/lib/firebase';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+import { getApiUrl } from '@/lib/api';
 
 function formatCurrency(n: number) {
   return `\u20b9${n.toLocaleString('en-IN')}`;
@@ -28,7 +27,7 @@ export default function RewardsScreen() {
         const user = auth.currentUser;
         if (!user) return;
         const token = await user.getIdToken();
-        const res = await fetch(`${API_URL}/api/me/referral`, {
+        const res = await fetch(`${getApiUrl()}/api/me/referral`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {

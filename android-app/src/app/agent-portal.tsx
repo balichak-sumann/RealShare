@@ -364,7 +364,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
         <View style={styles.sectionContainer}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <Text style={styles.sectionTitle}>My Listings</Text>
-            <TouchableOpacity style={styles.addClientBtn} onPress={() => setShowPostModal(true)}>
+            <TouchableOpacity style={styles.addClientBtn} onPress={() => router.push('/post-property' as any)}>
               <Text style={styles.addClientText}>+ Post Property</Text>
             </TouchableOpacity>
           </View>
@@ -408,18 +408,6 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
             <Text style={styles.modalTitle}>Post a Property</Text>
             <Text style={styles.modalSubtitle}>Submit a listing for RealShare Admin approval.</Text>
 
-            <Text style={styles.inputLabel}>Property Title</Text>
-            <TextInput style={styles.input} placeholder="e.g. Skyline Residences" value={postTitle} onChangeText={setPostTitle} placeholderTextColor="#9CA3AF" />
-
-            <Text style={styles.inputLabel}>Locality</Text>
-            <TextInput style={styles.input} placeholder="e.g. Gachibowli" value={postLocality} onChangeText={setPostLocality} placeholderTextColor="#9CA3AF" />
-
-            <Text style={styles.inputLabel}>District</Text>
-            <TextInput style={styles.input} value={postDistrict} onChangeText={setPostDistrict} placeholderTextColor="#9CA3AF" />
-
-            <Text style={styles.inputLabel}>State</Text>
-            <TextInput style={styles.input} value={postState} onChangeText={setPostState} placeholderTextColor="#9CA3AF" />
-
             <Text style={styles.inputLabel}>Listing Type</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
               {(['fractional', 'outright'] as const).map((lt) => (
@@ -452,6 +440,18 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
 
             <Text style={styles.inputLabel}>Assured Yield (%)</Text>
             <TextInput style={styles.input} keyboardType="numeric" value={postYield} onChangeText={setPostYield} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>Property Title</Text>
+            <TextInput style={styles.input} placeholder="e.g. Skyline Residences" value={postTitle} onChangeText={setPostTitle} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>Locality</Text>
+            <TextInput style={styles.input} placeholder="e.g. Gachibowli" value={postLocality} onChangeText={setPostLocality} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>District</Text>
+            <TextInput style={styles.input} value={postDistrict} onChangeText={setPostDistrict} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>State</Text>
+            <TextInput style={styles.input} value={postState} onChangeText={setPostState} placeholderTextColor="#9CA3AF" />
 
             <Text style={styles.inputLabel}>Property Image (Optional)</Text>
             <TouchableOpacity 

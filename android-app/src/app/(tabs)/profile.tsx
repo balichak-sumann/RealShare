@@ -26,6 +26,7 @@ import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { GoldSystem, Neutrals, Typography, Radius, Shadows } from '@/constants/design';
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
+import { getApiUrl } from '@/lib/api';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -191,7 +192,7 @@ export default function ProfileScreen() {
         }
         
         const token = await auth.currentUser.getIdToken();
-        await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
+        await fetch(`${getApiUrl()}/api/users/sync`, {
           method: 'POST',
           headers: { 'Authorization': `Bearer ${token}` }
         });
@@ -541,7 +542,7 @@ export default function ProfileScreen() {
                         const userId = auth.currentUser?.uid || 'guest';
                         
                         // 1. Upload Base64 to Local Admin Dashboard Server
-                        const uploadRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/upload`, {
+                        const uploadRes = await fetch(`${getApiUrl()}/api/upload`, {
                           method: 'POST',
                           headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({
@@ -559,7 +560,7 @@ export default function ProfileScreen() {
                         const downloadUrl = uploadData.url;
 
                         // 2. Submit real URL to Admin API
-                        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'http://localhost:3000'}/api/kyc/submit`, {
+                        const res = await fetch(`${getApiUrl()}/api/kyc/submit`, {
                           method: 'POST',
                           headers: {
                             'Content-Type': 'application/json',

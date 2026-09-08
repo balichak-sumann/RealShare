@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ActivityIndicator,
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getApiUrl } from '@/lib/api';
 
 export default function BankDetailsScreen() {
   const router = useRouter();
@@ -22,7 +23,7 @@ export default function BankDetailsScreen() {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/dashboard`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/dashboard`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       if (res.ok) {
@@ -50,7 +51,7 @@ export default function BankDetailsScreen() {
       if (!user) return;
       const token = await user.getIdToken();
       
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/bank`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/bank`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

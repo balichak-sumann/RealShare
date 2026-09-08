@@ -6,6 +6,7 @@ import { GoldButton } from '@/components/ui/GoldButton';
 import { InvestmentScore } from '@/components/ui/InvestmentScore';
 import { TrustBadge } from '@/components/ui/TrustBadge';
 import { propertyToProjectCardProps } from '@/lib/formatters';
+import { getApiUrl } from '@/lib/api';
 
 export default function ProjectDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -15,10 +16,9 @@ export default function ProjectDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/properties/${id}`);
+        const res = await fetch(`${getApiUrl()}/api/properties/${id}`);
         if (res.ok) {
           const data = await res.json();
           setRaw(data);
@@ -109,26 +109,33 @@ export default function ProjectDetailsScreen() {
           </View>
 
         </View>
+        </View>
       </ScrollView>
 
       {/* Bottom Bar */}
       <View style={styles.bottomBar}>
-        <View style={styles.bottomBarActions}>
-          <TouchableOpacity
-            style={styles.outlineBtn}
-            onPress={() => {
-              if (raw?.brochure_url) Linking.openURL(raw.brochure_url);
-            }}
-            disabled={!raw?.brochure_url}
-          >
-            <Text style={styles.outlineBtnText}>{raw?.brochure_url ? 'Download Brochure' : 'Brochure Unavailable'}</Text>
-          </TouchableOpacity>
-          <GoldButton
-            title="View & Invest"
-            onPress={() => router.push(`/property/${id}` as any)}
-            style={{ flex: 1, marginLeft: 12 }}
-          />
-        </View>
+        {raw?.is_sold_out || raw?.approval_status === 'sold_out' || (raw?.total_fractions > 0 && raw?.available_fractions <= 0) ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FEE2E2', paddingVertical: 12, borderRadius: Radius.md, marginTop: -4 }}>
+            <Text style={{ ...Typography.headlineMedium, color: '#DC2626' }}>THIS PROPERTY IS SOLD OUT</Text>
+          </View>
+        ) : (
+          <View style={styles.bottomBarActions}>
+            <TouchableOpacity
+              style={styles.outlineBtn}
+              onPress={() => {
+                if (raw?.brochure_url) Linking.openURL(raw.brochure_url);
+              }}
+              disabled={!raw?.brochure_url}
+            >
+              <Text style={styles.outlineBtnText}>{raw?.brochure_url ? 'Download Brochure' : 'Brochure Unavailable'}</Text>
+            </TouchableOpacity>
+            <GoldButton
+              title="View & Invest"
+              onPress={() => router.push(`/property/${id}` as any)}
+              style={{ flex: 1, marginLeft: 12 }}
+            />
+          </View>
+        )}
       </View>
     </View>
   );

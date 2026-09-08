@@ -93,12 +93,15 @@ model Property {
   lng                 Decimal?  @db.Decimal(10, 6)
   video_url           String?   @db.Text
   brochure_url        String?   @db.Text
+  area_sqft           Decimal?  @db.Decimal(10, 2)
+  google_maps_url     String?   @db.Text
   posted_by           String?   @db.VarChar(128)
   developer_id        String?   @db.VarChar(36)
   approval_status     String    @default("pending_approval") @db.VarChar(50)
   rejection_notes     String?   @db.Text
   featured            Boolean   @default(false)
   views_count         Int       @default(0)
+  is_sold_out         Boolean   @default(false)
   created_at          DateTime  @default(now()) @db.Timestamptz(6)
   updated_at          DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
 

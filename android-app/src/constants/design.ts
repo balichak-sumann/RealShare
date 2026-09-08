@@ -1,11 +1,11 @@
 export const GoldSystem = {
-  primaryGold: '#C5A55A',
-  metallicGold: '#D4AF37',
-  warmGold: '#CDA349',
-  darkGold: '#A88B2E',
-  softGold: '#E8D5A3',
-  paleGold: '#F5ECD7',
-  goldGradient: ['#D4AF37', '#C5A55A', '#E8D5A3'] as readonly [string, string, ...string[]],
+  primaryGold: '#0274DF',
+  metallicGold: '#3B82F6',
+  warmGold: '#60A5FA',
+  darkGold: '#1D4ED8',
+  softGold: '#93C5FD',
+  paleGold: '#DBEAFE',
+  goldGradient: ['#3C9FFE', '#0274DF', '#1D4ED8'] as readonly [string, string, ...string[]],
 };
 
 export const Neutrals = {

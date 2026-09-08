@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, TextInput, Platform, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { useRouter, Link } from 'expo-router';
 import { useUser } from '@/contexts/UserContext';
 import { useShortlist } from '@/contexts/ShortlistContext';
@@ -376,10 +377,12 @@ export default function ExploreScreen() {
               srcDoc={generateMapHtml(filteredProperties)}
             />
           ) : (
-            <View style={styles.mapPlaceholder}>
-              <Text style={styles.mapText}>Interactive Google Map View</Text>
-              <Text style={styles.mapSubtext}>Showing {filteredProperties.length} properties</Text>
-            </View>
+            <WebView 
+              source={{ html: generateMapHtml(filteredProperties) }}
+              style={{ flex: 1, backgroundColor: '#E5E7EB' }}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            />
           )}
         </View>
 

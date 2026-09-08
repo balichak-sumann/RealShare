@@ -173,7 +173,7 @@ export default function HomeScreen() {
 
           <View style={[styles.logoContainer, { opacity: splashDone ? 1 : 0 }]} pointerEvents="none">
             <Image 
-              source={require('../../../assets/logo.png')} 
+              source={require('../../../../assets/logo.png')} 
               style={styles.logoImage} 
               contentFit="contain" 
             />

@@ -19,7 +19,7 @@ import { InvestmentScore } from '@/components/ui/InvestmentScore';
 import { TrustBadge } from '@/components/ui/TrustBadge';
 import { PropertyInquiryModal } from '@/components/ui/PropertyInquiryModal';
 import { useActivityHistory } from '@/hooks/useActivityHistory';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, resilientFetch } from '@/lib/api';
 
 export default function PropertyDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -31,7 +31,7 @@ export default function PropertyDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${getApiUrl()}/api/properties/${id}`)
+    resilientFetch(`${getApiUrl()}/api/properties/${id}`)
       .then(res => res.json())
       .then(data => {
         setProperty(data);

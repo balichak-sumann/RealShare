@@ -107,8 +107,6 @@ export default function ProjectDetailsScreen() {
             </View>
             <Text style={styles.progressDesc}>{project.possession}</Text>
           </View>
-
-        </View>
         </View>
       </ScrollView>
 

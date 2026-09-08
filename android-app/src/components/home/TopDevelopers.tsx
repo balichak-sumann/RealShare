@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { SectionHeader } from '../ui/SectionHeader';
 import { useRouter } from 'expo-router';
 import { Neutrals, Typography, Radius, Shadows } from '@/constants/design';
@@ -46,7 +47,12 @@ export function TopDevelopers() {
         <View style={styles.desktopGrid}>
           {developers.map((dev) => (
             <TouchableOpacity key={dev.id} style={[styles.devCard, styles.devCardDesktop, { flex: 1, minWidth: 200 }]} activeOpacity={0.7}>
-              <Image source={dev.logo_source || { uri: dev.logo_url || PLACEHOLDER_LOGO }} style={[styles.devLogo, styles.devLogoDesktop]} />
+              <Image 
+                source={dev.logo_source || { uri: dev.logo_url || PLACEHOLDER_LOGO }} 
+                style={[styles.devLogo, styles.devLogoDesktop]} 
+                contentFit="cover"
+                cachePolicy="memory-disk"
+              />
               <Text style={[styles.devName, styles.devNameDesktop]} numberOfLines={1}>{dev.name}</Text>
               <Text style={[styles.devInfo, styles.devInfoDesktop]}>
                 {dev._count?.properties ?? 0} Projects · ⭐ {Number(dev.rating).toFixed(1)}
@@ -58,7 +64,12 @@ export function TopDevelopers() {
         <ResponsiveRail contentContainerStyle={styles.scrollContent}>
           {developers.map((dev) => (
             <TouchableOpacity key={dev.id} style={styles.devCard} activeOpacity={0.7}>
-              <Image source={dev.logo_source || { uri: dev.logo_url || PLACEHOLDER_LOGO }} style={styles.devLogo} />
+              <Image 
+                source={dev.logo_source || { uri: dev.logo_url || PLACEHOLDER_LOGO }} 
+                style={styles.devLogo} 
+                contentFit="cover"
+                cachePolicy="memory-disk"
+              />
               <Text style={styles.devName} numberOfLines={1}>{dev.name}</Text>
               <Text style={styles.devInfo}>
                 {dev._count?.properties ?? 0} Projects · ⭐ {Number(dev.rating).toFixed(1)}

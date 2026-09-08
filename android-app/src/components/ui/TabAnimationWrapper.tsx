@@ -14,19 +14,18 @@ export function TabAnimationWrapper({ children }: TabAnimationWrapperProps) {
       // Reset to starting position
       animValue.setValue(0);
 
-      // Animate in with a slower, more deliberate card-flip style spring
-      Animated.spring(animValue, {
+      // Animate in with a fast, lightweight fade
+      Animated.timing(animValue, {
         toValue: 1,
+        duration: 250,
         useNativeDriver: true,
-        speed: 10,
-        bounciness: 6,
       }).start();
     }, [])
   );
 
   const translateY = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [60, 0],
+    outputRange: [20, 0], // Reduced distance
   });
 
   const opacity = animValue.interpolate({
@@ -36,12 +35,7 @@ export function TabAnimationWrapper({ children }: TabAnimationWrapperProps) {
 
   const scale = animValue.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.9, 1],
-  });
-
-  const rotateX = animValue.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['15deg', '0deg'],
+    outputRange: [0.98, 1], // Reduced scaling
   });
 
   return (
@@ -50,10 +44,8 @@ export function TabAnimationWrapper({ children }: TabAnimationWrapperProps) {
         styles.container,
         {
           transform: [
-            { perspective: 1000 },
             { translateY },
-            { scale },
-            { rotateX }
+            { scale }
           ],
           opacity,
         },

@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { Neutrals, GoldSystem, Radius, Typography } from '@/constants/design';
 import { useResponsive } from '@/hooks/useResponsive';
 import { PremiumCard } from './PremiumCard';
@@ -27,7 +28,10 @@ interface PropertyCardProps {
   isSoldOut?: boolean;
 }
 
-export function PropertyCard({
+// A neutral gray placeholder shown while the real image loads.
+const PLACEHOLDER_BLURHASH = 'L6PZfSi_.AyE_3t7t7R**0o#DgR4';
+
+function PropertyCardInner({
   id,
   title,
   location,
@@ -56,14 +60,29 @@ export function PropertyCard({
     if (onShortlist) onShortlist();
   };
 
+  // Only load the FIRST image in the card to avoid mass-downloading all
+  // property gallery images at once. Users see the full gallery on tap.
+  const heroImage = images?.[0] || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=400&fit=crop';
+
   return (
     <PremiumCard style={[styles.card, compact && styles.compactCard, compact && isDesktop && styles.compactCardDesktop] as any} onPress={() => router.push(`/property/${id}` as any)}>
       <View style={styles.imageContainer}>
-        <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
-          {images.map((img, idx) => (
-            <Image key={idx} source={{ uri: img }} style={[styles.image, compact && styles.compactImage, compact && isDesktop && styles.compactImageDesktop]} />
-          ))}
-        </ScrollView>
+        <Image
+          source={{ uri: heroImage }}
+          style={[styles.image, compact && styles.compactImage, compact && isDesktop && styles.compactImageDesktop]}
+          contentFit="cover"
+          cachePolicy="memory-disk"
+          recyclingKey={`prop-card-${id}`}
+          placeholder={{ blurhash: PLACEHOLDER_BLURHASH }}
+          placeholderContentFit="cover"
+          transition={200}
+        />
+        {images.length > 1 && (
+          <View style={styles.imageCountBadge}>
+            <Ionicons name="images-outline" size={12} color="#fff" />
+            <Text style={styles.imageCountText}>{images.length}</Text>
+          </View>
+        )}
         <View style={styles.badgesTop}>
           {isVerified && <TrustBadge type="verified" />}
         </View>
@@ -141,6 +160,10 @@ export function PropertyCard({
   );
 }
 
+// Memoize to prevent re-rendering all cards when parent state changes
+// (e.g. scroll position, category filter, new data arriving).
+export const PropertyCard = React.memo(PropertyCardInner);
+
 const styles = StyleSheet.create({
   card: {
     width: '100%',
@@ -162,18 +185,33 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   image: {
-    width: 400, // Width of screen roughly, handled by ScrollView paging
+    width: '100%',
     height: 200,
     borderTopLeftRadius: Radius.lg,
     borderTopRightRadius: Radius.lg,
   },
   compactImage: {
-    width: 280,
     height: 160,
   },
   compactImageDesktop: {
-    width: 320,
     height: 180,
+  },
+  imageCountBadge: {
+    position: 'absolute',
+    bottom: 10,
+    left: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.55)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  imageCountText: {
+    color: '#fff',
+    fontSize: 11,
+    fontWeight: '700',
   },
   badgesTop: {
     position: 'absolute',

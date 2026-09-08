@@ -11,6 +11,7 @@ import {
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
@@ -244,7 +245,14 @@ export default function PropertyDetailsScreen() {
           }}>
             {property.images && property.images.length > 0 ? (
               property.images.map((img: any, idx: number) => (
-                <Image key={idx} source={{ uri: img.image_url }} style={styles.heroImage} />
+                <Image 
+                  key={idx} 
+                  source={{ uri: img.image_url }} 
+                  style={styles.heroImage} 
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  priority={idx === 0 ? 'high' : 'low'}
+                />
               ))
             ) : (
               <View style={styles.heroImagePlaceholder} />

@@ -45,7 +45,7 @@ export function PremiumCard({
   const isGlass = variant === 'glass';
   const isDark = variant === 'dark';
 
-  const getContainerStyle = (): ViewStyle => {
+  const containerStyle = React.useMemo(() => {
     let base: ViewStyle = {
       backgroundColor: Neutrals.surface,
       borderRadius: Radius.lg,
@@ -73,13 +73,13 @@ export function PremiumCard({
     }
 
     return base;
-  };
+  }, [isOutline, isDark, isGlass]);
 
   const content = (
     <Animated.View
       style={[
         styles.container,
-        getContainerStyle(),
+        containerStyle,
         { transform: [{ scale: scaleAnim }] },
         style,
       ]}

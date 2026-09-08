@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+import { getApiUrl } from '@/lib/api';
 
 type Agent = { id: string; type: 'agent'; name: string; locality: string | null; listings: number };
 type Developer = {
@@ -26,7 +25,7 @@ export default function AgentsScreen() {
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/professionals`);
+        const res = await fetch(`${getApiUrl()}/api/professionals`);
         if (res.ok) {
           const data = await res.json();
           setAgents(data.agents || []);

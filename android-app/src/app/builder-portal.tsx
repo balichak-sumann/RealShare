@@ -21,6 +21,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as FileSystem from 'expo-file-system';
 import { Neutrals, GoldSystem, Radius, Typography } from '@/constants/design';
 import { Ionicons } from '@expo/vector-icons';
+import { getApiUrl } from '@/lib/api';
 
 interface BuilderProperty {
   id: string;
@@ -89,7 +90,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         return;
       }
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties/builder`, {
+      const res = await fetch(`${getApiUrl()}/api/properties/builder`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -224,7 +225,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
       const user = auth.currentUser;
       const token = await user?.getIdToken();
 
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`, {
+      const res = await fetch(`${getApiUrl()}/api/properties`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -410,6 +411,24 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
               </Text>
             </View>
 
+            {/* Post Property Quick Action */}
+            <TouchableOpacity
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 8,
+                backgroundColor: GoldSystem.primaryGold,
+                paddingVertical: 12,
+                borderRadius: Radius.md || 10,
+                marginBottom: 16,
+              }}
+              onPress={() => router.push('/post-property' as any)}
+            >
+              <Ionicons name="add-circle-outline" size={20} color="#FFFFFF" />
+              <Text style={{ color: '#FFFFFF', fontWeight: '800', fontSize: 14 }}>+ Post New Property Listing</Text>
+            </TouchableOpacity>
+
             {/* Filter Pills */}
             <View style={styles.filterRow}>
               {(['ALL', 'LIVE', 'PENDING', 'REJECTED'] as const).map(f => (
@@ -594,19 +613,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
               ))}
             </View>
 
-            <Text style={styles.label}>Property Category</Text>
-            <View style={styles.typeRow}>
-              {['Commercial', 'Residential', 'Retail', 'Industrial', 'Land'].map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  style={[styles.typePill, type === t && styles.typePillActive]}
-                  onPress={() => setType(t)}
-                >
-                  <Text style={[styles.typeText, type === t && styles.typeTextActive]}>{t}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
+            {/* Pricing & Fractions directly below Listing Type */}
             <View style={styles.rowInputs}>
               {listingType === 'fractional' && (
                 <View style={{ flex: 1 }}>
@@ -649,6 +656,19 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
                   onChangeText={setTargetIrr}
                 />
               </View>
+            </View>
+
+            <Text style={styles.label}>Property Category</Text>
+            <View style={styles.typeRow}>
+              {['Commercial', 'Residential', 'Retail', 'Industrial', 'Land'].map((t) => (
+                <TouchableOpacity
+                  key={t}
+                  style={[styles.typePill, type === t && styles.typePillActive]}
+                  onPress={() => setType(t)}
+                >
+                  <Text style={[styles.typeText, type === t && styles.typeTextActive]}>{t}</Text>
+                </TouchableOpacity>
+              ))}
             </View>
 
             <Text style={styles.label}>RERA Registration Number (Optional)</Text>
@@ -788,17 +808,16 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
 
       <TouchableOpacity
         style={styles.builderNavTab}
-        onPress={() => setActiveTab('post_new')}
+        onPress={() => router.push('/post-property' as any)}
       >
         <Ionicons
-          name={activeTab === 'post_new' ? 'add-circle' : 'add-circle-outline'}
+          name="add-circle"
           size={24}
-          color={activeTab === 'post_new' ? GoldSystem.primaryGold : Neutrals.gray400}
+          color={GoldSystem.primaryGold}
         />
-        <Text style={[styles.builderNavLabel, activeTab === 'post_new' && styles.builderNavLabelActive]}>
+        <Text style={[styles.builderNavLabel, { color: GoldSystem.primaryGold, fontWeight: '700' }]}>
           Post Property
         </Text>
-        {activeTab === 'post_new' && <View style={styles.builderNavIndicator} />}
       </TouchableOpacity>
     </View>
   </View>

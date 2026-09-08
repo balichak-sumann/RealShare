@@ -152,7 +152,7 @@ export default function DevelopersPage() {
   };
 
   const handleDeleteDeveloper = async (d: Developer) => {
-    if (!confirm(`Delete developer "${d.name}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete developer "${d.name}" and all associated properties? This action cannot be undone.`)) return;
     try {
       const authHeader = await getAuthHeader();
       if (!authHeader) { alert("You must be signed in to do that."); return; }
@@ -160,12 +160,13 @@ export default function DevelopersPage() {
         method: "DELETE",
         headers: authHeader,
       });
-      if (!res.ok) throw new Error("Failed to delete developer");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to delete developer");
       setDevelopers((prev) => prev.filter((dev) => dev.id !== d.id));
-      showToast(`Developer "${d.name}" removed.`);
-    } catch (err) {
+      showToast(`Developer "${d.name}" and their properties were removed.`);
+    } catch (err: any) {
       console.error(err);
-      alert("Could not delete developer. It may still have properties attached.");
+      alert(err.message || "Could not delete developer. Please try again.");
     }
   };
 

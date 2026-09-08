@@ -80,8 +80,8 @@ export default function HomeScreen() {
 
   // Single fetch when city changes — all category filtering happens in memory
   useEffect(() => {
-    const query = city === 'All India' ? '' : `?district=${city}`;
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties${query}`)
+    const query = city === 'All India' ? '' : `?district=${encodeURIComponent(city)}`;
+    fetch(`${getApiUrl()}/api/properties${query}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {

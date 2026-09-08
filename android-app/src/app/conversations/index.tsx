@@ -14,6 +14,7 @@ import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
 import { getSocket } from '@/lib/socket';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
+import { getApiUrl } from '@/lib/api';
 
 interface ConversationRow {
   id: string;
@@ -67,7 +68,7 @@ export default function ConversationsInboxScreen() {
         return;
       }
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations`, {
+      const res = await fetch(`${getApiUrl()}/api/conversations`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {

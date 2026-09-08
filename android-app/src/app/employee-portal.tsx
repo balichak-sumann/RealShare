@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useUser } from '../contexts/UserContext';
 import { auth } from '../lib/firebase';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getApiUrl } from '@/lib/api';
 
 export default function EmployeePortalScreen({ isEmbedded = false }: { isEmbedded?: boolean } = {}) {
   const router = useRouter();
@@ -48,7 +49,7 @@ export default function EmployeePortalScreen({ isEmbedded = false }: { isEmbedde
       const token = await auth.currentUser?.getIdToken();
       if (!token) return;
 
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/employees/dashboard`, {
+      const res = await fetch(`${getApiUrl()}/api/employees/dashboard`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       

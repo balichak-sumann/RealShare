@@ -5,6 +5,7 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { propertyToCardProps, formatPrice } from '@/lib/formatters';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { InvestmentScore } from '@/components/ui/InvestmentScore';
+import { getApiUrl } from '@/lib/api';
 
 // The locality id here is its name (URL-encoded) — there's no separate
 // Locality table, so everything shown is derived from real properties in
@@ -18,10 +19,9 @@ export default function LocalityDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/properties`);
+        const res = await fetch(`${getApiUrl()}/api/properties`);
         if (res.ok) {
           const data = await res.json();
           const list = Array.isArray(data) ? data : data.properties || [];

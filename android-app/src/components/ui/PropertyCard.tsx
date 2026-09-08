@@ -24,6 +24,7 @@ interface PropertyCardProps {
   onShare?: () => void;
   areaSuffix?: string;
   description?: string;
+  isSoldOut?: boolean;
 }
 
 export function PropertyCard({
@@ -42,6 +43,7 @@ export function PropertyCard({
   onShare,
   areaSuffix = 'sq.ft',
   description,
+  isSoldOut = false,
 }: PropertyCardProps) {
   const router = useRouter();
   const { isDesktop } = useResponsive();
@@ -65,6 +67,13 @@ export function PropertyCard({
         <View style={styles.badgesTop}>
           {isVerified && <TrustBadge type="verified" />}
         </View>
+        {isSoldOut && (
+          <View style={styles.soldOutOverlay}>
+            <View style={styles.soldOutBadge}>
+              <Text style={styles.soldOutText}>SOLD OUT</Text>
+            </View>
+          </View>
+        )}
         <TouchableOpacity style={styles.shortlistBtn} onPress={handleShortlist}>
           <Text style={[styles.shortlistIcon, isSaved && styles.shortlistIconSaved]}>
             {isSaved ? '♥' : '♡'}
@@ -171,6 +180,25 @@ const styles = StyleSheet.create({
     top: 12,
     left: 12,
     flexDirection: 'row',
+  },
+  soldOutOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(255, 255, 255, 0.4)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  soldOutBadge: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: Radius.md,
+    transform: [{ rotate: '-10deg' }],
+  },
+  soldOutText: {
+    color: '#fff',
+    fontWeight: '900',
+    fontSize: 16,
+    letterSpacing: 2,
   },
   shortlistBtn: {
     position: 'absolute',

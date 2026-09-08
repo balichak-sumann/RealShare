@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/require-admin';
+import { requireAuth } from '@/lib/require-admin';
 import fs from 'fs';
 import path from 'path';
 
@@ -15,9 +15,17 @@ function getBaseUrl(): string {
 
 export async function POST(req: Request) {
   try {
-    // Require admin auth so arbitrary callers can't upload files.
-    const auth = await requireAdmin(req.clone());
+    // Require auth and allow admin, agent, and builder roles
+    const auth = await requireAuth(req.clone());
     if (!auth.ok) return auth.response;
+
+    const userRole = (auth.role || '').toLowerCase();
+    if (!['admin', 'agent', 'builder'].includes(userRole)) {
+      return NextResponse.json(
+        { error: 'Forbidden: Only admins, agents, and builders can upload media.' },
+        { status: 403 }
+      );
+    }
 
     const formData = await req.formData();
     const file = formData.get('file') as File | null;

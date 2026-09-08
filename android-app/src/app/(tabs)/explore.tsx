@@ -5,6 +5,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useShortlist } from '@/contexts/ShortlistContext';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
+import { getApiUrl } from '@/lib/api';
 
 export default function ExploreScreen() {
   const { width } = useWindowDimensions();
@@ -26,7 +27,7 @@ export default function ExploreScreen() {
   const [loading, setLoading] = useState(true);
   const [imageIndices, setImageIndices] = useState<Record<string, number>>({});
   
-  const goToImage = (propertyId: string, direction: 'prev' | 'next', totalImages: number) => {
+  const handleImageNavigation = (propertyId: string, totalImages: number, direction: 'prev' | 'next') => {
     setImageIndices(prev => {
       const current = prev[propertyId] || 0;
       let next;
@@ -40,7 +41,7 @@ export default function ExploreScreen() {
   };
 
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+    fetch(`${getApiUrl()}/api/properties`)
       .then(res => res.json())
       .then(data => {
         setProperties(Array.isArray(data) ? data : []);
@@ -398,13 +399,13 @@ export default function ExploreScreen() {
                       <>
                         <TouchableOpacity
                           style={[styles.sliderArrow, styles.sliderArrowLeft]}
-                          onPress={() => goToImage(prop.id, 'prev', prop.images.length)}
+                          onPress={() => handleImageNavigation(prop.id, prop.images.length, 'prev')}
                         >
                           <Text style={styles.sliderArrowText}>‹</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.sliderArrow, styles.sliderArrowRight]}
-                          onPress={() => goToImage(prop.id, 'next', prop.images.length)}
+                          onPress={() => handleImageNavigation(prop.id, prop.images.length, 'next')}
                         >
                           <Text style={styles.sliderArrowText}>›</Text>
                         </TouchableOpacity>

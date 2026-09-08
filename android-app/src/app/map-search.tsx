@@ -5,6 +5,7 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { propertyToCardProps } from '@/lib/formatters';
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { MapPropertyMarker } from '@/components/ui/MapPropertyMarker';
+import { getApiUrl } from '@/lib/api';
 
 const { width, height } = Dimensions.get('window');
 
@@ -14,10 +15,9 @@ export default function MapSearchScreen() {
   const [properties, setProperties] = useState<any[]>([]);
 
   useEffect(() => {
-    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/properties`);
+        const res = await fetch(`${getApiUrl()}/api/properties`);
         if (res.ok) {
           const data = await res.json();
           const list = Array.isArray(data) ? data : data.properties || [];

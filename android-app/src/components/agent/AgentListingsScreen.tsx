@@ -291,19 +291,8 @@ export function AgentListingsScreen() {
             ))}
           </View>
 
-          {/* Location */}
-          <Text style={styles.sectionLabel}>📍 Location</Text>
-          <Text style={styles.fieldLabel}>State *</Text>
-          <TextInput style={styles.fieldInput} value={stateName} onChangeText={setStateName} placeholder="e.g. Telangana" placeholderTextColor="#9CA3AF" />
-          <Text style={styles.fieldLabel}>District *</Text>
-          <TextInput style={styles.fieldInput} value={district} onChangeText={setDistrict} placeholder="e.g. Hyderabad" placeholderTextColor="#9CA3AF" />
-          <Text style={styles.fieldLabel}>Locality *</Text>
-          <TextInput style={styles.fieldInput} value={locality} onChangeText={setLocality} placeholder="e.g. Gachibowli" placeholderTextColor="#9CA3AF" />
-          <Text style={styles.fieldLabel}>Full Address</Text>
-          <TextInput style={styles.fieldInput} value={fullAddress} onChangeText={setFullAddress} placeholder="e.g. Plot No 42, Tech Park Road" placeholderTextColor="#9CA3AF" />
-
-          {/* Pricing */}
-          <Text style={styles.sectionLabel}>💰 Pricing</Text>
+          {/* Pricing & Fractions */}
+          <Text style={styles.sectionLabel}>💰 Pricing & Fractions</Text>
           <Text style={styles.fieldLabel}>Price per Fraction (₹) *</Text>
           <TextInput style={styles.fieldInput} value={pricePerFraction} onChangeText={setPricePerFraction} placeholder="e.g. 50000" keyboardType="numeric" placeholderTextColor="#9CA3AF" />
 
@@ -318,6 +307,17 @@ export function AgentListingsScreen() {
               <TextInput style={styles.fieldInput} value={targetIrr} onChangeText={setTargetIrr} placeholder="e.g. 15.0" keyboardType="numeric" placeholderTextColor="#9CA3AF" />
             </>
           )}
+
+          {/* Location */}
+          <Text style={styles.sectionLabel}>📍 Location</Text>
+          <Text style={styles.fieldLabel}>State *</Text>
+          <TextInput style={styles.fieldInput} value={stateName} onChangeText={setStateName} placeholder="e.g. Telangana" placeholderTextColor="#9CA3AF" />
+          <Text style={styles.fieldLabel}>District *</Text>
+          <TextInput style={styles.fieldInput} value={district} onChangeText={setDistrict} placeholder="e.g. Hyderabad" placeholderTextColor="#9CA3AF" />
+          <Text style={styles.fieldLabel}>Locality *</Text>
+          <TextInput style={styles.fieldInput} value={locality} onChangeText={setLocality} placeholder="e.g. Gachibowli" placeholderTextColor="#9CA3AF" />
+          <Text style={styles.fieldLabel}>Full Address</Text>
+          <TextInput style={styles.fieldInput} value={fullAddress} onChangeText={setFullAddress} placeholder="e.g. Plot No 42, Tech Park Road" placeholderTextColor="#9CA3AF" />
 
           {/* Photo URL (simplified for now) */}
           {!isEdit && (

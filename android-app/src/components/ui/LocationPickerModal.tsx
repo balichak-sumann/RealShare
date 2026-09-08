@@ -4,6 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { useLocation } from '@/contexts/LocationContext';
 
+import { getApiUrl } from '@/lib/api';
+
 // RealShare is currently live (has real listings) only in Hyderabad. The rest
 // of the cities are shown honestly as upcoming markets rather than hidden or
 // silently faked with Hyderabad data under a different city's name.
@@ -20,7 +22,7 @@ export function LocationPickerModal({ visible, onClose }: LocationPickerModalPro
 
   React.useEffect(() => {
     if (visible) {
-      fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+      fetch(`${getApiUrl()}/api/properties`)
         .then(res => res.json())
         .then(data => {
           if (Array.isArray(data)) {

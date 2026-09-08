@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { auth } from '@/lib/firebase';
 import { EmptyState } from '@/components/ui/EmptyState';
+import { getApiUrl } from '@/lib/api';
 
 export default function AssetDetailScreen() {
   const { id } = useLocalSearchParams();
@@ -21,7 +22,7 @@ export default function AssetDetailScreen() {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/assets/${id}`, {
+      const res = await fetch(`${getApiUrl()}/api/assets/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -45,7 +46,7 @@ export default function AssetDetailScreen() {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/assets/${id}/documents`, {
+      const res = await fetch(`${getApiUrl()}/api/assets/${id}/documents`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -71,7 +72,7 @@ export default function AssetDetailScreen() {
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/assets/${id}/agreements`, {
+      const res = await fetch(`${getApiUrl()}/api/assets/${id}/agreements`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

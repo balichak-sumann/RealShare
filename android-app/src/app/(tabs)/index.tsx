@@ -7,6 +7,7 @@ import {
   TouchableOpacity,
   Platform,
   Animated,
+  TextInput,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { useRef } from 'react';
@@ -31,6 +32,7 @@ import { HotProjects } from '@/components/home/HotProjects';
 import { TopLocalities } from '@/components/home/TopLocalities';
 import { ServicesStrip } from '@/components/home/ServicesStrip';
 import { TopDevelopers } from '@/components/home/TopDevelopers';
+import { PostPropertyBanner } from '@/components/home/PostPropertyBanner';
 
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PropertyCard } from '@/components/ui/PropertyCard';
@@ -40,7 +42,6 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { LocationPickerModal } from '@/components/ui/LocationPickerModal';
 import { WebFooter } from '@/components/layout/WebFooter';
-import { WealthMarketingSection } from '@/components/home/WealthMarketingSection';
 import { QuoteSection } from '@/components/home/QuoteSection';
 import { BenefitsSection } from '@/components/home/BenefitsSection';
 import { getApiUrl } from '@/lib/api';
@@ -56,6 +57,7 @@ export default function HomeScreen() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [allCityProperties, setAllCityProperties] = useState<any[]>([]);
   const [hasUnread, setHasUnread] = useState(false);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
     const currentUser = auth.currentUser;
@@ -150,6 +152,14 @@ export default function HomeScreen() {
     }
   }, []);
 
+  const submitSearch = () => {
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query.trim())}` as any);
+    } else {
+      router.push('/search' as any);
+    }
+  };
+
   if (profile?.role === 'agent') {
     return <AgentPortalScreen isEmbedded={true} />;
   }
@@ -209,7 +219,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={[
           { paddingBottom: isDesktop ? 64 : 120 },
-          isDesktop && { width: '100%', paddingHorizontal: 24 },
+          isDesktop && { width: '100%', paddingHorizontal: 24, paddingTop: 16 },
         ] as any}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -217,6 +227,31 @@ export default function HomeScreen() {
         )}
         scrollEventThrottle={16}
       >
+        {isDesktop && (
+          <View style={styles.webSearchContainer}>
+            <View style={styles.webSearchBox}>
+              <TouchableOpacity style={styles.webLocationDropdown} activeOpacity={0.7} onPress={() => setShowLocationPicker(true)}>
+                <Ionicons name="location-outline" size={18} color={Neutrals.gray600} />
+                <Text style={styles.webLocationDropdownText}>{city}</Text>
+                <Ionicons name="chevron-down" size={14} color={Neutrals.gray400} />
+              </TouchableOpacity>
+              
+              <View style={styles.webSearchInputWrapper}>
+                <Ionicons name="search-outline" size={18} color={Neutrals.gray500} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  onSubmitEditing={submitSearch}
+                  placeholder="Search properties, localities…"
+                  placeholderTextColor={Neutrals.gray500}
+                  style={styles.webSearchInput as any}
+                  returnKeyType="search"
+                />
+              </View>
+            </View>
+          </View>
+        )}
+
         <HeroCarousel />
         <CategoryGrid activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
         
@@ -225,9 +260,11 @@ export default function HomeScreen() {
         </View>
 
         <QuickActions />
-        
+
+        {/* 1. Recent Activity */}
         <RecentActivity />
         
+        {/* 2. Hot Selling Projects */}
         <View style={styles.featuredSection}>
           <SectionHeader title="Hot Selling Projects" onViewAll={() => router.push('/(tabs)/search')} />
           <ResponsiveRail contentContainerStyle={styles.featuredScroll}>
@@ -237,15 +274,13 @@ export default function HomeScreen() {
           </ResponsiveRail>
         </View>
 
-        <TopDevelopers />
-
-        {isDesktop && <QuoteSection />}
-
+        {/* 3. Projects in Hyderabad */}
         <HotProjects properties={filtered.newProjects} />
 
-        {isDesktop && <WealthMarketingSection />}
+        {/* 4. Sell or Rent Properties For Free */}
+        <PostPropertyBanner />
 
-
+        {/* 5. Resale Properties */}
         <View style={styles.featuredSection}>
           <SectionHeader title="Resale Properties" onViewAll={() => router.push('/(tabs)/search')} />
           {resaleProperties.length > 0 ? (
@@ -263,6 +298,7 @@ export default function HomeScreen() {
           )}
         </View>
         
+        {/* 6. Rental */}
         <View style={styles.featuredSection}>
           <SectionHeader title="Properties for Rent" onViewAll={() => router.push('/(tabs)/search')} />
           {rentalProperties.length > 0 ? (
@@ -279,11 +315,18 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
+
+        {/* 7. Top Developer */}
+        <TopDevelopers />
+
+        {/* Secondary Desktop / Utility Sections placed at bottom */}
         <TopLocalities properties={filtered.newProjects} />
 
         {isDesktop && <BenefitsSection />}
 
         <ServicesStrip />
+
+        {isDesktop && <QuoteSection />}
 
         {/* Trust Banner */}
         <View style={styles.trustBanner}>
@@ -460,5 +503,60 @@ const styles = StyleSheet.create({
     ...Typography.bodyMedium,
     color: Neutrals.gray500,
     textAlign: 'center',
+  },
+  webSearchContainer: {
+    width: '100%',
+    alignItems: 'flex-start',
+    paddingLeft: 138,
+    marginBottom: 24,
+    zIndex: 10,
+  },
+  webSearchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.full,
+    padding: 6,
+    paddingLeft: 16,
+    width: '100%',
+    maxWidth: 600,
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)',
+        } as any)
+      : {
+          elevation: 4,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 12,
+        }),
+  },
+  webLocationDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 16,
+    borderRightWidth: 1,
+    borderRightColor: Neutrals.gray200,
+  },
+  webLocationDropdownText: {
+    ...Typography.labelLarge,
+    fontSize: 15,
+    color: Neutrals.obsidian,
+  },
+  webSearchInputWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    height: 42,
+  },
+  webSearchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: Neutrals.text,
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}),
   },
 });

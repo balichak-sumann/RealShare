@@ -10,6 +10,12 @@ import { getApiUrl } from '@/lib/api';
 
 const DEFAULT_SERVICES = [
   { 
+    id: '3', 
+    title: 'Home Loans & Finance', 
+    video: require('../../../assets/videos/home_loan.mp4'),
+    image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+  },
+  { 
     id: '1', 
     title: 'Interior Design', 
     video: require('../../../assets/videos/interior_design.mp4'),
@@ -20,12 +26,6 @@ const DEFAULT_SERVICES = [
     title: 'Property Management', 
     video: require('../../../assets/videos/property_mgnt.mp4'),
     image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
-  },
-  { 
-    id: '3', 
-    title: 'Home Loans & Finance', 
-    video: require('../../../assets/videos/home_loan.mp4'),
-    image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
   },
 ];
 
@@ -101,11 +101,11 @@ export function ServicesStrip() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setServices(data.map((s, idx) => ({
+            setServices(data.map((s) => ({
               id: s.id,
               title: s.title,
               image: s.image_url,
-              video: DEFAULT_SERVICES[idx]?.video || undefined,
+              video: DEFAULT_SERVICES.find(ds => ds.title === s.title)?.video,
             })));
           }
         }

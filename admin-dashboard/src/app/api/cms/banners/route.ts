@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
 
+export const dynamic = 'force-dynamic';
+
 function isValidImageUrl(value: string): boolean {
   if (!value || typeof value !== 'string') return false;
   if (value.startsWith('/') || value.startsWith('data:')) return true;

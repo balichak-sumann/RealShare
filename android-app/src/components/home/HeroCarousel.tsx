@@ -15,7 +15,50 @@ type Banner = {
   link_url?: string | null;
 };
 
-const FALLBACK_SLIDES: Banner[] = [];
+const FALLBACK_SLIDES: Banner[] = [
+  {
+    id: 'slide1',
+    title: 'Premium Residential Homes',
+    subtitle: 'Own a premium residential home, your dream home search starts here.',
+    image_url: '/banners/residential.png',
+    link_url: '/search',
+  },
+  {
+    id: 'slide2',
+    title: 'High-Yield Commercial Spaces',
+    subtitle: 'Institutional grade assets now accessible to retail investors.',
+    image_url: '/banners/commercial.png',
+    link_url: '/search',
+  },
+  {
+    id: 'slide3',
+    title: 'Fractional Ownership',
+    subtitle: 'Co - own a piece of Premium  Realestate, start investing in Fractional ownership today.',
+    image_url: '/banners/fractional.png',
+    link_url: '/search',
+  },
+  {
+    id: 'slide4',
+    title: 'Investor Exclusives',
+    subtitle: 'Pre-launch and off-market deals for verified investors.',
+    image_url: '/banners/investor.png',
+    link_url: '/search',
+  },
+  {
+    id: 'slide5',
+    title: 'Plots & Farms',
+    subtitle: 'Secure premium agricultural land and farm plots for your future.',
+    image_url: '/banners/plots.png',
+    link_url: '/search',
+  },
+  {
+    id: 'slide6',
+    title: 'Luxury Holiday Homes',
+    subtitle: 'Earn passive income while enjoying exclusive access.',
+    image_url: 'https://images.unsplash.com/photo-1499793983690-e29da59ef1c2?q=80&w=2560&auto=format&fit=crop',
+    link_url: '/search',
+  }
+];
 
 export function HeroCarousel() {
   const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width || 400);
@@ -83,7 +126,7 @@ export function HeroCarousel() {
       >
         {slides.map((slide, index) => (
           <View key={slide.id} style={[styles.slide, isDesktop && styles.slideDesktop, { width: containerWidth }]}>
-            <Image source={{ uri: slide.image_url }} style={styles.image} />
+            <Image source={{ uri: slide.image_url.startsWith('/') ? `${getApiUrl()}${slide.image_url}` : slide.image_url }} style={styles.image} />
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.5)', 'rgba(0,0,0,0.9)']}
               style={styles.gradient}

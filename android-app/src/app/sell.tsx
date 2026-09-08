@@ -1,17 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, ActivityIndicator, Alert, Platform, Image } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
+import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { auth } from '@/lib/firebase';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToFirebase } from '@/lib/uploadImage';
 import { Ionicons } from '@expo/vector-icons';
 import { getApiUrl } from '@/lib/api';
+import { LinearGradient } from 'expo-linear-gradient';
 
 export default function SellScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [mainTab, setMainTab] = useState<'sell' | 'rent' | null>(null);
+  const currentUser = auth.currentUser;
   
+  // Autocomplete states
+  const [properties, setProperties] = useState<any[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -24,15 +31,59 @@ export default function SellScreen() {
     district: '',
     locality: '',
     image_url: '',
+    video_url: '',
   });
 
+  // Fetch properties on mount for autocomplete
+  useEffect(() => {
+    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setProperties(data);
+        } else if (data.properties && Array.isArray(data.properties)) {
+          setProperties(data.properties);
+        }
+      })
+      .catch(err => console.error("Error fetching properties for autocomplete:", err));
+  }, []);
+
   const propertyTypes = ['Residential', 'Commercial', 'Fractional', 'Holiday', 'Investor'];
-  const listingTypes = [
+  
+  const sellListingTypes = [
     { label: 'Outright Sale', value: 'outright' },
     { label: 'Fractional Sale', value: 'fractional' },
-    { label: 'Rental', value: 'rental' },
     { label: 'Resale', value: 'resale' }
   ];
+  const rentListingTypes = [
+    { label: 'Rental', value: 'rental' }
+  ];
+
+  const currentListingTypes = mainTab === 'sell' ? sellListingTypes : rentListingTypes;
+
+  const handleTabChange = (tab: 'sell' | 'rent') => {
+    setMainTab(tab);
+    setFormData({
+      ...formData,
+      listing_type: tab === 'sell' ? 'outright' : 'rental'
+    });
+  };
+
+  const handleSelectProperty = (property: any) => {
+    setFormData({
+      ...formData,
+      title: property.title,
+      description: property.description || '',
+      property_type: property.property_type || formData.property_type,
+      state: property.state || '',
+      district: property.district || '',
+      locality: property.locality || '',
+      image_url: property.image_url || '',
+      video_url: property.video_url || '',
+      price: property.price_per_fraction ? property.price_per_fraction.toString() : '',
+    });
+    setShowDropdown(false);
+  };
 
   const handleSave = async () => {
     console.log("Submit clicked!", formData);
@@ -54,6 +105,7 @@ export default function SellScreen() {
       }
 
       let finalImageUrl = formData.image_url;
+      let finalVideoUrl = formData.video_url;
 
       // If they selected a local image, upload it first
       if (formData.image_url && !formData.image_url.startsWith('http')) {
@@ -64,6 +116,20 @@ export default function SellScreen() {
         } catch (error) {
           console.error("Image upload error:", error);
           Alert.alert('Upload Failed', 'Failed to upload the image. Please try again.');
+          setLoading(false);
+          return;
+        }
+      }
+
+      // If they selected a local video, upload it
+      if (formData.video_url && !formData.video_url.startsWith('http')) {
+        try {
+          console.log("Uploading video...");
+          finalVideoUrl = await uploadImageToFirebase(formData.video_url, 'property_videos');
+          console.log("Video uploaded successfully:", finalVideoUrl);
+        } catch (error) {
+          console.error("Video upload error:", error);
+          Alert.alert('Upload Failed', 'Failed to upload the video. Please try again.');
           setLoading(false);
           return;
         }
@@ -90,6 +156,7 @@ export default function SellScreen() {
           district: formData.district,
           locality: formData.locality,
           image_url: finalImageUrl || undefined,
+          video_url: finalVideoUrl || undefined,
         })
       });
 
@@ -118,55 +185,164 @@ export default function SellScreen() {
     }
   };
 
+  // Filter properties based on input
+  const filteredProperties = formData.title.length > 0 
+    ? properties.filter(p => p.title && p.title.toLowerCase().includes(formData.title.toLowerCase()))
+    : [];
+
+  // ── AUTH GATE: Block access for unauthenticated users ──
+  if (!currentUser) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitleBig}>List Property</Text>
+          <View style={{ width: 40 }} />
+        </View>
+
+        <View style={styles.authGateContainer}>
+          <View style={styles.authGateCard}>
+            <View style={styles.authGateIconCircle}>
+              <Ionicons name="lock-closed" size={48} color={GoldSystem.primaryGold} />
+            </View>
+            <Text style={styles.authGateTitle}>Sign In Required</Text>
+            <Text style={styles.authGateSubtitle}>
+              You need to create an account or sign in before you can list a property on RealShare.
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push('/sign-in' as any)}
+              activeOpacity={0.85}
+              style={{ width: '100%' }}
+            >
+              <LinearGradient
+                colors={[GoldSystem.primaryGold, GoldSystem.darkGold]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.authGateBtn}
+              >
+                <Ionicons name="log-in-outline" size={20} color={Neutrals.white} />
+                <Text style={styles.authGateBtnText}>Sign In / Sign Up</Text>
+              </LinearGradient>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
+              <Text style={styles.authGateBackLink}>← Go Back</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Sell Property</Text>
+        <Text style={styles.headerTitleBig}>List Property</Text>
         <View style={{ width: 40 }} />
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={{ padding: 16, paddingBottom: 40 }}>
         
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Basic Details</Text>
-          
-          <Text style={styles.label}>Property Title *</Text>
-          <TextInput
-            style={styles.input}
-            placeholder="e.g. Luxury 3BHK in Gachibowli"
-            value={formData.title}
-            onChangeText={(val) => setFormData({ ...formData, title: val })}
-          />
+        {/* BIG BOXES FOR SELL OR RENT */}
+        <Text style={styles.chooseLabel}>What would you like to do?</Text>
+        <View style={styles.bigBoxContainer}>
+          <TouchableOpacity 
+            style={[styles.bigBox, mainTab === 'sell' && styles.bigBoxActive]} 
+            onPress={() => handleTabChange('sell')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.boxIconWrapper, mainTab === 'sell' && styles.boxIconWrapperActive]}>
+              <Ionicons name="home-outline" size={32} color={mainTab === 'sell' ? Neutrals.white : GoldSystem.primaryGold} />
+            </View>
+            <Text style={[styles.bigBoxText, mainTab === 'sell' && styles.bigBoxTextActive]}>Sell</Text>
+          </TouchableOpacity>
 
-          <Text style={styles.label}>Description</Text>
-          <TextInput
-            style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
-            placeholder="Describe the property..."
-            multiline
-            numberOfLines={3}
-            value={formData.description}
-            onChangeText={(val) => setFormData({ ...formData, description: val })}
-          />
+          <TouchableOpacity 
+            style={[styles.bigBox, mainTab === 'rent' && styles.bigBoxActive]} 
+            onPress={() => handleTabChange('rent')}
+            activeOpacity={0.8}
+          >
+            <View style={[styles.boxIconWrapper, mainTab === 'rent' && styles.boxIconWrapperActive]}>
+              <Ionicons name="key-outline" size={32} color={mainTab === 'rent' ? Neutrals.white : GoldSystem.primaryGold} />
+            </View>
+            <Text style={[styles.bigBoxText, mainTab === 'rent' && styles.bigBoxTextActive]}>Rent</Text>
+          </TouchableOpacity>
         </View>
 
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Listing & Pricing</Text>
+        {/* ONLY SHOW FORM IF A BOX IS CLICKED */}
+        {mainTab !== null && (
+          <View style={{ marginTop: 24 }}>
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Basic Details</Text>
+              
+              <View style={{ position: 'relative', zIndex: 10 }}>
+                <Text style={styles.label}>Property Title *</Text>
+                <TextInput
+                  style={styles.input}
+                  placeholder={mainTab === 'sell' ? "e.g. Luxury 3BHK for Sale in Gachibowli" : "e.g. 3BHK for Rent in Gachibowli"}
+                  value={formData.title}
+                  onChangeText={(val) => {
+                    setFormData({ ...formData, title: val });
+                    setShowDropdown(true);
+                  }}
+                  onFocus={() => setShowDropdown(true)}
+                />
 
-          <Text style={styles.label}>Listing Type *</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
-            {listingTypes.map((type) => (
-              <TouchableOpacity 
-                key={type.value}
-                style={[styles.typePill, formData.listing_type === type.value && styles.typePillActive]}
-                onPress={() => setFormData({ ...formData, listing_type: type.value })}
-              >
-                <Text style={[styles.typePillText, formData.listing_type === type.value && styles.typePillTextActive]}>{type.label}</Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
+                {/* Autocomplete Dropdown */}
+                {showDropdown && filteredProperties.length > 0 && (
+                  <View style={styles.dropdownContainer}>
+                    {filteredProperties.slice(0, 5).map((prop, index) => (
+                      <TouchableOpacity 
+                        key={prop.id || index} 
+                        style={styles.dropdownItem}
+                        onPress={() => handleSelectProperty(prop)}
+                      >
+                        {prop.image_url && <Image source={{ uri: prop.image_url }} style={styles.dropdownImage} />}
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.dropdownTitle} numberOfLines={1}>{prop.title}</Text>
+                          {prop.locality && <Text style={styles.dropdownSubtitle}>{prop.locality}</Text>}
+                        </View>
+                        <Ionicons name="arrow-forward" size={16} color={Neutrals.gray400} />
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                )}
+              </View>
+
+              <Text style={styles.label}>Description</Text>
+              <TextInput
+                style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
+                placeholder="Describe the property..."
+                multiline
+                numberOfLines={3}
+                value={formData.description}
+                onChangeText={(val) => setFormData({ ...formData, description: val })}
+              />
+            </View>
+
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Listing & Pricing</Text>
+
+              {mainTab === 'sell' && (
+                <>
+                  <Text style={styles.label}>Listing Type *</Text>
+                  <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+                    {currentListingTypes.map((type) => (
+                      <TouchableOpacity 
+                        key={type.value}
+                        style={[styles.typePill, formData.listing_type === type.value && styles.typePillActive]}
+                        onPress={() => setFormData({ ...formData, listing_type: type.value })}
+                      >
+                        <Text style={[styles.typePillText, formData.listing_type === type.value && styles.typePillTextActive]}>{type.label}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </ScrollView>
+                </>
+              )}
 
           <Text style={styles.label}>Property Category *</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
@@ -281,6 +457,44 @@ export default function SellScreen() {
               </View>
             )}
           </TouchableOpacity>
+
+          <Text style={[styles.label, { marginTop: 16 }]}>Property Video (Optional)</Text>
+          <TouchableOpacity 
+            style={styles.imagePickerBtn}
+            onPress={async () => {
+              const permissionResult = await ImagePicker.requestMediaLibraryPermissionsAsync();
+              if (permissionResult.granted === false) {
+                Alert.alert("Permission Refused", "You need to grant permission to access your videos.");
+                return;
+              }
+              const pickerResult = await ImagePicker.launchImageLibraryAsync({
+                mediaTypes: ImagePicker.MediaTypeOptions.Videos,
+                allowsEditing: true,
+                quality: 0.8,
+              });
+              if (!pickerResult.canceled && pickerResult.assets && pickerResult.assets.length > 0) {
+                setFormData({ ...formData, video_url: pickerResult.assets[0].uri });
+              }
+            }}
+          >
+            {formData.video_url ? (
+              <View style={styles.imagePreviewContainer}>
+                <View style={[styles.imagePreview, { backgroundColor: Neutrals.gray800, justifyContent: 'center', alignItems: 'center' }]}>
+                   <Ionicons name="videocam" size={48} color="#FFF" />
+                </View>
+                <View style={styles.changeImageOverlay}>
+                  <Ionicons name="camera-reverse-outline" size={24} color="#FFF" />
+                  <Text style={styles.changeImageText}>Change Video</Text>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.imagePlaceholder}>
+                <Ionicons name="videocam-outline" size={48} color={Neutrals.gray400} />
+                <Text style={styles.imagePlaceholderText}>Tap to select a video</Text>
+                <Text style={styles.imagePlaceholderSub}>Supported formats: MP4, MOV</Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </View>
 
         <TouchableOpacity style={styles.saveBtn} onPress={handleSave} disabled={loading}>
@@ -290,6 +504,8 @@ export default function SellScreen() {
             <Text style={styles.saveBtnText}>Submit Property for Approval</Text>
           )}
         </TouchableOpacity>
+        </View>
+        )}
       </ScrollView>
     </View>
   );
@@ -304,8 +520,96 @@ const styles = StyleSheet.create({
   },
   backBtn: { padding: 8, marginLeft: -8 },
   backIcon: { fontSize: 24, color: Neutrals.obsidian },
-  headerTitle: { ...Typography.headlineMedium, color: Neutrals.obsidian },
-  content: { flex: 1 },
+  headerTitleBig: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+  },
+  chooseLabel: {
+    ...Typography.titleLarge,
+    color: Neutrals.obsidian,
+    textAlign: 'center',
+    marginBottom: 20,
+    marginTop: 10,
+  },
+  bigBoxContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    gap: 16,
+  },
+  bigBox: {
+    flex: 1,
+    backgroundColor: Neutrals.white,
+    borderWidth: 2,
+    borderColor: Neutrals.gray200,
+    borderRadius: Radius.xl,
+    padding: 24,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bigBoxActive: {
+    borderColor: GoldSystem.primaryGold,
+    backgroundColor: Neutrals.surface,
+  },
+  boxIconWrapper: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Neutrals.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  boxIconWrapperActive: {
+    backgroundColor: GoldSystem.primaryGold,
+  },
+  bigBoxText: {
+    ...Typography.titleMedium,
+    color: Neutrals.gray500,
+  },
+  bigBoxTextActive: {
+    color: Neutrals.obsidian,
+    fontWeight: '700',
+  },
+  content: {
+    flex: 1,
+  },
+  dropdownContainer: {
+    position: 'absolute',
+    top: 70, // Just below the input
+    left: 0,
+    right: 0,
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Neutrals.gray200,
+    ...Shadows.md,
+    maxHeight: 250,
+    zIndex: 1000,
+    elevation: 10, // For Android z-index
+  },
+  dropdownItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Neutrals.gray100,
+  },
+  dropdownImage: {
+    width: 40,
+    height: 40,
+    borderRadius: Radius.sm,
+    backgroundColor: Neutrals.gray200,
+    marginRight: 12,
+  },
+  dropdownTitle: {
+    ...Typography.bodyMedium,
+    color: Neutrals.obsidian,
+    fontWeight: '600',
+  },
+  dropdownSubtitle: {
+    ...Typography.caption,
+    color: Neutrals.gray500,
+  },
   section: {
     marginBottom: 24,
     backgroundColor: Neutrals.surface,
@@ -412,5 +716,77 @@ const styles = StyleSheet.create({
     color: '#FFF',
     ...Typography.labelMedium,
     fontWeight: '700',
-  }
+  },
+  authGateContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingHorizontal: 32,
+    backgroundColor: Neutrals.background,
+  },
+  authGateCard: {
+    width: '100%',
+    maxWidth: 420,
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.xxl,
+    padding: 40,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Neutrals.gray200,
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0 8px 32px rgba(0,0,0,0.08), 0 2px 8px rgba(0,0,0,0.04)',
+        } as any)
+      : {
+          elevation: 6,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 16,
+        }),
+  },
+  authGateIconCircle: {
+    width: 96,
+    height: 96,
+    borderRadius: 48,
+    backgroundColor: 'rgba(212,175,55,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  authGateTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+    fontWeight: '700',
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  authGateSubtitle: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray500,
+    textAlign: 'center',
+    lineHeight: 22,
+    marginBottom: 32,
+  },
+  authGateBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: Radius.full,
+    width: '100%',
+  },
+  authGateBtnText: {
+    ...Typography.labelLarge,
+    color: Neutrals.white,
+    fontWeight: '700',
+    fontSize: 16,
+  },
+  authGateBackLink: {
+    ...Typography.labelMedium,
+    color: Neutrals.gray500,
+    marginTop: 20,
+    fontSize: 14,
+  },
 });

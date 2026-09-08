@@ -77,9 +77,11 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     backgroundColor: Neutrals.background,
+    ...(Platform.OS === 'web' ? ({ overflow: 'visible' } as any) : {}),
   },
   bodyWide: {
     flex: 1,
+    ...(Platform.OS === 'web' ? ({ position: 'relative', zIndex: 1 } as any) : {}),
   },
 
   // ---- auth backdrop ----

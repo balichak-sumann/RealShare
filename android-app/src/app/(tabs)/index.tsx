@@ -247,10 +247,6 @@ export default function HomeScreen() {
         <HeroCarousel />
         <CategoryGrid activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
         
-        <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
-        </View>
-
         {/* Search Bar with Location Picker */}
         <View style={styles.homeSearchContainer}>
           <View style={styles.homeSearchBox}>
@@ -283,6 +279,10 @@ export default function HomeScreen() {
               <Text style={styles.homeSearchBtnText}>Search</Text>
             </TouchableOpacity>
           </View>
+        </View>
+
+        <View style={styles.welcomeSection}>
+          <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
         </View>
 
         {/* 1. Recent Activity */}

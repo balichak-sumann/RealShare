@@ -381,6 +381,9 @@ export default function SignUpScreen() {
       ) : (
         <ImageBackground source={{ uri: BG_IMAGE }} style={styles.mobileBackgroundImage} resizeMode="cover">
           <View style={styles.mobileOverlay}>
+            <TouchableOpacity style={styles.mobileBackButton} onPress={() => router.replace('/')}>
+              <Ionicons name="arrow-back" size={24} color="#FFFFFF" />
+            </TouchableOpacity>
             <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
               <ScrollView contentContainerStyle={styles.mobileScrollContainer} keyboardShouldPersistTaps="handled">
                 <View style={styles.mobileGlassContainer}>
@@ -445,6 +448,11 @@ const styles = StyleSheet.create({
   // --- Old Mobile Styles ---
   mobileBackgroundImage: { flex: 1, width: '100%', height: '100%' },
   mobileOverlay: { flex: 1, backgroundColor: 'rgba(0, 0, 0, 0.65)' },
+  mobileBackButton: {
+    position: 'absolute', top: Platform.OS === 'ios' ? 60 : 40, left: 24, zIndex: 10,
+    width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(15, 23, 42, 0.5)',
+    justifyContent: 'center', alignItems: 'center', borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)',
+  },
   mobileScrollContainer: { flexGrow: 1, justifyContent: 'center', padding: 24 },
   mobileGlassContainer: { backgroundColor: 'rgba(15, 23, 42, 0.75)', borderRadius: 24, padding: 32, borderWidth: 1, borderColor: 'rgba(255, 255, 255, 0.15)', ...(Platform.OS === 'web' ? { backdropFilter: 'blur(16px)' } : {}), shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10, maxWidth: 500, width: '100%', alignSelf: 'center' },
   mobileHeader: { marginBottom: 32, alignItems: 'center' },

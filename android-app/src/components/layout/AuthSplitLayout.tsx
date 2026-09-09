@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Neutrals, GoldSystem, Typography } from '@/constants/design';
+import { DesktopNav } from './DesktopNav';
 
 interface AuthSplitLayoutProps {
   children: React.ReactNode;
@@ -37,25 +38,11 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
   // Desktop Split Layout
   if (isDesktop && Platform.OS === 'web') {
     return (
-      <View style={styles.desktopContainer}>
-        {/* Header Overlay */}
-        <View style={styles.headerAbsolute}>
-          <TouchableOpacity onPress={() => router.push('/')} style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Image source={require('../../../assets/logo.png')} style={{ width: 140, height: 35, resizeMode: 'contain' }} />
-          </TouchableOpacity>
-          <View style={styles.headerNav}>
-            {['Home', 'Properties', 'Portfolio', 'How It Works', 'About', 'Partners', 'Contact'].map((item) => (
-              <Text key={item} style={styles.headerNavItem}>{item}</Text>
-            ))}
-          </View>
-          <TouchableOpacity style={styles.backButton} onPress={() => router.push('/')}>
-            <Text style={styles.backButtonText}>Back to Home</Text>
-            <Ionicons name="arrow-forward" size={16} color={GoldSystem.primaryGold} style={{ marginLeft: 4 }} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Left Promotional Side */}
-        <View style={styles.leftSide}>
+      <View style={{ flex: 1, backgroundColor: '#FAF8F5' }}>
+        <DesktopNav />
+        <View style={styles.desktopContainer}>
+          {/* Left Promotional Side */}
+          <View style={styles.leftSide}>
           <ImageBackground source={{ uri: BG_IMAGE }} style={styles.backgroundImage}>
             <LinearGradient
               colors={['rgba(250, 248, 245, 0.95)', 'rgba(250, 248, 245, 0.8)', 'rgba(250, 248, 245, 0.3)']}
@@ -123,6 +110,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
           <View style={styles.formContainerWrapper}>
             {children}
           </View>
+        </View>
         </View>
       </View>
     );
@@ -201,7 +189,7 @@ const styles = StyleSheet.create({
   leftContent: {
     paddingLeft: '12%',
     paddingRight: '15%',
-    paddingTop: 80, // for header
+    paddingTop: 60,
   },
   eyebrowContainer: {
     flexDirection: 'row',
@@ -309,7 +297,6 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     padding: 40,
-    paddingTop: 100, // account for header
   },
   formContainerWrapper: {
     width: '100%',

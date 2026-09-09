@@ -106,9 +106,9 @@ export function DesktopNav() {
           style={{
             position: 'fixed',
             top: 0,
-            left: 16,
-            width: 90,
-            height: 90,
+            left: 48,
+            width: 105,
+            height: 105,
             backgroundColor: '#fff',
             display: 'flex',
             justifyContent: 'center',
@@ -251,7 +251,7 @@ const styles = StyleSheet.create({
     ...(Platform.OS === 'web' ? ({ overflow: 'visible' } as any) : {}),
   },
   brandPlaceholder: {
-    width: 110,
+    width: 145,
     marginRight: 12,
   },
   brand: {

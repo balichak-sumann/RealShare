@@ -140,7 +140,7 @@ export default function PropertiesPage() {
       listingType: (p.listing_type as any) || "fractional",
       areaSqft: Number(p.area_sqft) || 1200,
       googleMapsUrl: p.google_maps_url || "",
-      totalFractions: p.totalFractions || p.total_fractions || 50,
+      totalFractions: p.total_fractions || 50,
       price: Number(p.price_per_fraction) || 500000,
       yield: Number(p.assured_yield) || 8.5,
       irr: Number(p.target_irr) || 15.0,

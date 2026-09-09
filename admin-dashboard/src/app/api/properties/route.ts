@@ -183,12 +183,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Description is required and must be at least 5 characters.' }, { status: 400 });
     }
 
-    if (!data.property_type || !ALLOWED_CATEGORIES.includes(data.property_type)) {
+    const pType = data.property_type ? ALLOWED_CATEGORIES.find(c => c.toLowerCase() === String(data.property_type).trim().toLowerCase()) : undefined;
+    if (!pType) {
       return NextResponse.json(
         { error: `Invalid category. Allowed: ${ALLOWED_CATEGORIES.join(', ')}` },
         { status: 400 }
       );
     }
+    data.property_type = pType;
 
     const listingType: ListingType = data.listing_type ?? 'fractional';
     if (!ALLOWED_LISTING_TYPES.includes(listingType)) {
@@ -210,8 +212,8 @@ export async function POST(request: Request) {
     let availableFractions = 1;
     let pricePerFraction = Number(data.price_per_fraction);
 
-    if (isNaN(pricePerFraction) || pricePerFraction <= 0) {
-      return NextResponse.json({ error: 'Price must be a positive number.' }, { status: 400 });
+    if (isNaN(pricePerFraction) || pricePerFraction < 0) {
+      return NextResponse.json({ error: 'Price must be a positive number or 0.' }, { status: 400 });
     }
 
     if (!isSingleUnit) {
@@ -249,6 +251,7 @@ export async function POST(request: Request) {
       const created = await tx.property.create({
         data: {
           title: data.title.trim(),
+          short_description: data.short_description ? data.short_description.trim() : null,
           description: data.description.trim(),
           property_type: data.property_type,
           listing_type: listingType,

@@ -96,9 +96,12 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
     if (data.property_type) {
       const allowedCategories = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Investor'];
-      if (!allowedCategories.includes(data.property_type)) {
+      const pType = allowedCategories.find(c => c.toLowerCase() === String(data.property_type).trim().toLowerCase());
+      if (!pType) {
+        console.error('INVALID PROPERTY TYPE RECEIVED:', data.property_type, typeof data.property_type);
         return NextResponse.json({ error: `Invalid property_type. Allowed: ${allowedCategories.join(', ')}` }, { status: 400 });
       }
+      data.property_type = pType;
     }
 
     const finalListingType = data.listing_type !== undefined ? data.listing_type : property.listing_type;
@@ -137,6 +140,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       where: { id },
       data: {
         title: data.title !== undefined ? data.title : undefined,
+        short_description: data.short_description !== undefined ? data.short_description : undefined,
         description: data.description !== undefined ? data.description : undefined,
         property_type: data.property_type !== undefined ? data.property_type : undefined,
         listing_type: data.listing_type !== undefined ? data.listing_type : undefined,
@@ -182,6 +186,22 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!user || !user.isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
 
     const data = await request.json();
+    
+    // If reverting from sold out to live
+    if (data.is_sold_out === false) {
+      const prop = await prisma.property.findUnique({ where: { id } });
+      if (prop) {
+        data.sold_fractions = 0;
+        data.available_fractions = prop.total_fractions;
+        
+        // Cancel investments so they are removed from investor profiles without deleting records
+        await prisma.investment.updateMany({
+          where: { property_id: id, status: 'completed' },
+          data: { status: 'cancelled' }
+        });
+      }
+    }
+
     const updated = await prisma.property.update({
       where: { id },
       data: {
@@ -189,6 +209,8 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         rejection_notes: data.rejection_notes !== undefined ? data.rejection_notes : undefined,
         featured: data.featured !== undefined ? data.featured : undefined,
         is_sold_out: data.is_sold_out !== undefined ? data.is_sold_out : undefined,
+        sold_fractions: data.sold_fractions !== undefined ? data.sold_fractions : undefined,
+        available_fractions: data.available_fractions !== undefined ? data.available_fractions : undefined,
       },
       include: {
         images: {
@@ -200,6 +222,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     });
     return NextResponse.json(attachComputedFields(updated));
   } catch (error) {
+    console.error('Failed to patch property:', error);
     return NextResponse.json({ error: 'Failed to patch property' }, { status: 500 });
   }
 }

@@ -43,7 +43,7 @@ export const propertyToCardProps = (p: any) => {
     area: areaDisplay,
     areaSuffix: '',
     score: p.assured_yield ? Number(p.assured_yield) : 4.5,
-    description: p.description || 'A beautiful, premium property offering exceptional yields and modern amenities.',
+    description: p.short_description || p.description || 'A beautiful, premium property offering exceptional yields and modern amenities.',
     isSoldOut: p.is_sold_out || p.approval_status === 'sold_out' || (p.total_fractions > 0 && p.available_fractions <= 0),
   };
 };

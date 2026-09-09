@@ -141,7 +141,7 @@ const styles = StyleSheet.create({
   },
   card: {
     backgroundColor: Neutrals.white,
-    borderRadius: Radius.2xl,
+    borderRadius: Radius.xl,
     width: 280,
     ...(Platform.OS === 'web'
       ? ({
@@ -155,8 +155,8 @@ const styles = StyleSheet.create({
   },
   imageContainer: {
     height: 160,
-    borderTopLeftRadius: Radius.2xl,
-    borderTopRightRadius: Radius.2xl,
+    borderTopLeftRadius: Radius.xl,
+    borderTopRightRadius: Radius.xl,
     overflow: 'hidden',
   },
   cardImage: {

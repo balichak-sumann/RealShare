@@ -84,7 +84,7 @@ export function WebFooter() {
         </View>
 
         <View style={styles.bottomBar}>
-          <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. (C)Copyright {new Date().getFullYear()} Realshare Properties Pvt Ltd</Text>
+          <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © Copyright {new Date().getFullYear()} Realshare Properties Pvt Ltd</Text>
         </View>
       </View>
     </View>
@@ -164,6 +164,7 @@ const styles = StyleSheet.create({
   copyright: {
     ...Typography.caption,
     color: Neutrals.gray500,
+    textAlign: 'center',
   },
 });
 

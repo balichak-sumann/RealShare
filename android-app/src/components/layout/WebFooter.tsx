@@ -41,61 +41,74 @@ function FooterLink({ label, href }: FooterLinkProps) {
 
 export function WebFooter() {
   const { isDesktop } = useResponsive();
+  const router = useRouter();
+
+  if (!isDesktop) {
+    // Ultra-compact mobile footer
+    return (
+      <View style={{ backgroundColor: Neutrals.obsidian, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 70 }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Image source={require('../../../assets/logo.png')} style={{ width: 16, height: 16, marginRight: 6 }} resizeMode="contain" />
+            <Text style={{ color: Neutrals.surface, fontSize: 13, fontWeight: '700' }}>RealShare</Text>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 12 }}>
+            <TouchableOpacity onPress={() => router.push('/privacy-policy' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Privacy</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/terms-of-service' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Terms</Text></TouchableOpacity>
+          </View>
+        </View>
+        <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>RealShare Properties Pvt. Ltd., Nizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212</Text>
+        <Text style={{ color: Neutrals.gray600, fontSize: 8, marginTop: 6 }}>© {new Date().getFullYear()} Realshare Properties. All rights reserved.</Text>
+      </View>
+    );
+  }
+
   return (
-    <View style={[styles.footer, isDesktop && { marginTop: 40 }]}>
-      <View style={[
-        styles.inner, 
-        isDesktop ? { paddingHorizontal: 40, paddingTop: 48, paddingBottom: 24 } : { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 }
-      ]}>
-        <View style={[styles.columns, isDesktop ? { gap: 32 } : { gap: 8 }]}>
-          <View style={[styles.brandCol, isDesktop && { marginRight: 16 }, !isDesktop && { flexBasis: '100%', marginBottom: 2 }]}>
-            <View style={[styles.brandRow, !isDesktop && { marginBottom: 2 }]}>
-              <Image source={require('../../../assets/logo.png')} style={[styles.logo, !isDesktop && { width: 18, height: 18 }]} />
-              <Text style={[styles.brandName, !isDesktop && { fontSize: 16 }]}>RealShare</Text>
+    <View style={[styles.footer, { marginTop: 40 }]}>
+      <View style={[styles.inner, { paddingHorizontal: 40, paddingTop: 48, paddingBottom: 24 }]}>
+        <View style={[styles.columns, { gap: 32 }]}>
+          <View style={[styles.brandCol, { marginRight: 16 }]}>
+            <View style={styles.brandRow}>
+              <Image source={require('../../../assets/logo.png')} style={styles.logo} />
+              <Text style={styles.brandName}>RealShare</Text>
             </View>
-            {isDesktop && (
-              <Text style={styles.brandBlurb}>
-                A new age Intelligent platform bringing Homes that Inspire Life. Earn rental income with commercial and Holiday properties. Invest in premium Realestate with fractional ownership and exit with ease.
-              </Text>
-            )}
+            <Text style={styles.brandBlurb}>
+              A new age Intelligent platform bringing Homes that Inspire Life. Earn rental income with commercial and Holiday properties. Invest in premium Realestate with fractional ownership and exit with ease.
+            </Text>
           </View>
 
-          {isDesktop && (
-            <>
-              <View style={styles.col}>
-                <Text style={styles.colTitle}>Learn</Text>
-                <FooterLink label="How It Works" href="/how-it-works" />
-                <FooterLink label="About Us" href="/about" />
-                <FooterLink label="FAQs" href="/support" />
-              </View>
+          <View style={styles.col}>
+            <Text style={styles.colTitle}>Learn</Text>
+            <FooterLink label="How It Works" href="/how-it-works" />
+            <FooterLink label="About Us" href="/about" />
+            <FooterLink label="FAQs" href="/support" />
+          </View>
 
-              <View style={styles.col}>
-                <Text style={styles.colTitle}>Company</Text>
-                <FooterLink label="Contact Us" href="/contact" />
-                <FooterLink label="Partner With Us" href="/partners" />
-              </View>
-            </>
-          )}
+          <View style={styles.col}>
+            <Text style={styles.colTitle}>Company</Text>
+            <FooterLink label="Contact Us" href="/contact" />
+            <FooterLink label="Partner With Us" href="/partners" />
+          </View>
 
-          <View style={[styles.col, !isDesktop && { flexBasis: '45%' }]}>
-            <Text style={[styles.colTitle, !isDesktop && { marginBottom: 4, fontSize: 10 }]}>Legal</Text>
+          <View style={styles.col}>
+            <Text style={styles.colTitle}>Legal</Text>
             <FooterLink label="Privacy Policy" href="/privacy-policy" />
             <FooterLink label="Terms of Service" href="/terms-of-service" />
           </View>
 
-          <View style={[styles.col, !isDesktop && { flexBasis: '50%' }]}>
-            <Text style={[styles.colTitle, !isDesktop && { marginBottom: 4, fontSize: 10 }]}>Registered Office</Text>
-            <Text style={[styles.addressText, !isDesktop && { fontSize: 10, lineHeight: 14, marginBottom: 2 }]}>
-              {isDesktop 
-                ? "RealShare Properties Pvt. Ltd.\n206, Panchsheel Complex, Nizampet\nHyderabad – 500090, Telangana, India"
-                : "RealShare Properties Pvt. Ltd., 206, Panchsheel Complex, Nizampet, Hyderabad – 500090, TS, India"}
+          <View style={styles.col}>
+            <Text style={styles.colTitle}>Registered Office</Text>
+            <Text style={styles.addressText}>
+              RealShare Properties Pvt. Ltd.{'\n'}
+              206, Panchsheel Complex, Nizampet{'\n'}
+              Hyderabad – 500090, Telangana, India
             </Text>
-            <Text style={[styles.addressText, !isDesktop && { fontSize: 10 }]}>+91 40 4010 1212</Text>
+            <Text style={styles.addressText}>+91 40 4010 1212</Text>
           </View>
         </View>
 
-        <View style={[styles.bottomBar, isDesktop ? { marginTop: 32, paddingTop: 20 } : { marginTop: 8, paddingTop: 8 }]}>
-          <Text style={[styles.copyright, !isDesktop && { fontSize: 9 }]}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © {new Date().getFullYear()} Realshare Properties</Text>
+        <View style={[styles.bottomBar, { marginTop: 32, paddingTop: 20 }]}>
+          <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © Copyright {new Date().getFullYear()} Realshare Properties Pvt Ltd</Text>
         </View>
       </View>
     </View>

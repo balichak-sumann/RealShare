@@ -11,7 +11,7 @@ interface AuthSplitLayoutProps {
   children: React.ReactNode;
 }
 
-const BG_IMAGE = 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2000&auto=format&fit=crop';
+const BG_IMAGE = 'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2000&auto=format&fit=crop';
 
 const FEATURES = [
   {

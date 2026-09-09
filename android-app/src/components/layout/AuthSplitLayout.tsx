@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, Platform, ImageBackground, TouchableOpacity, Image } from 'react-native';
+import { View, Text, StyleSheet, Platform, ImageBackground, TouchableOpacity, Image, ScrollView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -11,7 +11,7 @@ interface AuthSplitLayoutProps {
   children: React.ReactNode;
 }
 
-const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2000&auto=format&fit=crop';
+const BG_IMAGE = 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2000&auto=format&fit=crop';
 
 const FEATURES = [
   {
@@ -50,7 +50,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
               end={{ x: 1, y: 0 }}
               style={styles.gradientOverlay}
             >
-              <View style={styles.leftContent}>
+              <ScrollView contentContainerStyle={styles.leftContent} showsVerticalScrollIndicator={false}>
                 <View style={styles.eyebrowContainer}>
                   <View style={styles.eyebrowLine} />
                   <Text style={styles.eyebrow}>REAL PEOPLE. REAL OPPORTUNITIES.</Text>
@@ -100,7 +100,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
                     <Text style={styles.statLabel}>User Rating</Text>
                   </View>
                 </View>
-              </View>
+              </ScrollView>
             </LinearGradient>
           </ImageBackground>
         </View>
@@ -190,6 +190,9 @@ const styles = StyleSheet.create({
     paddingLeft: '12%',
     paddingRight: '15%',
     paddingTop: 60,
+    paddingBottom: 60,
+    flexGrow: 1,
+    justifyContent: 'center',
   },
   eyebrowContainer: {
     flexDirection: 'row',

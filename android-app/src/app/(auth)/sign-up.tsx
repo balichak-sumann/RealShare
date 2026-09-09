@@ -14,7 +14,7 @@ import { getApiUrl } from '@/lib/api';
 // Email regex — must have valid format (user@domain.tld)
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const MIN_PASSWORD_LENGTH = 8;
-const BG_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2000&auto=format&fit=crop';
+const BG_IMAGE = 'https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=2000&auto=format&fit=crop';
 
 export default function SignUpScreen() {
   const router = useRouter();

@@ -386,11 +386,15 @@ export default function ExploreScreen() {
                     <Text style={styles.cardLocation}>{prop.district}, {prop.state}</Text>
                     
                     <View style={styles.cardStats}>
-                      <View style={styles.statBox}>
-                        <Text style={styles.statValue}>₹ {Number(prop.price_per_fraction).toLocaleString('en-IN')}</Text>
-                        <Text style={styles.statLabel}>Min. Investment</Text>
-                      </View>
-                      <View style={styles.statBoxDivider} />
+                      {Number(prop.price_per_fraction) > 0 && (
+                        <>
+                          <View style={styles.statBox}>
+                            <Text style={styles.statValue}>₹ {Number(prop.price_per_fraction).toLocaleString('en-IN')}</Text>
+                            <Text style={styles.statLabel}>Min. Investment</Text>
+                          </View>
+                          <View style={styles.statBoxDivider} />
+                        </>
+                      )}
                       <View style={styles.statBox}>
                         <Text style={styles.statValueYield}>{prop.assured_yield}%</Text>
                         <Text style={styles.statLabel}>Expected ROI</Text>

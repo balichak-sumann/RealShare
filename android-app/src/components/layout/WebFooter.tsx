@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
+import { useResponsive } from '@/hooks/useResponsive';
 
 /**
  * Web-only informational footer (About, How It Works, Contact, Partner

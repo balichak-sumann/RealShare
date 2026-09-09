@@ -6,6 +6,7 @@ import { TrustBadge } from '@/components/ui/TrustBadge';
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { propertyToProjectCardProps } from '@/lib/formatters';
+import { getApiUrl } from '@/lib/api';
 
 export default function DeveloperDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -15,10 +16,9 @@ export default function DeveloperDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/developers/${id}`);
+        const res = await fetch(`${getApiUrl()}/api/developers/${id}`);
         if (res.ok) {
           const data = await res.json();
           const properties = data.properties || [];

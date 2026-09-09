@@ -5,6 +5,7 @@ import { LocalityCard } from '../ui/LocalityCard';
 import { formatPrice } from '@/lib/formatters';
 import { useRouter } from 'expo-router';
 import { ResponsiveRail } from '../layout/ResponsiveRail';
+import { getApiUrl, getFullImageUrl } from '@/lib/api';
 
 // Derived from real listed properties, grouped by locality — there's no
 // separate Locality table (or tracked rent/sale-per-sqft market data), so
@@ -30,8 +31,9 @@ export function TopLocalities({ properties }: TopLocalitiesProps) {
         const avgPrice = props.reduce((sum, p) => sum + Number(p.price_per_fraction) * (p.total_fractions || 1), 0) / props.length;
         const yields = props.map((p) => Number(p.assured_yield || 0)).filter((y) => y > 0);
         const avgYield = yields.length > 0 ? yields.reduce((a, b) => a + b, 0) / yields.length : 0;
-        const firstImage = props[0]?.images?.[0]?.image_url
-          || 'https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=800&fit=crop';
+        
+        let firstImage = props[0]?.images?.[0]?.image_url;
+        firstImage = firstImage ? getFullImageUrl(firstImage) : 'https://images.unsplash.com/photo-1519999482648-25049ddd37b1?w=800&fit=crop';
         return {
           id: encodeURIComponent(name),
           name,

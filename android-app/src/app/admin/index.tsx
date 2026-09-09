@@ -4,8 +4,7 @@ import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { useUser } from '@/contexts/UserContext';
 import { auth } from '@/lib/firebase';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+import { getApiUrl } from '@/lib/api';
 
 function formatCurrency(n: number) {
   if (n >= 10000000) return `\u20b9${(n / 10000000).toFixed(2)} Cr`;
@@ -26,7 +25,7 @@ export default function AdminDashboardScreen() {
         const user = auth.currentUser;
         if (!user) return;
         const token = await user.getIdToken();
-        const res = await fetch(`${API_URL}/api/dashboard/summary`, {
+        const res = await fetch(`${getApiUrl()}/api/dashboard/summary`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (res.ok) {

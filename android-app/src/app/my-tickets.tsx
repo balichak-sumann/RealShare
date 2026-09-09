@@ -16,6 +16,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/useResponsive';
 import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 
 interface Ticket {
   id: string;
@@ -64,7 +65,7 @@ export default function MyTicketsScreen() {
       if (!user) throw new Error('Not logged in');
       const token = await user.getIdToken();
 
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/tickets`, {
+      const res = await fetch(`${getApiUrl()}/api/tickets`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -113,7 +114,7 @@ export default function MyTicketsScreen() {
       if (!user) throw new Error('Not logged in');
       const token = await user.getIdToken();
 
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations`, {
+      const res = await fetch(`${getApiUrl()}/api/conversations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

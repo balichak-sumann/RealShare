@@ -5,6 +5,7 @@ import { EmptyState } from '@/components/ui/EmptyState';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
+import { getApiUrl } from '@/lib/api';
 
 export default function ClientsScreen() {
   const router = useRouter();
@@ -26,7 +27,7 @@ export default function ClientsScreen() {
   const fetchClients = async () => {
     try {
       const token = await auth.currentUser?.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/clients`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/clients`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -48,7 +49,7 @@ export default function ClientsScreen() {
     }
     try {
       const token = await auth.currentUser?.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/clients`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/clients`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -78,7 +79,7 @@ export default function ClientsScreen() {
     setShowPitchModal(true);
     if (properties.length === 0) {
       try {
-        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`);
+        const res = await fetch(`${getApiUrl()}/api/properties`);
         if (res.ok) {
           const data = await res.json();
           setProperties(data.properties || data);

@@ -14,20 +14,30 @@ export async function GET(request: Request) {
     const userId = decodedToken.uid;
 
     let user = await prisma.profile.findUnique({ where: { id: userId } });
-    
     if (!user) {
-      return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      user = await prisma.profile.create({
+        data: {
+          id: userId,
+          email: decodedToken.email || null,
+          full_name: decodedToken.name || decodedToken.email?.split('@')[0] || 'Investor',
+          role: 'investor',
+        }
+      }).catch(async () => prisma.profile.findUnique({ where: { id: userId } }));
     }
 
-    const investments = await prisma.investment.findMany({
+    const investments = user ? await prisma.investment.findMany({
       where: { user_id: user.id },
       include: {
-        property: true,
+        property: {
+          include: {
+            images: true,
+          }
+        },
       },
       orderBy: {
         created_at: 'desc',
       },
-    });
+    }) : [];
 
     return NextResponse.json({
       user,

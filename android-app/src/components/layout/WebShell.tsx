@@ -1,35 +1,19 @@
 import React from 'react';
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, Platform } from 'react-native';
 import { usePathname } from 'expo-router';
 import { Neutrals, Radius } from '@/constants/design';
 import { useResponsive } from '@/hooks/useResponsive';
 import { DesktopNav } from './DesktopNav';
-import { Platform } from 'react-native';
 
-/**
- * Web layout shell.
- *
- *   native / narrow web -> children untouched (the phone app, zero wrapping)
- *   web, auth routes    -> centered auth card on a branded backdrop (no nav)
- *   web, everything else-> DesktopNav + full-bleed page, same as Home
- *
- * There used to be a separate "content" tier that boxed non-browse routes into
- * a centered column with a cream backdrop and hairline borders. That read as
- * dead space / a broken layout rather than a deliberate one, so it's gone —
- * every route now gets the exact same full-width treatment Home uses. A route
- * that wants a narrower reading measure caps its OWN inner content (the way
- * Home caps its scroll content at 1240px) rather than being boxed by the shell.
- */
+type Tier = 'auth' | 'split-auth' | 'page';
 
-type Tier = 'auth' | 'page';
-
-/** Sign-in / sign-up / verification — a centered card is the correct web pattern. */
-const AUTH_ROUTES =
-  /(^|\/)\(auth\)|^\/sign-in|^\/sign-up|^\/verify-email|^\/verify-otp/;
+const SPLIT_AUTH_ROUTES = /^\/sign-in|^\/sign-up/;
+const AUTH_ROUTES = /(^|\/)\(auth\)|^\/verify-email|^\/verify-otp/;
 
 const AUTH_CARD_WIDTH = 460;
 
 function routeTier(pathname: string): Tier {
+  if (SPLIT_AUTH_ROUTES.test(pathname)) return 'split-auth';
   return AUTH_ROUTES.test(pathname) ? 'auth' : 'page';
 }
 
@@ -41,15 +25,16 @@ export function WebShell({ children }: WebShellProps) {
   const { isFramed, width, height } = useResponsive();
   const pathname = usePathname();
 
-  // Native + narrow web: pass straight through, no wrapper node at all.
   if (!isFramed) {
     return <>{children}</>;
   }
 
   const tier = routeTier(pathname);
 
-  // Auth: a centered card on the branded backdrop. No nav — signing in is its
-  // own moment, and this is how login pages are built on the web.
+  if (tier === 'split-auth') {
+    return <>{children}</>;
+  }
+
   if (tier === 'auth') {
     const cardWidth = Math.min(AUTH_CARD_WIDTH, width - 48);
     const cardHeight = Math.min(780, height - 64);
@@ -64,7 +49,6 @@ export function WebShell({ children }: WebShellProps) {
     );
   }
 
-  // Every other route: desktop nav + full-bleed page, uniform background.
   return (
     <View style={styles.page}>
       <DesktopNav />
@@ -77,12 +61,12 @@ const styles = StyleSheet.create({
   page: {
     flex: 1,
     backgroundColor: Neutrals.background,
+    ...(Platform.OS === 'web' ? ({ overflow: 'visible' } as any) : {}),
   },
   bodyWide: {
     flex: 1,
+    ...(Platform.OS === 'web' ? ({ position: 'relative', zIndex: 1 } as any) : {}),
   },
-
-  // ---- auth backdrop ----
   backdrop: {
     flex: 1,
     backgroundColor: Neutrals.obsidian,

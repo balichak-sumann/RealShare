@@ -49,8 +49,7 @@ export function WebFooter() {
               <Text style={styles.brandName}>RealShare</Text>
             </View>
             <Text style={styles.brandBlurb}>
-              Fractional ownership in premium real estate — co-own commercial and
-              holiday properties, earn rental income, and exit with ease.
+              A new age Intelligent platform bringing Homes that Inspire Life. Earn rental income with commercial and Holiday properties. Invest in premium Realestate with fractional ownership and exit with ease.
             </Text>
           </View>
 
@@ -85,7 +84,7 @@ export function WebFooter() {
         </View>
 
         <View style={styles.bottomBar}>
-          <Text style={styles.copyright}>© {new Date().getFullYear()} RealShare. All rights reserved.</Text>
+          <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © Copyright {new Date().getFullYear()} Realshare Properties Pvt Ltd</Text>
         </View>
       </View>
     </View>
@@ -165,6 +164,7 @@ const styles = StyleSheet.create({
   copyright: {
     ...Typography.caption,
     color: Neutrals.gray500,
+    textAlign: 'center',
   },
 });
 

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Activi
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 
 export default function AddAssetScreen() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function AddAssetScreen() {
       }
 
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/assets`, {
+      const res = await fetch(`${getApiUrl()}/api/assets`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,

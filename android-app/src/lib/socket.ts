@@ -15,14 +15,13 @@
 // each independently authenticated and joined to the same `user:{uid}` room.
 import { io, Socket } from 'socket.io-client';
 import { auth } from '@/lib/firebase';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+import { getApiUrl } from '@/lib/api';
 
 let socket: Socket | null = null;
 
 export function getSocket(): Socket {
   if (!socket) {
-    socket = io(API_URL, {
+    socket = io(getApiUrl(), {
       autoConnect: true,
       auth: async (cb) => {
         const token = await auth.currentUser?.getIdToken();

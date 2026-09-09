@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIn
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { propertyToProjectCardProps } from '@/lib/formatters';
+import { getApiUrl } from '@/lib/api';
 
 // Construction-stage and progress tracking isn't captured anywhere in the
 // schema yet (no ConstructionUpdate model, no admin flow to post one), so
@@ -16,10 +17,9 @@ export default function ConstructionTrackingScreen() {
 
   useEffect(() => {
     if (!id) { setLoading(false); return; }
-    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/properties/${id}`);
+        const res = await fetch(`${getApiUrl()}/api/properties/${id}`);
         if (res.ok) setProject(propertyToProjectCardProps(await res.json()));
       } catch (e) {
         console.log('Failed to load project', e);

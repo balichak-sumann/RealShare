@@ -15,6 +15,7 @@ import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
 import { getSocket } from '@/lib/socket';
 import { LinearGradient } from 'expo-linear-gradient';
+import { getApiUrl } from '@/lib/api';
 
 interface ConversationMessage {
   id: string;
@@ -47,7 +48,7 @@ export default function ConversationThreadScreen() {
       const token = await auth.currentUser?.getIdToken();
       if (!token) return;
       const res = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations/${id}/messages`,
+        `${getApiUrl()}/api/conversations/${id}/messages`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {
@@ -66,7 +67,7 @@ export default function ConversationThreadScreen() {
       const token = await auth.currentUser?.getIdToken();
       if (!token) return;
       await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations/${id}/read`,
+        `${getApiUrl()}/api/conversations/${id}/read`,
         {
           method: 'PATCH',
           headers: { Authorization: `Bearer ${token}` },
@@ -131,7 +132,7 @@ export default function ConversationThreadScreen() {
       setInputText('');
 
       const res = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations/${id}/messages`,
+        `${getApiUrl()}/api/conversations/${id}/messages`,
         {
           method: 'POST',
           headers: {

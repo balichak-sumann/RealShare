@@ -23,14 +23,51 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (assigned_to !== undefined) {
       data.assigned_to = assigned_to || null;
     }
+    if (body.notes !== undefined) {
+      data.notes = body.notes;
+    }
     if (Object.keys(data).length === 0) {
       return NextResponse.json({ error: 'Nothing to update' }, { status: 400 });
     }
 
-    const updated = await prisma.serviceInquiry.update({ where: { id }, data });
+    let updated: any;
+    if ((prisma as any).serviceInquiry) {
+      updated = await (prisma as any).serviceInquiry.update({ where: { id }, data });
+    } else {
+      const setClauses: string[] = [];
+      const values: any[] = [];
+      let idx = 1;
+      for (const [key, val] of Object.entries(data)) {
+        setClauses.push(`${key} = $${idx++}`);
+        values.push(val);
+      }
+      values.push(id);
+      const query = `UPDATE service_inquiries SET ${setClauses.join(', ')} WHERE id = $${idx} RETURNING *`;
+      const rows = await prisma.$queryRawUnsafe<any[]>(query, ...values);
+      updated = rows[0];
+    }
+
     return NextResponse.json(updated);
   } catch (error: any) {
     console.error('Failed to update service inquiry:', error);
     return NextResponse.json({ error: error.message || 'Failed to update service inquiry' }, { status: 500 });
+  }
+}
+
+export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
+  try {
+    const auth = await requireAdmin(request);
+    if (!auth.ok) return auth.response;
+    const { id } = await context.params;
+
+    if ((prisma as any).serviceInquiry) {
+      await (prisma as any).serviceInquiry.delete({ where: { id } });
+    } else {
+      await prisma.$executeRaw`DELETE FROM service_inquiries WHERE id = ${id}`;
+    }
+    return NextResponse.json({ success: true, message: 'Inquiry deleted successfully' });
+  } catch (error: any) {
+    console.error('Failed to delete service inquiry:', error);
+    return NextResponse.json({ error: error.message || 'Failed to delete service inquiry' }, { status: 500 });
   }
 }

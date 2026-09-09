@@ -5,6 +5,7 @@ import { PropertyCard } from '../ui/PropertyCard';
 import { propertyToCardProps } from '@/lib/formatters';
 import { useRouter } from 'expo-router';
 import { ResponsiveRail } from '../layout/ResponsiveRail';
+import { getApiUrl } from '@/lib/api';
 
 interface HotProjectsProps {
   properties: any[];
@@ -17,7 +18,7 @@ export function HotProjects({ properties }: HotProjectsProps) {
 
   return (
     <View style={styles.container}>
-      <SectionHeader title="New Projects" onViewAll={() => router.push('/(tabs)/search')} />
+      <SectionHeader title="Projects in Hyderabad" onViewAll={() => router.push('/(tabs)/search')} />
       <ResponsiveRail contentContainerStyle={styles.scrollContent}>
         {properties.map((prop) => (
           <PropertyCard key={prop.id} {...propertyToCardProps(prop)} compact />

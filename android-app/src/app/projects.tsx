@@ -5,6 +5,7 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { SearchBar } from '@/components/ui/SearchBar';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { propertyToProjectCardProps } from '@/lib/formatters';
+import { getApiUrl } from '@/lib/api';
 
 const TABS = ['All Projects', 'New Launch', 'Under Construction', 'Ready to Move', 'Luxury'];
 
@@ -17,10 +18,9 @@ export default function ProjectsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/properties`);
+        const res = await fetch(`${getApiUrl()}/api/properties`);
         if (res.ok) {
           const data = await res.json();
           let list = Array.isArray(data) ? data : data.properties || [];

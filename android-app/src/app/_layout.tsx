@@ -6,6 +6,8 @@ import { useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 
+import { getApiUrl, resilientFetch } from '@/lib/api';
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,
@@ -18,25 +20,31 @@ Notifications.setNotificationHandler({
 
 async function registerForPushNotificationsAsync() {
   let token;
-  if (Platform.OS === 'android') {
-    Notifications.setNotificationChannelAsync('default', {
-      name: 'default',
-      importance: Notifications.AndroidImportance.MAX,
-    });
-  }
-  if (Device.isDevice) {
-    const { status: existingStatus } = await Notifications.getPermissionsAsync();
-    let finalStatus = existingStatus;
-    if (existingStatus !== 'granted') {
-      const { status } = await Notifications.requestPermissionsAsync();
-      finalStatus = status;
+  try {
+    if (Platform.OS === 'android') {
+      await Notifications.setNotificationChannelAsync('default', {
+        name: 'default',
+        importance: Notifications.AndroidImportance.MAX,
+      });
     }
-    if (finalStatus !== 'granted') return;
-    try {
-      token = (await Notifications.getExpoPushTokenAsync({ projectId: 'realshare-mock' })).data;
-    } catch(e) {
-      console.log('Error getting push token', e);
+    if (Device.isDevice) {
+      const { status: existingStatus } = await Notifications.getPermissionsAsync();
+      let finalStatus = existingStatus;
+      if (existingStatus !== 'granted') {
+        const { status } = await Notifications.requestPermissionsAsync();
+        finalStatus = status;
+      }
+      if (finalStatus !== 'granted') return undefined;
+      try {
+        token = (await Notifications.getExpoPushTokenAsync({
+          projectId: 'a786e55d-d4ef-40bd-8d1c-844f5dff4a81',
+        })).data;
+      } catch (e) {
+        console.log('Push token error (non-fatal):', e);
+      }
     }
+  } catch (e) {
+    console.log('Notification setup error (non-fatal):', e);
   }
   return token;
 }
@@ -47,7 +55,9 @@ import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { UserProvider, useUser } from '@/contexts/UserContext';
 
-SplashScreen.preventAutoHideAsync();
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Ignore — splash may have already been hidden
+});
 
 function RootLayoutNav() {
   const segments = useSegments();
@@ -56,7 +66,20 @@ function RootLayoutNav() {
   const [isLoaded, setIsLoaded] = useState(false);
   const { setProfile } = useUser();
 
+  // Wake up the Render backend immediately on app launch.
+  // This runs during the splash screen so that by the time
+  // the home screen mounts and fetches properties/banners,
+  // the backend is already warm and responds instantly.
   useEffect(() => {
+    resilientFetch(`${getApiUrl()}/api/properties?limit=1`).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    // Guard: if Firebase auth failed to initialize, skip the listener
+    if (!auth) {
+      setIsLoaded(true);
+      return;
+    }
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       if (!currentUser) {
@@ -80,6 +103,15 @@ function RootLayoutNav() {
         return;
       }
 
+      // Check email verification gate
+      if (!user.emailVerified && !user.email?.endsWith('@realshare.test')) {
+        const currentRoute = segments[1] as string;
+        if (currentRoute !== 'verify-email' && currentRoute !== 'sign-up') {
+          router.replace('/verify-email');
+        }
+        return; // Halt further sync/routing until verified
+      }
+
       // Sync user to DB
       user.getIdToken().then(async token => {
         let pushToken = null;
@@ -88,7 +120,7 @@ function RootLayoutNav() {
         } catch(e) {
           console.log(e);
         }
-        fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/users/sync`, {
+        fetch(`${getApiUrl()}/api/users/sync`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,

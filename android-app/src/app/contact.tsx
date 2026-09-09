@@ -4,8 +4,7 @@ import { useRouter, Redirect } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { useResponsive } from '@/hooks/useResponsive';
 import { WebFooter } from '@/components/layout/WebFooter';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+import { getApiUrl } from '@/lib/api';
 
 type Intent = 'Buyer' | 'Seller' | 'Agent or Broker';
 const INTENTS: Intent[] = ['Buyer', 'Seller', 'Agent or Broker'];
@@ -49,7 +48,7 @@ export default function ContactScreen() {
       if (pincode.trim()) notesParts.push(`Pincode: ${pincode.trim()}`);
       if (message.trim()) notesParts.push(`Message: ${message.trim()}`);
 
-      const res = await fetch(`${API_URL}/api/services`, {
+      const res = await fetch(`${getApiUrl()}/api/services`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

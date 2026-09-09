@@ -4,20 +4,22 @@ import {
   View,
   Text,
   StyleSheet,
-  Image,
   ScrollView,
   TouchableOpacity,
   Modal,
   ActivityIndicator,
   Platform,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { GoldButton } from '@/components/ui/GoldButton';
 import { InvestmentScore } from '@/components/ui/InvestmentScore';
 import { TrustBadge } from '@/components/ui/TrustBadge';
+import { PropertyInquiryModal } from '@/components/ui/PropertyInquiryModal';
 import { useActivityHistory } from '@/hooks/useActivityHistory';
+import { getApiUrl, resilientFetch } from '@/lib/api';
 
 export default function PropertyDetailsScreen() {
   const { id } = useLocalSearchParams();
@@ -29,7 +31,7 @@ export default function PropertyDetailsScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties/${id}`)
+    resilientFetch(`${getApiUrl()}/api/properties/${id}`)
       .then(res => res.json())
       .then(data => {
         setProperty(data);
@@ -51,6 +53,7 @@ export default function PropertyDetailsScreen() {
   const [investmentSuccess, setInvestmentSuccess] = useState(false);
   const [certificateId, setCertificateId] = useState('');
   const [askingQuestion, setAskingQuestion] = useState(false);
+  const [showInquiryModal, setShowInquiryModal] = useState(false);
 
   if (loading) {
     return (
@@ -64,7 +67,7 @@ export default function PropertyDetailsScreen() {
     return (
       <View style={styles.centerContainer}>
         <Text style={{ color: Neutrals.obsidian }}>Property not found</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+        <TouchableOpacity onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))} style={{ marginTop: 16 }}>
           <Text style={{ color: GoldSystem.primaryGold }}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -86,7 +89,7 @@ export default function PropertyDetailsScreen() {
     setAskingQuestion(true);
     try {
       const token = await auth.currentUser.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/conversations`, {
+      const res = await fetch(`${getApiUrl()}/api/conversations`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -108,10 +111,11 @@ export default function PropertyDetailsScreen() {
     }
   };
 
-  const fractionPrice = Number(property.price_per_fraction) || 500000;
+  const fractionPrice = Number(property.price_per_fraction) || 0;
   const bookingAmtPerFrac = Number(property.booking_amount) || 25000;
   const isOutright = property.listing_type === 'outright';
   const totalBookingAmt = isOutright ? fractionsToBuy * fractionPrice : fractionsToBuy * bookingAmtPerFrac;
+  const isSoldOut = property.is_sold_out || property.approval_status === 'sold_out' || (property.total_fractions > 0 && property.available_fractions <= 0);
 
   const loadRazorpay = () => {
     return new Promise((resolve) => {
@@ -150,7 +154,7 @@ export default function PropertyDetailsScreen() {
       const token = await auth.currentUser.getIdToken();
 
       // 2. Create Order on Backend
-      const orderResponse = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/transactions/create-order`, {
+      const orderResponse = await fetch(`${getApiUrl()}/api/transactions/create-order`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -171,7 +175,7 @@ export default function PropertyDetailsScreen() {
       // 3. Open Razorpay Modal (Web)
       if (Platform.OS === 'web') {
         const options = {
-          key: process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TSKXy2WO8gcwyH', 
+          key: orderData.keyId || process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TSKXy2WO8gcwyH', 
           amount: orderData.amount,
           currency: orderData.currency,
           name: 'RealShare',
@@ -179,7 +183,7 @@ export default function PropertyDetailsScreen() {
           order_id: orderData.orderId,
           handler: async function (response: any) {
             // 4. Verify Payment on Backend
-            const verifyRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/transactions/verify-payment`, {
+            const verifyRes = await fetch(`${getApiUrl()}/api/transactions/verify-payment`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -240,13 +244,20 @@ export default function PropertyDetailsScreen() {
           }}>
             {property.images && property.images.length > 0 ? (
               property.images.map((img: any, idx: number) => (
-                <Image key={idx} source={{ uri: img.image_url }} style={styles.heroImage} />
+                <Image 
+                  key={idx} 
+                  source={{ uri: img.image_url }} 
+                  style={styles.heroImage} 
+                  contentFit="cover"
+                  cachePolicy="memory-disk"
+                  priority={idx === 0 ? 'high' : 'low'}
+                />
               ))
             ) : (
               <View style={styles.heroImagePlaceholder} />
             )}
           </ScrollView>
-          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
             <Text style={styles.iconBtnText}>←</Text>
           </TouchableOpacity>
           <View style={styles.topRightBtns}>
@@ -262,6 +273,11 @@ export default function PropertyDetailsScreen() {
         <View style={styles.content}>
           <View style={styles.badgeRow}>
             <TrustBadge type="verified" />
+            <View style={[styles.typeBadge, { backgroundColor: isOutright ? '#F3E8FF' : '#EFF6FF' }]}>
+              <Text style={[styles.typeText, { color: isOutright ? '#7E22CE' : '#1D4ED8' }]}>
+                {isOutright ? 'BUY / OUTRIGHT' : 'INVEST / FRACTIONAL'}
+              </Text>
+            </View>
             <View style={styles.typeBadge}>
               <Text style={styles.typeText}>{property.property_type}</Text>
             </View>
@@ -269,11 +285,23 @@ export default function PropertyDetailsScreen() {
 
           <Text style={styles.title}>{property.title}</Text>
           <Text style={styles.location}>📍 {property.locality || property.district}, {property.state}</Text>
+          {property.full_address ? (
+            <Text style={{ fontSize: 13, color: Neutrals.gray500, marginTop: 4, marginBottom: 8 }}>
+              {property.full_address}
+            </Text>
+          ) : null}
 
           <View style={styles.priceCard}>
             <View>
-              <Text style={styles.priceLabel}>Price / Min. Investment</Text>
-              <Text style={styles.priceValue}>₹ {fractionPrice.toLocaleString('en-IN')}</Text>
+              {fractionPrice !== 0 && (
+                <>
+                  <Text style={styles.priceLabel}>{isOutright ? 'Asking Price' : 'Price / Min. Investment'}</Text>
+                  <Text style={styles.priceValue}>
+                    ₹ {fractionPrice.toLocaleString('en-IN')}
+                    {!isOutright && <Text style={{ fontSize: 13, fontWeight: '400', color: Neutrals.gray500 }}> / fraction</Text>}
+                  </Text>
+                </>
+              )}
             </View>
             <View style={styles.scoreContainer}>
               <InvestmentScore score={92} size={50} showLabel={false} strokeWidth={4} />
@@ -300,67 +328,127 @@ export default function PropertyDetailsScreen() {
           <View style={styles.highlightsGrid}>
             <View style={styles.highlightBox}>
               <Text style={styles.highlightLabel}>Expected ROI</Text>
-              <Text style={styles.highlightValue}>{property.assured_yield}%</Text>
+              <Text style={styles.highlightValue}>{property.assured_yield ? `${property.assured_yield}%` : '8.5%'}</Text>
             </View>
             <View style={styles.highlightBox}>
-              <Text style={styles.highlightLabel}>Total Area</Text>
-              <Text style={styles.highlightValue}>{property.total_area} sqft</Text>
+              <Text style={styles.highlightLabel}>Built-up Area</Text>
+              <Text style={styles.highlightValue}>
+                {property.area_sqft ? `${Number(property.area_sqft).toLocaleString('en-IN')} sqft` : property.total_area ? `${property.total_area} sqft` : '—'}
+              </Text>
             </View>
             <View style={styles.highlightBox}>
-              <Text style={styles.highlightLabel}>Status</Text>
-              <Text style={styles.highlightValue}>{property.status || 'Ready'}</Text>
+              <Text style={styles.highlightLabel}>Target IRR</Text>
+              <Text style={styles.highlightValue}>{property.target_irr ? `${property.target_irr}%` : '15.0%'}</Text>
             </View>
             <View style={styles.highlightBox}>
-              <Text style={styles.highlightLabel}>RERA</Text>
-              <Text style={styles.highlightValue}>{property.rera_number ? 'Verified' : 'N/A'}</Text>
+              <Text style={styles.highlightLabel}>Listing Mode</Text>
+              <Text style={styles.highlightValue}>{isOutright ? 'Whole Unit' : 'Fractional'}</Text>
             </View>
           </View>
 
           {/* Graphical Shares Representation */}
-          <Text style={styles.sectionTitle}>Investment Availability</Text>
-          <View style={styles.sharesCard}>
-            <View style={styles.sharesRow}>
-              <View style={styles.shareMetric}>
-                <Text style={styles.shareValue}>100</Text>
-                <Text style={styles.shareLabel}>Total Shares</Text>
+          <Text style={styles.sectionTitle}>
+            {isOutright ? 'Ownership Details' : 'Investment Share Pool Availability'}
+          </Text>
+          {!isOutright ? (
+            <View style={styles.sharesCard}>
+              <View style={styles.sharesRow}>
+                <View style={styles.shareMetric}>
+                  <Text style={styles.shareValue}>{property.total_fractions || 100}</Text>
+                  <Text style={styles.shareLabel}>Total Shares</Text>
+                </View>
+                <View style={styles.shareMetric}>
+                  <Text style={[styles.shareValue, { color: '#059669' }]}>{property.sold_fractions || 0}</Text>
+                  <Text style={styles.shareLabel}>Sold Shares</Text>
+                </View>
+                <View style={styles.shareMetric}>
+                  <Text style={[styles.shareValue, { color: GoldSystem.primaryGold }]}>
+                    {property.available_fractions ?? ((property.total_fractions || 100) - (property.sold_fractions || 0))}
+                  </Text>
+                  <Text style={styles.shareLabel}>Available</Text>
+                </View>
               </View>
-              <View style={styles.shareMetric}>
-                <Text style={[styles.shareValue, { color: '#059669' }]}>65</Text>
-                <Text style={styles.shareLabel}>Sold Shares</Text>
+              <View style={styles.progressBarBg}>
+                <View
+                  style={[
+                    styles.progressBarFill,
+                    {
+                      width: `${property.percentage_sold !== undefined ? property.percentage_sold : Math.min(100, Math.max(0, Math.round(((property.sold_fractions || 0) / (property.total_fractions || 100)) * 100)))}%`,
+                    },
+                  ]}
+                />
               </View>
-              <View style={styles.shareMetric}>
-                <Text style={[styles.shareValue, { color: GoldSystem.primaryGold }]}>35</Text>
-                <Text style={styles.shareLabel}>Available</Text>
-              </View>
+              <Text style={styles.progressText}>
+                {property.percentage_sold !== undefined ? property.percentage_sold : Math.min(100, Math.max(0, Math.round(((property.sold_fractions || 0) / (property.total_fractions || 100)) * 100)))}% Funded • {property.available_fractions ?? ((property.total_fractions || 100) - (property.sold_fractions || 0))} fractions remaining
+              </Text>
             </View>
-            <View style={styles.progressBarBg}>
-              <View style={[styles.progressBarFill, { width: '65%' }]} />
+          ) : (
+            <View style={[styles.sharesCard, { padding: 16 }]}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: Neutrals.obsidian, marginBottom: 4 }}>
+                100% Full Ownership Unit
+              </Text>
+              <Text style={{ fontSize: 13, color: Neutrals.gray600, lineHeight: 18 }}>
+                This is a whole-property listing with dedicated title registration. No fractional subdivision.
+              </Text>
             </View>
-            <Text style={styles.progressText}>65% Funded. Closing soon.</Text>
-          </View>
+          )}
 
           <Text style={styles.sectionTitle}>About Property</Text>
-          <Text style={styles.description}>{property.description || 'Premium property with excellent investment potential and high rental yields. Located in a prime area with seamless connectivity.'}</Text>
+          <Text style={styles.description}>
+            {property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.'}
+          </Text>
 
           {/* Map View */}
           <Text style={styles.sectionTitle}>Location Details</Text>
           {property.lat && property.lng ? (
-            <View style={[styles.mapContainer, { height: 200 }]}>
-              {Platform.OS === 'web' ? (
-                <div style={{ width: '100%', height: '100%' }}
-                  dangerouslySetInnerHTML={{ __html: 
-                    `<iframe width="100%" height="100%" frameborder="0" style="border:0;" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q=${parseFloat(property.lat)},${parseFloat(property.lng)}&z=15&output=embed"></iframe>`
-                  }}
-                />
-              ) : (
-                <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: Neutrals.gray200 }}>
-                  <Text style={{ color: Neutrals.gray500 }}>Map view available on web</Text>
-                </View>
-              )}
+            <View>
+              <View style={[styles.mapContainer, { height: 200, borderRadius: 12, overflow: 'hidden' }]}>
+                {Platform.OS === 'web' ? (
+                  <div
+                    style={{ width: '100%', height: '100%' }}
+                    dangerouslySetInnerHTML={{
+                      __html: `<iframe width="100%" height="100%" frameborder="0" style="border:0;" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q=${parseFloat(property.lat)},${parseFloat(property.lng)}&z=15&output=embed"></iframe>`,
+                    }}
+                  />
+                ) : (
+                  <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: Neutrals.gray200 }}>
+                    <Text style={{ color: Neutrals.gray600, fontWeight: '600' }}>📍 {property.locality || property.district}</Text>
+                    <Text style={{ color: Neutrals.gray500, fontSize: 12, marginTop: 4 }}>Lat: {Number(property.lat).toFixed(4)}, Lng: {Number(property.lng).toFixed(4)}</Text>
+                  </View>
+                )}
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  const url = property.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${property.lat},${property.lng}`;
+                  if (Platform.OS === 'web') {
+                    window.open(url, '_blank');
+                  } else {
+                    const Linking = require('react-native').Linking;
+                    Linking.openURL(url);
+                  }
+                }}
+                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 10, paddingVertical: 8, borderRadius: 8, backgroundColor: '#EFF6FF' }}
+              >
+                <Text style={{ color: '#2563EB', fontWeight: '700', fontSize: 13 }}>Open in Google Maps ↗</Text>
+              </TouchableOpacity>
             </View>
+          ) : property.google_maps_url ? (
+            <TouchableOpacity
+              onPress={() => {
+                if (Platform.OS === 'web') {
+                  window.open(property.google_maps_url, '_blank');
+                } else {
+                  const Linking = require('react-native').Linking;
+                  Linking.openURL(property.google_maps_url);
+                }
+              }}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 8, backgroundColor: '#EFF6FF' }}
+            >
+              <Text style={{ color: '#2563EB', fontWeight: '700', fontSize: 14 }}>📍 View Location on Google Maps ↗</Text>
+            </TouchableOpacity>
           ) : (
-            <View style={[styles.mapContainer, { height: 100, justifyContent: 'center', alignItems: 'center' }]}>
-              <Text style={{ color: Neutrals.gray500 }}>Location not available</Text>
+            <View style={[styles.mapContainer, { height: 80, justifyContent: 'center', alignItems: 'center' }]}>
+              <Text style={{ color: Neutrals.gray500 }}>Location map coordinates not provided</Text>
             </View>
           )}
 
@@ -369,21 +457,43 @@ export default function PropertyDetailsScreen() {
 
       {/* Bottom Action Bar */}
       <View style={styles.bottomBar}>
-        <View style={styles.bottomBarText}>
-          <Text style={styles.bottomLabel}>{isOutright ? 'Full Property Price' : 'Booking Amount'}</Text>
-          <Text style={styles.bottomPrice}>₹ {(isOutright ? fractionPrice : bookingAmtPerFrac).toLocaleString('en-IN')}</Text>
-        </View>
-        <GoldButton 
-          title={isOutright ? 'Buy Now' : 'Invest Now'} 
-          onPress={() => {
-            if (!auth.currentUser) {
-              router.push('/(auth)/sign-in');
-              return;
-            }
-            setShowPaymentModal(true);
-          }} 
-          style={{ width: 160 }}
-        />
+        {isSoldOut ? (
+          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FEE2E2', paddingVertical: 12, borderRadius: Radius.md }}>
+            <Text style={{ ...Typography.headlineMedium, color: '#DC2626' }}>THIS PROPERTY IS SOLD OUT</Text>
+          </View>
+        ) : fractionPrice === 0 ? (
+          <>
+            <View style={styles.bottomBarText}>
+              <Text style={styles.bottomLabel}>Pricing</Text>
+              <Text style={styles.bottomPrice}>On Request</Text>
+            </View>
+            <GoldButton 
+              title="Request Details"
+              onPress={() => setShowInquiryModal(true)} 
+              style={{ width: 160 }}
+            />
+          </>
+        ) : (
+          <>
+            <View style={styles.bottomBarText}>
+              <Text style={styles.bottomLabel}>{isOutright ? 'Full Property Price' : 'Booking Amount'}</Text>
+              <Text style={styles.bottomPrice}>
+                ₹ {(isOutright ? fractionPrice : bookingAmtPerFrac).toLocaleString('en-IN')}
+              </Text>
+            </View>
+            <GoldButton 
+              title={isOutright ? 'Buy Now' : 'Invest Now'} 
+              onPress={() => {
+                if (!auth.currentUser) {
+                  router.push('/(auth)/sign-in');
+                  return;
+                }
+                setShowPaymentModal(true);
+              }} 
+              style={{ width: 160 }}
+            />
+          </>
+        )}
       </View>
 
       {/* Payment Modal */}
@@ -455,6 +565,12 @@ export default function PropertyDetailsScreen() {
           </View>
         </View>
       </Modal>
+
+      <PropertyInquiryModal 
+        visible={showInquiryModal} 
+        onClose={() => setShowInquiryModal(false)} 
+        propertyTitle={property.title} 
+      />
 
     </View>
   );

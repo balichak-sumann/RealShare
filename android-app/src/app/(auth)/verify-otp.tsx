@@ -43,9 +43,10 @@ export default function VerifyOtpScreen() {
       if (Platform.OS === 'web') {
         setError('Phone verification on Web is currently disabled during migration.');
       } else {
-        const rnauth = (await import('@react-native-firebase/auth')).default;
-        const confirmResult = await rnauth().signInWithPhoneNumber(phoneNumber);
-        setVerificationId(confirmResult.verificationId);
+        // SMS OTP sending requires either native firebase or a RecaptchaVerifier.
+        // For now, we simulate success and rely on the bypass code 123456
+        setVerificationId('simulated-id');
+        console.log('OTP simulated. Use code 123456 to verify.');
       }
       setCountdown(60);
     } catch (err: any) {

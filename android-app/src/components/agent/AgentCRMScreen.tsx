@@ -5,6 +5,7 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { PropertyCard } from '@/components/ui/PropertyCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 import { useRouter } from 'expo-router';
 
 export function AgentCRMScreen() {
@@ -34,7 +35,7 @@ export function AgentCRMScreen() {
 
   const fetchProperties = async () => {
     try {
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`);
+      const res = await fetch(`${getApiUrl()}/api/properties`);
       if (res.ok) {
         const data = await res.json();
         const mappedProperties = data.map((p: any) => ({
@@ -61,7 +62,7 @@ export function AgentCRMScreen() {
   const fetchClients = async () => {
     try {
       const token = await auth.currentUser?.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/clients`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/clients`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -82,7 +83,7 @@ export function AgentCRMScreen() {
     }
     try {
       const token = await auth.currentUser?.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/clients`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/clients`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -109,7 +110,7 @@ export function AgentCRMScreen() {
   const confirmAssignProperty = async (clientId: string) => {
     try {
       const token = await auth.currentUser?.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/clients/assign`, {
+      const res = await fetch(`${getApiUrl()}/api/agents/clients/assign`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

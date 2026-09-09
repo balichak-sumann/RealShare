@@ -1,10 +1,9 @@
 "use client";
 import React, { useState, useRef, useEffect } from "react";
-import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
-import { storage } from "@/lib/firebase";
 import AdminLayout from "@/components/layout/AdminLayout";
 import styles from "../properties/Properties.module.css";
 import { getAuthHeader } from "@/lib/api-auth";
+import { uploadFileToServer } from "@/lib/upload";
 
 interface Banner {
   id: string;
@@ -108,14 +107,14 @@ export default function CMSPage() {
     let finalImageUrl = "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=600&h=280&fit=crop";
 
     try {
-      if (selectedFile) {
-        const storageRef = ref(storage, `banners/${Date.now()}_${selectedFile.name}`);
-        await uploadBytes(storageRef, selectedFile);
-        finalImageUrl = await getDownloadURL(storageRef);
-      }
-
       const authHeader = await getAuthHeader();
       if (!authHeader) { showToast("You must be signed in to do that."); return; }
+
+      if (selectedFile) {
+        // Upload image to server storage (no Firebase)
+        finalImageUrl = await uploadFileToServer(selectedFile, authHeader);
+      }
+
       const res = await fetch('/api/cms/banners', {
         method: 'POST',
         headers: { ...authHeader, 'Content-Type': 'application/json' },
@@ -139,9 +138,9 @@ export default function CMSPage() {
       setSelectedFile(null);
       setNewBan({ ...newBan, title: "", subtitle: "" });
       showToast(`Banner "${created.title}" published to Mobile App & Web hero carousels!`);
-    } catch (error) {
-      console.error("Error uploading banner image:", error);
-      showToast("Failed to upload image. Please try again.");
+    } catch (error: any) {
+      console.error("Error creating banner:", error);
+      showToast(error.message || "Failed to upload image. Please try again.");
     } finally {
       setIsUploading(false);
     }
@@ -167,14 +166,14 @@ export default function CMSPage() {
     let finalImageUrl = editForm.imageUrl;
 
     try {
-      if (editSelectedFile) {
-        const storageRef = ref(storage, `banners/${Date.now()}_${editSelectedFile.name}`);
-        await uploadBytes(storageRef, editSelectedFile);
-        finalImageUrl = await getDownloadURL(storageRef);
-      }
-
       const authHeader = await getAuthHeader();
       if (!authHeader) { showToast("You must be signed in to do that."); return; }
+
+      if (editSelectedFile) {
+        // Upload replacement image to server storage (no Firebase)
+        finalImageUrl = await uploadFileToServer(editSelectedFile, authHeader);
+      }
+
       const res = await fetch(`/api/cms/banners/${editingBanner.id}`, {
         method: 'PATCH',
         headers: { ...authHeader, 'Content-Type': 'application/json' },
@@ -196,9 +195,9 @@ export default function CMSPage() {
       setEditingBanner(null);
       setEditSelectedFile(null);
       showToast(`Banner "${updated.title}" updated.`);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error saving banner edits:", error);
-      showToast("Failed to save changes. Please try again.");
+      showToast(error.message || "Failed to save changes. Please try again.");
     } finally {
       setIsSavingEdit(false);
     }

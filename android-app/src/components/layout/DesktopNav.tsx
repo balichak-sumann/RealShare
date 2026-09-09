@@ -16,6 +16,7 @@ import { useUser } from '@/contexts/UserContext';
 import { useLocation } from '@/contexts/LocationContext';
 import { LocationPickerModal } from '@/components/ui/LocationPickerModal';
 import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 
 /**
  * Desktop top navigation.
@@ -52,7 +53,7 @@ export function DesktopNav() {
       try {
         const token = await currentUser.getIdToken();
         const res = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/notifications/feed`,
+          `${getApiUrl()}/api/notifications/feed`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (res.ok) {
@@ -68,7 +69,6 @@ export function DesktopNav() {
 
   const navItems: NavItem[] = [
     { label: 'Home', route: '/', match: /^\/$|^\/\(tabs\)$/ },
-    { label: 'Explore', route: '/explore', match: /^\/explore/ },
     { label: 'Properties', route: '/shortlist', match: /^\/shortlist/ },
     { label: 'Portfolio', route: '/portfolio', match: /^\/portfolio/ },
     ...(isAgent
@@ -98,124 +98,134 @@ export function DesktopNav() {
   };
 
   return (
-    <View style={styles.bar}>
-      <View style={styles.inner}>
-        {/* Brand */}
-        <TouchableOpacity
-          style={styles.brand}
-          onPress={() => router.push('/' as any)}
-          activeOpacity={0.7}
+    <>
+      {/* Logo — OUTSIDE all RN Web Views so nothing can clip it */}
+      {Platform.OS === 'web' && (
+        <div
+          onClick={() => router.push('/' as any)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 48,
+            width: 105,
+            height: 90,
+            backgroundColor: '#fff',
+            display: 'flex',
+            justifyContent: 'center',
+            alignItems: 'center',
+            padding: 4,
+            borderBottomLeftRadius: 8,
+            borderBottomRightRadius: 8,
+            boxShadow: '0 4px 10px rgba(0,0,0,0.12)',
+            zIndex: 9999,
+            cursor: 'pointer',
+          }}
         >
-          <Image
-            source={require('../../../assets/logo.png')}
-            style={styles.logo}
-            resizeMode="contain"
+          <img
+            src={require('../../../assets/logo.png')}
+            alt="Realshare"
+            style={{ width: '115%', height: '115%', objectFit: 'contain' }}
           />
-        </TouchableOpacity>
+        </div>
+      )}
 
-        {/* Primary nav */}
-        <View style={styles.navLinks}>
-          {navItems.map((item) => {
-            const active = item.match.test(pathname);
-            return (
-              <TouchableOpacity
-                key={item.route}
-                onPress={() => router.push(item.route as any)}
-                style={styles.navLink}
-                activeOpacity={0.7}
-              >
-                <Text style={[styles.navLabel, active && styles.navLabelActive]}>
-                  {item.label}
-                </Text>
-                {active && <View style={styles.navUnderline} />}
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        <View style={styles.spacer} />
-
-        {/* Location */}
-        <TouchableOpacity style={styles.locationChip} activeOpacity={0.7} onPress={() => setShowLocationPicker(true)}>
-          <Ionicons
-            name="location-outline"
-            size={15}
-            color={Neutrals.white}
-          />
-          <Text style={styles.locationText}>{city}</Text>
-          <Ionicons name="chevron-down" size={13} color="rgba(255,255,255,0.75)" />
-        </TouchableOpacity>
-        <LocationPickerModal visible={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
-
-        {/* Search */}
-        <View style={styles.searchBox}>
-          <Ionicons name="search-outline" size={16} color={Neutrals.gray400} />
-          <TextInput
-            value={query}
-            onChangeText={setQuery}
-            onSubmitEditing={submitSearch}
-            placeholder="Search properties, localities…"
-            placeholderTextColor={Neutrals.gray400}
-            style={styles.searchInput as any}
-            returnKeyType="search"
-          />
-        </View>
-
-        {/* Notifications */}
-        <TouchableOpacity
-          style={styles.iconBtn}
-          onPress={() => router.push('/notifications' as any)}
-          activeOpacity={0.7}
-        >
-          {hasUnread && <View style={styles.dot} />}
-          <Ionicons
-            name="notifications-outline"
-            size={21}
-            color={Neutrals.white}
-          />
-        </TouchableOpacity>
-
-        {/* Account */}
-        {currentUser ? (
-          <TouchableOpacity
-            style={styles.account}
-            onPress={() => router.push('/profile' as any)}
-            activeOpacity={0.8}
-          >
-            <LinearGradient
-              colors={GoldSystem.goldGradient}
-              style={[styles.avatar, styles.avatarRing]}
+      <View style={styles.container}>
+        {/* Top Gold Header - Sticky */}
+        <View style={styles.topHeader}>
+          {/* Native-only logo */}
+          {Platform.OS !== 'web' && (
+            <TouchableOpacity
+              style={styles.brand}
+              onPress={() => router.push('/' as any)}
+              activeOpacity={1}
             >
-              <Text style={styles.avatarText}>
-                {(displayName || 'U').charAt(0).toUpperCase()}
+              <Image
+                source={require('../../../assets/logo.png')}
+                style={styles.logo}
+                resizeMode="contain"
+              />
+            </TouchableOpacity>
+          )}
+
+          <View style={styles.inner}>
+            {/* Brand spacer */}
+            <View style={styles.brandPlaceholder} />
+
+          {/* Primary nav */}
+          <View style={styles.navLinks}>
+            {navItems.map((item) => {
+              const active = item.match.test(pathname);
+              return (
+                <TouchableOpacity
+                  key={item.route}
+                  onPress={() => router.push(item.route as any)}
+                  style={styles.navLink}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.navLabel, active && styles.navLabelActive]}>
+                    {item.label}
+                  </Text>
+                  {active && <View style={styles.navUnderline} />}
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          {/* Account */}
+          {currentUser ? (
+            <TouchableOpacity
+              style={styles.accountSub}
+              onPress={() => router.push('/(tabs)/profile' as any)}
+              activeOpacity={0.8}
+            >
+              <LinearGradient
+                colors={GoldSystem.goldGradient}
+                style={[styles.avatar, styles.avatarRing]}
+              >
+                <Text style={styles.avatarText}>
+                  {(displayName || 'U').charAt(0).toUpperCase()}
+                </Text>
+              </LinearGradient>
+              <Text style={styles.accountNameTop} numberOfLines={1}>
+                {displayName}
               </Text>
-            </LinearGradient>
-            <Text style={styles.accountName} numberOfLines={1}>
-              {displayName}
-            </Text>
-          </TouchableOpacity>
-        ) : (
-          <TouchableOpacity
-            onPress={() => router.push('/sign-in' as any)}
-            activeOpacity={0.85}
-          >
-            <LinearGradient
-              colors={[Neutrals.white, GoldSystem.paleGold]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              onPress={() => router.push('/sign-in' as any)}
+              activeOpacity={0.85}
               style={styles.signInBtn}
             >
-              <Text style={styles.signInText}>Sign In</Text>
-            </LinearGradient>
+                <Text style={styles.signInText}>Sign In</Text>
+            </TouchableOpacity>
+          )}
+
+          {/* Notifications */}
+          <TouchableOpacity
+            style={styles.iconBtn}
+            onPress={() => router.push('/notifications' as any)}
+            activeOpacity={0.7}
+          >
+            {hasUnread && <View style={styles.dot} />}
+            <Ionicons
+              name="notifications-outline"
+              size={21}
+              color={Neutrals.white}
+            />
           </TouchableOpacity>
-        )}
+        </View>
       </View>
     </View>
+    </>
   );
 }
 
 const styles = StyleSheet.create({
-  bar: {
+  container: {
+    width: '100%',
+    ...(Platform.OS === 'web' ? ({ overflow: 'visible', position: 'relative' } as any) : {}),
+  },
+  topHeader: {
     backgroundColor: GoldSystem.darkGold,
     ...(Platform.OS === 'web'
       ? ({
@@ -223,6 +233,7 @@ const styles = StyleSheet.create({
           top: 0,
           zIndex: 100,
           boxShadow: '0 2px 8px rgba(0,0,0,0.14)',
+          overflow: 'visible',
         } as any)
       : {}),
   },
@@ -231,41 +242,65 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     height: 68,
     width: '100%',
-    paddingHorizontal: 28,
-    gap: 8,
+    paddingHorizontal: 16,
+    gap: 6,
+    position: 'relative',
+    zIndex: 10,
+    ...(Platform.OS === 'web' ? ({ overflow: 'visible' } as any) : {}),
+  },
+  brandPlaceholder: {
+    width: 145,
+    marginRight: 12,
   },
   brand: {
-    marginRight: 28,
+    ...(Platform.OS === 'web'
+      ? ({
+          position: 'fixed',
+          top: 0,
+          left: 16,
+          zIndex: 9999,
+        } as any)
+      : {
+          position: 'absolute',
+          top: 0,
+          left: 16,
+          zIndex: 200,
+        }),
+    width: 110,
+    height: 130,
+    backgroundColor: Neutrals.white,
     justifyContent: 'center',
-    backgroundColor: Neutrals.warmIvory,
-    borderRadius: Radius.md,
-    paddingHorizontal: 14,
-    paddingVertical: 6,
+    alignItems: 'center',
+    padding: 8,
+    borderBottomLeftRadius: Radius.md,
+    borderBottomRightRadius: Radius.md,
     shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    elevation: 4,
   },
   logo: {
-    width: 165,
-    height: 50,
+    width: '100%',
+    height: '100%',
   },
   navLinks: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    gap: 32,
     height: '100%',
   },
   navLink: {
-    paddingHorizontal: 14,
+    paddingHorizontal: 10,
     height: '100%',
     justifyContent: 'center',
     position: 'relative',
   },
   navLabel: {
     ...Typography.labelLarge,
-    fontSize: 15,
+    fontSize: 16,
     color: GoldSystem.paleGold,
   },
   navLabelActive: {
@@ -286,37 +321,46 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 16,
   },
-  locationChip: {
+  locationDropdown: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: Radius.full,
-    backgroundColor: 'rgba(255,255,255,0.16)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
+    gap: 8,
+    paddingRight: 8,
   },
-  locationText: {
-    ...Typography.labelMedium,
-    fontSize: 13,
-    color: Neutrals.white,
+  locationDropdownText: {
+    ...Typography.labelLarge,
+    fontSize: 15,
+    color: Neutrals.obsidian,
+  },
+  subHeader: {
+    backgroundColor: Neutrals.white,
+    position: 'relative',
+    zIndex: 1,
+  },
+  subHeaderInner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    height: 58,
+    width: '100%',
+    paddingHorizontal: 16,
+    gap: 16,
   },
   searchBox: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
-    paddingHorizontal: 14,
-    height: 40,
-    width: 260,
+    paddingHorizontal: 16,
+    height: 42,
+    flex: 1,
+    maxWidth: 350,
     borderRadius: Radius.full,
-    backgroundColor: Neutrals.warmIvory,
+    backgroundColor: Neutrals.gray100,
     borderWidth: 1,
-    borderColor: 'transparent',
+    borderColor: Neutrals.gray200,
   },
   searchInput: {
     flex: 1,
-    fontSize: 14,
+    fontSize: 15,
     color: Neutrals.text,
     ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}),
   },
@@ -338,45 +382,46 @@ const styles = StyleSheet.create({
     backgroundColor: Neutrals.ruby,
     zIndex: 2,
   },
-  account: {
+  accountSub: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 9,
-    paddingLeft: 6,
-    paddingRight: 12,
-    paddingVertical: 5,
+    gap: 10,
+    paddingLeft: 4,
+    paddingRight: 16,
+    paddingVertical: 4,
     borderRadius: Radius.full,
     backgroundColor: 'rgba(255,255,255,0.16)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.22)',
-    maxWidth: 190,
+    maxWidth: 220,
   },
   avatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
     alignItems: 'center',
     justifyContent: 'center',
   },
   avatarRing: {
-    borderWidth: 1.5,
-    borderColor: 'rgba(255,255,255,0.7)',
+    borderWidth: 2,
+    borderColor: Neutrals.white,
   },
   avatarText: {
-    fontSize: 14,
+    fontSize: 15,
     fontWeight: '700',
     color: Neutrals.white,
   },
-  accountName: {
+  accountNameTop: {
     ...Typography.labelMedium,
-    fontSize: 13,
+    fontSize: 14,
     color: Neutrals.white,
     flexShrink: 1,
   },
   signInBtn: {
-    paddingHorizontal: 22,
-    paddingVertical: 11,
+    paddingHorizontal: 28,
+    paddingVertical: 10,
     borderRadius: Radius.full,
+    backgroundColor: '#FFFFFF',
   },
   signInText: {
     ...Typography.labelLarge,

@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
 import { useDrawer } from '@/contexts/DrawerContext';
+import { getApiUrl } from '@/lib/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Radius } from '@/constants/design';
 import { PropertyCard } from '@/components/ui/PropertyCard';
@@ -81,7 +82,8 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
       const user = auth.currentUser;
       if (!user) return;
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties/builder`, {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/properties/builder`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -119,7 +121,8 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
       }
 
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`, {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/properties`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -167,6 +170,8 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
   }, [activeIndex, properties]);
 
   const fetchDashboardData = async () => {
+    setLoading(true);
+    setError('');
     try {
       const user = auth.currentUser;
       if (!user) {
@@ -176,21 +181,24 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
       }
 
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/agents/dashboard`, {
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/agents/dashboard`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
 
       if (!res.ok) {
-        throw new Error('Failed to fetch dashboard data');
+        const errJson = await res.json().catch(() => ({}));
+        throw new Error(errJson.error || `Failed to fetch dashboard data (HTTP ${res.status})`);
       }
 
       const data = await res.json();
       setDashboardData(data);
+      setError('');
 
       // Fetch Properties
-      const propsRes = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`);
+      const propsRes = await fetch(`${apiUrl}/api/properties`);
       if (propsRes.ok) {
         const propsData = await propsRes.json();
         const mappedProperties = propsData.map((p: any) => ({
@@ -207,7 +215,8 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
         setProperties(mappedProperties);
       }
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      console.error('Agent dashboard fetch error:', err);
+      setError(err.message || 'An error occurred while loading Wealth Partner Hub');
     } finally {
       setLoading(false);
     }
@@ -236,11 +245,38 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
 
   if (error) {
     return (
-      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 20 }]}>
-        <Text style={{ color: '#EF4444', textAlign: 'center' }}>{error}</Text>
-        <TouchableOpacity style={{ marginTop: 20 }} onPress={() => router.back()}>
-          <Text style={{ color: '#D4AF37', fontWeight: 'bold' }}>Go Back</Text>
-        </TouchableOpacity>
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+        <Text style={{ fontSize: 32, marginBottom: 12 }}>⚠️</Text>
+        <Text style={{ color: '#EF4444', textAlign: 'center', fontSize: 16, fontWeight: '700', marginBottom: 8 }}>
+          {error}
+        </Text>
+        <Text style={{ color: '#94A3B8', textAlign: 'center', fontSize: 13, marginBottom: 20 }}>
+          Unable to retrieve your agent metrics. Please check your connection and try again.
+        </Text>
+        <View style={{ flexDirection: 'row', gap: 12 }}>
+          <TouchableOpacity
+            style={{
+              backgroundColor: '#D4AF37',
+              paddingVertical: 10,
+              paddingHorizontal: 20,
+              borderRadius: 8,
+            }}
+            onPress={fetchDashboardData}
+          >
+            <Text style={{ color: '#0F172A', fontWeight: 'bold' }}>Try Again</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={{
+              backgroundColor: 'rgba(255,255,255,0.1)',
+              paddingVertical: 10,
+              paddingHorizontal: 20,
+              borderRadius: 8,
+            }}
+            onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
+          >
+            <Text style={{ color: '#FFFFFF', fontWeight: '600' }}>Home</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -328,7 +364,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
         <View style={styles.sectionContainer}>
           <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <Text style={styles.sectionTitle}>My Listings</Text>
-            <TouchableOpacity style={styles.addClientBtn} onPress={() => setShowPostModal(true)}>
+            <TouchableOpacity style={styles.addClientBtn} onPress={() => router.push('/post-property' as any)}>
               <Text style={styles.addClientText}>+ Post Property</Text>
             </TouchableOpacity>
           </View>
@@ -372,18 +408,6 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
             <Text style={styles.modalTitle}>Post a Property</Text>
             <Text style={styles.modalSubtitle}>Submit a listing for RealShare Admin approval.</Text>
 
-            <Text style={styles.inputLabel}>Property Title</Text>
-            <TextInput style={styles.input} placeholder="e.g. Skyline Residences" value={postTitle} onChangeText={setPostTitle} placeholderTextColor="#9CA3AF" />
-
-            <Text style={styles.inputLabel}>Locality</Text>
-            <TextInput style={styles.input} placeholder="e.g. Gachibowli" value={postLocality} onChangeText={setPostLocality} placeholderTextColor="#9CA3AF" />
-
-            <Text style={styles.inputLabel}>District</Text>
-            <TextInput style={styles.input} value={postDistrict} onChangeText={setPostDistrict} placeholderTextColor="#9CA3AF" />
-
-            <Text style={styles.inputLabel}>State</Text>
-            <TextInput style={styles.input} value={postState} onChangeText={setPostState} placeholderTextColor="#9CA3AF" />
-
             <Text style={styles.inputLabel}>Listing Type</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>
               {(['fractional', 'outright'] as const).map((lt) => (
@@ -416,6 +440,18 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
 
             <Text style={styles.inputLabel}>Assured Yield (%)</Text>
             <TextInput style={styles.input} keyboardType="numeric" value={postYield} onChangeText={setPostYield} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>Property Title</Text>
+            <TextInput style={styles.input} placeholder="e.g. Skyline Residences" value={postTitle} onChangeText={setPostTitle} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>Locality</Text>
+            <TextInput style={styles.input} placeholder="e.g. Gachibowli" value={postLocality} onChangeText={setPostLocality} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>District</Text>
+            <TextInput style={styles.input} value={postDistrict} onChangeText={setPostDistrict} placeholderTextColor="#9CA3AF" />
+
+            <Text style={styles.inputLabel}>State</Text>
+            <TextInput style={styles.input} value={postState} onChangeText={setPostState} placeholderTextColor="#9CA3AF" />
 
             <Text style={styles.inputLabel}>Property Image (Optional)</Text>
             <TouchableOpacity 

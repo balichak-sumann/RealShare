@@ -1,6 +1,6 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider } from 'firebase/auth';
-import { getStorage } from 'firebase/storage';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
+import { getStorage, FirebaseStorage } from 'firebase/storage';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -11,10 +11,23 @@ const firebaseConfig = {
   appId: process.env.EXPO_PUBLIC_FIREBASE_APP_ID
 };
 
-// Initialize Firebase
-export const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+// Initialize Firebase — wrapped in try-catch so the app doesn't crash
+// if Firebase config is missing or invalid.
+let app: FirebaseApp;
+let auth: Auth;
+let storage: FirebaseStorage;
 
-export const auth = getAuth(app);
+try {
+  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+  auth = getAuth(app);
+  storage = getStorage(app);
+} catch (e) {
+  console.error('Firebase init failed (non-fatal):', e);
+  // Create fallback — the app will run but auth features won't work
+  app = null as any;
+  auth = null as any;
+  storage = null as any;
+}
+
+export { app, auth, storage };
 export const googleProvider = new GoogleAuthProvider();
-
-export const storage = getStorage(app);

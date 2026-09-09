@@ -1,3 +1,5 @@
+import { getFullImageUrl } from './api';
+
 export const formatPrice = (amount: number): string => {
   if (amount >= 10000000) {
     return `₹${(amount / 10000000).toFixed(2)} Cr`;
@@ -18,22 +20,31 @@ export const formatArea = (sqft: number): string => {
 export const propertyToCardProps = (p: any) => {
   const isOutright = p.listing_type === 'outright';
   const images = Array.isArray(p.images) && p.images.length > 0
-    ? p.images.map((img: any) => (typeof img === 'string' ? img : img.image_url))
+    ? p.images.map((img: any) => getFullImageUrl(typeof img === 'string' ? img : img.image_url))
     : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=400&fit=crop'];
+
+  const areaDisplay = p.area_sqft
+    ? `${Number(p.area_sqft).toLocaleString('en-IN')} sqft`
+    : isOutright
+      ? 'Outright Buy'
+      : `${p.sold_fractions ?? 0}/${p.total_fractions ?? 100} sold`;
 
   return {
     id: p.id,
     title: p.title,
     location: [p.locality, p.district].filter(Boolean).join(', '),
-    price: isOutright
-      ? formatPrice(Number(p.price_per_fraction))
-      : `${formatPrice(Number(p.price_per_fraction))} / fraction`,
+    price: Number(p.price_per_fraction) === 0
+      ? ''
+      : isOutright
+        ? formatPrice(Number(p.price_per_fraction))
+        : `${formatPrice(Number(p.price_per_fraction))} / fraction`,
     images,
     bhk: p.property_type ? p.property_type.charAt(0).toUpperCase() + p.property_type.slice(1) : 'Property',
-    area: isOutright ? 'Outright' : `${p.sold_fractions ?? 0}/${p.total_fractions ?? 0} sold`,
+    area: areaDisplay,
     areaSuffix: '',
     score: p.assured_yield ? Number(p.assured_yield) : 4.5,
     description: p.description || 'A beautiful, premium property offering exceptional yields and modern amenities.',
+    isSoldOut: p.is_sold_out || p.approval_status === 'sold_out' || (p.total_fractions > 0 && p.available_fractions <= 0),
   };
 };
 
@@ -42,9 +53,9 @@ export const propertyToCardProps = (p: any) => {
 // possession/completion date in the schema, so we surface when the listing
 // was posted instead of inventing a construction-completion date.
 export const propertyToProjectCardProps = (p: any) => {
-  const images = Array.isArray(p.images) && p.images.length > 0
-    ? p.images.map((img: any) => (typeof img === 'string' ? img : img.image_url))
-    : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=800&fit=crop'];
+  const images = Array.isArray(p.images) && p.images.length > 0 
+    ? p.images.map((img: any) => getFullImageUrl(typeof img === 'string' ? img : img.image_url))
+    : ['https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1000'];
   const totalValue = Number(p.price_per_fraction) * (p.total_fractions || 1);
 
   return {
@@ -53,7 +64,7 @@ export const propertyToProjectCardProps = (p: any) => {
     developer: p.developer?.name || 'Independent',
     location: [p.locality, p.district].filter(Boolean).join(', '),
     image: images[0],
-    priceRange: formatPrice(totalValue),
+    priceRange: totalValue === 0 ? '' : formatPrice(totalValue),
     possession: p.created_at ? `Listed ${new Date(p.created_at).toLocaleDateString()}` : 'Recently listed',
     hasRera: !!p.developer?.rera_registered,
   };

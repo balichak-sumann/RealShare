@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import { auth } from '@/lib/firebase';
-
-const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
+import { getApiUrl } from '@/lib/api';
 
 type ShortlistContextType = {
   savedProperties: string[];
@@ -28,7 +27,7 @@ export function ShortlistProvider({ children }: { children: React.ReactNode }) {
     }
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`${API_URL}/api/shortlist`, {
+      const res = await fetch(`${getApiUrl()}/api/shortlist`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -59,7 +58,7 @@ export function ShortlistProvider({ children }: { children: React.ReactNode }) {
     );
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`${API_URL}/api/shortlist`, {
+      const res = await fetch(`${getApiUrl()}/api/shortlist`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ property_id: id }),

@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { SectionHeader } from '../ui/SectionHeader';
 import { useRouter } from 'expo-router';
 import { Neutrals, Typography, Radius, Shadows } from '@/constants/design';
 import { ResponsiveRail } from '../layout/ResponsiveRail';
 import { useResponsive } from '@/hooks/useResponsive';
+import { getApiUrl, resilientFetch } from '@/lib/api';
 
 const PLACEHOLDER_LOGO = 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=120&h=120&fit=crop';
 
@@ -16,7 +18,7 @@ export function TopDevelopers() {
   useEffect(() => {
     const fetchDevelopers = async () => {
       try {
-        const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/developers`);
+        const res = await resilientFetch(`${getApiUrl()}/api/developers`);
         const data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
           setDevelopers(data.slice(0, 10));
@@ -24,12 +26,13 @@ export function TopDevelopers() {
         }
       } catch (err) {}
       
-      // Fallback to mock data if API fails or is empty
+      // Fallback data if API fails or is empty
       setDevelopers([
-        { id: '1', name: 'DLF Group', rating: 4.8, _count: { properties: 12 }, logo_url: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=120&h=120&fit=crop' },
-        { id: '2', name: 'Prestige', rating: 4.6, _count: { properties: 8 }, logo_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?w=120&h=120&fit=crop' },
-        { id: '3', name: 'Lodha', rating: 4.9, _count: { properties: 15 }, logo_url: 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=120&h=120&fit=crop' },
-        { id: '4', name: 'Godrej', rating: 4.7, _count: { properties: 10 }, logo_url: 'https://images.unsplash.com/photo-1600607687920-4e2a09be15ea?w=120&h=120&fit=crop' },
+        { id: 'dev-makuta', name: 'Makuta Developers', rating: 4.9, _count: { properties: 10 }, logo_source: require('@/assets/images/developers/prestige.png') },
+        { id: '1', name: 'DLF Group', rating: 4.8, _count: { properties: 12 }, logo_source: require('@/assets/images/developers/dlf.png') },
+        { id: '2', name: 'Prestige', rating: 4.6, _count: { properties: 8 }, logo_source: require('@/assets/images/developers/prestige.png') },
+        { id: '3', name: 'Lodha', rating: 4.9, _count: { properties: 15 }, logo_source: require('@/assets/images/developers/lodha.jpg') },
+        { id: '4', name: 'Godrej', rating: 4.7, _count: { properties: 10 }, logo_source: require('@/assets/images/developers/godrej.png') },
       ]);
     };
     fetchDevelopers();
@@ -44,7 +47,12 @@ export function TopDevelopers() {
         <View style={styles.desktopGrid}>
           {developers.map((dev) => (
             <TouchableOpacity key={dev.id} style={[styles.devCard, styles.devCardDesktop, { flex: 1, minWidth: 200 }]} activeOpacity={0.7}>
-              <Image source={{ uri: dev.logo_url || PLACEHOLDER_LOGO }} style={[styles.devLogo, styles.devLogoDesktop]} />
+              <Image 
+                source={dev.logo_source || { uri: dev.logo_url || PLACEHOLDER_LOGO }} 
+                style={[styles.devLogo, styles.devLogoDesktop]} 
+                contentFit="cover"
+                cachePolicy="memory-disk"
+              />
               <Text style={[styles.devName, styles.devNameDesktop]} numberOfLines={1}>{dev.name}</Text>
               <Text style={[styles.devInfo, styles.devInfoDesktop]}>
                 {dev._count?.properties ?? 0} Projects · ⭐ {Number(dev.rating).toFixed(1)}
@@ -56,7 +64,12 @@ export function TopDevelopers() {
         <ResponsiveRail contentContainerStyle={styles.scrollContent}>
           {developers.map((dev) => (
             <TouchableOpacity key={dev.id} style={styles.devCard} activeOpacity={0.7}>
-              <Image source={{ uri: dev.logo_url || PLACEHOLDER_LOGO }} style={styles.devLogo} />
+              <Image 
+                source={dev.logo_source || { uri: dev.logo_url || PLACEHOLDER_LOGO }} 
+                style={styles.devLogo} 
+                contentFit="cover"
+                cachePolicy="memory-disk"
+              />
               <Text style={styles.devName} numberOfLines={1}>{dev.name}</Text>
               <Text style={styles.devInfo}>
                 {dev._count?.properties ?? 0} Projects · ⭐ {Number(dev.rating).toFixed(1)}

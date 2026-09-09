@@ -4,28 +4,27 @@
     "slug": "realshare",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/images/icon.png",
+    "icon": "./assets/images/realshare-logo.png",
     "scheme": "androidapp",
     "userInterfaceStyle": "automatic",
     "ios": {
-      "bundleIdentifier": "com.indusinnovate.realshare",
-      "icon": "./assets/expo.icon",
+      "bundleIdentifier": "com.realshare.app",
+      "icon": "./assets/images/realshare-logo.png",
       "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
-      "package": "com.realshare",
+      "package": "com.realshare.app",
+      "versionCode": 21,
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/images/android-icon-foreground.png",
-        "backgroundImage": "./assets/images/android-icon-background.png",
-        "monochromeImage": "./assets/images/android-icon-monochrome.png"
+        "backgroundColor": "#FFFFFF",
+        "foregroundImage": "./assets/images/adaptive-icon.png"
       },
       "predictiveBackGestureEnabled": false,
       "googleServicesFile": "./google-services.json"
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/realshare-logo.png"
     },
     "plugins": [
       "expo-router",
@@ -34,15 +33,13 @@
         {
           "backgroundColor": "#FFFFFF",
           "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "imageWidth": 200
         }
       ],
-      "@react-native-firebase/app",
-      "@react-native-firebase/auth"
+      "expo-image"
     ],
     "experiments": {
-      "typedRoutes": true,
-      "reactCompiler": true
+      "typedRoutes": true
     },
     "extra": {
       "eas": {

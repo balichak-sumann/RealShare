@@ -1,10 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, TextInput, Platform, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { WebView } from 'react-native-webview';
 import { useRouter, Link } from 'expo-router';
 import { useUser } from '@/contexts/UserContext';
 import { useShortlist } from '@/contexts/ShortlistContext';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
+import { getApiUrl, resilientFetch } from '@/lib/api';
 
 export default function ExploreScreen() {
   const { width } = useWindowDimensions();
@@ -26,7 +28,7 @@ export default function ExploreScreen() {
   const [loading, setLoading] = useState(true);
   const [imageIndices, setImageIndices] = useState<Record<string, number>>({});
   
-  const goToImage = (propertyId: string, direction: 'prev' | 'next', totalImages: number) => {
+  const handleImageNavigation = (propertyId: string, totalImages: number, direction: 'prev' | 'next') => {
     setImageIndices(prev => {
       const current = prev[propertyId] || 0;
       let next;
@@ -40,64 +42,15 @@ export default function ExploreScreen() {
   };
 
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties`)
+    resilientFetch(`${getApiUrl()}/api/properties`)
       .then(res => res.json())
       .then(data => {
         setProperties(Array.isArray(data) ? data : []);
         setLoading(false);
       })
       .catch(err => {
-        console.warn('Failed to fetch properties, using mock data:', err);
-        setProperties([
-          {
-            id: 'prop-1',
-            title: 'The Obsidian Tower',
-            locality: 'BKC, Mumbai',
-            district: 'Mumbai',
-            state: 'Maharashtra',
-            property_type: 'Commercial',
-            price_per_fraction: 5000000,
-            assured_yield: 14.2,
-            target_irr: 18.5,
-            funding_status: 85,
-            images: [
-              { image_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&q=80&w=1000' },
-              { image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000' }
-            ]
-          },
-          {
-            id: 'prop-2',
-            title: 'Aura IT Park',
-            locality: 'Whitefield, Bangalore',
-            district: 'Bangalore',
-            state: 'Karnataka',
-            property_type: 'Commercial',
-            price_per_fraction: 2500000,
-            assured_yield: 11.5,
-            target_irr: 15.0,
-            funding_status: 100,
-            images: [
-              { image_url: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&q=80&w=1000' },
-              { image_url: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?auto=format&fit=crop&q=80&w=1000' }
-            ]
-          },
-          {
-            id: 'prop-3',
-            title: 'Sapphire Residences',
-            locality: 'Jubilee Hills, Hyderabad',
-            district: 'Hyderabad',
-            state: 'Telangana',
-            property_type: 'Residential',
-            price_per_fraction: 1500000,
-            assured_yield: 8.5,
-            target_irr: 12.0,
-            funding_status: 45,
-            images: [
-              { image_url: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&q=80&w=1000' },
-              { image_url: 'https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&q=80&w=1000' }
-            ]
-          }
-        ]);
+        console.warn('Failed to fetch properties:', err);
+        setProperties([]);
         setLoading(false);
       });
   }, []);
@@ -376,10 +329,12 @@ export default function ExploreScreen() {
               srcDoc={generateMapHtml(filteredProperties)}
             />
           ) : (
-            <View style={styles.mapPlaceholder}>
-              <Text style={styles.mapText}>Interactive Google Map View</Text>
-              <Text style={styles.mapSubtext}>Showing {filteredProperties.length} properties</Text>
-            </View>
+            <WebView 
+              source={{ html: generateMapHtml(filteredProperties) }}
+              style={{ flex: 1, backgroundColor: '#E5E7EB' }}
+              showsVerticalScrollIndicator={false}
+              showsHorizontalScrollIndicator={false}
+            />
           )}
         </View>
 
@@ -398,13 +353,13 @@ export default function ExploreScreen() {
                       <>
                         <TouchableOpacity
                           style={[styles.sliderArrow, styles.sliderArrowLeft]}
-                          onPress={() => goToImage(prop.id, 'prev', prop.images.length)}
+                          onPress={() => handleImageNavigation(prop.id, prop.images.length, 'prev')}
                         >
                           <Text style={styles.sliderArrowText}>‹</Text>
                         </TouchableOpacity>
                         <TouchableOpacity
                           style={[styles.sliderArrow, styles.sliderArrowRight]}
-                          onPress={() => goToImage(prop.id, 'next', prop.images.length)}
+                          onPress={() => handleImageNavigation(prop.id, prop.images.length, 'next')}
                         >
                           <Text style={styles.sliderArrowText}>›</Text>
                         </TouchableOpacity>
@@ -798,13 +753,6 @@ const styles = StyleSheet.create({
   },
   shortlistIconSaved: {
     color: '#D4AF37',
-  },
-  cardContent: {
-    backgroundColor: '#F3F4F6',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    borderRadius: 8,
-    paddingHorizontal: 16,
   },
   shareBtn: {
     backgroundColor: '#F3F4F6',

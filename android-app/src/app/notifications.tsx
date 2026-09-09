@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { auth } from '@/lib/firebase';
 import { Ionicons } from '@expo/vector-icons';
+import { getApiUrl } from '@/lib/api';
 
 interface Notification {
   id: string;
@@ -35,7 +36,7 @@ export default function NotificationsScreen() {
       }
       const token = await user.getIdToken();
       const res = await fetch(
-        `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/notifications/feed`,
+        `${getApiUrl()}/api/notifications/feed`,
         { headers: { Authorization: `Bearer ${token}` } }
       );
       if (res.ok) {

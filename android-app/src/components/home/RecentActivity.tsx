@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { SectionHeader } from '../ui/SectionHeader';
@@ -10,93 +10,100 @@ export function RecentActivity() {
   const router = useRouter();
   const { recentSearches, recentViews } = useActivityHistory();
 
-  const latestSearch = recentSearches.length > 0 ? recentSearches[0] : null;
-  const hasNoActivity = recentSearches.length === 0 && recentViews.length === 0;
-  
   return (
     <View style={styles.container}>
-      <SectionHeader title="Recent Activity" onViewAll={() => {}} />
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+      
+      {/* Main Header */}
+      <SectionHeader title="Recent Activity" />
+
+      {/* Action Buttons */}
+      <View style={styles.buttonContainer}>
         
-        {hasNoActivity && (
-          <View style={[styles.activityCard, { width: 320, backgroundColor: Neutrals.gray100, justifyContent: 'center', borderColor: 'transparent' }]}>
-            <Text style={{ color: Neutrals.gray500, textAlign: 'center', ...Typography.bodyMedium }}>
-              You have no recent activity. Start exploring properties!
+        {/* 1. Recently Viewed Button */}
+        <TouchableOpacity 
+          style={styles.actionButton} 
+          onPress={() => router.push('/recently-viewed')}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.iconBg, { backgroundColor: '#F5F3FF' }]}>
+            <Ionicons name="eye-outline" size={24} color="#8B5CF6" />
+          </View>
+          <View style={styles.buttonTextContent}>
+            <Text style={styles.buttonTitle}>Recently Viewed</Text>
+            <Text style={styles.buttonSubtitle}>
+              {recentViews.length > 0 ? `View your ${recentViews.length} past properties` : 'No recent properties'}
             </Text>
           </View>
-        )}
+          <Ionicons name="chevron-forward" size={20} color={Neutrals.gray400} />
+        </TouchableOpacity>
 
-        {/* Continue Search Card */}
-        {latestSearch && (
-          <TouchableOpacity style={styles.activityCard} onPress={() => router.push(`/(tabs)/search?q=${latestSearch.query}`)}>
-            <View style={[styles.iconContainer, { backgroundColor: '#EFF6FF' }]}>
-              <Ionicons name="search-outline" size={20} color="#3B82F6" />
-            </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.title}>Continue Search</Text>
-              <Text style={styles.subtitle} numberOfLines={1}>{latestSearch.query}</Text>
-            </View>
-            <Ionicons name="arrow-forward-outline" size={16} color={Neutrals.gray400} />
-          </TouchableOpacity>
-        )}
+        {/* 2. Continue Search Button */}
+        <TouchableOpacity 
+          style={styles.actionButton} 
+          onPress={() => {
+            if (recentSearches.length > 0) {
+              router.push(`/(tabs)/search?q=${recentSearches[0].query}` as any);
+            } else {
+              router.push('/(tabs)/search');
+            }
+          }}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.iconBg, { backgroundColor: '#EFF6FF' }]}>
+            <Ionicons name="search-outline" size={24} color="#3B82F6" />
+          </View>
+          <View style={styles.buttonTextContent}>
+            <Text style={styles.buttonTitle}>Continue with last search</Text>
+            <Text style={styles.buttonSubtitle}>
+              {recentSearches.length > 0 ? `Search for "${recentSearches[0].query}"` : 'Start a new search'}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={Neutrals.gray400} />
+        </TouchableOpacity>
 
-        {/* Recently Viewed */}
-        {recentViews.length > 0 && (
-          <TouchableOpacity style={styles.activityCard} onPress={() => router.push(`/property/${recentViews[0].id}`)}>
-            <View style={[styles.iconContainer, { backgroundColor: '#F5F3FF' }]}>
-              <Ionicons name="eye-outline" size={20} color="#8B5CF6" />
-            </View>
-            <View style={styles.cardContent}>
-              <Text style={styles.title}>Recently Viewed</Text>
-              <Text style={styles.subtitle} numberOfLines={1}>{recentViews[0].title}</Text>
-            </View>
-            <Ionicons name="arrow-forward-outline" size={16} color={Neutrals.gray400} />
-          </TouchableOpacity>
-        )}
+      </View>
 
-      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 8,
+    marginTop: 16,
+    marginBottom: 8,
   },
-  scrollContent: {
+  buttonContainer: {
     paddingHorizontal: 16,
+    gap: 12,
   },
-  activityCard: {
+  actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Neutrals.surface,
+    backgroundColor: Neutrals.white,
     padding: 16,
     borderRadius: Radius.lg,
-    width: 240,
-    marginRight: 16,
-    ...Shadows.soft,
+    ...Shadows.md,
     borderWidth: 1,
-    borderColor: Neutrals.border,
+    borderColor: Neutrals.gray100,
   },
-  iconContainer: {
-    width: 42,
-    height: 42,
-    borderRadius: 12,
+  iconBg: {
+    width: 48,
+    height: 48,
+    borderRadius: Radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 12,
+    marginRight: 16,
   },
-  cardContent: {
+  buttonTextContent: {
     flex: 1,
-    paddingRight: 8,
   },
-  title: {
-    ...Typography.labelMedium,
+  buttonTitle: {
+    ...Typography.titleMedium,
     color: Neutrals.obsidian,
+    marginBottom: 2,
   },
-  subtitle: {
+  buttonSubtitle: {
     ...Typography.caption,
-    color: GoldSystem.primaryGold,
-    marginTop: 2,
+    color: Neutrals.gray500,
   },
 });

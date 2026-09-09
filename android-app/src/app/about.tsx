@@ -62,7 +62,7 @@ export default function AboutScreen() {
           <Text style={styles.sectionTitle}>Founder & Promoter</Text>
           <View style={[styles.founderCard, isDesktop && styles.founderCardDesktop]}>
             <View style={styles.founderInfo}>
-              <Text style={styles.founderName}>Raj Kumar Chintireddy</Text>
+              <Text style={styles.founderName}>Raj Kumar Chinthireddy</Text>
               <Text style={styles.founderRole}>Chairman & MD, RealShare</Text>
               <Text style={styles.bodyText}>
                 Raj Kumar, a seasoned leader and serial entrepreneur, began his career 20

@@ -6,6 +6,7 @@ import { PropertyCard } from '@/components/ui/PropertyCard';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 
 const COLLECTIONS = ['High Commission', 'Premium Residential', 'Commercial', 'Recently Viewed'];
 const DEFAULT_COMMISSION_RATE_PCT = 2.5;
@@ -18,10 +19,9 @@ export function AgentEarningsScreen() {
   const [commissionRatePct, setCommissionRatePct] = useState(DEFAULT_COMMISSION_RATE_PCT);
 
   useEffect(() => {
-    const API_URL = process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com';
     (async () => {
       try {
-        const res = await fetch(`${API_URL}/api/properties`);
+        const res = await fetch(`${getApiUrl()}/api/properties`);
         if (res.ok) {
           const data = await res.json();
           const list = Array.isArray(data) ? data : data.properties || [];

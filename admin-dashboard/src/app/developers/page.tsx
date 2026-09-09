@@ -12,6 +12,9 @@ interface Developer {
   rating: string | number;
   established_year?: number | null;
   rera_registered: boolean;
+  type?: 'firm' | 'account';
+  email?: string | null;
+  phone_number?: string | null;
   _count?: { properties: number };
 }
 
@@ -46,15 +49,23 @@ export default function DevelopersPage() {
     setTimeout(() => setToastMessage(null), 4000);
   };
 
-  const loadDevelopers = () => {
+  const loadDevelopers = async () => {
     setLoading(true);
-    fetch("/api/developers")
-      .then((res) => res.json())
-      .then((data) => {
+    try {
+      const authHeader = await getAuthHeader();
+      const res = await fetch("/api/developers", { headers: authHeader || {} });
+      if (res.ok) {
+        const data = await res.json();
         setDevelopers(Array.isArray(data) ? data : []);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
+      } else {
+        setDevelopers([]);
+      }
+    } catch (err) {
+      console.error("Failed to load developers:", err);
+      setDevelopers([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -141,7 +152,7 @@ export default function DevelopersPage() {
   };
 
   const handleDeleteDeveloper = async (d: Developer) => {
-    if (!confirm(`Delete developer "${d.name}"? This cannot be undone.`)) return;
+    if (!confirm(`Delete developer "${d.name}" and all associated properties? This action cannot be undone.`)) return;
     try {
       const authHeader = await getAuthHeader();
       if (!authHeader) { alert("You must be signed in to do that."); return; }
@@ -149,12 +160,13 @@ export default function DevelopersPage() {
         method: "DELETE",
         headers: authHeader,
       });
-      if (!res.ok) throw new Error("Failed to delete developer");
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || "Failed to delete developer");
       setDevelopers((prev) => prev.filter((dev) => dev.id !== d.id));
-      showToast(`Developer "${d.name}" removed.`);
-    } catch (err) {
+      showToast(`Developer "${d.name}" and their properties were removed.`);
+    } catch (err: any) {
       console.error(err);
-      alert("Could not delete developer. It may still have properties attached.");
+      alert(err.message || "Could not delete developer. Please try again.");
     }
   };
 
@@ -197,9 +209,16 @@ export default function DevelopersPage() {
                 <tr key={d.id} className={styles.tr}>
                   <td className={styles.td}>
                     <div className={styles.propCell}>
-                      <strong>{d.name}</strong>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <strong>{d.name}</strong>
+                        {d.type === "account" && (
+                          <span className={styles.badge} style={{ background: "#EFF6FF", color: "#2563EB", fontSize: "0.68rem" }}>
+                            Builder Account
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    {d.bio && <div style={{ fontSize: "0.75rem", color: "#64748B" }}>{d.bio}</div>}
+                    {d.bio && <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: "2px" }}>{d.bio}</div>}
                   </td>
                   <td className={styles.td}>⭐ {Number(d.rating).toFixed(1)}</td>
                   <td className={styles.td}>{d.established_year || "—"}</td>
@@ -212,7 +231,9 @@ export default function DevelopersPage() {
                       "—"
                     )}
                   </td>
-                  <td className={styles.td}>{d._count?.properties ?? 0}</td>
+                  <td className={styles.td}>
+                    <span style={{ fontWeight: 600 }}>{d._count?.properties ?? 0}</span>
+                  </td>
                   <td className={styles.td}>
                     <div className={styles.actions}>
                       <button onClick={() => openEditModal(d)} className={styles.viewBtn}>

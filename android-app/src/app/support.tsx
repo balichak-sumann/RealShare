@@ -15,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { auth } from '@/lib/firebase';
 import { useResponsive } from '@/hooks/useResponsive';
+import { getApiUrl } from '@/lib/api';
 
 const CONTACT_METHODS = [
   { icon: 'chatbubble-ellipses-outline' as const, label: 'Chat with us' },
@@ -44,7 +45,7 @@ export default function SupportScreen() {
     setSubmitting(true);
     try {
       const token = await user.getIdToken();
-      const res = await fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/tickets`, {
+      const res = await fetch(`${getApiUrl()}/api/tickets`, {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({

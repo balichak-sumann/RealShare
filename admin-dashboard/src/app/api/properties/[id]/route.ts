@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { auth } from '@/lib/firebase-admin';
+import { parseGoogleMapsCoordinates } from '../route';
+import { deletePropertyWithRelations } from '@/lib/delete-cascade';
 
 // Auth helper
 async function getUser(request: Request) {
@@ -10,12 +12,27 @@ async function getUser(request: Request) {
     try {
       const decodedToken = await auth.verifyIdToken(token);
       const profile = await prisma.profile.findUnique({ where: { id: decodedToken.uid } });
-      return { uid: decodedToken.uid, isAdmin: profile?.role === 'admin' };
+      return { uid: decodedToken.uid, role: profile?.role?.toLowerCase() || 'investor', isAdmin: profile?.role === 'admin' };
     } catch (e) {
       return null;
     }
   }
   return null;
+}
+
+function attachComputedFields(property: any) {
+  const total = property.total_fractions || 1;
+  const available = property.available_fractions ?? total;
+  const sold = property.sold_fractions ?? (total - available);
+  const percentageSold = Math.min(100, Math.max(0, Math.round((sold / total) * 100)));
+  const action = property.listing_type === 'fractional' ? 'INVEST' : 'BUY';
+
+  return {
+    ...property,
+    shares_available: available,
+    percentage_sold: percentageSold,
+    action,
+  };
 }
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -26,20 +43,37 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Property ID is required' }, { status: 400 });
     }
 
-    const property = await prisma.property.findUnique({
+    const property = await prisma.property.update({
       where: { id },
+      data: {
+        views_count: { increment: 1 },
+      },
       include: {
-        images: true,
+        images: {
+          orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
+        },
         developer: true,
-        profile: { select: { full_name: true, role: true } },
-      }
+        profile: { select: { full_name: true, role: true, avatar_url: true, phone_number: true, email: true } },
+      },
+    }).catch(async () => {
+      // Fallback to findUnique if update fails (e.g. read-only context)
+      return await prisma.property.findUnique({
+        where: { id },
+        include: {
+          images: {
+            orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
+          },
+          developer: true,
+          profile: { select: { full_name: true, role: true, avatar_url: true, phone_number: true, email: true } },
+        },
+      });
     });
 
     if (!property) {
       return NextResponse.json({ error: 'Property not found' }, { status: 404 });
     }
 
-    return NextResponse.json(property);
+    return NextResponse.json(attachComputedFields(property));
   } catch (error) {
     console.error('Failed to fetch property details:', error);
     return NextResponse.json({ error: 'Failed to fetch property details' }, { status: 500 });
@@ -59,6 +93,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const data = await request.json();
+
     if (data.property_type) {
       const allowedCategories = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Investor'];
       if (!allowedCategories.includes(data.property_type)) {
@@ -66,48 +101,77 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
       }
     }
 
-    // Resolve what listing_type and total_fractions would be *after* this
-    // update, and enforce the "outright listings always have exactly one
-    // fraction" invariant against that final state (covers both changing
-    // total_fractions on an outright property and changing listing_type to
-    // outright without also setting total_fractions to 1).
     const finalListingType = data.listing_type !== undefined ? data.listing_type : property.listing_type;
-    const finalTotalFractions =
-      data.total_fractions !== undefined ? Number(data.total_fractions) : property.total_fractions;
+    const isSingleUnit = finalListingType !== 'fractional';
 
-    if (finalListingType === 'outright' && finalTotalFractions !== 1) {
-      return NextResponse.json(
-        { error: 'Outright listings must have total_fractions = 1' },
-        { status: 400 }
-      );
+    let newTotalFractions = property.total_fractions;
+    let newAvailableFractions = property.available_fractions;
+
+    if (isSingleUnit) {
+      newTotalFractions = 1;
+      newAvailableFractions = 1;
+    } else if (data.total_fractions !== undefined) {
+      newTotalFractions = Number(data.total_fractions);
+      if (isNaN(newTotalFractions) || newTotalFractions < 1) {
+        return NextResponse.json({ error: 'total_fractions must be >= 1' }, { status: 400 });
+      }
+      newAvailableFractions = Math.min(newTotalFractions, Math.max(0, newTotalFractions - property.sold_fractions));
     }
 
-    // If total_fractions is changing, keep available_fractions consistent:
-    // sold_fractions is a historical fact we never rewrite here, so the
-    // remaining pool is simply the new total minus what's already sold,
-    // clamped so it can never exceed the new total or go negative.
-    let newAvailableFractions: number | undefined = undefined;
-    if (data.total_fractions !== undefined) {
-      const newTotal = Number(data.total_fractions);
-      newAvailableFractions = Math.min(newTotal, Math.max(0, newTotal - property.sold_fractions));
+    // Handle coordinates & Google Maps URL
+    let lat = data.lat !== undefined ? (data.lat !== null && data.lat !== '' ? Number(data.lat) : null) : undefined;
+    let lng = data.lng !== undefined ? (data.lng !== null && data.lng !== '' ? Number(data.lng) : null) : undefined;
+    const googleMapsUrl = data.google_maps_url !== undefined ? data.google_maps_url : property.google_maps_url;
+
+    if ((lat === undefined || lat === null) && (lng === undefined || lng === null) && googleMapsUrl) {
+      const coords = parseGoogleMapsCoordinates(googleMapsUrl);
+      if (coords) {
+        lat = coords.lat;
+        lng = coords.lng;
+      }
     }
+
+    const areaSqft = data.area_sqft !== undefined ? (data.area_sqft !== null && data.area_sqft !== '' ? Number(data.area_sqft) : null) : undefined;
 
     const updated = await prisma.property.update({
       where: { id },
       data: {
-        title: data.title,
-        locality: data.locality,
-        property_type: data.property_type,
+        title: data.title !== undefined ? data.title : undefined,
+        description: data.description !== undefined ? data.description : undefined,
+        property_type: data.property_type !== undefined ? data.property_type : undefined,
         listing_type: data.listing_type !== undefined ? data.listing_type : undefined,
-        total_fractions: data.total_fractions !== undefined ? Number(data.total_fractions) : undefined,
+        total_fractions: newTotalFractions,
         available_fractions: newAvailableFractions,
-        price_per_fraction: data.price_per_fraction,
-        assured_yield: data.assured_yield,
-      }
+        price_per_fraction: data.price_per_fraction !== undefined ? Number(data.price_per_fraction) : undefined,
+        booking_amount: data.booking_amount !== undefined ? Number(data.booking_amount) : undefined,
+        assured_yield: data.assured_yield !== undefined ? (data.assured_yield ? Number(data.assured_yield) : null) : undefined,
+        target_irr: data.target_irr !== undefined ? (data.target_irr ? Number(data.target_irr) : null) : undefined,
+        state: data.state !== undefined ? data.state : undefined,
+        district: data.district !== undefined ? data.district : undefined,
+        locality: data.locality !== undefined ? data.locality : undefined,
+        full_address: data.full_address !== undefined ? data.full_address : undefined,
+        lat: lat !== undefined ? lat : undefined,
+        lng: lng !== undefined ? lng : undefined,
+        video_url: data.video_url !== undefined ? data.video_url : undefined,
+        brochure_url: data.brochure_url !== undefined ? data.brochure_url : undefined,
+        area_sqft: areaSqft !== undefined ? areaSqft : undefined,
+        google_maps_url: googleMapsUrl,
+        featured: data.featured !== undefined ? data.featured : undefined,
+        developer_id: data.developer_id !== undefined ? data.developer_id : undefined,
+      },
+      include: {
+        images: {
+          orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
+        },
+        developer: true,
+        profile: { select: { full_name: true, role: true, avatar_url: true } },
+      },
     });
-    return NextResponse.json(updated);
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to update' }, { status: 500 });
+
+    return NextResponse.json(attachComputedFields(updated));
+  } catch (error: any) {
+    console.error('Failed to update property:', error);
+    return NextResponse.json({ error: error.message || 'Failed to update' }, { status: 500 });
   }
 }
 
@@ -115,16 +179,28 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   try {
     const { id } = await params;
     const user = await getUser(request);
-    if (!user || !user.isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user || !user.isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
 
     const data = await request.json();
     const updated = await prisma.property.update({
       where: { id },
-      data: { approval_status: data.approval_status }
+      data: {
+        approval_status: data.approval_status !== undefined ? data.approval_status : undefined,
+        rejection_notes: data.rejection_notes !== undefined ? data.rejection_notes : undefined,
+        featured: data.featured !== undefined ? data.featured : undefined,
+        is_sold_out: data.is_sold_out !== undefined ? data.is_sold_out : undefined,
+      },
+      include: {
+        images: {
+          orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
+        },
+        developer: true,
+        profile: { select: { full_name: true, role: true } },
+      },
     });
-    return NextResponse.json(updated);
+    return NextResponse.json(attachComputedFields(updated));
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to patch' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to patch property' }, { status: 500 });
   }
 }
 
@@ -132,11 +208,19 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   try {
     const { id } = await params;
     const user = await getUser(request);
-    if (!user || !user.isAdmin) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    await prisma.property.delete({ where: { id } });
+    const property = await prisma.property.findUnique({ where: { id } });
+    if (!property) return NextResponse.json({ error: 'Not found' }, { status: 404 });
+    if (!user.isAdmin && property.posted_by !== user.uid) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    await deletePropertyWithRelations(id);
     return NextResponse.json({ success: true });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
+  } catch (error: any) {
+    console.error('Failed to delete property:', error);
+    return NextResponse.json({ error: error.message || 'Failed to delete property' }, { status: 500 });
   }
 }
+

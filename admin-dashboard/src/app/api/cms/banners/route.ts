@@ -2,12 +2,11 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
 
-// image_url always comes from the Firebase Storage upload and must be an
-// absolute URL. link_url is admin-typed and legitimately may be an in-app
-// route (e.g. "/properties") instead of an absolute URL, so it only needs to
-// look like *something* navigable -- either an absolute URL or a root-relative
-// path -- not strictly pass `new URL()`.
-function isValidAbsoluteUrl(value: string): boolean {
+export const dynamic = 'force-dynamic';
+
+function isValidImageUrl(value: string): boolean {
+  if (!value || typeof value !== 'string') return false;
+  if (value.startsWith('/') || value.startsWith('data:')) return true;
   try {
     new URL(value);
     return true;
@@ -18,7 +17,12 @@ function isValidAbsoluteUrl(value: string): boolean {
 
 function isValidLinkTarget(value: string): boolean {
   if (value.startsWith('/')) return true;
-  return isValidAbsoluteUrl(value);
+  try {
+    new URL(value);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export async function GET(request: Request) {
@@ -56,7 +60,7 @@ export async function POST(request: Request) {
     if (!title || !image_url) {
       return NextResponse.json({ error: 'title and image_url are required' }, { status: 400 });
     }
-    if (!isValidAbsoluteUrl(image_url)) {
+    if (!isValidImageUrl(image_url)) {
       return NextResponse.json({ error: 'image_url must be a valid URL' }, { status: 400 });
     }
     if (link_url && !isValidLinkTarget(link_url)) {

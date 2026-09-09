@@ -5,10 +5,11 @@ import {
   ScrollView,
   Text,
   TouchableOpacity,
-  Image,
   Platform,
   Animated,
+  TextInput,
 } from 'react-native';
+import { Image } from 'expo-image';
 import { useRef } from 'react';
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
@@ -31,6 +32,7 @@ import { HotProjects } from '@/components/home/HotProjects';
 import { TopLocalities } from '@/components/home/TopLocalities';
 import { ServicesStrip } from '@/components/home/ServicesStrip';
 import { TopDevelopers } from '@/components/home/TopDevelopers';
+import { PostPropertyBanner } from '@/components/home/PostPropertyBanner';
 
 import { SectionHeader } from '@/components/ui/SectionHeader';
 import { PropertyCard } from '@/components/ui/PropertyCard';
@@ -40,9 +42,9 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { LocationPickerModal } from '@/components/ui/LocationPickerModal';
 import { WebFooter } from '@/components/layout/WebFooter';
-import { WealthMarketingSection } from '@/components/home/WealthMarketingSection';
 import { QuoteSection } from '@/components/home/QuoteSection';
-import { BenefitsSection } from '@/components/home/BenefitsSection';
+
+import { getApiUrl, resilientFetch } from '@/lib/api';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -55,15 +57,16 @@ export default function HomeScreen() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [allCityProperties, setAllCityProperties] = useState<any[]>([]);
   const [hasUnread, setHasUnread] = useState(false);
+  const [query, setQuery] = useState('');
 
   useEffect(() => {
+    const currentUser = auth.currentUser;
+    if (!currentUser) return;
     const checkUnread = async () => {
-      const currentUser = auth.currentUser;
-      if (!currentUser) return;
       try {
         const token = await currentUser.getIdToken();
         const res = await fetch(
-          `${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/notifications/feed`,
+          `${getApiUrl()}/api/notifications/feed`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         if (res.ok) {
@@ -79,7 +82,8 @@ export default function HomeScreen() {
 
   // Single fetch when city changes — all category filtering happens in memory
   useEffect(() => {
-    fetch(`${process.env.EXPO_PUBLIC_API_URL || 'https://realshare-5l24.onrender.com'}/api/properties?district=${city}`)
+    const query = city === 'All India' ? '' : `?district=${encodeURIComponent(city)}`;
+    resilientFetch(`${getApiUrl()}/api/properties${query}`)
       .then((res) => res.json())
       .then((data) => {
         if (Array.isArray(data)) {
@@ -95,14 +99,28 @@ export default function HomeScreen() {
       ? allCityProperties
       : allCityProperties.filter(p => p.property_type?.toLowerCase() === activeCategory.toLowerCase());
 
+    const sortSoldOutLast = (a: any, b: any, primarySort: (a: any, b: any) => number) => {
+      const aSoldOut = a.available_fractions === 0 ? 1 : 0;
+      const bSoldOut = b.available_fractions === 0 ? 1 : 0;
+      if (aSoldOut !== bSoldOut) {
+        return aSoldOut - bSoldOut; // 0 (Available) comes before 1 (Sold Out)
+      }
+      return primarySort(a, b);
+    };
+
     const primaryProps = byCategory.filter(p => p.listing_type !== 'rental' && p.listing_type !== 'resale');
-    const sorted = [...primaryProps].sort((a, b) => (b.sold_fractions ?? 0) - (a.sold_fractions ?? 0));
+    const sortedHot = [...primaryProps].sort((a, b) => 
+      sortSoldOutLast(a, b, (x, y) => (y.sold_fractions ?? 0) - (x.sold_fractions ?? 0))
+    );
+    const sortedNew = [...byCategory].sort((a, b) =>
+      sortSoldOutLast(a, b, (x, y) => new Date(y.created_at || 0).getTime() - new Date(x.created_at || 0).getTime())
+    );
 
     return {
-      hot: sorted.slice(0, 10),
-      rental: byCategory.filter(p => p.listing_type === 'rental').slice(0, 10),
-      resale: byCategory.filter(p => p.listing_type === 'resale').slice(0, 10),
-      newProjects: byCategory.slice(0, 8),
+      hot: sortedHot.slice(0, 10),
+      rental: byCategory.filter(p => p.listing_type === 'rental').sort((a, b) => sortSoldOutLast(a, b, () => 0)).slice(0, 10),
+      resale: byCategory.filter(p => p.listing_type === 'resale').sort((a, b) => sortSoldOutLast(a, b, () => 0)).slice(0, 10),
+      newProjects: sortedNew.slice(0, 8),
     };
   }, [allCityProperties, activeCategory]);
 
@@ -148,6 +166,14 @@ export default function HomeScreen() {
     }
   }, []);
 
+  const submitSearch = () => {
+    if (query.trim()) {
+      router.push(`/search?q=${encodeURIComponent(query.trim())}` as any);
+    } else {
+      router.push('/search' as any);
+    }
+  };
+
   if (profile?.role === 'agent') {
     return <AgentPortalScreen isEmbedded={true} />;
   }
@@ -170,7 +196,11 @@ export default function HomeScreen() {
           </TouchableOpacity>
 
           <View style={[styles.logoContainer, { opacity: splashDone ? 1 : 0 }]} pointerEvents="none">
-            <Image source={require('../../../assets/logo.png')} style={styles.logoImage} />
+            <Image 
+              source={require('../../../assets/logo.png')} 
+              style={styles.logoImage} 
+              contentFit="contain" 
+            />
           </View>
 
           <TouchableOpacity onPress={() => router.push('/notifications')} style={styles.headerIconBtnRight}>
@@ -198,30 +228,70 @@ export default function HomeScreen() {
 
       <LocationPickerModal visible={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
 
+      {/* Desktop web search moved to HeroCarousel */}
+
       <Animated.ScrollView 
         style={styles.scrollContent} 
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={[
           { paddingBottom: isDesktop ? 64 : 120 },
-          isDesktop && { width: '100%', paddingHorizontal: 24 },
+          isDesktop && { width: '100%', paddingHorizontal: 24, paddingTop: 16 },
         ] as any}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
           { useNativeDriver: false }
         )}
-        scrollEventThrottle={16}
+        scrollEventThrottle={32}
       >
+
         <HeroCarousel />
         <CategoryGrid activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
         
-        <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
+        {/* Search Bar with Location Picker */}
+        <View style={styles.homeSearchContainer}>
+          <View style={styles.homeSearchBox}>
+            <TouchableOpacity style={styles.homeLocationDropdown} activeOpacity={0.7} onPress={() => setShowLocationPicker(true)}>
+              <Ionicons name="location-outline" size={18} color={Neutrals.gray600} />
+              <Text style={styles.homeLocationText}>{city}</Text>
+              <Ionicons name="chevron-down" size={14} color={Neutrals.gray400} />
+            </TouchableOpacity>
+
+            {Platform.OS === 'web' ? (
+              <View style={styles.homeSearchInputWrapper}>
+                <Ionicons name="search-outline" size={18} color={Neutrals.gray500} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  onSubmitEditing={submitSearch}
+                  placeholder="Search properties, localities…"
+                  placeholderTextColor={Neutrals.gray500}
+                  style={styles.homeSearchInput as any}
+                  returnKeyType="search"
+                />
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.homeSearchInputWrapper} onPress={() => router.push('/search')} activeOpacity={0.7}>
+                <Ionicons name="search-outline" size={18} color={Neutrals.gray500} />
+                <Text style={styles.homeSearchPlaceholder}>Search properties, localities…</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.homeSearchBtn} onPress={submitSearch}>
+              <Text style={styles.homeSearchBtnText}>Search</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        <QuickActions />
-        
+        {auth.currentUser && (
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
+          </View>
+        )}
+
+        {/* 1. Recent Activity */}
         <RecentActivity />
-        
+
+        <QuickActions />
+        {/* 2. Hot Selling Projects */}
         <View style={styles.featuredSection}>
           <SectionHeader title="Hot Selling Projects" onViewAll={() => router.push('/(tabs)/search')} />
           <ResponsiveRail contentContainerStyle={styles.featuredScroll}>
@@ -231,15 +301,13 @@ export default function HomeScreen() {
           </ResponsiveRail>
         </View>
 
-        <TopDevelopers />
-
-        {isDesktop && <QuoteSection />}
-
+        {/* 3. Projects in Hyderabad */}
         <HotProjects properties={filtered.newProjects} />
 
-        {isDesktop && <WealthMarketingSection />}
+        {/* 4. Sell or Rent Properties For Free */}
+        <PostPropertyBanner />
 
-
+        {/* 5. Resale Properties */}
         <View style={styles.featuredSection}>
           <SectionHeader title="Resale Properties" onViewAll={() => router.push('/(tabs)/search')} />
           {resaleProperties.length > 0 ? (
@@ -257,6 +325,7 @@ export default function HomeScreen() {
           )}
         </View>
         
+        {/* 6. Rental */}
         <View style={styles.featuredSection}>
           <SectionHeader title="Properties for Rent" onViewAll={() => router.push('/(tabs)/search')} />
           {rentalProperties.length > 0 ? (
@@ -273,11 +342,17 @@ export default function HomeScreen() {
             </View>
           )}
         </View>
+
+        {/* 7. Top Developer */}
+        <TopDevelopers />
+
+        {/* Secondary Desktop / Utility Sections placed at bottom */}
         <TopLocalities properties={filtered.newProjects} />
 
-        {isDesktop && <BenefitsSection />}
 
         <ServicesStrip />
+
+        {isDesktop && <QuoteSection />}
 
         {/* Trust Banner */}
         <View style={styles.trustBanner}>
@@ -328,12 +403,11 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFill as any,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: -1,
+    zIndex: 0,
   },
   logoImage: {
-    width: 170,
-    height: 48,
-    resizeMode: 'contain',
+    width: 220,
+    height: 60,
   },
   headerBottom: {
     flexDirection: 'row',
@@ -455,5 +529,74 @@ const styles = StyleSheet.create({
     ...Typography.bodyMedium,
     color: Neutrals.gray500,
     textAlign: 'center',
+  },
+  homeSearchContainer: {
+    paddingHorizontal: 20,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  homeSearchBox: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.lg,
+    padding: 8,
+    paddingLeft: 16,
+    width: '100%',
+    maxWidth: 560,
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+        } as any)
+      : {
+          elevation: 4,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+        }),
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+  },
+  homeLocationDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 16,
+    borderRightWidth: 1,
+    borderRightColor: Neutrals.gray200,
+  },
+  homeLocationText: {
+    ...Typography.labelLarge,
+    fontSize: 15,
+    color: Neutrals.obsidian,
+  },
+  homeSearchInputWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    height: 42,
+  },
+  homeSearchInput: {
+    flex: 1,
+    fontSize: 15,
+    color: Neutrals.text,
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}),
+  },
+  homeSearchPlaceholder: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray400,
+  },
+  homeSearchBtn: {
+    backgroundColor: GoldSystem.primaryGold,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+  },
+  homeSearchBtnText: {
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
   },
 });

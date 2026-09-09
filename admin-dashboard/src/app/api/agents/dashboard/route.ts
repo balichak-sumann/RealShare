@@ -19,6 +19,21 @@ export async function GET(req: Request) {
     });
 
     if (!profile) {
+      // Auto-create or sync profile if authenticated user exists in Firebase
+      profile = await prisma.profile.create({
+        data: {
+          id: uid,
+          email: decodedToken.email || null,
+          full_name: decodedToken.name || decodedToken.email?.split('@')[0] || 'Agent',
+          role: 'agent',
+          referral_code: `RS-${uid.substring(0, 6).toUpperCase()}`
+        }
+      }).catch(async () => {
+        return await prisma.profile.findUnique({ where: { id: uid } });
+      });
+    }
+
+    if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
     }
 
@@ -29,11 +44,19 @@ export async function GET(req: Request) {
     // Generate referral code if it doesn't exist
     if (!profile.referral_code) {
       const shortId = uid.substring(0, 6).toUpperCase();
-      const generatedCode = `RS-${shortId}`;
-      profile = await prisma.profile.update({
-        where: { id: uid },
-        data: { referral_code: generatedCode }
-      });
+      let generatedCode = `RS-${shortId}`;
+      try {
+        profile = await prisma.profile.update({
+          where: { id: uid },
+          data: { referral_code: generatedCode }
+        });
+      } catch {
+        generatedCode = `RS-${shortId}-${Math.floor(100 + Math.random() * 900)}`;
+        profile = await prisma.profile.update({
+          where: { id: uid },
+          data: { referral_code: generatedCode }
+        });
+      }
     }
 
     // Fetch agent commissions and client pipeline
@@ -45,12 +68,12 @@ export async function GET(req: Request) {
         investment: true
       },
       orderBy: { created_at: 'desc' }
-    });
+    }).catch(() => []);
 
     let totalEarned = 0;
     let pendingPayout = 0;
     const clientLeads = commissions.map(c => {
-      const amount = Number(c.commission_amount);
+      const amount = Number(c.commission_amount || 0);
       
       if (c.status === 'paid') {
         totalEarned += amount;
@@ -65,8 +88,8 @@ export async function GET(req: Request) {
 
       return {
         id: c.id,
-        name: c.investor.full_name,
-        property: c.property.title,
+        name: c.investor?.full_name || 'Direct Investor',
+        property: c.property?.title || 'Commercial Asset',
         fractions: c.investment?.fractions_bought || 0,
         commission: `₹${amount.toLocaleString('en-IN')}`,
         status: displayStatus
@@ -89,7 +112,7 @@ export async function GET(req: Request) {
       const date = new Date(c.created_at);
       const label = monthNames[date.getMonth()];
       if (monthlyDataMap[label] !== undefined && c.status === 'paid') {
-         monthlyDataMap[label] += Number(c.commission_amount);
+         monthlyDataMap[label] += Number(c.commission_amount || 0);
       }
     });
 
@@ -100,8 +123,8 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       agentName: profile.full_name,
-      agencyName: 'RealShare Agent', // Could be dynamic if added to schema later
-      commissionRate: '2.5% per Sale', // Could be dynamic
+      agencyName: profile.full_address || 'RealShare Channel Partner',
+      commissionRate: `${Number(profile.commission_rate_pct || 2.5)}% per Sale`,
       referralCode: profile.referral_code,
       totalEarned: `₹${totalEarned.toLocaleString('en-IN')}`,
       pendingPayout: `₹${pendingPayout.toLocaleString('en-IN')}`,

@@ -145,7 +145,9 @@ export function HeroCarousel() {
   return (
     <View style={[styles.container, isDesktop && styles.containerDesktop]} onLayout={(e) => {
       const { width } = e.nativeEvent.layout;
-      if (width > 0) setContainerWidth(width);
+      // Force full window width on desktop to ignore any parent padding
+      const fullWidth = isDesktop && Platform.OS === 'web' ? Dimensions.get('window').width : width;
+      if (fullWidth > 0) setContainerWidth(fullWidth);
     }}>
       <ScrollView
         ref={scrollRef}
@@ -240,11 +242,10 @@ const styles = StyleSheet.create({
   },
   containerDesktop: {
     height: HERO_H_DESKTOP,
-    borderRadius: 20,
-    overflow: 'hidden',
-    marginHorizontal: 24,
-    marginTop: 20,
-    width: 'auto',
+    width: '100%',
+    marginLeft: -24, // Pull out to negate index.tsx paddingHorizontal
+    marginRight: -24,
+    marginTop: -8,   // Pull up to negate index.tsx 8px gap (76 - 68)
   },
   slide: {
     height: HERO_H,

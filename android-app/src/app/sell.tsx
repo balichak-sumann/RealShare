@@ -15,9 +15,8 @@ export default function SellScreen() {
   const [mainTab, setMainTab] = useState<'sell' | 'rent' | null>(null);
   const currentUser = auth.currentUser;
   
-  // Autocomplete states
   const [properties, setProperties] = useState<any[]>([]);
-  const [showDropdown, setShowDropdown] = useState(false);
+  const [selectedPropertyId, setSelectedPropertyId] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -34,19 +33,33 @@ export default function SellScreen() {
     video_url: '',
   });
 
-  // Fetch properties on mount for autocomplete
+  // Fetch portfolio on mount for property selection
   useEffect(() => {
-    fetch(`${getApiUrl()}/api/properties`)
-      .then(res => res.json())
-      .then(data => {
-        if (Array.isArray(data)) {
-          setProperties(data);
-        } else if (data.properties && Array.isArray(data.properties)) {
-          setProperties(data.properties);
+    const fetchPortfolio = async () => {
+      try {
+        if (!currentUser) return;
+        const token = await currentUser.getIdToken();
+        const res = await fetch(`${getApiUrl()}/api/portfolio`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        
+        if (Array.isArray(data.investments)) {
+          // Extract unique properties from investments
+          const uniqueProps = new Map();
+          data.investments.forEach((inv: any) => {
+            if (inv.property && !uniqueProps.has(inv.property.id)) {
+              uniqueProps.set(inv.property.id, inv.property);
+            }
+          });
+          setProperties(Array.from(uniqueProps.values()));
         }
-      })
-      .catch(err => console.error("Error fetching properties for autocomplete:", err));
-  }, []);
+      } catch (err) {
+        console.error("Error fetching portfolio for sell page:", err);
+      }
+    };
+    fetchPortfolio();
+  }, [currentUser]);
 
   const propertyTypes = ['Residential', 'Commercial', 'Fractional', 'Holiday', 'Investor'];
   
@@ -63,27 +76,24 @@ export default function SellScreen() {
 
   const handleTabChange = (tab: 'sell' | 'rent') => {
     setMainTab(tab);
+    setSelectedPropertyId(null);
     setFormData({
-      ...formData,
-      listing_type: tab === 'sell' ? 'outright' : 'rental'
+      title: '',
+      description: '',
+      property_type: 'Residential',
+      listing_type: tab === 'sell' ? 'outright' : 'rental',
+      price: '',
+      total_fractions: '100',
+      available_fractions: '100',
+      state: '',
+      district: '',
+      locality: '',
+      image_url: '',
+      video_url: '',
     });
   };
 
-  const handleSelectProperty = (property: any) => {
-    setFormData({
-      ...formData,
-      title: property.title,
-      description: property.description || '',
-      property_type: property.property_type || formData.property_type,
-      state: property.state || '',
-      district: property.district || '',
-      locality: property.locality || '',
-      image_url: property.image_url || '',
-      video_url: property.video_url || '',
-      price: property.price_per_fraction ? property.price_per_fraction.toString() : '',
-    });
-    setShowDropdown(false);
-  };
+  // Selection handled inline directly
 
   const handleSave = async () => {
     console.log("Submit clicked!", formData);
@@ -185,10 +195,7 @@ export default function SellScreen() {
     }
   };
 
-  // Filter properties based on input
-  const filteredProperties = formData.title.length > 0 
-    ? properties.filter(p => p.title && p.title.toLowerCase().includes(formData.title.toLowerCase()))
-    : [];
+  // Filtering not needed as we show portfolio directly
 
   // ── AUTH GATE: Block access for unauthenticated users ──
   if (!currentUser) {
@@ -277,53 +284,48 @@ export default function SellScreen() {
         {mainTab !== null && (
           <View style={{ marginTop: 24 }}>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Basic Details</Text>
+              <Text style={styles.sectionTitle}>Select Property from Portfolio</Text>
               
-              <View style={{ position: 'relative', zIndex: 10 }}>
-                <Text style={styles.label}>Property Title *</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder={mainTab === 'sell' ? "e.g. Luxury 3BHK for Sale in Gachibowli" : "e.g. 3BHK for Rent in Gachibowli"}
-                  value={formData.title}
-                  onChangeText={(val) => {
-                    setFormData({ ...formData, title: val });
-                    setShowDropdown(true);
-                  }}
-                  onFocus={() => setShowDropdown(true)}
-                />
-
-                {/* Autocomplete Dropdown */}
-                {showDropdown && filteredProperties.length > 0 && (
-                  <View style={styles.dropdownContainer}>
-                    {filteredProperties.slice(0, 5).map((prop, index) => (
-                      <TouchableOpacity 
-                        key={prop.id || index} 
-                        style={styles.dropdownItem}
-                        onPress={() => handleSelectProperty(prop)}
-                      >
-                        {prop.image_url && <Image source={{ uri: prop.image_url }} style={styles.dropdownImage} />}
-                        <View style={{ flex: 1 }}>
-                          <Text style={styles.dropdownTitle} numberOfLines={1}>{prop.title}</Text>
-                          {prop.locality && <Text style={styles.dropdownSubtitle}>{prop.locality}</Text>}
-                        </View>
-                        <Ionicons name="arrow-forward" size={16} color={Neutrals.gray400} />
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-              </View>
-
-              <Text style={styles.label}>Description</Text>
-              <TextInput
-                style={[styles.input, { height: 80, textAlignVertical: 'top' }]}
-                placeholder="Describe the property..."
-                multiline
-                numberOfLines={3}
-                value={formData.description}
-                onChangeText={(val) => setFormData({ ...formData, description: val })}
-              />
+              {properties.length === 0 ? (
+                <Text style={styles.label}>You don't have any properties in your portfolio to list.</Text>
+              ) : (
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+                  {properties.map((prop) => (
+                    <TouchableOpacity 
+                      key={prop.id}
+                      style={[styles.propertyCard, selectedPropertyId === prop.id && styles.propertyCardActive]}
+                      onPress={() => {
+                        setSelectedPropertyId(prop.id);
+                        setFormData({
+                          ...formData,
+                          title: prop.title,
+                          description: prop.description || '',
+                          property_type: prop.property_type || formData.property_type,
+                          state: prop.state || '',
+                          district: prop.district || '',
+                          locality: prop.locality || '',
+                          image_url: prop.image_url || prop.images?.[0]?.image_url || '',
+                          video_url: prop.video_url || '',
+                        });
+                      }}
+                    >
+                      <Image 
+                        source={{ uri: prop.image_url || prop.images?.[0]?.image_url || 'https://via.placeholder.com/150' }} 
+                        style={styles.propertyCardImage} 
+                      />
+                      <View style={styles.propertyCardInfo}>
+                        <Text style={styles.propertyCardTitle} numberOfLines={1}>{prop.title}</Text>
+                        <Text style={styles.propertyCardLocality} numberOfLines={1}>{prop.locality || prop.district}</Text>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              )}
             </View>
 
+            {/* ONLY SHOW REST OF FORM IF A PROPERTY IS SELECTED */}
+            {selectedPropertyId && (
+              <>
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Listing & Pricing</Text>
 
@@ -504,6 +506,8 @@ export default function SellScreen() {
             <Text style={styles.saveBtnText}>Submit Property for Approval</Text>
           )}
         </TouchableOpacity>
+              </>
+            )}
         </View>
         )}
       </ScrollView>
@@ -573,40 +577,34 @@ const styles = StyleSheet.create({
   content: {
     flex: 1,
   },
-  dropdownContainer: {
-    position: 'absolute',
-    top: 70, // Just below the input
-    left: 0,
-    right: 0,
+  propertyCard: {
+    width: 200,
     backgroundColor: Neutrals.white,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: Neutrals.gray200,
-    ...Shadows.md,
-    maxHeight: 250,
-    zIndex: 1000,
-    elevation: 10, // For Android z-index
+    borderRadius: Radius.lg,
+    borderWidth: 2,
+    borderColor: Neutrals.border,
+    marginRight: 16,
+    overflow: 'hidden',
+    ...Shadows.soft,
   },
-  dropdownItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: Neutrals.gray100,
+  propertyCardActive: {
+    borderColor: GoldSystem.primaryGold,
+    backgroundColor: 'rgba(212,175,55,0.05)',
   },
-  dropdownImage: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.sm,
+  propertyCardImage: {
+    width: '100%',
+    height: 120,
     backgroundColor: Neutrals.gray200,
-    marginRight: 12,
   },
-  dropdownTitle: {
-    ...Typography.bodyMedium,
+  propertyCardInfo: {
+    padding: 12,
+  },
+  propertyCardTitle: {
+    ...Typography.labelLarge,
     color: Neutrals.obsidian,
-    fontWeight: '600',
+    marginBottom: 4,
   },
-  dropdownSubtitle: {
+  propertyCardLocality: {
     ...Typography.caption,
     color: Neutrals.gray500,
   },

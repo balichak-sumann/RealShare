@@ -176,7 +176,7 @@ export default function ShortlistScreen() {
     <View style={styles.container}>
       <View style={styles.header}>
         <Text style={styles.headerTitle}>Shortlist</Text>
-        <TouchableOpacity style={styles.addBtn}>
+        <TouchableOpacity style={styles.addBtn} onPress={() => router.push('/explore' as any)}>
           <Text style={styles.addIcon}>+</Text>
         </TouchableOpacity>
       </View>

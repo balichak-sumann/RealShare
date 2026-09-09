@@ -361,7 +361,7 @@ export default function HomeScreen() {
           <Text style={styles.trustItem}>✓ Fractional Investing</Text>
         </View>
 
-        {isDesktop && <WebFooter />}
+        <WebFooter />
 
       </Animated.ScrollView>
     </View>
@@ -494,6 +494,8 @@ const styles = StyleSheet.create({
   trustBanner: {
     flexDirection: 'row',
     justifyContent: 'space-around',
+    flexWrap: 'wrap',
+    gap: 8,
     paddingVertical: 16,
     backgroundColor: Neutrals.surface,
     marginTop: 24,

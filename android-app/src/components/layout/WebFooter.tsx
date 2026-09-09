@@ -38,10 +38,13 @@ function FooterLink({ label, href }: FooterLinkProps) {
   );
 }
 
+import { useResponsive } from '@/hooks/useResponsive';
+
 export function WebFooter() {
+  const { isDesktop } = useResponsive();
   return (
     <View style={styles.footer}>
-      <View style={styles.inner}>
+      <View style={[styles.inner, !isDesktop && { paddingHorizontal: 20 }]}>
         <View style={styles.columns}>
           <View style={styles.brandCol}>
             <View style={styles.brandRow}>

@@ -281,9 +281,11 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        <View style={styles.welcomeSection}>
-          <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
-        </View>
+        {auth.currentUser && (
+          <View style={styles.welcomeSection}>
+            <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
+          </View>
+        )}
 
         {/* 1. Recent Activity */}
         <RecentActivity />

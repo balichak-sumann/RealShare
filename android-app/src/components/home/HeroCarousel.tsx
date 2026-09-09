@@ -243,7 +243,7 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     overflow: 'hidden',
     marginHorizontal: 24,
-    marginTop: -8,
+    marginTop: 0,
     width: 'auto',
   },
   slide: {

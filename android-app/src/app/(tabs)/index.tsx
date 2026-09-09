@@ -221,7 +221,7 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={[
           { paddingBottom: isDesktop ? 64 : 120 },
-          isDesktop && { width: '100%', paddingHorizontal: 24, paddingTop: 76 },
+          isDesktop && { width: '100%', paddingHorizontal: 24, paddingTop: 16 },
         ] as any}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],

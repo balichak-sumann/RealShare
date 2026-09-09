@@ -251,6 +251,28 @@ export default function HomeScreen() {
           <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
         </View>
 
+        {/* Search Bar */}
+        <View style={styles.homeSearchContainer}>
+          {Platform.OS === 'web' ? (
+            <View style={styles.homeSearchBar}>
+              <Ionicons name="search-outline" size={18} color={Neutrals.gray400} style={{ marginRight: 10 }} />
+              <TextInput
+                value={query}
+                onChangeText={setQuery}
+                onSubmitEditing={submitSearch}
+                placeholder="Search properties, localities…"
+                placeholderTextColor={Neutrals.gray400}
+                style={styles.homeSearchInput as any}
+              />
+            </View>
+          ) : (
+            <TouchableOpacity style={styles.homeSearchBar} onPress={() => router.push('/search')} activeOpacity={0.7}>
+              <Ionicons name="search-outline" size={18} color={Neutrals.gray400} style={{ marginRight: 10 }} />
+              <Text style={styles.homeSearchPlaceholder}>Search properties, localities…</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+
         {/* 1. Recent Activity */}
         <RecentActivity />
 
@@ -493,5 +515,30 @@ const styles = StyleSheet.create({
     ...Typography.bodyMedium,
     color: Neutrals.gray500,
     textAlign: 'center',
+  },
+  homeSearchContainer: {
+    paddingHorizontal: 20,
+    marginTop: 12,
+    marginBottom: 4,
+  },
+  homeSearchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Neutrals.gray100,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+  },
+  homeSearchInput: {
+    flex: 1,
+    ...Typography.bodyMedium,
+    color: Neutrals.obsidian,
+    outlineStyle: 'none',
+  },
+  homeSearchPlaceholder: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray400,
   },
 });

@@ -44,30 +44,36 @@ export function WebFooter() {
   const { isDesktop } = useResponsive();
   return (
     <View style={styles.footer}>
-      <View style={[styles.inner, !isDesktop && { paddingHorizontal: 20 }]}>
+      <View style={[styles.inner, !isDesktop && { paddingHorizontal: 20, paddingBottom: 100 }]}>
         <View style={styles.columns}>
           <View style={styles.brandCol}>
             <View style={styles.brandRow}>
               <Image source={require('../../../assets/logo.png')} style={styles.logo} />
               <Text style={styles.brandName}>RealShare</Text>
             </View>
-            <Text style={styles.brandBlurb}>
-              A new age Intelligent platform bringing Homes that Inspire Life. Earn rental income with commercial and Holiday properties. Invest in premium Realestate with fractional ownership and exit with ease.
-            </Text>
+            {isDesktop && (
+              <Text style={styles.brandBlurb}>
+                A new age Intelligent platform bringing Homes that Inspire Life. Earn rental income with commercial and Holiday properties. Invest in premium Realestate with fractional ownership and exit with ease.
+              </Text>
+            )}
           </View>
 
-          <View style={styles.col}>
-            <Text style={styles.colTitle}>Learn</Text>
-            <FooterLink label="How It Works" href="/how-it-works" />
-            <FooterLink label="About Us" href="/about" />
-            <FooterLink label="FAQs" href="/support" />
-          </View>
+          {isDesktop && (
+            <>
+              <View style={styles.col}>
+                <Text style={styles.colTitle}>Learn</Text>
+                <FooterLink label="How It Works" href="/how-it-works" />
+                <FooterLink label="About Us" href="/about" />
+                <FooterLink label="FAQs" href="/support" />
+              </View>
 
-          <View style={styles.col}>
-            <Text style={styles.colTitle}>Company</Text>
-            <FooterLink label="Contact Us" href="/contact" />
-            <FooterLink label="Partner With Us" href="/partners" />
-          </View>
+              <View style={styles.col}>
+                <Text style={styles.colTitle}>Company</Text>
+                <FooterLink label="Contact Us" href="/contact" />
+                <FooterLink label="Partner With Us" href="/partners" />
+              </View>
+            </>
+          )}
 
           <View style={styles.col}>
             <Text style={styles.colTitle}>Legal</Text>

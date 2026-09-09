@@ -43,10 +43,13 @@ import { useResponsive } from '@/hooks/useResponsive';
 export function WebFooter() {
   const { isDesktop } = useResponsive();
   return (
-    <View style={styles.footer}>
-      <View style={[styles.inner, !isDesktop && { paddingHorizontal: 20, paddingBottom: 100 }]}>
-        <View style={styles.columns}>
-          <View style={styles.brandCol}>
+    <View style={[styles.footer, isDesktop && { marginTop: 40 }]}>
+      <View style={[
+        styles.inner, 
+        isDesktop ? { paddingHorizontal: 40, paddingTop: 48, paddingBottom: 24 } : { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 80 }
+      ]}>
+        <View style={[styles.columns, isDesktop ? { gap: 32 } : { gap: 16 }]}>
+          <View style={[styles.brandCol, isDesktop && { marginRight: 16 }]}>
             <View style={styles.brandRow}>
               <Image source={require('../../../assets/logo.png')} style={styles.logo} />
               <Text style={styles.brandName}>RealShare</Text>
@@ -92,7 +95,7 @@ export function WebFooter() {
           </View>
         </View>
 
-        <View style={styles.bottomBar}>
+        <View style={[styles.bottomBar, isDesktop ? { marginTop: 32, paddingTop: 20 } : { marginTop: 24, paddingTop: 16 }]}>
           <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © Copyright {new Date().getFullYear()} Realshare Properties Pvt Ltd</Text>
         </View>
       </View>
@@ -103,23 +106,17 @@ export function WebFooter() {
 const styles = StyleSheet.create({
   footer: {
     backgroundColor: Neutrals.obsidian,
-    marginTop: 40,
   },
   inner: {
     width: '100%',
-    paddingHorizontal: 40,
-    paddingTop: 48,
-    paddingBottom: 24,
   },
   columns: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    gap: 32,
   },
   brandCol: {
     flexBasis: 280,
     flexGrow: 1,
-    marginRight: 16,
   },
   brandRow: {
     flexDirection: 'row',
@@ -167,8 +164,6 @@ const styles = StyleSheet.create({
   bottomBar: {
     borderTopWidth: 1,
     borderTopColor: 'rgba(255,255,255,0.08)',
-    marginTop: 32,
-    paddingTop: 20,
   },
   copyright: {
     ...Typography.caption,

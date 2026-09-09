@@ -63,7 +63,7 @@ const styles = StyleSheet.create({
   },
   mainCard: {
     backgroundColor: Neutrals.white,
-    borderRadius: Radius.2xl,
+    borderRadius: Radius.xl,
     flexDirection: 'row',
     flexWrap: 'wrap',
     borderWidth: 1,

@@ -532,7 +532,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 12,
     marginBottom: 4,
-    alignItems: 'center',
   },
   homeSearchBox: {
     flexDirection: 'row',

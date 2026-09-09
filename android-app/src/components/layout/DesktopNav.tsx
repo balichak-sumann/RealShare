@@ -171,8 +171,6 @@ export function DesktopNav() {
             })}
           </View>
 
-          <View style={styles.spacer} />
-
           {/* Account */}
           {currentUser ? (
             <TouchableOpacity
@@ -287,9 +285,11 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   navLinks: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
+    justifyContent: 'center',
+    gap: 32,
     height: '100%',
   },
   navLink: {
@@ -300,7 +300,7 @@ const styles = StyleSheet.create({
   },
   navLabel: {
     ...Typography.labelLarge,
-    fontSize: 14,
+    fontSize: 16,
     color: GoldSystem.paleGold,
   },
   navLabelActive: {

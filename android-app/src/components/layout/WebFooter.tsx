@@ -31,14 +31,13 @@ interface FooterLinkProps {
 
 function FooterLink({ label, href }: FooterLinkProps) {
   const router = useRouter();
+  const { isDesktop } = useResponsive();
   return (
     <TouchableOpacity onPress={() => router.push(href as any)} activeOpacity={0.7}>
-      <Text style={styles.link}>{label}</Text>
+      <Text style={[styles.link, !isDesktop && { marginBottom: 4, fontSize: 11 }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
-
-import { useResponsive } from '@/hooks/useResponsive';
 
 export function WebFooter() {
   const { isDesktop } = useResponsive();
@@ -46,13 +45,13 @@ export function WebFooter() {
     <View style={[styles.footer, isDesktop && { marginTop: 40 }]}>
       <View style={[
         styles.inner, 
-        isDesktop ? { paddingHorizontal: 40, paddingTop: 48, paddingBottom: 24 } : { paddingHorizontal: 20, paddingTop: 24, paddingBottom: 80 }
+        isDesktop ? { paddingHorizontal: 40, paddingTop: 48, paddingBottom: 24 } : { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 40 }
       ]}>
-        <View style={[styles.columns, isDesktop ? { gap: 32 } : { gap: 16 }]}>
-          <View style={[styles.brandCol, isDesktop && { marginRight: 16 }]}>
-            <View style={styles.brandRow}>
-              <Image source={require('../../../assets/logo.png')} style={styles.logo} />
-              <Text style={styles.brandName}>RealShare</Text>
+        <View style={[styles.columns, isDesktop ? { gap: 32 } : { gap: 8 }]}>
+          <View style={[styles.brandCol, isDesktop && { marginRight: 16 }, !isDesktop && { flexBasis: '100%', marginBottom: 2 }]}>
+            <View style={[styles.brandRow, !isDesktop && { marginBottom: 2 }]}>
+              <Image source={require('../../../assets/logo.png')} style={[styles.logo, !isDesktop && { width: 18, height: 18 }]} />
+              <Text style={[styles.brandName, !isDesktop && { fontSize: 16 }]}>RealShare</Text>
             </View>
             {isDesktop && (
               <Text style={styles.brandBlurb}>
@@ -78,25 +77,25 @@ export function WebFooter() {
             </>
           )}
 
-          <View style={styles.col}>
-            <Text style={styles.colTitle}>Legal</Text>
+          <View style={[styles.col, !isDesktop && { flexBasis: '45%' }]}>
+            <Text style={[styles.colTitle, !isDesktop && { marginBottom: 4, fontSize: 10 }]}>Legal</Text>
             <FooterLink label="Privacy Policy" href="/privacy-policy" />
             <FooterLink label="Terms of Service" href="/terms-of-service" />
           </View>
 
-          <View style={styles.col}>
-            <Text style={styles.colTitle}>Registered Office</Text>
-            <Text style={styles.addressText}>
-              RealShare Properties Pvt. Ltd.{'\n'}
-              206, Panchsheel Complex, Nizampet{'\n'}
-              Hyderabad – 500090, Telangana, India
+          <View style={[styles.col, !isDesktop && { flexBasis: '50%' }]}>
+            <Text style={[styles.colTitle, !isDesktop && { marginBottom: 4, fontSize: 10 }]}>Registered Office</Text>
+            <Text style={[styles.addressText, !isDesktop && { fontSize: 10, lineHeight: 14, marginBottom: 2 }]}>
+              {isDesktop 
+                ? "RealShare Properties Pvt. Ltd.\n206, Panchsheel Complex, Nizampet\nHyderabad – 500090, Telangana, India"
+                : "RealShare Properties Pvt. Ltd., 206, Panchsheel Complex, Nizampet, Hyderabad – 500090, TS, India"}
             </Text>
-            <Text style={styles.addressText}>+91 40 4010 1212</Text>
+            <Text style={[styles.addressText, !isDesktop && { fontSize: 10 }]}>+91 40 4010 1212</Text>
           </View>
         </View>
 
-        <View style={[styles.bottomBar, isDesktop ? { marginTop: 32, paddingTop: 20 } : { marginTop: 24, paddingTop: 16 }]}>
-          <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © Copyright {new Date().getFullYear()} Realshare Properties Pvt Ltd</Text>
+        <View style={[styles.bottomBar, isDesktop ? { marginTop: 32, paddingTop: 20 } : { marginTop: 8, paddingTop: 8 }]}>
+          <Text style={[styles.copyright, !isDesktop && { fontSize: 9 }]}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © {new Date().getFullYear()} Realshare Properties</Text>
         </View>
       </View>
     </View>

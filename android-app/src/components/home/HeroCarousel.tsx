@@ -160,7 +160,6 @@ export function HeroCarousel() {
               source={{ uri: slide.image_url.startsWith('/') ? `${getApiUrl()}${slide.image_url}` : slide.image_url }}
               style={styles.image}
               contentFit="cover"
-              cachePolicy="memory-disk"
               priority={index === 0 ? 'high' : 'low'}
               transition={300}
             />

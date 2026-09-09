@@ -136,6 +136,7 @@ const styles = StyleSheet.create({
   cardsContainerDesktop: {
     flexDirection: 'row',
     justifyContent: 'center',
+    alignItems: 'flex-start',
     gap: 24,
     width: '100%',
   },
@@ -154,7 +155,7 @@ const styles = StyleSheet.create({
     maxWidth: 320,
   },
   imageContainer: {
-    height: 160,
+    height: 110,
     borderTopLeftRadius: Radius.xl,
     borderTopRightRadius: Radius.xl,
     overflow: 'hidden',
@@ -164,19 +165,19 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   contentContainer: {
-    padding: 24,
-    paddingTop: 0, // Icon overlaps
+    padding: 12,
+    paddingTop: 0,
     position: 'relative',
   },
   iconWrapper: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
+    width: 48,
+    height: 48,
+    borderRadius: 24,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -28,
-    marginBottom: 16,
-    borderWidth: 4,
+    marginTop: -24,
+    marginBottom: 12,
+    borderWidth: 3,
     borderColor: Neutrals.white,
   },
   cardTitle: {
@@ -187,15 +188,14 @@ const styles = StyleSheet.create({
   cardSubtitle: {
     ...Typography.bodyMedium,
     color: Neutrals.gray500,
-    lineHeight: 22,
-    minHeight: 44,
-    marginBottom: 24,
+    lineHeight: 18,
+    marginBottom: 8,
   },
   cardFooter: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingTop: 16,
+    paddingTop: 12,
     borderTopWidth: 1,
     borderTopColor: Neutrals.gray100,
   },

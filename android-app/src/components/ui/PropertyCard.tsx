@@ -71,8 +71,6 @@ function PropertyCardInner({
           source={{ uri: heroImage }}
           style={[styles.image, compact && styles.compactImage, compact && isDesktop && styles.compactImageDesktop]}
           contentFit="cover"
-          cachePolicy="memory-disk"
-          recyclingKey={`prop-card-${id}`}
           placeholder={{ blurhash: PLACEHOLDER_BLURHASH }}
           placeholderContentFit="cover"
           transition={200}

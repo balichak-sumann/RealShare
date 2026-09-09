@@ -99,14 +99,28 @@ export default function HomeScreen() {
       ? allCityProperties
       : allCityProperties.filter(p => p.property_type?.toLowerCase() === activeCategory.toLowerCase());
 
+    const sortSoldOutLast = (a: any, b: any, primarySort: (a: any, b: any) => number) => {
+      const aSoldOut = a.available_fractions === 0 ? 1 : 0;
+      const bSoldOut = b.available_fractions === 0 ? 1 : 0;
+      if (aSoldOut !== bSoldOut) {
+        return aSoldOut - bSoldOut; // 0 (Available) comes before 1 (Sold Out)
+      }
+      return primarySort(a, b);
+    };
+
     const primaryProps = byCategory.filter(p => p.listing_type !== 'rental' && p.listing_type !== 'resale');
-    const sorted = [...primaryProps].sort((a, b) => (b.sold_fractions ?? 0) - (a.sold_fractions ?? 0));
+    const sortedHot = [...primaryProps].sort((a, b) => 
+      sortSoldOutLast(a, b, (x, y) => (y.sold_fractions ?? 0) - (x.sold_fractions ?? 0))
+    );
+    const sortedNew = [...byCategory].sort((a, b) =>
+      sortSoldOutLast(a, b, (x, y) => new Date(y.created_at || 0).getTime() - new Date(x.created_at || 0).getTime())
+    );
 
     return {
-      hot: sorted.slice(0, 10),
-      rental: byCategory.filter(p => p.listing_type === 'rental').slice(0, 10),
-      resale: byCategory.filter(p => p.listing_type === 'resale').slice(0, 10),
-      newProjects: byCategory.slice(0, 8),
+      hot: sortedHot.slice(0, 10),
+      rental: byCategory.filter(p => p.listing_type === 'rental').sort((a, b) => sortSoldOutLast(a, b, () => 0)).slice(0, 10),
+      resale: byCategory.filter(p => p.listing_type === 'resale').sort((a, b) => sortSoldOutLast(a, b, () => 0)).slice(0, 10),
+      newProjects: sortedNew.slice(0, 8),
     };
   }, [allCityProperties, activeCategory]);
 
@@ -237,11 +251,10 @@ export default function HomeScreen() {
           <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
         </View>
 
-        <QuickActions />
-
         {/* 1. Recent Activity */}
         <RecentActivity />
-        
+
+        <QuickActions />
         {/* 2. Hot Selling Projects */}
         <View style={styles.featuredSection}>
           <SectionHeader title="Hot Selling Projects" onViewAll={() => router.push('/(tabs)/search')} />

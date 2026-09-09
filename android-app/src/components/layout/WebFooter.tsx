@@ -47,7 +47,7 @@ export function WebFooter() {
   if (!isDesktop) {
     // Ultra-compact mobile footer
     return (
-      <View style={{ backgroundColor: Neutrals.obsidian, paddingHorizontal: 16, paddingTop: 12, paddingBottom: 70 }}>
+      <View style={{ backgroundColor: Neutrals.obsidian, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14 }}>
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image source={require('../../../assets/logo.png')} style={{ width: 16, height: 16, marginRight: 6 }} resizeMode="contain" />

@@ -58,6 +58,7 @@ export default function PostPropertyScreen() {
   const [listingType, setListingType] = useState<'fractional' | 'outright' | 'rental' | 'resale'>('fractional');
   const [category, setCategory] = useState<string>('Commercial');
   const [title, setTitle] = useState('');
+  const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
   const [areaSqft, setAreaSqft] = useState('');
   const [district, setDistrict] = useState('Hyderabad');
@@ -221,8 +222,8 @@ export default function PostPropertyScreen() {
       setStep(3);
       return;
     }
-    if (!price || Number(price) <= 0) {
-      Alert.alert('Validation Error', 'Please enter a valid price.');
+    if (!price || Number(price) < 0) {
+      Alert.alert('Validation Error', 'Please enter a valid price (0 or greater).');
       setStep(4);
       return;
     }
@@ -261,6 +262,7 @@ export default function PostPropertyScreen() {
 
       const payload = {
         title: title.trim(),
+        short_description: shortDescription.trim() || undefined,
         description: description.trim(),
         property_type: category,
         listing_type: listingType,
@@ -504,6 +506,15 @@ export default function PostPropertyScreen() {
               keyboardType="numeric"
               value={areaSqft}
               onChangeText={setAreaSqft}
+            />
+
+            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Short Description</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="Visible on the home screen cards"
+              placeholderTextColor={Neutrals.gray400}
+              value={shortDescription}
+              onChangeText={setShortDescription}
             />
 
             <Text style={[styles.inputLabel, { marginTop: 16 }]}>Description *</Text>

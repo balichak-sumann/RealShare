@@ -39,6 +39,7 @@ interface Property {
   videoUrl?: string;
   video_url?: string;
   raised?: string;
+  short_description?: string;
   description?: string;
   full_address?: string;
   area_sqft?: number | string;
@@ -120,9 +121,40 @@ export default function PropertiesPage() {
     fetchProperties();
   }, []);
 
+  // Edit Property State
+  const [editingPropertyId, setEditingPropertyId] = useState<string | null>(null);
+
+  const handleEditClick = (p: Property) => {
+    setEditingPropertyId(p.id);
+    setNewProp({
+      title: p.title || "",
+      shortDescription: p.short_description || "",
+      description: p.description || "",
+      state: p.state || "Telangana",
+      district: p.district || "Hyderabad",
+      locality: p.locality || "",
+      fullAddress: p.full_address || "",
+      type: (["Commercial", "Fractional", "Residential", "Holiday", "Investor"].includes(p.property_type ? p.property_type.trim().charAt(0).toUpperCase() + p.property_type.trim().slice(1).toLowerCase() : "") 
+        ? p.property_type.trim().charAt(0).toUpperCase() + p.property_type.trim().slice(1).toLowerCase() 
+        : "Commercial") as any,
+      listingType: (p.listing_type as any) || "fractional",
+      areaSqft: Number(p.area_sqft) || 1200,
+      googleMapsUrl: p.google_maps_url || "",
+      totalFractions: p.totalFractions || p.total_fractions || 50,
+      price: Number(p.price_per_fraction) || 500000,
+      yield: Number(p.assured_yield) || 8.5,
+      irr: Number(p.target_irr) || 15.0,
+      postedBy: "Admin",
+    });
+    setMapLat(Number(p.lat) || 17.385);
+    setMapLng(Number(p.lng) || 78.4867);
+    setShowAddModal(true);
+  };
+
   // New Property Form State
   const [newProp, setNewProp] = useState({
     title: "",
+    shortDescription: "",
     description: "",
     state: "Telangana",
     district: "Hyderabad",
@@ -270,6 +302,33 @@ export default function PropertiesPage() {
       } else {
         const data = await res.json();
         alert(`Failed to mark sold out: ${data.error || res.status}`);
+      }
+    } catch(e: any) {
+      alert(`Network error: ${e.message}`);
+    }
+  };
+
+  const handleMakeLive = async (id: string) => {
+    if (!confirm("Are you sure you want to make this property live again? This will also cancel any active investments assigned to it.")) return;
+    try {
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { showToast('You must be signed in to do that.'); return; }
+      const res = await fetch(`/api/properties/${id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_sold_out: false })
+      });
+      if (res.ok) {
+        setProperties((prev) => prev.map((p) => {
+          if (p.id === id) {
+            return { ...p, is_sold_out: false, sold_fractions: 0, available_fractions: p.total_fractions || 1 };
+          }
+          return p;
+        }));
+        showToast(`Property is now live and on sale again.`);
+      } else {
+        const data = await res.json();
+        alert(`Failed to make live: ${data.error || res.status}`);
       }
     } catch(e: any) {
       alert(`Network error: ${e.message}`);
@@ -426,11 +485,16 @@ export default function PropertiesPage() {
         }
       }
 
-      const res = await fetch('/api/properties', {
-        method: 'POST',
+      const isEdit = !!editingPropertyId;
+      const url = isEdit ? `/api/properties/${editingPropertyId}` : '/api/properties';
+      const method = isEdit ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { ...authHeader, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: newProp.title.trim(),
+          short_description: newProp.shortDescription.trim() || undefined,
           description: newProp.description.trim(),
           state: newProp.state,
           district: newProp.district,
@@ -461,12 +525,18 @@ export default function PropertiesPage() {
       }
       const created = await res.json();
 
-      setProperties([created, ...properties]);
+      if (isEdit) {
+        setProperties(properties.map(p => p.id === created.id ? created : p));
+        showToast(`Property "${created.title}" successfully updated.`);
+      } else {
+        setProperties([created, ...properties]);
+        showToast(`Property "${created.title}" successfully added with ${uploadedImageUrls.length} images${videoUrl ? ' and 1 video' : ''}.`);
+      }
       setShowAddModal(false);
+      setEditingPropertyId(null);
       setSelectedFiles([]);
       setSelectedVideo(null);
-      setNewProp({ ...newProp, title: "", description: "", locality: "", fullAddress: "", googleMapsUrl: "" });
-      showToast(`Property "${created.title}" successfully added with ${uploadedImageUrls.length} images${videoUrl ? ' and 1 video' : ''}.`);
+      setNewProp({ ...newProp, title: "", shortDescription: "", description: "", locality: "", fullAddress: "", googleMapsUrl: "" });
     } catch (error: any) {
       console.error("Error uploading property media:", error);
       showToast(error.message || "Failed to upload media. Please try again.");
@@ -682,7 +752,11 @@ export default function PropertiesPage() {
               </button>
             ))}
           </div>
-          <button className={styles.addButton} onClick={() => setShowAddModal(true)}>
+          <button className={styles.addButton} onClick={() => {
+            setEditingPropertyId(null);
+            setNewProp({ title: "", shortDescription: "", description: "", state: "Telangana", district: "Hyderabad", locality: "", fullAddress: "", type: "Commercial", listingType: "fractional", areaSqft: 1200, googleMapsUrl: "", totalFractions: 50, price: 500000, yield: 8.5, irr: 15.0, postedBy: "Admin" });
+            setShowAddModal(true);
+          }}>
             + Post Property (Admin)
           </button>
         </div>
@@ -912,9 +986,24 @@ export default function PropertiesPage() {
                           Mark Sold Out
                         </button>
                       </>
+                    ) : isSoldOut(p) ? (
+                      <button
+                        className={styles.actionBtnGreen}
+                        style={{ background: "#10B981" }}
+                        onClick={() => handleMakeLive(p.id)}
+                      >
+                        Make Live
+                      </button>
                     ) : (
                       <span className={styles.noAction}>-</span>
                     )}
+                    <button
+                      onClick={() => handleEditClick(p as any)}
+                      className={styles.viewBtn}
+                      style={{ background: "#3B82F6", color: "white", padding: "4px 8px", borderRadius: "4px", border: "none", cursor: "pointer", marginRight: "6px" }}
+                    >
+                      Edit
+                    </button>
                     <button
                       onClick={() => setSelectedProperty(p as any)}
                       className={styles.viewBtn}
@@ -976,14 +1065,14 @@ export default function PropertiesPage() {
             >
               <div>
                 <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0F172A" }}>
-                  Add New Property Listing
+                  {editingPropertyId ? "Edit Property Listing" : "Add New Property Listing"}
                 </h2>
                 <p style={{ fontSize: "0.8rem", color: "#64748B", marginTop: "2px" }}>
-                  Create and publish a verified real estate investment listing
+                  {editingPropertyId ? "Update property details" : "Create and publish a verified real estate investment listing"}
                 </p>
               </div>
               <button
-                onClick={() => setShowAddModal(false)}
+                onClick={() => { setShowAddModal(false); setEditingPropertyId(null); }}
                 style={{
                   background: "#F1F5F9",
                   border: "none",
@@ -1062,7 +1151,7 @@ export default function PropertiesPage() {
                     <input
                       type="number"
                       required
-                      min={100}
+                      min={0}
                       value={newProp.price}
                       onChange={(e) => setNewProp({ ...newProp, price: Number(e.target.value) })}
                       style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#FFFFFF" }}
@@ -1136,6 +1225,20 @@ export default function PropertiesPage() {
                   placeholder="e.g. One Cyber City Commercial Office Space"
                   value={newProp.title}
                   onChange={(e) => setNewProp({ ...newProp, title: e.target.value })}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                />
+              </div>
+
+              {/* 4.5. Short Description */}
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
+                  Short Description
+                </label>
+                <input
+                  type="text"
+                  placeholder="Visible on the home screen property cards"
+                  value={newProp.shortDescription}
+                  onChange={(e) => setNewProp({ ...newProp, shortDescription: e.target.value })}
                   style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                 />
               </div>

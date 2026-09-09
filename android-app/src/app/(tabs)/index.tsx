@@ -532,6 +532,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     marginTop: 12,
     marginBottom: 4,
+    alignItems: 'center',
   },
   homeSearchBox: {
     flexDirection: 'row',
@@ -541,6 +542,7 @@ const styles = StyleSheet.create({
     padding: 8,
     paddingLeft: 16,
     width: '100%',
+    maxWidth: 560,
     ...(Platform.OS === 'web'
       ? ({
           boxShadow: '0 4px 16px rgba(0,0,0,0.08)',

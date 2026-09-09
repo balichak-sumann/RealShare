@@ -108,7 +108,7 @@ export function DesktopNav() {
             top: 0,
             left: 48,
             width: 105,
-            height: 105,
+            height: 90,
             backgroundColor: '#fff',
             display: 'flex',
             justifyContent: 'center',

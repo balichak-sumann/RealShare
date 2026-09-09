@@ -22,36 +22,35 @@ export function QuickActions() {
   return (
     <View style={styles.wrapper}>
       <View style={[styles.mainCard, isDesktop && styles.mainCardDesktop]}>
-        {QUICK_ACTIONS.map((action, index) => (
-          <React.Fragment key={action.id}>
+        {QUICK_ACTIONS.map((action, index) => {
+          // Window pane border logic
+          const isTopRow = index < 2;
+          const isLeftCol = index % 2 === 0;
+          
+          return (
             <TouchableOpacity
-              style={[styles.actionItem, isDesktop && styles.actionItemDesktop]}
+              key={action.id}
+              style={[
+                styles.actionItem,
+                isDesktop && styles.actionItemDesktop,
+                isTopRow && styles.borderBottom,
+                isLeftCol && styles.borderRight
+              ]}
               onPress={() => router.push(action.route as any)}
               activeOpacity={0.7}
             >
               <View style={[styles.iconContainer, { backgroundColor: `${ACTION_COLORS[action.id]}18` }]}>
                 <Ionicons
                   name={action.icon as IoniconName}
-                  size={24}
+                  size={28}
                   color={ACTION_COLORS[action.id] || GoldSystem.primaryGold}
                 />
               </View>
-              <View style={styles.textContainer}>
-                <Text style={styles.title}>{action.title}</Text>
-                <Text style={styles.subtitle}>{action.subtitle}</Text>
-              </View>
-              {!isDesktop && <Ionicons name="chevron-forward" size={18} color={Neutrals.gray300} />}
+              <Text style={[styles.title, isDesktop && styles.titleDesktop]}>{action.title}</Text>
+              <Text style={[styles.subtitle, isDesktop && styles.subtitleDesktop]}>{action.subtitle}</Text>
             </TouchableOpacity>
-
-            {/* Dividers */}
-            {isDesktop && index < QUICK_ACTIONS.length - 1 && (
-              <View style={styles.verticalDivider} />
-            )}
-            {!isDesktop && index < QUICK_ACTIONS.length - 1 && (
-              <View style={styles.horizontalDivider} />
-            )}
-          </React.Fragment>
-        ))}
+          );
+        })}
       </View>
     </View>
   );
@@ -64,65 +63,66 @@ const styles = StyleSheet.create({
   },
   mainCard: {
     backgroundColor: Neutrals.white,
-    borderRadius: Radius.xl,
-    padding: 12,
+    borderRadius: Radius.2xl,
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     borderWidth: 1,
     borderColor: Neutrals.border,
+    overflow: 'hidden',
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0 8px 30px rgba(0,0,0,0.06)',
+          boxShadow: '0 12px 40px rgba(0,0,0,0.08)',
         } as any)
       : Shadows.medium),
   },
   mainCardDesktop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingVertical: 20,
-    paddingHorizontal: 24,
+    maxWidth: 900,
+    alignSelf: 'center',
+    marginTop: 16,
   },
   actionItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-  },
-  actionItemDesktop: {
-    flex: 1,
-    paddingVertical: 0,
-    paddingHorizontal: 16,
-    alignItems: 'center',
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: Radius.md,
+    width: '50%',
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 16,
+    paddingVertical: 24,
+    paddingHorizontal: 16,
+    backgroundColor: Neutrals.white,
   },
-  textContainer: {
-    flex: 1,
+  actionItemDesktop: {
+    paddingVertical: 40,
+  },
+  borderBottom: {
+    borderBottomWidth: 1,
+    borderBottomColor: Neutrals.gray100,
+  },
+  borderRight: {
+    borderRightWidth: 1,
+    borderRightColor: Neutrals.gray100,
+  },
+  iconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: Radius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
   },
   title: {
     ...Typography.labelLarge,
     color: Neutrals.obsidian,
-    marginBottom: 4,
+    marginBottom: 6,
+    textAlign: 'center',
+  },
+  titleDesktop: {
+    fontSize: 18,
   },
   subtitle: {
     ...Typography.caption,
     color: Neutrals.gray500,
+    textAlign: 'center',
+    lineHeight: 18,
   },
-  verticalDivider: {
-    width: 1,
-    height: '100%',
-    backgroundColor: Neutrals.gray200,
-    marginHorizontal: 8,
-  },
-  horizontalDivider: {
-    height: 1,
-    backgroundColor: Neutrals.gray100,
-    marginVertical: 4,
-    marginHorizontal: 8,
+  subtitleDesktop: {
+    fontSize: 14,
   },
 });

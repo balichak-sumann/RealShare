@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, Platform, TextInput, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Animated, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -7,9 +7,7 @@ import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
 import { getApiUrl, resilientFetch } from '@/lib/api';
-import { useLocation } from '@/contexts/LocationContext';
-import { LocationPickerModal } from '@/components/ui/LocationPickerModal';
-import { Ionicons } from '@expo/vector-icons';
+import { getFullImageUrl } from '@/lib/formatters';
 
 type Banner = {
   id: string;
@@ -68,9 +66,6 @@ export function HeroCarousel() {
   const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width || 400);
   const { isDesktop } = useResponsive();
   const router = useRouter();
-  const { city } = useLocation();
-  const [query, setQuery] = useState('');
-  const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
   const [slides, setSlides] = useState<Banner[]>([]);
   const scrollRef = useRef<ScrollView>(null);
@@ -130,13 +125,7 @@ export function HeroCarousel() {
     }
   }, [containerWidth, slides.length]);
 
-  const submitSearch = () => {
-    if (query.trim()) {
-      router.push(`/search?q=${encodeURIComponent(query.trim())}` as any);
-    } else {
-      router.push('/search' as any);
-    }
-  };
+
 
   if (slides.length === 0) {
     return <View style={[styles.container, isDesktop && styles.containerDesktop]} />;
@@ -196,35 +185,6 @@ export function HeroCarousel() {
         ))}
       </View>
 
-      {/* Floating Desktop Search Overlay */}
-      {isDesktop && Platform.OS === 'web' && (
-        <View style={styles.searchOverlay}>
-          <View style={styles.webSearchBox}>
-            <TouchableOpacity style={styles.webLocationDropdown} activeOpacity={0.7} onPress={() => setShowLocationPicker(true)}>
-              <Ionicons name="location-outline" size={18} color={Neutrals.gray600} />
-              <Text style={styles.webLocationDropdownText}>{city}</Text>
-              <Ionicons name="chevron-down" size={14} color={Neutrals.gray400} />
-            </TouchableOpacity>
-            
-            <View style={styles.webSearchInputWrapper}>
-              <Ionicons name="search-outline" size={18} color={Neutrals.gray500} />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                onSubmitEditing={submitSearch}
-                placeholder="Search properties, localities…"
-                placeholderTextColor={Neutrals.gray500}
-                style={styles.webSearchInput as any}
-                returnKeyType="search"
-              />
-            </View>
-            <TouchableOpacity style={styles.searchButton} onPress={submitSearch}>
-              <Text style={styles.searchButtonText}>Search</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      )}
-      <LocationPickerModal visible={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
     </View>
   );
 }
@@ -315,66 +275,5 @@ const styles = StyleSheet.create({
   activeDot: {
     backgroundColor: GoldSystem.primaryGold,
     width: 24,
-  },
-  searchOverlay: {
-    position: 'absolute',
-    bottom: 30,
-    right: 40,
-    zIndex: 10,
-    width: '45%',
-    maxWidth: 500,
-  },
-  webSearchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Neutrals.white,
-    borderRadius: Radius.lg,
-    padding: 8,
-    paddingLeft: 16,
-    width: '100%',
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0 8px 30px rgba(0,0,0,0.2)',
-        } as any)
-      : {
-          elevation: 8,
-        }),
-  },
-  webLocationDropdown: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingRight: 16,
-    borderRightWidth: 1,
-    borderRightColor: Neutrals.gray200,
-  },
-  webLocationDropdownText: {
-    ...Typography.labelLarge,
-    fontSize: 15,
-    color: Neutrals.obsidian,
-  },
-  webSearchInputWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    height: 42,
-  },
-  webSearchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: Neutrals.text,
-    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}),
-  },
-  searchButton: {
-    backgroundColor: GoldSystem.primaryGold,
-    paddingHorizontal: 20,
-    paddingVertical: 12,
-    borderRadius: Radius.md,
-  },
-  searchButtonText: {
-    ...Typography.labelLarge,
-    color: Neutrals.obsidian,
   },
 });

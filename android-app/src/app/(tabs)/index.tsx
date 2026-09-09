@@ -251,26 +251,38 @@ export default function HomeScreen() {
           <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
         </View>
 
-        {/* Search Bar */}
+        {/* Search Bar with Location Picker */}
         <View style={styles.homeSearchContainer}>
-          {Platform.OS === 'web' ? (
-            <View style={styles.homeSearchBar}>
-              <Ionicons name="search-outline" size={18} color={Neutrals.gray400} style={{ marginRight: 10 }} />
-              <TextInput
-                value={query}
-                onChangeText={setQuery}
-                onSubmitEditing={submitSearch}
-                placeholder="Search properties, localities…"
-                placeholderTextColor={Neutrals.gray400}
-                style={styles.homeSearchInput as any}
-              />
-            </View>
-          ) : (
-            <TouchableOpacity style={styles.homeSearchBar} onPress={() => router.push('/search')} activeOpacity={0.7}>
-              <Ionicons name="search-outline" size={18} color={Neutrals.gray400} style={{ marginRight: 10 }} />
-              <Text style={styles.homeSearchPlaceholder}>Search properties, localities…</Text>
+          <View style={styles.homeSearchBox}>
+            <TouchableOpacity style={styles.homeLocationDropdown} activeOpacity={0.7} onPress={() => setShowLocationPicker(true)}>
+              <Ionicons name="location-outline" size={18} color={Neutrals.gray600} />
+              <Text style={styles.homeLocationText}>{city}</Text>
+              <Ionicons name="chevron-down" size={14} color={Neutrals.gray400} />
             </TouchableOpacity>
-          )}
+
+            {Platform.OS === 'web' ? (
+              <View style={styles.homeSearchInputWrapper}>
+                <Ionicons name="search-outline" size={18} color={Neutrals.gray500} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  onSubmitEditing={submitSearch}
+                  placeholder="Search properties, localities…"
+                  placeholderTextColor={Neutrals.gray500}
+                  style={styles.homeSearchInput as any}
+                  returnKeyType="search"
+                />
+              </View>
+            ) : (
+              <TouchableOpacity style={styles.homeSearchInputWrapper} onPress={() => router.push('/search')} activeOpacity={0.7}>
+                <Ionicons name="search-outline" size={18} color={Neutrals.gray500} />
+                <Text style={styles.homeSearchPlaceholder}>Search properties, localities…</Text>
+              </TouchableOpacity>
+            )}
+            <TouchableOpacity style={styles.homeSearchBtn} onPress={submitSearch}>
+              <Text style={styles.homeSearchBtnText}>Search</Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
         {/* 1. Recent Activity */}
@@ -521,24 +533,67 @@ const styles = StyleSheet.create({
     marginTop: 12,
     marginBottom: 4,
   },
-  homeSearchBar: {
+  homeSearchBox: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Neutrals.gray100,
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    borderRadius: Radius.full,
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.lg,
+    padding: 8,
+    paddingLeft: 16,
+    width: '100%',
+    ...(Platform.OS === 'web'
+      ? ({
+          boxShadow: '0 4px 16px rgba(0,0,0,0.08)',
+        } as any)
+      : {
+          elevation: 4,
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+        }),
     borderWidth: 1,
     borderColor: Neutrals.border,
   },
+  homeLocationDropdown: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 16,
+    borderRightWidth: 1,
+    borderRightColor: Neutrals.gray200,
+  },
+  homeLocationText: {
+    ...Typography.labelLarge,
+    fontSize: 15,
+    color: Neutrals.obsidian,
+  },
+  homeSearchInputWrapper: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    height: 42,
+  },
   homeSearchInput: {
     flex: 1,
-    ...Typography.bodyMedium,
-    color: Neutrals.obsidian,
-    outlineStyle: 'none',
+    fontSize: 15,
+    color: Neutrals.text,
+    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}),
   },
   homeSearchPlaceholder: {
     ...Typography.bodyMedium,
     color: Neutrals.gray400,
+  },
+  homeSearchBtn: {
+    backgroundColor: GoldSystem.primaryGold,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: Radius.md,
+  },
+  homeSearchBtnText: {
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
   },
 });

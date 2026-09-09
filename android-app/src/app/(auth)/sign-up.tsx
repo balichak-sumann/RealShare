@@ -14,8 +14,6 @@ import { getApiUrl } from '@/lib/api';
 // Email regex — must have valid format (user@domain.tld)
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const MIN_PASSWORD_LENGTH = 8;
-const BG_IMAGE = 'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2000&auto=format&fit=crop';
-
 export default function SignUpScreen() {
   const router = useRouter();
   const { setProfile } = useUser();
@@ -379,7 +377,7 @@ export default function SignUpScreen() {
           </KeyboardAvoidingView>
         </AuthSplitLayout>
       ) : (
-        <ImageBackground source={{ uri: BG_IMAGE }} style={styles.mobileBackgroundImage} resizeMode="cover">
+        <ImageBackground source={require('../../../assets/images/auth_bg.jpg')} style={styles.mobileBackgroundImage} resizeMode="cover">
           <View style={styles.mobileOverlay}>
             <TouchableOpacity style={styles.mobileBackButton} onPress={() => router.replace('/')}>
               <Ionicons name="arrow-back" size={24} color="#FFFFFF" />

@@ -11,8 +11,6 @@ interface AuthSplitLayoutProps {
   children: React.ReactNode;
 }
 
-const BG_IMAGE = 'https://images.unsplash.com/photo-1613977257363-707ba9348227?q=80&w=2000&auto=format&fit=crop';
-
 const FEATURES = [
   {
     icon: 'home-outline',
@@ -43,7 +41,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
         <View style={styles.desktopContainer}>
           {/* Left Promotional Side */}
           <View style={styles.leftSide}>
-          <ImageBackground source={{ uri: BG_IMAGE }} style={styles.backgroundImage}>
+          <ImageBackground source={require('../../../assets/images/auth_bg.jpg')} style={styles.backgroundImage}>
             <LinearGradient
               colors={['rgba(250, 248, 245, 0.95)', 'rgba(250, 248, 245, 0.8)', 'rgba(250, 248, 245, 0.3)']}
               start={{ x: 0, y: 0 }}

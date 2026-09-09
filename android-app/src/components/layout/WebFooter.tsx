@@ -58,7 +58,7 @@ export function WebFooter() {
             <TouchableOpacity onPress={() => router.push('/terms-of-service' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Terms</Text></TouchableOpacity>
           </View>
         </View>
-        <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>RealShare Properties Pvt. Ltd., Nizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212</Text>
+        <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>{"RealShare Properties Pvt. Ltd.\nNizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212"}</Text>
         <Text style={{ color: Neutrals.gray600, fontSize: 8, marginTop: 6 }}>© {new Date().getFullYear()} Realshare Properties. All rights reserved.</Text>
       </View>
     );

@@ -43,7 +43,7 @@ import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { LocationPickerModal } from '@/components/ui/LocationPickerModal';
 import { WebFooter } from '@/components/layout/WebFooter';
 import { QuoteSection } from '@/components/home/QuoteSection';
-import { BenefitsSection } from '@/components/home/BenefitsSection';
+
 import { getApiUrl, resilientFetch } from '@/lib/api';
 
 export default function HomeScreen() {
@@ -313,7 +313,6 @@ export default function HomeScreen() {
         {/* Secondary Desktop / Utility Sections placed at bottom */}
         <TopLocalities properties={filtered.newProjects} />
 
-        {isDesktop && <BenefitsSection />}
 
         <ServicesStrip />
 

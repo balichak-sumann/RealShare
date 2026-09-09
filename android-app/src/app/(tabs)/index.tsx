@@ -214,52 +214,7 @@ export default function HomeScreen() {
 
       <LocationPickerModal visible={showLocationPicker} onClose={() => setShowLocationPicker(false)} />
 
-      {/* Floating search bar — desktop web only, raw HTML to avoid RN Web spacing */}
-      {isDesktop && Platform.OS === 'web' && (() => {
-        const searchRef = React.useRef<HTMLDivElement>(null);
-        React.useEffect(() => {
-          const id = scrollY.addListener(({ value }) => {
-            if (!searchRef.current) return;
-            const t = Math.min(value / 80, 1);
-            searchRef.current.style.transform = `translateY(${-70 * t}px)`;
-            searchRef.current.style.opacity = `${1 - Math.min(value / 60, 1)}`;
-            searchRef.current.style.pointerEvents = t >= 1 ? 'none' : 'auto';
-          });
-          return () => scrollY.removeListener(id);
-        }, []);
-        return (
-          <div
-            ref={searchRef}
-            style={{
-              position: 'fixed',
-              top: 68,
-              left: 138,
-              zIndex: 90,
-            }}
-          >
-            <View style={styles.webSearchBox}>
-              <TouchableOpacity style={styles.webLocationDropdown} activeOpacity={0.7} onPress={() => setShowLocationPicker(true)}>
-                <Ionicons name="location-outline" size={18} color={Neutrals.gray600} />
-                <Text style={styles.webLocationDropdownText}>{city}</Text>
-                <Ionicons name="chevron-down" size={14} color={Neutrals.gray400} />
-              </TouchableOpacity>
-              
-              <View style={styles.webSearchInputWrapper}>
-                <Ionicons name="search-outline" size={18} color={Neutrals.gray500} />
-                <TextInput
-                  value={query}
-                  onChangeText={setQuery}
-                  onSubmitEditing={submitSearch}
-                  placeholder="Search properties, localities…"
-                  placeholderTextColor={Neutrals.gray500}
-                  style={styles.webSearchInput as any}
-                  returnKeyType="search"
-                />
-              </View>
-            </View>
-          </div>
-        );
-      })()}
+      {/* Desktop web search moved to HeroCarousel */}
 
       <Animated.ScrollView 
         style={styles.scrollContent} 
@@ -526,53 +481,5 @@ const styles = StyleSheet.create({
     ...Typography.bodyMedium,
     color: Neutrals.gray500,
     textAlign: 'center',
-  },
-  webSearchBox: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Neutrals.white,
-    borderRadius: Radius.full,
-    padding: 6,
-    paddingLeft: 16,
-    width: '100%',
-    maxWidth: 600,
-    ...(Platform.OS === 'web'
-      ? ({
-          boxShadow: '0 4px 12px rgba(0,0,0,0.08), 0 1px 3px rgba(0,0,0,0.05)',
-        } as any)
-      : {
-          elevation: 4,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 12,
-        }),
-  },
-  webLocationDropdown: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingRight: 16,
-    borderRightWidth: 1,
-    borderRightColor: Neutrals.gray200,
-  },
-  webLocationDropdownText: {
-    ...Typography.labelLarge,
-    fontSize: 15,
-    color: Neutrals.obsidian,
-  },
-  webSearchInputWrapper: {
-    flex: 1,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingHorizontal: 16,
-    height: 42,
-  },
-  webSearchInput: {
-    flex: 1,
-    fontSize: 15,
-    color: Neutrals.text,
-    ...(Platform.OS === 'web' ? ({ outlineStyle: 'none' } as any) : {}),
   },
 });

@@ -241,11 +241,11 @@ const styles = StyleSheet.create({
     height: 280,
     justifyContent: 'flex-end',
     overflow: 'hidden',
-    ...(Platform.OS !== 'web' ? { borderBottomLeftRadius: Radius.2xl, borderBottomRightRadius: Radius.2xl } : {}),
+    ...(Platform.OS !== 'web' ? { borderBottomLeftRadius: Radius.xl, borderBottomRightRadius: Radius.xl } : {}),
   },
   heroBannerDesktop: {
     height: 400,
-    borderRadius: Radius.2xl,
+    borderRadius: Radius.xl,
     marginHorizontal: 24,
     marginTop: 24,
   },

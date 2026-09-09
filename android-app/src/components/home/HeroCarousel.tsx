@@ -145,9 +145,7 @@ export function HeroCarousel() {
   return (
     <View style={[styles.container, isDesktop && styles.containerDesktop]} onLayout={(e) => {
       const { width } = e.nativeEvent.layout;
-      // Force full window width on desktop to ignore any parent padding
-      const fullWidth = isDesktop && Platform.OS === 'web' ? Dimensions.get('window').width : width;
-      if (fullWidth > 0) setContainerWidth(fullWidth);
+      if (width > 0) setContainerWidth(width);
     }}>
       <ScrollView
         ref={scrollRef}
@@ -233,7 +231,7 @@ export function HeroCarousel() {
 }
 
 const HERO_H = 450;
-const HERO_H_DESKTOP = 500;
+const HERO_H_DESKTOP = 650;
 
 const styles = StyleSheet.create({
   container: {
@@ -242,10 +240,11 @@ const styles = StyleSheet.create({
   },
   containerDesktop: {
     height: HERO_H_DESKTOP,
-    width: '100%',
-    marginLeft: -24, // Pull out to negate index.tsx paddingHorizontal
-    marginRight: -24,
-    marginTop: -8,   // Pull up to negate index.tsx 8px gap (76 - 68)
+    borderRadius: 20,
+    overflow: 'hidden',
+    marginHorizontal: 24,
+    marginTop: -8,
+    width: 'auto',
   },
   slide: {
     height: HERO_H,

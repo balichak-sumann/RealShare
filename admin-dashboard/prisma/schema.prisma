@@ -23,6 +23,7 @@ model Profile {
   expo_push_token      String?       @db.VarChar(255)
   is_active            Boolean       @default(true)
   is_banned            Boolean       @default(false)
+  is_approved          Boolean       @default(true)
   bank_account_name    String?       @db.VarChar(255)
   bank_account_number  String?       @db.VarChar(50)
   bank_ifsc            String?       @db.VarChar(20)
@@ -79,6 +80,7 @@ model Property {
   description         String?   @db.Text
   property_type       String    @db.VarChar(50)
   listing_type        String    @default("fractional") @db.VarChar(50) // "fractional" | "outright"
+  sub_type            String?   @db.VarChar(100) // Apartment | Villa | Office | Retail | Open Plot | Farm Land
   total_fractions     Int
   available_fractions Int
   sold_fractions      Int       @default(0)
@@ -95,6 +97,7 @@ model Property {
   video_url           String?   @db.Text
   brochure_url        String?   @db.Text
   area_sqft           Decimal?  @db.Decimal(10, 2)
+  area_unit           String?   @default("sqft") @db.VarChar(20) // "sqft" | "acres"
   google_maps_url     String?   @db.Text
   posted_by           String?   @db.VarChar(128)
   developer_id        String?   @db.VarChar(36)
@@ -103,6 +106,37 @@ model Property {
   featured            Boolean   @default(false)
   views_count         Int       @default(0)
   is_sold_out         Boolean   @default(false)
+
+  // Residential / Apartment specific
+  floor_type          String?   @db.VarChar(50)   // "High Rise" | "Low Rise" | "Multiple"
+  bedrooms            Int?
+  bathrooms           Int?
+  flooring            String?   @db.VarChar(100)  // "Vitrified Tiles" | "Marble" | "Wooden" | "Other"
+  kitchen_type        String?   @db.VarChar(50)   // "Modular" | "Open" | "Semi-Modular"
+  parking_count       Int?
+  club_house          Boolean?
+  amenities           String?   @db.Text           // comma-separated list
+
+  // Commercial / Fractional specific
+  furnished           Boolean?
+  plug_and_play       Boolean?
+  central_ac          Boolean?
+  preleased           Boolean?
+  maintenance_avail   Boolean?
+
+  // Plot / Farm Land specific
+  fencing             Boolean?
+  electricity_avail   Boolean?
+  farm_shed           Boolean?
+  bore_wells          Boolean?
+  plants_available    Boolean?
+  loan_availability   Boolean?
+  land_registered     Boolean?
+  pass_book           Boolean?
+  raithu_bharosa      Boolean?
+  approach_road       String?   @db.VarChar(50)   // "BT Road" | "Village Road" | "Katcha"
+  under_irrigation    Boolean?
+
   created_at          DateTime  @default(now()) @db.Timestamptz(6)
   updated_at          DateTime  @default(now()) @updatedAt @db.Timestamptz(6)
 

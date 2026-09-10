@@ -73,6 +73,7 @@ export async function POST(req: Request) {
         full_name: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
         avatar_url: decodedToken.picture || null,
         role: requestedRole,
+        is_approved: requestedRole === 'investor' || requestedRole === 'admin',
         referred_by_code: referredByCode || null,
         expo_push_token: expoPushToken || null,
       },

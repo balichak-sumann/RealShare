@@ -19,6 +19,7 @@ export type UserProfile = {
     document_type: string;
     verification_status: string;
   }>;
+  is_approved?: boolean;
 };
 
 type UserContextType = {

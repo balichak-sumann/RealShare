@@ -119,7 +119,7 @@ export async function GET(request: Request) {
             }
           : {}),
         // Non-admin callers only see approved listings unless querying their own listings
-        ...(isAdmin || isOwner ? {} : { approval_status: 'approved' }),
+        ...(isAdmin || isOwner ? {} : { approval_status: 'approved', profile: { is_approved: true } }),
       },
       include: {
         images: {
@@ -255,6 +255,7 @@ export async function POST(request: Request) {
           description: data.description.trim(),
           property_type: data.property_type,
           listing_type: listingType,
+          sub_type: data.sub_type || null,
           total_fractions: totalFractions,
           available_fractions: availableFractions,
           sold_fractions: 0,
@@ -271,11 +272,39 @@ export async function POST(request: Request) {
           video_url: data.video_url || null,
           brochure_url: data.brochure_url || null,
           area_sqft: areaSqft !== null ? areaSqft : null,
+          area_unit: data.area_unit || 'sqft',
           google_maps_url: data.google_maps_url || null,
           featured: data.featured || false,
           posted_by: userId,
           developer_id: data.developer_id || null,
           approval_status: isAdmin ? 'approved' : 'pending_approval',
+          // Residential fields
+          floor_type: data.floor_type || null,
+          bedrooms: data.bedrooms ? Number(data.bedrooms) : null,
+          bathrooms: data.bathrooms ? Number(data.bathrooms) : null,
+          flooring: data.flooring || null,
+          kitchen_type: data.kitchen_type || null,
+          parking_count: data.parking_count ? Number(data.parking_count) : null,
+          club_house: data.club_house !== undefined ? Boolean(data.club_house) : null,
+          amenities: data.amenities || null,
+          // Commercial fields
+          furnished: data.furnished !== undefined ? Boolean(data.furnished) : null,
+          plug_and_play: data.plug_and_play !== undefined ? Boolean(data.plug_and_play) : null,
+          central_ac: data.central_ac !== undefined ? Boolean(data.central_ac) : null,
+          preleased: data.preleased !== undefined ? Boolean(data.preleased) : null,
+          maintenance_avail: data.maintenance_avail !== undefined ? Boolean(data.maintenance_avail) : null,
+          // Plot / Farm fields
+          fencing: data.fencing !== undefined ? Boolean(data.fencing) : null,
+          electricity_avail: data.electricity_avail !== undefined ? Boolean(data.electricity_avail) : null,
+          farm_shed: data.farm_shed !== undefined ? Boolean(data.farm_shed) : null,
+          bore_wells: data.bore_wells !== undefined ? Boolean(data.bore_wells) : null,
+          plants_available: data.plants_available !== undefined ? Boolean(data.plants_available) : null,
+          loan_availability: data.loan_availability !== undefined ? Boolean(data.loan_availability) : null,
+          land_registered: data.land_registered !== undefined ? Boolean(data.land_registered) : null,
+          pass_book: data.pass_book !== undefined ? Boolean(data.pass_book) : null,
+          raithu_bharosa: data.raithu_bharosa !== undefined ? Boolean(data.raithu_bharosa) : null,
+          approach_road: data.approach_road || null,
+          under_irrigation: data.under_irrigation !== undefined ? Boolean(data.under_irrigation) : null,
         },
       });
 

@@ -139,12 +139,42 @@ export default function PropertiesPage() {
         : "Commercial") as any,
       listingType: (p.listing_type as any) || "fractional",
       areaSqft: Number(p.area_sqft) || 1200,
+      areaUnit: (p.area_unit as any) || "sqft",
       googleMapsUrl: p.google_maps_url || "",
       totalFractions: p.total_fractions || 50,
       price: Number(p.price_per_fraction) || 500000,
       yield: Number(p.assured_yield) || 8.5,
       irr: Number(p.target_irr) || 15.0,
       postedBy: "Admin",
+      // Shared
+      subType: p.sub_type || "",
+      floorType: p.floor_type || "",
+      // Residential
+      bedrooms: p.bedrooms ?? null,
+      bathrooms: p.bathrooms ?? null,
+      flooring: p.flooring || "",
+      kitchenType: p.kitchen_type || "",
+      parkingCount: p.parking_count ?? null,
+      clubHouse: p.club_house ?? false,
+      amenities: p.amenities || "",
+      // Commercial
+      furnished: p.furnished ?? false,
+      plugAndPlay: p.plug_and_play ?? false,
+      centralAc: p.central_ac ?? false,
+      preleased: p.preleased ?? false,
+      maintenanceAvail: p.maintenance_avail ?? false,
+      // Farm/Plot
+      fencing: p.fencing ?? false,
+      electricityAvail: p.electricity_avail ?? false,
+      farmShed: p.farm_shed ?? false,
+      boreWells: p.bore_wells ?? false,
+      plantsAvailable: p.plants_available ?? false,
+      loanAvailability: p.loan_availability ?? false,
+      landRegistered: p.land_registered ?? false,
+      passBook: p.pass_book ?? false,
+      raithuBharosa: p.raithu_bharosa ?? false,
+      approachRoad: p.approach_road || "",
+      underIrrigation: p.under_irrigation ?? false,
     });
     setMapLat(Number(p.lat) || 17.385);
     setMapLng(Number(p.lng) || 78.4867);
@@ -163,12 +193,42 @@ export default function PropertiesPage() {
     type: "Commercial" as "Commercial" | "Fractional" | "Residential" | "Holiday" | "Investor",
     listingType: "fractional" as "fractional" | "outright" | "rental" | "resale",
     areaSqft: 1200,
+    areaUnit: "sqft" as "sqft" | "acres",
     googleMapsUrl: "",
     totalFractions: 50,
     price: 500000,
     yield: 8.5,
     irr: 15.0,
     postedBy: "Admin" as const,
+    // Shared
+    subType: "",
+    floorType: "",
+    // Residential
+    bedrooms: null as number | null,
+    bathrooms: null as number | null,
+    flooring: "",
+    kitchenType: "",
+    parkingCount: null as number | null,
+    clubHouse: false,
+    amenities: "",
+    // Commercial
+    furnished: false,
+    plugAndPlay: false,
+    centralAc: false,
+    preleased: false,
+    maintenanceAvail: false,
+    // Farm/Plot
+    fencing: false,
+    electricityAvail: false,
+    farmShed: false,
+    boreWells: false,
+    plantsAvailable: false,
+    loanAvailability: false,
+    landRegistered: false,
+    passBook: false,
+    raithuBharosa: false,
+    approachRoad: "",
+    underIrrigation: false,
   });
   // Helper to extract lat/lng from a Google Maps share link
   const parseGoogleMapsUrl = (url: string) => {
@@ -503,6 +563,7 @@ export default function PropertiesPage() {
           property_type: newProp.type,
           listing_type: newProp.listingType,
           area_sqft: Number(newProp.areaSqft),
+          area_unit: newProp.areaUnit || 'sqft',
           total_fractions: newProp.listingType === "fractional" ? Number(newProp.totalFractions) : 1,
           available_fractions: newProp.listingType === "fractional" ? Number(newProp.totalFractions) : 1,
           price_per_fraction: Number(newProp.price),
@@ -516,6 +577,35 @@ export default function PropertiesPage() {
           featured: false,
           image_urls: uploadedImageUrls,
           image_url: uploadedImageUrls[0],
+          // Shared
+          sub_type: newProp.subType || undefined,
+          floor_type: newProp.floorType || undefined,
+          // Residential
+          bedrooms: newProp.bedrooms ?? undefined,
+          bathrooms: newProp.bathrooms ?? undefined,
+          flooring: newProp.flooring || undefined,
+          kitchen_type: newProp.kitchenType || undefined,
+          parking_count: newProp.parkingCount ?? undefined,
+          club_house: newProp.clubHouse,
+          amenities: newProp.amenities || undefined,
+          // Commercial
+          furnished: newProp.furnished,
+          plug_and_play: newProp.plugAndPlay,
+          central_ac: newProp.centralAc,
+          preleased: newProp.preleased,
+          maintenance_avail: newProp.maintenanceAvail,
+          // Farm/Plot
+          fencing: newProp.fencing,
+          electricity_avail: newProp.electricityAvail,
+          farm_shed: newProp.farmShed,
+          bore_wells: newProp.boreWells,
+          plants_available: newProp.plantsAvailable,
+          loan_availability: newProp.loanAvailability,
+          land_registered: newProp.landRegistered,
+          pass_book: newProp.passBook,
+          raithu_bharosa: newProp.raithuBharosa,
+          approach_road: newProp.approachRoad || undefined,
+          under_irrigation: newProp.underIrrigation,
         }),
       });
 
@@ -1180,37 +1270,61 @@ export default function PropertiesPage() {
                 </div>
               </div>
 
-              {/* 3. Category & Area */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+
+              {/* 3. Category, Sub-type & Area */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
                     Category <span style={{ color: "#EF4444" }}>*</span>
                   </label>
                   <select
                     value={newProp.type}
-                    onChange={(e) => setNewProp({ ...newProp, type: e.target.value as any })}
+                    onChange={(e) => setNewProp({ ...newProp, type: e.target.value as any, subType: "" })}
                     style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff" }}
                   >
-                    <option value="Commercial">Commercial</option>
-                    <option value="Fractional">Fractional</option>
-                    <option value="Residential">Residential</option>
-                    <option value="Holiday">Holiday</option>
-                    <option value="Investor">Investor</option>
+                    <option value="Commercial">🏢 Commercial</option>
+                    <option value="Fractional">📊 Fractional</option>
+                    <option value="Residential">🏠 Residential / Apartment</option>
+                    <option value="Holiday">🌴 Holiday / Resort</option>
+                    <option value="Investor">🌾 Plot / Farm Land</option>
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Sub-Type</label>
+                  <select
+                    value={newProp.subType}
+                    onChange={(e) => setNewProp({ ...newProp, subType: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff" }}
+                  >
+                    <option value="">— Select —</option>
+                    {(newProp.type === "Residential" || newProp.type === "Holiday")
+                      ? ["Apartment", "Villa", "Independent House", "Row House", "Studio", "Penthouse"].map(s => <option key={s} value={s}>{s}</option>)
+                      : (newProp.type === "Investor")
+                      ? ["Open Plot", "Farm Land", "Agricultural Land"].map(s => <option key={s} value={s}>{s}</option>)
+                      : ["Office Space", "Retail Shop", "Showroom", "Warehouse", "Co-working"].map(s => <option key={s} value={s}>{s}</option>)
+                    }
                   </select>
                 </div>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
-                    Total Area (Sq. Ft.) <span style={{ color: "#EF4444" }}>*</span>
+                    Area <span style={{ color: "#EF4444" }}>*</span>
+                    {newProp.type === "Investor" && (
+                      <span style={{ marginLeft: "8px", fontSize: "0.7rem" }}>
+                        <button type="button" onClick={() => setNewProp({ ...newProp, areaUnit: "sqft" })}
+                          style={{ padding: "2px 6px", borderRadius: "4px", border: "1px solid #CBD5E1", background: newProp.areaUnit === "sqft" ? "#2563EB" : "#fff", color: newProp.areaUnit === "sqft" ? "#fff" : "#475569", cursor: "pointer", fontSize: "0.7rem" }}>Sq.Ft</button>
+                        <button type="button" onClick={() => setNewProp({ ...newProp, areaUnit: "acres" })}
+                          style={{ padding: "2px 6px", borderRadius: "4px", border: "1px solid #CBD5E1", background: newProp.areaUnit === "acres" ? "#2563EB" : "#fff", color: newProp.areaUnit === "acres" ? "#fff" : "#475569", cursor: "pointer", fontSize: "0.7rem", marginLeft: "2px" }}>Acres</button>
+                      </span>
+                    )}
                   </label>
                   <input
-                    type="number"
-                    required
-                    min={1}
-                    placeholder="e.g. 1500"
+                    type="number" required min={0}
+                    placeholder={newProp.areaUnit === "acres" ? "e.g. 4" : "e.g. 2467"}
                     value={newProp.areaSqft}
                     onChange={(e) => setNewProp({ ...newProp, areaSqft: Number(e.target.value) })}
                     style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                   />
+                  <div style={{ fontSize: "0.7rem", color: "#94A3B8", marginTop: "2px" }}>{newProp.areaUnit === "acres" ? "Acres" : "Sq. Ft."}</div>
                 </div>
               </div>
 
@@ -1220,9 +1334,8 @@ export default function PropertiesPage() {
                   Property Title <span style={{ color: "#EF4444" }}>*</span>
                 </label>
                 <input
-                  type="text"
-                  required
-                  placeholder="e.g. One Cyber City Commercial Office Space"
+                  type="text" required
+                  placeholder="e.g. Rajapushpa Provincia, Financial District"
                   value={newProp.title}
                   onChange={(e) => setNewProp({ ...newProp, title: e.target.value })}
                   style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
@@ -1231,31 +1344,233 @@ export default function PropertiesPage() {
 
               {/* 4.5. Short Description */}
               <div>
-                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
-                  Short Description
-                </label>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Short Description</label>
                 <input
                   type="text"
-                  placeholder="Visible on the home screen property cards"
+                  placeholder="Visible on home screen property cards"
                   value={newProp.shortDescription}
                   onChange={(e) => setNewProp({ ...newProp, shortDescription: e.target.value })}
                   style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                 />
               </div>
 
-              {/* 5. Description */}
+              {/* 5. Long Description */}
               <div>
                 <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
                   Property Description <span style={{ color: "#EF4444" }}>*</span>
                 </label>
                 <textarea
-                  required
-                  rows={3}
-                  placeholder="Detailed overview of property features, tenant profile, lease terms, and capital appreciation prospects..."
+                  required rows={3}
+                  placeholder="Detailed overview of features, tenant profile, lease terms, amenities..."
                   value={newProp.description}
                   onChange={(e) => setNewProp({ ...newProp, description: e.target.value })}
                   style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px", resize: "vertical", fontFamily: "inherit" }}
                 />
+              </div>
+
+              {/* 5.5. Dynamic Property-Specific Details */}
+              <div style={{ background: "#F8FAFC", padding: "16px", borderRadius: "12px", border: "1px solid #E2E8F0" }}>
+                <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1E293B", marginBottom: "14px" }}>
+                  {newProp.type === "Residential" || newProp.type === "Holiday" ? "🏠 Apartment / Residential Details"
+                    : newProp.type === "Investor" ? "🌾 Plot / Farm Land Details"
+                    : "🏢 Commercial Property Details"}
+                </div>
+
+                {/* ---- RESIDENTIAL / HOLIDAY ---- */}
+                {(newProp.type === "Residential" || newProp.type === "Holiday") && (
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                      <div>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Bedrooms</label>
+                        <select value={newProp.bedrooms ?? ""} onChange={(e) => setNewProp({ ...newProp, bedrooms: e.target.value ? Number(e.target.value) : null })}
+                          style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
+                          <option value="">—</option>
+                          {[1,2,3,4,5,6].map(n => <option key={n} value={n}>{n} BHK</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Bathrooms</label>
+                        <select value={newProp.bathrooms ?? ""} onChange={(e) => setNewProp({ ...newProp, bathrooms: e.target.value ? Number(e.target.value) : null })}
+                          style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
+                          <option value="">—</option>
+                          {[1,2,3,4,5].map(n => <option key={n} value={n}>{n}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Floor Type</label>
+                        <select value={newProp.floorType} onChange={(e) => setNewProp({ ...newProp, floorType: e.target.value })}
+                          style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
+                          <option value="">—</option>
+                          {["High Rise", "Low Rise", "Multiple"].map(f => <option key={f} value={f}>{f}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Flooring</label>
+                        <select value={newProp.flooring} onChange={(e) => setNewProp({ ...newProp, flooring: e.target.value })}
+                          style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
+                          <option value="">—</option>
+                          {["Vitrified Tiles", "Marble", "Wooden", "Granite", "Ceramic", "Other"].map(f => <option key={f} value={f}>{f}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Kitchen</label>
+                        <select value={newProp.kitchenType} onChange={(e) => setNewProp({ ...newProp, kitchenType: e.target.value })}
+                          style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
+                          <option value="">—</option>
+                          {["Modular", "Open", "Semi-Modular", "Dry Kitchen"].map(k => <option key={k} value={k}>{k}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Car Parking</label>
+                        <select value={newProp.parkingCount ?? ""} onChange={(e) => setNewProp({ ...newProp, parkingCount: e.target.value ? Number(e.target.value) : null })}
+                          style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
+                          <option value="">—</option>
+                          {[0,1,2,3,4].map(n => <option key={n} value={n}>{n} Car{n !== 1 ? "s" : ""}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ marginBottom: "12px" }}>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569", display: "flex", alignItems: "center", gap: "8px" }}>
+                        Club House
+                        <button type="button" onClick={() => setNewProp({ ...newProp, clubHouse: !newProp.clubHouse })}
+                          style={{ padding: "2px 10px", borderRadius: "12px", border: "none", background: newProp.clubHouse ? "#059669" : "#CBD5E1", color: "#fff", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                          {newProp.clubHouse ? "Yes" : "No"}
+                        </button>
+                      </label>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "6px", display: "block" }}>Amenities (select all that apply)</label>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                        {["Gym", "Swimming Pool", "Party Hall", "ATM", "Club House", "Children's Play Area", "Jogging Track", "Power Backup", "24/7 Security", "CCTV", "Lift", "Visitor Parking", "Garden", "Tennis Court", "Badminton Court"].map(a => {
+                          const selected = (newProp.amenities || "").split(",").map(x => x.trim()).includes(a);
+                          return (
+                            <button key={a} type="button"
+                              onClick={() => {
+                                const current = (newProp.amenities || "").split(",").map(x => x.trim()).filter(Boolean);
+                                const updated = selected ? current.filter(x => x !== a) : [...current, a];
+                                setNewProp({ ...newProp, amenities: updated.join(", ") });
+                              }}
+                              style={{ padding: "4px 10px", borderRadius: "12px", border: `1px solid ${selected ? "#2563EB" : "#CBD5E1"}`, background: selected ? "#EFF6FF" : "#fff", color: selected ? "#1D4ED8" : "#475569", cursor: "pointer", fontSize: "0.75rem", fontWeight: selected ? 700 : 400 }}>
+                              {a}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      <input type="text" placeholder="Other amenities (comma separated)" value={newProp.amenities}
+                        onChange={(e) => setNewProp({ ...newProp, amenities: e.target.value })}
+                        style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "6px", fontSize: "0.8rem" }} />
+                    </div>
+                  </>
+                )}
+
+                {/* ---- COMMERCIAL / FRACTIONAL ---- */}
+                {(newProp.type === "Commercial" || newProp.type === "Fractional") && (
+                  <>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                      <div>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Floor Type</label>
+                        <select value={newProp.floorType} onChange={(e) => setNewProp({ ...newProp, floorType: e.target.value })}
+                          style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
+                          <option value="">—</option>
+                          {["High Rise", "Low Rise", "Multiple"].map(f => <option key={f} value={f}>{f}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Car Parking</label>
+                        <select value={newProp.parkingCount ?? ""} onChange={(e) => setNewProp({ ...newProp, parkingCount: e.target.value ? Number(e.target.value) : null })}
+                          style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
+                          <option value="">—</option>
+                          {["No", "Yes – 1 Car", "Yes – 2 Cars", "Yes – 4+ Cars"].map((v, i) => <option key={i} value={i}>{v}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "12px" }}>
+                      {[
+                        { label: "Furnished", key: "furnished" },
+                        { label: "Plug & Play", key: "plugAndPlay" },
+                        { label: "Central AC", key: "centralAc" },
+                        { label: "Preleased", key: "preleased" },
+                        { label: "Maintenance", key: "maintenanceAvail" },
+                      ].map(({ label, key }) => (
+                        <label key={key} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 600, color: "#475569", cursor: "pointer" }}>
+                          <button type="button" onClick={() => setNewProp({ ...newProp, [key]: !(newProp as any)[key] })}
+                            style={{ padding: "2px 10px", borderRadius: "12px", border: "none", background: (newProp as any)[key] ? "#059669" : "#CBD5E1", color: "#fff", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                            {(newProp as any)[key] ? "Yes" : "No"}
+                          </button>
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "6px", display: "block" }}>Amenities (select all that apply)</label>
+                      <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
+                        {["Food Court", "High Speed Lifts", "Central Airconditioning", "Power Backup", "24/7 Security", "CCTV", "Visitor Parking", "Conference Room", "Cafeteria", "ATM", "Fire Safety System", "Gymnasium"].map(a => {
+                          const selected = (newProp.amenities || "").split(",").map(x => x.trim()).includes(a);
+                          return (
+                            <button key={a} type="button"
+                              onClick={() => {
+                                const current = (newProp.amenities || "").split(",").map(x => x.trim()).filter(Boolean);
+                                const updated = selected ? current.filter(x => x !== a) : [...current, a];
+                                setNewProp({ ...newProp, amenities: updated.join(", ") });
+                              }}
+                              style={{ padding: "4px 10px", borderRadius: "12px", border: `1px solid ${selected ? "#2563EB" : "#CBD5E1"}`, background: selected ? "#EFF6FF" : "#fff", color: selected ? "#1D4ED8" : "#475569", cursor: "pointer", fontSize: "0.75rem", fontWeight: selected ? 700 : 400 }}>
+                              {a}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {/* ---- INVESTOR / PLOT / FARM ---- */}
+                {newProp.type === "Investor" && (
+                  <>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "12px" }}>
+                      {[
+                        { label: "Fencing", key: "fencing" },
+                        { label: "Electricity", key: "electricityAvail" },
+                        { label: "Farm Shed", key: "farmShed" },
+                        { label: "Bore Wells", key: "boreWells" },
+                        { label: "Plants", key: "plantsAvailable" },
+                        { label: "Loan Availability", key: "loanAvailability" },
+                      ].map(({ label, key }) => (
+                        <label key={key} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 600, color: "#475569", cursor: "pointer" }}>
+                          <button type="button" onClick={() => setNewProp({ ...newProp, [key]: !(newProp as any)[key] })}
+                            style={{ padding: "2px 10px", borderRadius: "12px", border: "none", background: (newProp as any)[key] ? "#059669" : "#CBD5E1", color: "#fff", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                            {(newProp as any)[key] ? "Yes" : "No"}
+                          </button>
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#475569", marginBottom: "8px" }}>📋 Legal & Ownership</div>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "12px" }}>
+                      {[
+                        { label: "Registered", key: "landRegistered" },
+                        { label: "Pass Book", key: "passBook" },
+                        { label: "Raithu Bharosa", key: "raithuBharosa" },
+                        { label: "Under Irrigation", key: "underIrrigation" },
+                      ].map(({ label, key }) => (
+                        <label key={key} style={{ display: "flex", alignItems: "center", gap: "6px", fontSize: "0.8rem", fontWeight: 600, color: "#475569", cursor: "pointer" }}>
+                          <button type="button" onClick={() => setNewProp({ ...newProp, [key]: !(newProp as any)[key] })}
+                            style={{ padding: "2px 10px", borderRadius: "12px", border: "none", background: (newProp as any)[key] ? "#059669" : "#CBD5E1", color: "#fff", cursor: "pointer", fontSize: "0.7rem", fontWeight: 700 }}>
+                            {(newProp as any)[key] ? "Yes" : "No"}
+                          </button>
+                          {label}
+                        </label>
+                      ))}
+                    </div>
+                    <div style={{ maxWidth: "260px" }}>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Approach Road</label>
+                      <select value={newProp.approachRoad} onChange={(e) => setNewProp({ ...newProp, approachRoad: e.target.value })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
+                        <option value="">— Select —</option>
+                        {["BT Road", "Village Road", "Katcha"].map(r => <option key={r} value={r}>{r}</option>)}
+                      </select>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* 6. Location Details */}

@@ -398,7 +398,187 @@ export default function PropertyDetailsScreen() {
             {property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.'}
           </Text>
 
-          {/* Map View */}
+          {/* Property Specific Details Card */}
+          <Text style={styles.sectionTitle}>About this Property</Text>
+          <View style={{ backgroundColor: '#FAFAFA', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16, marginBottom: 16 }}>
+            {/* Shared row: sub-type, area, floor */}
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
+              {property.sub_type ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.sub_type}</Text></View> : null}
+              {property.area_sqft ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{Number(property.area_sqft).toLocaleString('en-IN')} {property.area_unit === 'acres' ? 'Acres' : 'Sq.Ft'}</Text></View> : null}
+              {property.floor_type ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Floor</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.floor_type}</Text></View> : null}
+            </View>
+
+            {/* Residential / Holiday */}
+            {(property.property_type === 'Residential' || property.property_type === 'Holiday') && (
+              <>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
+                  {property.bedrooms ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Bed Rooms</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.bedrooms} Bedrooms</Text></View> : null}
+                  {property.bathrooms ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Bath Rooms</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.bathrooms} Bathrooms</Text></View> : null}
+                  {property.flooring ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Flooring</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.flooring}</Text></View> : null}
+                  {property.kitchen_type ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Kitchen</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.kitchen_type} Kitchen</Text></View> : null}
+                  {property.parking_count != null ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Parking</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.parking_count} Car{property.parking_count !== 1 ? 's' : ''}</Text></View> : null}
+                  {property.club_house != null ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Club House</Text><Text style={{ fontSize: 13, color: property.club_house ? '#059669' : '#64748B', fontWeight: '700', marginTop: 2 }}>{property.club_house ? 'Yes' : 'No'}</Text></View> : null}
+                </View>
+                {property.amenities ? (
+                  <View>
+                    <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600', marginBottom: 6 }}>Amenities</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {property.amenities.split(',').map((a: string, i: number) => (
+                        <View key={i} style={{ backgroundColor: '#EFF6FF', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                          <Text style={{ fontSize: 12, color: '#1D4ED8', fontWeight: '600' }}>{a.trim()}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                ) : null}
+              </>
+            )}
+
+            {/* Commercial / Fractional */}
+            {(property.property_type === 'Commercial' || property.property_type === 'Fractional') && (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+                {[
+                  { label: 'Furnished', value: property.furnished },
+                  { label: 'Plug & Play', value: property.plug_and_play },
+                  { label: 'Central AC', value: property.central_ac },
+                  { label: 'Preleased', value: property.preleased },
+                  { label: 'Maintenance', value: property.maintenance_avail },
+                ].filter(f => f.value != null).map((f, i) => (
+                  <View key={i} style={{ flex: 1, minWidth: 100 }}>
+                    <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>{f.label}</Text>
+                    <Text style={{ fontSize: 13, color: f.value ? '#059669' : '#64748B', fontWeight: '700', marginTop: 2 }}>{f.value ? 'Yes' : 'No'}</Text>
+                  </View>
+                ))}
+                {property.parking_count != null ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Parking</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.parking_count > 0 ? `Yes – ${property.parking_count} Car${property.parking_count !== 1 ? 's' : ''}` : 'No'}</Text></View> : null}
+                {property.amenities ? (
+                  <View style={{ width: '100%', marginTop: 8 }}>
+                    <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600', marginBottom: 6 }}>Amenities</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                      {property.amenities.split(',').map((a: string, i: number) => (
+                        <View key={i} style={{ backgroundColor: '#EFF6FF', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
+                          <Text style={{ fontSize: 12, color: '#1D4ED8', fontWeight: '600' }}>{a.trim()}</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </View>
+                ) : null}
+              </View>
+            )}
+
+            {/* Investor / Plot / Farm */}
+            {property.property_type === 'Investor' && (
+              <>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
+                  {[
+                    { label: 'Fencing', value: property.fencing },
+                    { label: 'Electricity', value: property.electricity_avail },
+                    { label: 'Farm Shed', value: property.farm_shed },
+                    { label: 'Bore Wells', value: property.bore_wells },
+                    { label: 'Plants', value: property.plants_available },
+                    { label: 'Loan Avail.', value: property.loan_availability },
+                  ].filter(f => f.value != null).map((f, i) => (
+                    <View key={i} style={{ flex: 1, minWidth: 90 }}>
+                      <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>{f.label}</Text>
+                      <Text style={{ fontSize: 13, color: f.value ? '#059669' : '#64748B', fontWeight: '700', marginTop: 2 }}>{f.value ? 'Yes' : 'No'}</Text>
+                    </View>
+                  ))}
+                </View>
+                <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600', marginBottom: 6, marginTop: 4 }}>Legal & Ownership</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
+                  {[
+                    { label: 'Registered', value: property.land_registered },
+                    { label: 'Pass Book', value: property.pass_book },
+                    { label: 'Raithu Bharosa', value: property.raithu_bharosa },
+                    { label: 'Under Irrigation', value: property.under_irrigation },
+                  ].filter(f => f.value != null).map((f, i) => (
+                    <View key={i} style={{ flex: 1, minWidth: 100 }}>
+                      <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>{f.label}</Text>
+                      <Text style={{ fontSize: 13, color: f.value ? '#059669' : '#64748B', fontWeight: '700', marginTop: 2 }}>{f.value ? 'Yes' : 'No'}</Text>
+                    </View>
+                  ))}
+                  {property.approach_road ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Approach Road</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.approach_road}</Text></View> : null}
+                </View>
+              </>
+            )}
+          </View>
+
+          {/* Payment Calculator */}
+          {fractionPrice > 0 && (
+            <>
+              <Text style={styles.sectionTitle}>Payment Calculator</Text>
+              <View style={{ backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16, marginBottom: 16 }}>
+                {(() => {
+                  const price = fractionPrice;
+                  const downPct = 0.20;
+                  const down = Math.round(price * downPct);
+                  const loan = price - down;
+                  const r = 7.25 / 100 / 12;
+                  const n = 30 * 12;
+                  const emi = Math.round(loan * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1));
+                  return (
+                    <>
+                      {[
+                        { label: 'Property Price', value: `₹ ${price.toLocaleString('en-IN')}` },
+                        { label: 'Down Payment (20%)', value: `₹ ${down.toLocaleString('en-IN')}` },
+                        { label: 'Loan Amount (80%)', value: `₹ ${loan.toLocaleString('en-IN')}` },
+                        { label: 'Loan Details', value: '30 Year – Fixed – @7.25%' },
+                      ].map((row, i) => (
+                        <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderBottomWidth: i < 3 ? 1 : 0, borderBottomColor: '#E2E8F0' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', fontWeight: '500' }}>{row.label}</Text>
+                          <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{row.value}</Text>
+                        </View>
+                      ))}
+                      <View style={{ marginTop: 10, backgroundColor: '#EFF6FF', borderRadius: 8, padding: 12, alignItems: 'center' }}>
+                        <Text style={{ fontSize: 12, color: '#1D4ED8', fontWeight: '600' }}>Estimated Monthly EMI</Text>
+                        <Text style={{ fontSize: 22, color: '#1D4ED8', fontWeight: '800', marginTop: 4 }}>₹ {emi.toLocaleString('en-IN')} <Text style={{ fontSize: 13, fontWeight: '400' }}>/ Month</Text></Text>
+                      </View>
+                    </>
+                  );
+                })()}
+              </View>
+            </>
+          )}
+
+          {/* Contact Builder / Agent */}
+          {property.profile && (
+            <>
+              <Text style={styles.sectionTitle}>Contact {property.profile.role === 'builder' ? 'Builder' : property.profile.role === 'agent' ? 'Agent' : 'Owner'}</Text>
+              <View style={{ backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16, marginBottom: 16 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
+                    <Text style={{ fontSize: 18 }}>👤</Text>
+                  </View>
+                  <View>
+                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#1E293B' }}>{property.profile.full_name || 'Agent / Builder'}</Text>
+                    <Text style={{ fontSize: 12, color: '#64748B', textTransform: 'capitalize', marginTop: 2 }}>{property.profile.role}</Text>
+                  </View>
+                </View>
+                {[
+                  { icon: '📞', label: 'Phone No', value: property.profile.phone_number },
+                  { icon: '✉️', label: 'Email', value: property.profile.email },
+                ].map((item, i) => item.value ? (
+                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#E2E8F0' }}>
+                    <Text style={{ fontSize: 16, marginRight: 10 }}>{item.icon}</Text>
+                    <View>
+                      <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>{item.label}</Text>
+                      <Text style={{ fontSize: 13, color: '#1D4ED8', fontWeight: '700', marginTop: 1 }}>{item.value}</Text>
+                    </View>
+                  </View>
+                ) : null)}
+                <TouchableOpacity
+                  style={{ marginTop: 12, backgroundColor: GoldSystem.primaryGold, borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
+                  onPress={() => setShowInquiryModal(true)}
+                >
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>SUBMIT INQUIRY</Text>
+                </TouchableOpacity>
+                <Text style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 8 }}>
+                  Thanks for your interest. Agent / Builder will contact you.
+                </Text>
+              </View>
+            </>
+          )}
+
+
           <Text style={styles.sectionTitle}>Location Details</Text>
           {property.lat && property.lng ? (
             <View>

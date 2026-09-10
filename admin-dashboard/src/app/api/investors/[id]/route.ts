@@ -172,6 +172,7 @@ export async function PATCH(
     if (bank_ifsc !== undefined) updateData.bank_ifsc = bank_ifsc.trim() || null;
     if (typeof is_active === 'boolean') updateData.is_active = is_active;
     if (typeof is_banned === 'boolean') updateData.is_banned = is_banned;
+    if (typeof body.is_approved === 'boolean') updateData.is_approved = body.is_approved;
 
     if (Object.keys(updateData).length > 0) {
       await prisma.profile.update({

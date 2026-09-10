@@ -70,6 +70,36 @@ export default function PostPropertyScreen() {
   const [lat, setLat] = useState('');
   const [lng, setLng] = useState('');
 
+  // Dynamic Property State
+  const [newProp, setNewProp] = useState({
+    areaUnit: "sqft" as "sqft" | "acres",
+    subType: "",
+    floorType: "",
+    bedrooms: null as number | null,
+    bathrooms: null as number | null,
+    flooring: "",
+    kitchenType: "",
+    parkingCount: null as number | null,
+    clubHouse: false,
+    amenities: "",
+    furnished: false,
+    plugAndPlay: false,
+    centralAc: false,
+    preleased: false,
+    maintenanceAvail: false,
+    fencing: false,
+    electricityAvail: false,
+    farmShed: false,
+    boreWells: false,
+    plantsAvailable: false,
+    loanAvailability: false,
+    landRegistered: false,
+    passBook: false,
+    raithuBharosa: false,
+    approachRoad: "",
+    underIrrigation: false,
+  });
+
   // Financials
   const [price, setPrice] = useState('500000');
   const [totalFractions, setTotalFractions] = useState('100');
@@ -219,12 +249,12 @@ export default function PostPropertyScreen() {
     const finalDistrict = district === 'Other' ? customDistrict.trim() : district;
     if (!locality.trim() || !finalDistrict) {
       Alert.alert('Validation Error', 'Please enter district and locality.');
-      setStep(3);
+      setStep(4);
       return;
     }
     if (!price || Number(price) < 0) {
       Alert.alert('Validation Error', 'Please enter a valid price (0 or greater).');
-      setStep(4);
+      setStep(1);
       return;
     }
 
@@ -267,6 +297,7 @@ export default function PostPropertyScreen() {
         property_type: category,
         listing_type: listingType,
         area_sqft: Number(areaSqft),
+        area_unit: newProp.areaUnit || 'sqft',
         state: stateName.trim() || 'Telangana',
         district: finalDistrict,
         locality: locality.trim(),
@@ -282,6 +313,35 @@ export default function PostPropertyScreen() {
         target_irr: targetIrr ? Number(targetIrr) : undefined,
         video_url: videoUrl.trim() || undefined,
         image_urls: uploadedUrls,
+        // Shared
+        sub_type: newProp.subType || undefined,
+        floor_type: newProp.floorType || undefined,
+        // Residential
+        bedrooms: newProp.bedrooms ?? undefined,
+        bathrooms: newProp.bathrooms ?? undefined,
+        flooring: newProp.flooring || undefined,
+        kitchen_type: newProp.kitchenType || undefined,
+        parking_count: newProp.parkingCount ?? undefined,
+        club_house: newProp.clubHouse,
+        amenities: newProp.amenities || undefined,
+        // Commercial
+        furnished: newProp.furnished,
+        plug_and_play: newProp.plugAndPlay,
+        central_ac: newProp.centralAc,
+        preleased: newProp.preleased,
+        maintenance_avail: newProp.maintenanceAvail,
+        // Farm/Plot
+        fencing: newProp.fencing,
+        electricity_avail: newProp.electricityAvail,
+        farm_shed: newProp.farmShed,
+        bore_wells: newProp.boreWells,
+        plants_available: newProp.plantsAvailable,
+        loan_availability: newProp.loanAvailability,
+        land_registered: newProp.landRegistered,
+        pass_book: newProp.passBook,
+        raithu_bharosa: newProp.raithuBharosa,
+        approach_road: newProp.approachRoad || undefined,
+        under_irrigation: newProp.underIrrigation,
       };
 
       const res = await fetch(`${getApiUrl()}/api/properties`, {
@@ -351,6 +411,25 @@ export default function PostPropertyScreen() {
       router.replace('/');
     }
   };
+  if (profile && (profile.role === 'agent' || profile.role === 'builder') && profile.is_approved === false) {
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+        <Ionicons name="time-outline" size={80} color={GoldSystem.primary} style={{ marginBottom: 16 }} />
+        <Text style={{ fontSize: 24, fontWeight: '700', color: Neutrals.obsidian, marginBottom: 12, textAlign: 'center' }}>
+          Account Under Review
+        </Text>
+        <Text style={{ fontSize: 16, color: Neutrals.slate, textAlign: 'center', lineHeight: 24, marginBottom: 32 }}>
+          Your {profile.role} account is currently pending administrator approval. You can browse the app, but you will not be able to post properties until approved.
+        </Text>
+        <TouchableOpacity 
+          style={{ backgroundColor: Neutrals.obsidian, paddingVertical: 14, paddingHorizontal: 32, borderRadius: 12 }}
+          onPress={() => router.replace('/')}
+        >
+          <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>Return to Home</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -361,13 +440,13 @@ export default function PostPropertyScreen() {
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Post New Property</Text>
         <View style={styles.stepBadge}>
-          <Text style={styles.stepBadgeText}>Step {step}/4</Text>
+          <Text style={styles.stepBadgeText}>Step {step}/5</Text>
         </View>
       </View>
 
       {/* Stepper Progress Bar */}
       <View style={styles.stepProgressBarBg}>
-        <View style={[styles.stepProgressBarFill, { width: `${(step / 4) * 100}%` }]} />
+        <View style={[styles.stepProgressBarFill, { width: `${(step / 5) * 100}%` }]} />
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
@@ -542,14 +621,66 @@ export default function PostPropertyScreen() {
                   setStep(3);
                 }}
               >
+                <Text style={styles.primaryButtonText}>Continue to Features →</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* STEP 3: Property Features (Dynamic) */}
+        {step === 3 && (
+          <View style={styles.stepContainer}>
+            <Text style={styles.stepTitle}>Property Features</Text>
+            <Text style={styles.stepSubtitle}>Provide specific amenities and features based on asset type.</Text>
+
+            <Text style={styles.inputLabel}>Sub-Type</Text>
+            <View style={[styles.grid2, { marginBottom: 16 }]}>
+              {((category === 'Residential' || category === 'Holiday') 
+                ? ["Apartment", "Villa", "Independent House", "Row House", "Studio", "Penthouse"]
+                : (category === 'Investor')
+                ? ["Open Plot", "Farm Land", "Agricultural Land"]
+                : ["Office Space", "Retail Shop", "Showroom", "Warehouse", "Co-working"]
+              ).map(s => (
+                <TouchableOpacity
+                  key={s}
+                  style={[styles.tagBtn, newProp.subType === s && styles.tagBtnActive]}
+                  onPress={() => setNewProp({ ...newProp, subType: s })}
+                >
+                  <Text style={[styles.tagBtnText, newProp.subType === s && styles.tagBtnTextActive]}>{s}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {(category === 'Residential' || category === 'Holiday') && (
+              <>
+                <View style={styles.grid2Row}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.inputLabel}>Bedrooms</Text>
+                    <TextInput style={styles.textInput} keyboardType="numeric" placeholder="e.g. 3" value={newProp.bedrooms ? newProp.bedrooms.toString() : ''} onChangeText={t => setNewProp({...newProp, bedrooms: Number(t) || null})} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.inputLabel}>Bathrooms</Text>
+                    <TextInput style={styles.textInput} keyboardType="numeric" placeholder="e.g. 3" value={newProp.bathrooms ? newProp.bathrooms.toString() : ''} onChangeText={t => setNewProp({...newProp, bathrooms: Number(t) || null})} />
+                  </View>
+                </View>
+                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Amenities</Text>
+                <TextInput style={styles.textInput} placeholder="Comma separated: Gym, Pool, etc" value={newProp.amenities} onChangeText={t => setNewProp({...newProp, amenities: t})} />
+              </>
+            )}
+
+            <View style={styles.buttonRow}>
+              <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(2)}>
+                <Text style={styles.secondaryButtonText}>← Back</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.primaryButton, { flex: 2 }]} onPress={() => setStep(4)}>
                 <Text style={styles.primaryButtonText}>Continue to Location →</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
 
-        {/* STEP 3: Location & Google Maps */}
-        {step === 3 && (
+        {/* STEP 4: Location & Google Maps */}
+        {step === 4 && (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Location & Google Maps</Text>
             <Text style={styles.stepSubtitle}>Specify exact location and paste Google Maps share link.</Text>
@@ -585,31 +716,16 @@ export default function PostPropertyScreen() {
             <View style={styles.grid2Row}>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.inputLabel, { marginTop: 14 }]}>State *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  value={stateName}
-                  onChangeText={setStateName}
-                  placeholder="State"
-                />
+                <TextInput style={styles.textInput} value={stateName} onChangeText={setStateName} placeholder="State" />
               </View>
               <View style={{ flex: 1 }}>
                 <Text style={[styles.inputLabel, { marginTop: 14 }]}>Locality / Area *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  placeholder="e.g. Gachibowli"
-                  value={locality}
-                  onChangeText={setLocality}
-                />
+                <TextInput style={styles.textInput} placeholder="e.g. Gachibowli" value={locality} onChangeText={setLocality} />
               </View>
             </View>
 
             <Text style={[styles.inputLabel, { marginTop: 14 }]}>Full Street Address</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="e.g. Tower B, Financial District"
-              value={fullAddress}
-              onChangeText={setFullAddress}
-            />
+            <TextInput style={styles.textInput} placeholder="e.g. Tower B, Financial District" value={fullAddress} onChangeText={setFullAddress} />
 
             {/* Google Maps Link with Coords extraction */}
             <View style={styles.mapsCard}>
@@ -663,27 +779,24 @@ export default function PostPropertyScreen() {
             </View>
 
             <View style={styles.buttonRow}>
-              <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(2)}>
+              <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(3)}>
                 <Text style={styles.secondaryButtonText}>← Back</Text>
               </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.primaryButton, { flex: 2 }]}
-                onPress={() => {
+              <TouchableOpacity style={[styles.primaryButton, { flex: 2 }]} onPress={() => {
                   if (!locality.trim()) {
                     Alert.alert('Locality Required', 'Please enter the locality.');
                     return;
                   }
-                  setStep(4);
-                }}
-              >
+                  setStep(5);
+              }}>
                 <Text style={styles.primaryButtonText}>Continue to Media →</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
 
-        {/* STEP 4: Media & Submit */}
-        {step === 4 && (
+        {/* STEP 5: Media & Submit */}
+        {step === 5 && (
           <View style={styles.stepContainer}>
             <Text style={styles.stepTitle}>Media & Final Review</Text>
             <Text style={styles.stepSubtitle}>Upload high-resolution property images and video walkthrough.</Text>

@@ -24,7 +24,7 @@ export const propertyToCardProps = (p: any) => {
     : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=400&fit=crop'];
 
   const areaDisplay = p.area_sqft
-    ? `${Number(p.area_sqft).toLocaleString('en-IN')} sqft`
+    ? `${Number(p.area_sqft).toLocaleString('en-IN')} ${p.area_unit === 'acres' ? 'Acres' : 'sq.ft'}`
     : isOutright
       ? 'Outright Buy'
       : `${p.sold_fractions ?? 0}/${p.total_fractions ?? 100} sold`;
@@ -39,7 +39,9 @@ export const propertyToCardProps = (p: any) => {
         ? formatPrice(Number(p.price_per_fraction))
         : `${formatPrice(Number(p.price_per_fraction))} / fraction`,
     images,
-    bhk: p.property_type ? p.property_type.charAt(0).toUpperCase() + p.property_type.slice(1) : 'Property',
+    bhk: p.bedrooms 
+      ? `${p.bedrooms} BHK` 
+      : p.sub_type || (p.property_type ? p.property_type.charAt(0).toUpperCase() + p.property_type.slice(1) : 'Property'),
     area: areaDisplay,
     areaSuffix: '',
     score: p.assured_yield ? Number(p.assured_yield) : 4.5,

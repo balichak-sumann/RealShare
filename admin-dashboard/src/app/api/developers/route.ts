@@ -13,7 +13,7 @@ export async function GET() {
         orderBy: { created_at: 'desc' },
       }),
       prisma.profile.findMany({
-        where: { role: { in: ['builder', 'developer'] } },
+        where: { role: { in: ['builder', 'developer'] }, is_approved: true },
         include: {
           posted_properties: { select: { id: true, title: true, approval_status: true } },
         },
@@ -63,7 +63,7 @@ export async function GET() {
     return NextResponse.json(unifiedList);
   } catch (error) {
     console.error('Failed to fetch developers:', error);
-    return NextResponse.json({ error: 'Failed to fetch developers' }, { status: 500 });
+    return NextResponse.json({ error: String(error) }, { status: 500 });
   }
 }
 

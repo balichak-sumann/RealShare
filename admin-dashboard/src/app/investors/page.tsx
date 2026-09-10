@@ -63,6 +63,8 @@ interface Investor {
   rawTotalInvested: number;
   joinDate: string;
   avatar: string;
+  role: string;
+  is_approved: boolean;
   status: "Active" | "Deactivated" | "Banned";
   investments: InvestmentItem[];
   transactions: TransactionItem[];
@@ -126,6 +128,8 @@ function mapApiInvestor(inv: any): Investor {
         .slice(0, 2)
         .join("")
         .toUpperCase() || "IN",
+    role: inv.role || "investor",
+    is_approved: inv.is_approved ?? true,
     status: statusMap(),
     investments: inv.investments || [],
     transactions: inv.transactions || [],
@@ -153,6 +157,13 @@ const kycColors: Record<string, string> = {
   Rejected: "#DC2626",
   "Not Submitted": "#64748B",
 };
+
+function getFullImageUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  if (url.startsWith("http://") || url.startsWith("https://")) return url;
+  if (url.startsWith("/")) return url;
+  return `/uploads/${url}`;
+}
 
 export default function InvestorsPage() {
   const [investors, setInvestors] = useState<Investor[]>([]);
@@ -349,6 +360,17 @@ export default function InvestorsPage() {
     setInvestors((prev) => prev.map((inv) => (inv.id === id ? mapped : inv)));
     if (selectedInvestor?.id === id) setSelectedInvestor(mapped);
     setActionSuccess(`Account status changed to ${newStatus}`);
+    setTimeout(() => setActionSuccess(null), 4000);
+  };
+
+  // 5. Toggle Agent/Builder Approval
+  const handleToggleApproval = async (id: string, is_approved: boolean) => {
+    const updated = await patchInvestor(id, { is_approved });
+    if (!updated) return;
+    const mapped = mapApiInvestor(updated);
+    setInvestors((prev) => prev.map((inv) => (inv.id === id ? mapped : inv)));
+    if (selectedInvestor?.id === id) setSelectedInvestor(mapped);
+    setActionSuccess(`Account ${is_approved ? "Approved" : "Approval Revoked"}`);
     setTimeout(() => setActionSuccess(null), 4000);
   };
 
@@ -978,6 +1000,26 @@ export default function InvestorsPage() {
                     >
                       KYC: {selectedInvestor.kyc}
                     </span>
+                    {(selectedInvestor.role === "agent" || selectedInvestor.role === "builder") && (
+                      <span
+                        style={{
+                          fontSize: "0.7rem",
+                          padding: "2px 8px",
+                          borderRadius: "4px",
+                          fontWeight: 700,
+                          background: selectedInvestor.is_approved ? "#DCFCE7" : "#FEE2E2",
+                          color: selectedInvestor.is_approved ? "#15803D" : "#B91C1C",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "4px",
+                          cursor: "pointer",
+                        }}
+                        onClick={() => handleToggleApproval(selectedInvestor.id, !selectedInvestor.is_approved)}
+                        title={`Click to ${selectedInvestor.is_approved ? "revoke approval" : "approve"}`}
+                      >
+                        {selectedInvestor.is_approved ? "✓ Approved" : "⏳ Pending Approval"}
+                      </span>
+                    )}
                   </div>
                 </div>
               </div>
@@ -1673,7 +1715,7 @@ export default function InvestorsPage() {
                         </div>
                         {selectedInvestor.kycDetails.aadhaarFront ? (
                           <img
-                            src={selectedInvestor.kycDetails.aadhaarFront}
+                            src={getFullImageUrl(selectedInvestor.kycDetails.aadhaarFront)}
                             alt="Aadhaar Front"
                             style={{
                               width: "100%",
@@ -1718,7 +1760,7 @@ export default function InvestorsPage() {
                         </div>
                         {selectedInvestor.kycDetails.panFront ? (
                           <img
-                            src={selectedInvestor.kycDetails.panFront}
+                            src={getFullImageUrl(selectedInvestor.kycDetails.panFront)}
                             alt="PAN Front"
                             style={{
                               width: "100%",
@@ -1764,63 +1806,81 @@ export default function InvestorsPage() {
                     )}
 
                     {/* Verification Actions */}
-                    <div
-                      style={{
-                        background: "#F1F5F9",
-                        padding: "18px",
-                        borderRadius: "12px",
-                        border: "1px solid #CBD5E1",
-                      }}
-                    >
-                      <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "10px" }}>
-                        Verification Actions
-                      </h4>
-                      <textarea
-                        placeholder="Enter rejection reason or approval remarks..."
-                        value={rejectionReason}
-                        onChange={(e) => setRejectionReason(e.target.value)}
+                    {selectedInvestor.kyc === "Verified" ? (
+                      <div
                         style={{
-                          width: "100%",
-                          padding: "10px 12px",
-                          borderRadius: "8px",
-                          border: "1px solid #CBD5E1",
-                          fontSize: "0.85rem",
-                          minHeight: "60px",
-                          marginBottom: "12px",
-                          resize: "vertical",
+                          background: "#D1FAE5",
+                          border: "1px solid #10B981",
+                          borderRadius: "12px",
+                          padding: "16px",
+                          color: "#065F46",
+                          display: "flex",
+                          alignItems: "center",
+                          gap: "8px",
+                          fontWeight: 600,
                         }}
-                      />
-                      <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
-                        <button
-                          onClick={() => handleRejectKYC(selectedInvestor.id)}
-                          style={{
-                            padding: "8px 18px",
-                            borderRadius: "8px",
-                            backgroundColor: "#DC2626",
-                            color: "#fff",
-                            fontWeight: 700,
-                            border: "none",
-                            cursor: "pointer",
-                          }}
-                        >
-                          ✕ Reject KYC
-                        </button>
-                        <button
-                          onClick={() => handleApproveKYC(selectedInvestor.id)}
-                          style={{
-                            padding: "8px 22px",
-                            borderRadius: "8px",
-                            backgroundColor: "#16A34A",
-                            color: "#fff",
-                            fontWeight: 700,
-                            border: "none",
-                            cursor: "pointer",
-                          }}
-                        >
-                          ✓ Approve KYC
-                        </button>
+                      >
+                        ✓ This user's KYC has been successfully verified.
                       </div>
-                    </div>
+                    ) : (
+                      <div
+                        style={{
+                          background: "#F1F5F9",
+                          padding: "18px",
+                          borderRadius: "12px",
+                          border: "1px solid #CBD5E1",
+                        }}
+                      >
+                        <h4 style={{ fontSize: "0.9rem", fontWeight: 700, marginBottom: "10px" }}>
+                          Verification Actions
+                        </h4>
+                        <textarea
+                          placeholder="Enter rejection reason or approval remarks..."
+                          value={rejectionReason}
+                          onChange={(e) => setRejectionReason(e.target.value)}
+                          style={{
+                            width: "100%",
+                            padding: "10px 12px",
+                            borderRadius: "8px",
+                            border: "1px solid #CBD5E1",
+                            fontSize: "0.85rem",
+                            minHeight: "60px",
+                            marginBottom: "12px",
+                            resize: "vertical",
+                          }}
+                        />
+                        <div style={{ display: "flex", gap: "10px", justifyContent: "flex-end" }}>
+                          <button
+                            onClick={() => handleRejectKYC(selectedInvestor.id)}
+                            style={{
+                              padding: "8px 18px",
+                              borderRadius: "8px",
+                              backgroundColor: "#DC2626",
+                              color: "#fff",
+                              fontWeight: 700,
+                              border: "none",
+                              cursor: "pointer",
+                            }}
+                          >
+                            ✕ Reject KYC
+                          </button>
+                          <button
+                            onClick={() => handleApproveKYC(selectedInvestor.id)}
+                            style={{
+                              padding: "8px 22px",
+                              borderRadius: "8px",
+                              backgroundColor: "#16A34A",
+                              color: "#fff",
+                              fontWeight: 700,
+                              border: "none",
+                              cursor: "pointer",
+                            }}
+                          >
+                            ✓ Approve KYC
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div

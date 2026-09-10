@@ -102,6 +102,40 @@ export default function ClientsScreen() {
     Alert.alert('Success', 'Property pitched to client!');
   };
 
+  const handleDeleteClient = (clientId: string) => {
+    if (Platform.OS === 'web') {
+      if (!window.confirm('Are you sure you want to remove this client?')) return;
+      deleteClientConfirmed(clientId);
+    } else {
+      Alert.alert(
+        'Delete Client',
+        'Are you sure you want to remove this client?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: () => deleteClientConfirmed(clientId) }
+        ]
+      );
+    }
+  };
+
+  const deleteClientConfirmed = async (clientId: string) => {
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      const res = await fetch(`${getApiUrl()}/api/agents/clients?id=${clientId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        fetchClients();
+      } else {
+        Alert.alert('Error', 'Failed to delete client');
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', 'Failed to delete client');
+    }
+  };
+
   return (
     <TabAnimationWrapper>
       <View style={styles.container}>
@@ -135,9 +169,14 @@ export default function ClientsScreen() {
                     <Text style={styles.clientName}>{client.client_name}</Text>
                     <Text style={styles.clientPhone}>{client.phone_number}</Text>
                   </View>
-                  <TouchableOpacity style={styles.chatBadge} onPress={() => router.push(`/chat/${client.id}` as any)}>
-                    <Text style={styles.chatBadgeText}>💬 Chat</Text>
-                  </TouchableOpacity>
+                  <View style={{ flexDirection: 'row', gap: 8 }}>
+                    <TouchableOpacity style={styles.chatBadge} onPress={() => router.push(`/chat/${client.id}` as any)}>
+                      <Text style={styles.chatBadgeText}>💬 Chat</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={[styles.chatBadge, { backgroundColor: '#FEE2E2', paddingHorizontal: 10 }]} onPress={() => handleDeleteClient(client.id)}>
+                      <Text style={[styles.chatBadgeText, { color: '#EF4444' }]}>🗑️</Text>
+                    </TouchableOpacity>
+                  </View>
                 </View>
                 <View style={styles.clientFooter}>
                   <View>

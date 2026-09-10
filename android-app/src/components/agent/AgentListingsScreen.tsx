@@ -6,8 +6,9 @@ import {
 import { LinearGradient } from 'expo-linear-gradient';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { auth } from '@/lib/firebase';
-import { getApiUrl } from '@/lib/api';
+import { getApiUrl, getFullImageUrl } from '@/lib/api';
 import { useRouter } from 'expo-router';
+import * as ImagePicker from 'expo-image-picker';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -68,6 +69,50 @@ export function AgentListingsScreen() {
   const [fullAddress, setFullAddress] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [contactPhone, setContactPhone] = useState('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
+
+  const pickImage = async () => {
+    try {
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ['images'],
+        allowsEditing: true,
+        aspect: [16, 9],
+        quality: 0.8,
+        base64: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets[0].base64) {
+        setUploadingImage(true);
+        const token = await auth.currentUser?.getIdToken();
+        const res = await fetch(`${getApiUrl()}/api/upload`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            imageBase64: result.assets[0].base64,
+            fileName: 'property_listing.jpg'
+          })
+        });
+
+        if (res.ok) {
+          const data = await res.json();
+          if (data.url) {
+            setImageUrl(data.url);
+          }
+        } else {
+          Alert.alert('Upload Failed', 'Could not upload the image to the server.');
+        }
+      }
+    } catch (error) {
+      console.error('Image picking error', error);
+      Alert.alert('Error', 'Failed to pick image.');
+    } finally {
+      setUploadingImage(false);
+    }
+  };
 
   useEffect(() => {
     fetchListings();
@@ -98,17 +143,19 @@ export function AgentListingsScreen() {
     setAssuredYield(''); setTargetIrr('');
     setStateName(''); setDistrict(''); setLocality('');
     setFullAddress(''); setImageUrl(''); setContactPhone('');
+    setErrorMsg('');
   };
 
   const handleSubmitListing = async () => {
+    setErrorMsg('');
     if (!title.trim() || !pricePerFraction.trim() || !stateName.trim() || !district.trim() || !locality.trim()) {
-      Alert.alert('Missing Fields', 'Please fill in all required fields: Title, Price, State, District, and Locality.');
+      setErrorMsg('Please fill in all required fields: Title, Price, State, District, and Locality.');
       return;
     }
     if (contactPhone) {
       const cleanedPhone = contactPhone.replace(/\D/g, '').slice(-10);
       if (cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
-        Alert.alert('Invalid Mobile Number', 'Please enter a valid 10-digit contact mobile number starting with 7, 8, 9, or 6.');
+        setErrorMsg('Please enter a valid 10-digit mobile number.');
         return;
       }
     }
@@ -138,16 +185,21 @@ export function AgentListingsScreen() {
         }),
       });
       if (res.ok) {
-        Alert.alert('Submitted!', 'Your listing has been submitted for admin approval. You can track its status here.');
+        Alert.alert('Submitted!', 'Your listing has been submitted for admin approval.');
         setShowSubmitForm(false);
         resetForm();
         fetchListings();
       } else {
-        const err = await res.json();
-        Alert.alert('Error', err.error || 'Failed to submit listing.');
+        const errText = await res.text();
+        try {
+          const err = JSON.parse(errText);
+          setErrorMsg(err.error || 'Failed to submit listing.');
+        } catch (e) {
+          setErrorMsg(`Server Error: ${errText.substring(0, 100)}`);
+        }
       }
-    } catch (err) {
-      Alert.alert('Error', 'An unexpected error occurred.');
+    } catch (err: any) {
+      setErrorMsg(`Network Error: ${err.message}`);
     } finally {
       setSubmitting(false);
     }
@@ -155,6 +207,11 @@ export function AgentListingsScreen() {
 
   const handleEditListing = async () => {
     if (!editingListing) return;
+    setErrorMsg('');
+    if (!title.trim() || !pricePerFraction.trim() || !stateName.trim() || !district.trim() || !locality.trim()) {
+      setErrorMsg('Please fill in all required fields: Title, Price, State, District, and Locality.');
+      return;
+    }
     setSubmitting(true);
     try {
       const token = await auth.currentUser?.getIdToken();
@@ -236,6 +293,7 @@ export function AgentListingsScreen() {
     setDistrict(listing.district);
     setLocality(listing.locality);
     setFullAddress(listing.full_address || '');
+    setErrorMsg('');
     setShowEditForm(true);
   };
 
@@ -323,8 +381,25 @@ export function AgentListingsScreen() {
           {!isEdit && (
             <>
               <Text style={styles.sectionLabel}>📸 Photo</Text>
-              <Text style={styles.fieldLabel}>Image URL</Text>
-              <TextInput style={styles.fieldInput} value={imageUrl} onChangeText={setImageUrl} placeholder="https://example.com/photo.jpg" placeholderTextColor="#9CA3AF" />
+              {imageUrl ? (
+                <View style={{ marginBottom: 16 }}>
+                  <Image source={{ uri: getFullImageUrl(imageUrl) }} style={{ width: '100%', height: 200, borderRadius: 12, marginBottom: 8 }} />
+                  <TouchableOpacity onPress={() => setImageUrl('')} style={{ alignSelf: 'flex-start', padding: 8, backgroundColor: '#FEE2E2', borderRadius: 6 }}>
+                    <Text style={{ color: '#991B1B', fontWeight: 'bold', fontSize: 13 }}>Remove Photo</Text>
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <TouchableOpacity style={styles.uploadBtn} onPress={pickImage} disabled={uploadingImage}>
+                  {uploadingImage ? (
+                    <ActivityIndicator color="#D4AF37" />
+                  ) : (
+                    <>
+                      <Text style={{ fontSize: 32, marginBottom: 8 }}>📁</Text>
+                      <Text style={styles.uploadBtnText}>Tap to Upload Photo</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              )}
             </>
           )}
 
@@ -336,6 +411,13 @@ export function AgentListingsScreen() {
               <TextInput style={styles.fieldInput} value={contactPhone} onChangeText={setContactPhone} placeholder="e.g. +91 9876543210" keyboardType="phone-pad" placeholderTextColor="#9CA3AF" />
             </>
           )}
+
+          {/* Error Message */}
+          {errorMsg ? (
+            <Text style={{ color: '#EF4444', fontSize: 13, fontWeight: '700', marginBottom: 12, textAlign: 'center' }}>
+              ⚠️ {errorMsg}
+            </Text>
+          ) : null}
 
           {/* Submit Button */}
           <TouchableOpacity
@@ -583,4 +665,9 @@ const styles = StyleSheet.create({
     alignItems: 'center', marginTop: 10,
   },
   submitBtnText: { color: '#111827', fontSize: 16, fontWeight: '800' },
+  uploadBtn: {
+    backgroundColor: '#F9FAFB', borderWidth: 2, borderColor: '#E5E7EB', borderStyle: 'dashed',
+    borderRadius: 12, padding: 32, alignItems: 'center', justifyContent: 'center', marginBottom: 16
+  },
+  uploadBtnText: { color: '#6B7280', fontSize: 15, fontWeight: '600' },
 });

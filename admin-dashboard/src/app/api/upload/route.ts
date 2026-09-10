@@ -20,33 +20,50 @@ export async function POST(req: Request) {
     if (!auth.ok) return auth.response;
 
     const userRole = (auth.role || '').toLowerCase();
-    if (!['admin', 'agent', 'builder'].includes(userRole)) {
+    if (!['admin', 'agent', 'builder', 'investor'].includes(userRole)) {
       return NextResponse.json(
-        { error: 'Forbidden: Only admins, agents, and builders can upload media.' },
+        { error: 'Forbidden: You do not have permission to upload media.' },
         { status: 403 }
       );
     }
 
-    const formData = await req.formData();
-    const file = formData.get('file') as File | null;
+    let fileBuffer: Buffer | null = null;
+    let originalName = 'upload.bin';
 
-    if (!file) {
-      return NextResponse.json({ error: 'No file provided in field "file"' }, { status: 400 });
-    }
+    const contentType = req.headers.get('content-type') || '';
+    if (contentType.includes('application/json')) {
+      const body = await req.json();
+      if (!body.imageBase64) {
+        return NextResponse.json({ error: 'No imageBase64 provided in JSON body' }, { status: 400 });
+      }
+      const base64Data = body.imageBase64.replace(/^data:image\/\w+;base64,/, '');
+      fileBuffer = Buffer.from(base64Data, 'base64');
+      originalName = body.fileName || `upload_${Date.now()}.jpg`;
+    } else {
+      const formData = await req.formData();
+      const file = formData.get('file') as File | null;
 
-    // Validate MIME type — only allow image and video files.
-    const allowedTypes = [
-      'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif',
-      'video/mp4', 'video/quicktime', 'video/webm',
-    ];
-    if (!allowedTypes.includes(file.type)) {
-      return NextResponse.json({ error: `File type "${file.type}" is not allowed.` }, { status: 400 });
-    }
+      if (!file) {
+        return NextResponse.json({ error: 'No file provided in field "file"' }, { status: 400 });
+      }
 
-    // Max 20MB
-    const MAX_BYTES = 20 * 1024 * 1024;
-    if (file.size > MAX_BYTES) {
-      return NextResponse.json({ error: 'File exceeds the 20MB size limit.' }, { status: 400 });
+      // Validate MIME type — only allow image and video files.
+      const allowedTypes = [
+        'image/jpeg', 'image/png', 'image/webp', 'image/gif', 'image/avif',
+        'video/mp4', 'video/quicktime', 'video/webm',
+      ];
+      if (!allowedTypes.includes(file.type)) {
+        return NextResponse.json({ error: `File type "${file.type}" is not allowed.` }, { status: 400 });
+      }
+
+      // Max 20MB
+      const MAX_BYTES = 20 * 1024 * 1024;
+      if (file.size > MAX_BYTES) {
+        return NextResponse.json({ error: 'File exceeds the 20MB size limit.' }, { status: 400 });
+      }
+      
+      fileBuffer = Buffer.from(await file.arrayBuffer());
+      originalName = file.name;
     }
 
     const uploadsDir = path.join(process.cwd(), 'public', 'uploads');
@@ -54,14 +71,13 @@ export async function POST(req: Request) {
       fs.mkdirSync(uploadsDir, { recursive: true });
     }
 
-    const ext = path.extname(file.name) || '.bin';
+    const ext = path.extname(originalName) || '.bin';
     const safeName = `${Date.now()}_${Math.random().toString(36).slice(2)}${ext}`;
     const filePath = path.join(uploadsDir, safeName);
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    await fs.promises.writeFile(filePath, buffer);
+    await fs.promises.writeFile(filePath, fileBuffer);
 
-    const publicUrl = `${getBaseUrl()}/uploads/${safeName}`;
+    const publicUrl = `/uploads/${safeName}`;
     return NextResponse.json({ success: true, url: publicUrl });
   } catch (error: any) {
     console.error('Upload error:', error);

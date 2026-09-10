@@ -251,7 +251,7 @@ export async function POST(request: Request) {
       const created = await tx.property.create({
         data: {
           title: data.title.trim(),
-          short_description: data.short_description ? data.short_description.trim() : null,
+          // short_description: data.short_description ? data.short_description.trim() : null,
           description: data.description.trim(),
           property_type: data.property_type,
           listing_type: listingType,
@@ -308,7 +308,7 @@ export async function POST(request: Request) {
     return NextResponse.json(attachComputedFields(property), { status: 201 });
   } catch (error: any) {
     console.error('Failed to create property:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create property' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to create property', details: error.toString() }, { status: 500 });
   }
 }
 

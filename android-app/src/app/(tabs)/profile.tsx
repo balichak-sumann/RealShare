@@ -148,15 +148,11 @@ export default function ProfileScreen() {
     
     try {
       if (otpType === 'phone') {
-        if (Platform.OS === 'web') {
-          Alert.alert('Not Supported', 'Phone verification on Web is currently disabled during migration.');
-        } else {
-          // SMS OTP sending requires either native firebase or a RecaptchaVerifier.
-          // For now, we simulate success and rely on the bypass code 123456
-          setVerificationId('simulated-id');
-          setOtpStep('code');
-          console.log('OTP simulated. Use code 123456 to verify.');
-        }
+        // SMS OTP sending requires either native firebase or a RecaptchaVerifier.
+        // For now, we simulate success and rely on the bypass code 123456
+        setVerificationId('simulated-id');
+        setOtpStep('code');
+        console.log('OTP simulated. Use code 123456 to verify.');
       } else {
         if (auth.currentUser) {
           await verifyBeforeUpdateEmail(auth.currentUser, inputValue);
@@ -192,9 +188,14 @@ export default function ProfileScreen() {
         }
         
         const token = await auth.currentUser.getIdToken();
+        const syncBody = JSON.stringify({ phone_number: `+91 ${inputValue}` });
         await fetch(`${getApiUrl()}/api/users/sync`, {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${token}` }
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          },
+          body: syncBody
         });
 
         if (user) {
@@ -544,7 +545,10 @@ export default function ProfileScreen() {
                         // 1. Upload Base64 to Local Admin Dashboard Server
                         const uploadRes = await fetch(`${getApiUrl()}/api/upload`, {
                           method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
+                          headers: { 
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}` 
+                          },
                           body: JSON.stringify({
                             imageBase64: base64Data,
                             fileName: `kyc_${doc.type}.jpg`
@@ -647,12 +651,20 @@ export default function ProfileScreen() {
         ]}>
           <Text style={styles.sectionTitle}>Quick Actions</Text>
           <View style={styles.actionsGrid}>
-            {[
-              { icon: 'home-outline' as const, label: 'My Assets', route: '/my-assets', color: '#14B8A6' },
-              { icon: 'receipt-outline' as const, label: 'A/C Ledger', route: '/ledger', color: '#3B82F6' },
-              { icon: 'trending-up-outline' as const, label: 'Investments', route: '/portfolio?from=profile', color: '#10B981' },
-              { icon: 'help-circle-outline' as const, label: 'Support Tickets', route: '/my-tickets', color: '#8B5CF6' },
-            ].map((action) => (
+            {(user?.role === 'agent' 
+              ? [
+                  { icon: 'briefcase-outline' as const, label: 'Agent Console', route: '/', color: '#D4AF37' },
+                  { icon: 'people-outline' as const, label: 'My Clients', route: '/clients', color: '#3B82F6' },
+                  { icon: 'add-circle-outline' as const, label: 'Post Property', route: '/post-property', color: '#10B981' },
+                  { icon: 'help-circle-outline' as const, label: 'Support Tickets', route: '/my-tickets', color: '#8B5CF6' },
+                ]
+              : [
+                  { icon: 'home-outline' as const, label: 'My Assets', route: '/my-assets', color: '#14B8A6' },
+                  { icon: 'receipt-outline' as const, label: 'A/C Ledger', route: '/ledger', color: '#3B82F6' },
+                  { icon: 'trending-up-outline' as const, label: 'Investments', route: '/portfolio?from=profile', color: '#10B981' },
+                  { icon: 'help-circle-outline' as const, label: 'Support Tickets', route: '/my-tickets', color: '#8B5CF6' },
+                ]
+            ).map((action) => (
               <TouchableOpacity
                 key={action.label}
                 style={styles.actionCard}

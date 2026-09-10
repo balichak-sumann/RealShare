@@ -17,6 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useResponsive } from '@/hooks/useResponsive';
 import { auth } from '@/lib/firebase';
 import { getApiUrl } from '@/lib/api';
+import { HelpModal } from '@/components/help/HelpModal';
 
 interface Ticket {
   id: string;
@@ -38,6 +39,7 @@ export default function MyTicketsScreen() {
   const [loading, setLoading] = useState(true);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [openingConversationId, setOpeningConversationId] = useState<string | null>(null);
+  const [helpModalVisible, setHelpModalVisible] = useState(false);
 
   const slideAnim = useRef(new Animated.Value(20)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -163,6 +165,15 @@ export default function MyTicketsScreen() {
             <Text style={styles.emptyIcon}>🎫</Text>
             <Text style={styles.emptyTitle}>No Support Tickets</Text>
             <Text style={styles.emptySub}>You haven't raised any support tickets yet.</Text>
+            
+            <TouchableOpacity 
+              style={styles.newTicketEmptyBtn}
+              activeOpacity={0.8}
+              onPress={() => setHelpModalVisible(true)}
+            >
+              <Ionicons name="add-circle-outline" size={20} color={Neutrals.obsidian} style={{ marginRight: 8 }} />
+              <Text style={styles.newTicketEmptyBtnText}>Raise a Ticket</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           tickets.map(ticket => {
@@ -257,6 +268,24 @@ export default function MyTicketsScreen() {
           })
         )}
       </Animated.ScrollView>
+
+      {tickets.length > 0 && (
+        <TouchableOpacity 
+          style={styles.fab} 
+          activeOpacity={0.8} 
+          onPress={() => setHelpModalVisible(true)}
+        >
+          <Ionicons name="add" size={32} color={Neutrals.obsidian} />
+        </TouchableOpacity>
+      )}
+
+      <HelpModal 
+        visible={helpModalVisible} 
+        onClose={() => {
+          setHelpModalVisible(false);
+          fetchTickets();
+        }} 
+      />
     </View>
   );
 }
@@ -455,5 +484,33 @@ const styles = StyleSheet.create({
       ...Typography.caption,
       color: Neutrals.gray500,
       marginTop: 2,
+  },
+  newTicketEmptyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: GoldSystem.primaryGold,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: Radius.full,
+    marginTop: 24,
+    ...Shadows.medium,
+  },
+  newTicketEmptyBtnText: {
+    ...Typography.bodyLarge,
+    fontWeight: '700',
+    color: Neutrals.obsidian,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: GoldSystem.primaryGold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.strong,
+    zIndex: 100,
   }
 });

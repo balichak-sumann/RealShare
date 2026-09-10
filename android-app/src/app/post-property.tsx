@@ -298,38 +298,51 @@ export default function PostPropertyScreen() {
         throw new Error(data.error || 'Failed to create listing');
       }
 
-      Alert.alert(
-        'Success! 🎉',
-        `Property "${title}" has been submitted successfully${profile?.role === 'admin' ? ' and is now LIVE' : ' and is pending admin approval'}.`,
-        [
-          {
-            text: 'View Property',
-            onPress: () => {
-              if (data.id) {
-                router.replace(`/property/${data.id}`);
-              } else if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace('/');
-              }
+      const successMsg = `Property "${title}" has been submitted successfully${profile?.role === 'admin' ? ' and is now LIVE' : ' and is pending admin approval'}.`;
+      
+      if (Platform.OS === 'web') {
+        alert('Success! 🎉\n\n' + successMsg);
+        if (profile?.role === 'agent') {
+          router.replace('/agent-portal');
+        } else if (profile?.role === 'builder') {
+          router.replace('/builder-portal');
+        } else {
+          router.replace('/');
+        }
+      } else {
+        Alert.alert(
+          'Success! 🎉',
+          successMsg,
+          [
+            {
+              text: 'View Property',
+              onPress: () => {
+                if (data.id) {
+                  router.replace(`/property/${data.id}`);
+                } else if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/');
+                }
+              },
             },
-          },
-          {
-            text: 'Return to Portal',
-            onPress: () => {
-              if (profile?.role === 'agent') {
-                router.replace('/agent-portal');
-              } else if (profile?.role === 'builder') {
-                router.replace('/builder-portal');
-              } else if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace('/');
-              }
+            {
+              text: 'Return to Portal',
+              onPress: () => {
+                if (profile?.role === 'agent') {
+                  router.replace('/agent-portal');
+                } else if (profile?.role === 'builder') {
+                  router.replace('/builder-portal');
+                } else if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/');
+                }
+              },
             },
-          },
-        ]
-      );
+          ]
+        );
+      }
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to submit property listing.');
     } finally {

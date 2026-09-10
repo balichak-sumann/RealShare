@@ -56,6 +56,7 @@ export function WebFooter() {
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity onPress={() => router.push('/privacy-policy' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Privacy</Text></TouchableOpacity>
             <TouchableOpacity onPress={() => router.push('/terms-of-service' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Terms</Text></TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push('/disclaimer' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Disclaimer</Text></TouchableOpacity>
           </View>
         </View>
         <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>{"RealShare Properties Pvt. Ltd.\nNizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212"}</Text>
@@ -95,6 +96,7 @@ export function WebFooter() {
             <Text style={styles.colTitle}>Legal</Text>
             <FooterLink label="Privacy Policy" href="/privacy-policy" />
             <FooterLink label="Terms of Service" href="/terms-of-service" />
+            <FooterLink label="Disclaimer" href="/disclaimer" />
           </View>
 
           <View style={styles.col}>

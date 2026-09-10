@@ -131,7 +131,7 @@ export function ServicesStrip() {
           ))}
         </View>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+        <View style={styles.mobileGrid}>
           {services.map((service) => (
             <AnimatedServiceItem 
               key={service.id} 
@@ -140,7 +140,7 @@ export function ServicesStrip() {
               onPress={() => router.push('/services')}
             />
           ))}
-        </ScrollView>
+        </View>
       )}
     </View>
   );
@@ -151,9 +151,11 @@ const styles = StyleSheet.create({
     marginTop: 24,
     marginBottom: 40,
   },
-  scrollContent: {
+  mobileGrid: {
+    flexDirection: 'row',
     paddingHorizontal: 16,
-    gap: 16,
+    gap: 12,
+    justifyContent: 'space-between',
   },
   desktopGrid: {
     flexDirection: 'row',
@@ -162,8 +164,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
   },
   serviceItem: {
-    width: 160,
-    height: 200,
+    flex: 1,
+    height: 140,
     borderRadius: Radius.lg,
     ...Shadows.medium,
   },
@@ -194,8 +196,11 @@ const styles = StyleSheet.create({
   },
   title: {
     ...Typography.labelMedium,
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
     color: Neutrals.surface,
-    padding: 16,
+    padding: 8,
     zIndex: 2,
     textShadowColor: 'rgba(0, 0, 0, 0.7)',
     textShadowOffset: { width: 0, height: 1 },

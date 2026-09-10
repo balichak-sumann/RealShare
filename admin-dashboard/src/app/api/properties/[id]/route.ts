@@ -179,6 +179,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         central_ac: data.central_ac !== undefined ? Boolean(data.central_ac) : undefined,
         preleased: data.preleased !== undefined ? Boolean(data.preleased) : undefined,
         maintenance_avail: data.maintenance_avail !== undefined ? Boolean(data.maintenance_avail) : undefined,
+        food_courts: data.food_courts !== undefined ? Boolean(data.food_courts) : undefined,
         // Plot / Farm fields
         fencing: data.fencing !== undefined ? Boolean(data.fencing) : undefined,
         electricity_avail: data.electricity_avail !== undefined ? Boolean(data.electricity_avail) : undefined,
@@ -191,6 +192,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         raithu_bharosa: data.raithu_bharosa !== undefined ? Boolean(data.raithu_bharosa) : undefined,
         approach_road: data.approach_road !== undefined ? data.approach_road : undefined,
         under_irrigation: data.under_irrigation !== undefined ? Boolean(data.under_irrigation) : undefined,
+        ownership_type: data.ownership_type !== undefined ? data.ownership_type : undefined,
       },
       include: {
         images: {

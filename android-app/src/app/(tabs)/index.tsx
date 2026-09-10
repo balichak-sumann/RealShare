@@ -116,11 +116,18 @@ export default function HomeScreen() {
       sortSoldOutLast(a, b, (x, y) => new Date(y.created_at || 0).getTime() - new Date(x.created_at || 0).getTime())
     );
 
+    const allowedMakuta = [
+      'makuta horizon', 'makuta nirvana', 'makuta green woods', 'makuta taranga',
+      'makuta prime', 'makuta aruna arcade', 'makuta mall'
+    ];
+    const makutaProjects = byCategory.filter(p => allowedMakuta.includes((p.title || '').toLowerCase()));
+
     return {
       hot: sortedHot.slice(0, 10),
       rental: byCategory.filter(p => p.listing_type === 'rental').sort((a, b) => sortSoldOutLast(a, b, () => 0)).slice(0, 10),
       resale: byCategory.filter(p => p.listing_type === 'resale').sort((a, b) => sortSoldOutLast(a, b, () => 0)).slice(0, 10),
       newProjects: sortedNew.slice(0, 8),
+      makutaProjects,
     };
   }, [allCityProperties, activeCategory]);
 
@@ -304,7 +311,7 @@ export default function HomeScreen() {
         </View>
 
         {/* 3. Projects in Hyderabad */}
-        <HotProjects properties={filtered.newProjects} />
+        <HotProjects properties={filtered.makutaProjects} />
 
         {/* 4. Sell or Rent Properties For Free */}
         <PostPropertyBanner />

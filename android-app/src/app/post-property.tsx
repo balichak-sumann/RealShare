@@ -98,6 +98,8 @@ export default function PostPropertyScreen() {
     raithuBharosa: false,
     approachRoad: "",
     underIrrigation: false,
+    foodCourts: false,
+    ownershipType: "Single",
   });
 
   // Financials
@@ -330,6 +332,7 @@ export default function PostPropertyScreen() {
         central_ac: newProp.centralAc,
         preleased: newProp.preleased,
         maintenance_avail: newProp.maintenanceAvail,
+        food_courts: newProp.foodCourts,
         // Farm/Plot
         fencing: newProp.fencing,
         electricity_avail: newProp.electricityAvail,
@@ -342,6 +345,7 @@ export default function PostPropertyScreen() {
         raithu_bharosa: newProp.raithuBharosa,
         approach_road: newProp.approachRoad || undefined,
         under_irrigation: newProp.underIrrigation,
+        ownership_type: newProp.ownershipType || undefined,
       };
 
       const res = await fetch(`${getApiUrl()}/api/properties`, {
@@ -653,6 +657,14 @@ export default function PostPropertyScreen() {
 
             {(category === 'Residential' || category === 'Holiday') && (
               <>
+                <Text style={styles.inputLabel}>Floor Type</Text>
+                <View style={[styles.grid2, { marginBottom: 16 }]}>
+                  {["High Rise", "Low Rise", "Multiple"].map(f => (
+                    <TouchableOpacity key={f} style={[styles.tagBtn, newProp.floorType === f && styles.tagBtnActive]} onPress={() => setNewProp({ ...newProp, floorType: f })}>
+                      <Text style={[styles.tagBtnText, newProp.floorType === f && styles.tagBtnTextActive]}>{f}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
                 <View style={styles.grid2Row}>
                   <View style={{ flex: 1 }}>
                     <Text style={styles.inputLabel}>Bedrooms</Text>
@@ -663,8 +675,123 @@ export default function PostPropertyScreen() {
                     <TextInput style={styles.textInput} keyboardType="numeric" placeholder="e.g. 3" value={newProp.bathrooms ? newProp.bathrooms.toString() : ''} onChangeText={t => setNewProp({...newProp, bathrooms: Number(t) || null})} />
                   </View>
                 </View>
+                <View style={styles.grid2Row}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.inputLabel, { marginTop: 14 }]}>Parking Count</Text>
+                    <TextInput style={styles.textInput} keyboardType="numeric" placeholder="e.g. 2" value={newProp.parkingCount ? newProp.parkingCount.toString() : ''} onChangeText={t => setNewProp({...newProp, parkingCount: Number(t) || null})} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.inputLabel, { marginTop: 14 }]}>Flooring</Text>
+                    <TextInput style={styles.textInput} placeholder="e.g. Vitrified" value={newProp.flooring} onChangeText={t => setNewProp({...newProp, flooring: t})} />
+                  </View>
+                </View>
+                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Kitchen Type</Text>
+                <View style={[styles.grid2, { marginBottom: 16 }]}>
+                  {["Modular", "Open", "Semi-Modular"].map(k => (
+                    <TouchableOpacity key={k} style={[styles.tagBtn, newProp.kitchenType === k && styles.tagBtnActive]} onPress={() => setNewProp({ ...newProp, kitchenType: k })}>
+                      <Text style={[styles.tagBtnText, newProp.kitchenType === k && styles.tagBtnTextActive]}>{k}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Features</Text>
+                <View style={[styles.grid2, { marginBottom: 16 }]}>
+                  <TouchableOpacity style={[styles.tagBtn, newProp.clubHouse && styles.tagBtnActive]} onPress={() => setNewProp({ ...newProp, clubHouse: !newProp.clubHouse })}>
+                    <Text style={[styles.tagBtnText, newProp.clubHouse && styles.tagBtnTextActive]}>Club House</Text>
+                  </TouchableOpacity>
+                </View>
                 <Text style={[styles.inputLabel, { marginTop: 14 }]}>Amenities</Text>
                 <TextInput style={styles.textInput} placeholder="Comma separated: Gym, Pool, etc" value={newProp.amenities} onChangeText={t => setNewProp({...newProp, amenities: t})} />
+              </>
+            )}
+
+            {(category === 'Commercial' || category === 'Fractional') && (
+              <>
+                <Text style={styles.inputLabel}>Floor Type</Text>
+                <View style={[styles.grid2, { marginBottom: 16 }]}>
+                  {["High Rise", "Low Rise", "Multiple"].map(f => (
+                    <TouchableOpacity key={f} style={[styles.tagBtn, newProp.floorType === f && styles.tagBtnActive]} onPress={() => setNewProp({ ...newProp, floorType: f })}>
+                      <Text style={[styles.tagBtnText, newProp.floorType === f && styles.tagBtnTextActive]}>{f}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <View style={styles.grid2Row}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.inputLabel, { marginTop: 14 }]}>Parking Count</Text>
+                    <TextInput style={styles.textInput} keyboardType="numeric" placeholder="e.g. 5" value={newProp.parkingCount ? newProp.parkingCount.toString() : ''} onChangeText={t => setNewProp({...newProp, parkingCount: Number(t) || null})} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.inputLabel, { marginTop: 14 }]}>Flooring</Text>
+                    <TextInput style={styles.textInput} placeholder="e.g. Marble" value={newProp.flooring} onChangeText={t => setNewProp({...newProp, flooring: t})} />
+                  </View>
+                </View>
+                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Features & Status</Text>
+                <View style={[styles.grid2, { marginBottom: 16 }]}>
+                  {[
+                    { key: 'furnished', label: 'Furnished' },
+                    { key: 'plugAndPlay', label: 'Plug & Play' },
+                    { key: 'centralAc', label: 'Central AC' },
+                    { key: 'preleased', label: 'Preleased' },
+                    { key: 'maintenanceAvail', label: 'Maintenance' },
+                    { key: 'foodCourts', label: 'Food Courts' },
+                  ].map(f => (
+                    <TouchableOpacity key={f.key} style={[styles.tagBtn, (newProp as any)[f.key] && styles.tagBtnActive]} onPress={() => setNewProp({ ...newProp, [f.key]: !(newProp as any)[f.key] })}>
+                      <Text style={[styles.tagBtnText, (newProp as any)[f.key] && styles.tagBtnTextActive]}>{f.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Amenities</Text>
+                <TextInput style={styles.textInput} placeholder="Comma separated: Gym, ATM, etc" value={newProp.amenities} onChangeText={t => setNewProp({...newProp, amenities: t})} />
+              </>
+            )}
+
+            {category === 'Investor' && (
+              <>
+                <Text style={styles.inputLabel}>Area Unit</Text>
+                <View style={[styles.grid2, { marginBottom: 16 }]}>
+                  {["sqft", "acres"].map(u => (
+                    <TouchableOpacity key={u} style={[styles.tagBtn, newProp.areaUnit === u && styles.tagBtnActive]} onPress={() => setNewProp({ ...newProp, areaUnit: u as any })}>
+                      <Text style={[styles.tagBtnText, newProp.areaUnit === u && styles.tagBtnTextActive]}>{u}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Ownership Type</Text>
+                <View style={[styles.grid2, { marginBottom: 16 }]}>
+                  {["Single", "Multiple"].map(o => (
+                    <TouchableOpacity key={o} style={[styles.tagBtn, newProp.ownershipType === o && styles.tagBtnActive]} onPress={() => setNewProp({ ...newProp, ownershipType: o })}>
+                      <Text style={[styles.tagBtnText, newProp.ownershipType === o && styles.tagBtnTextActive]}>{o}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Approach Road</Text>
+                <View style={[styles.grid2, { marginBottom: 16 }]}>
+                  {["BT Road", "Village Road", "Katcha"].map(r => (
+                    <TouchableOpacity key={r} style={[styles.tagBtn, newProp.approachRoad === r && styles.tagBtnActive]} onPress={() => setNewProp({ ...newProp, approachRoad: r })}>
+                      <Text style={[styles.tagBtnText, newProp.approachRoad === r && styles.tagBtnTextActive]}>{r}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+
+                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Features</Text>
+                <View style={[styles.grid2, { marginBottom: 16 }]}>
+                  {[
+                    { key: 'fencing', label: 'Fencing' },
+                    { key: 'electricityAvail', label: 'Electricity' },
+                    { key: 'farmShed', label: 'Farm Shed' },
+                    { key: 'boreWells', label: 'Bore Wells' },
+                    { key: 'plantsAvailable', label: 'Plants Available' },
+                    { key: 'loanAvailability', label: 'Loan Available' },
+                    { key: 'landRegistered', label: 'Land Registered' },
+                    { key: 'passBook', label: 'Pass Book' },
+                    { key: 'raithuBharosa', label: 'Raithu Bharosa' },
+                    { key: 'underIrrigation', label: 'Under Irrigation' },
+                  ].map(f => (
+                    <TouchableOpacity key={f.key} style={[styles.tagBtn, (newProp as any)[f.key] && styles.tagBtnActive]} onPress={() => setNewProp({ ...newProp, [f.key]: !(newProp as any)[f.key] })}>
+                      <Text style={[styles.tagBtnText, (newProp as any)[f.key] && styles.tagBtnTextActive]}>{f.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
               </>
             )}
 

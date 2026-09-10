@@ -123,6 +123,7 @@ model Property {
   central_ac          Boolean?
   preleased           Boolean?
   maintenance_avail   Boolean?
+  food_courts         Boolean?
 
   // Plot / Farm Land specific
   fencing             Boolean?
@@ -136,6 +137,7 @@ model Property {
   raithu_bharosa      Boolean?
   approach_road       String?   @db.VarChar(50)   // "BT Road" | "Village Road" | "Katcha"
   under_irrigation    Boolean?
+  ownership_type      String?   @db.VarChar(50)   // "Single" | "Multiple"
 
   created_at          DateTime  @default(now()) @db.Timestamptz(6)
   updated_at          DateTime  @default(now()) @updatedAt @db.Timestamptz(6)

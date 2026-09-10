@@ -37,3 +37,4 @@ const styles = StyleSheet.create({
     paddingBottom: 20, // For shadow
   },
 });
+

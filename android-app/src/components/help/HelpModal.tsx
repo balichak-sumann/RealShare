@@ -196,7 +196,7 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
                     >
                       {CATEGORIES.map((item) => {
                         const isSelected = category === item.id;
-                        const columns = isDesktop ? 3 : 2;
+                        const columns = 2;
                         const cardWidth = (contentWidth - (16 * (columns - 1))) / columns;
                         
                         return (

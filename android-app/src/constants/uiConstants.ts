@@ -14,5 +14,5 @@ export const QUICK_ACTIONS = [
   { id: 'q1', title: 'Buy Property', subtitle: 'Zero brokerage', icon: 'home-outline', route: '/(tabs)/search' },
   { id: 'q2', title: 'Home Services', subtitle: 'Interiors & more', icon: 'construct-outline', route: '/services' },
   { id: 'q3', title: 'Investment', subtitle: 'High ROI', icon: 'trending-up-outline', route: '/(tabs)/search?filter=investment' },
-  { id: 'q4', title: 'Market Insights', subtitle: 'Trends & Data', icon: 'bar-chart-outline', route: '/market-insights' },
+  { id: 'q4', title: 'Market Insights', subtitle: 'Coming Soon', icon: 'bar-chart-outline', route: '/market-insights' },
 ];

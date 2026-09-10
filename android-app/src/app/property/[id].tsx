@@ -9,14 +9,19 @@ import {
   Modal,
   ActivityIndicator,
   Platform,
+  TextInput,
+  useWindowDimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
+import { Ionicons } from '@expo/vector-icons';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
+import { useDrawer } from '@/contexts/DrawerContext';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { GoldButton } from '@/components/ui/GoldButton';
 import { InvestmentScore } from '@/components/ui/InvestmentScore';
 import { TrustBadge } from '@/components/ui/TrustBadge';
+import { WebFooter } from '@/components/layout/WebFooter';
 import { PropertyInquiryModal } from '@/components/ui/PropertyInquiryModal';
 import { useActivityHistory } from '@/hooks/useActivityHistory';
 import { getApiUrl, resilientFetch } from '@/lib/api';
@@ -25,6 +30,7 @@ export default function PropertyDetailsScreen() {
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const { profile } = useUser();
+  const { toggleDrawer } = useDrawer();
   const { addView } = useActivityHistory();
 
   const [property, setProperty] = useState<any>(null);
@@ -54,6 +60,15 @@ export default function PropertyDetailsScreen() {
   const [certificateId, setCertificateId] = useState('');
   const [askingQuestion, setAskingQuestion] = useState(false);
   const [showInquiryModal, setShowInquiryModal] = useState(false);
+  const [calcDownPct, setCalcDownPct] = useState("20");
+  const [calcInterest, setCalcInterest] = useState("7.25");
+  const [calcYears, setCalcYears] = useState("30");
+  const [calcPriceStr, setCalcPriceStr] = useState("");
+  const [activeTab, setActiveTab] = useState("Overview");
+  const [showGallery, setShowGallery] = useState(false);
+  const [galleryIndex, setGalleryIndex] = useState(0);
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 1024;
 
   if (loading) {
     return (
@@ -111,7 +126,7 @@ export default function PropertyDetailsScreen() {
     }
   };
 
-  const fractionPrice = Number(property.price_per_fraction) || 0;
+  const fractionPrice = Number(property.price_per_fraction) || Number(property.price) || 0;
   const bookingAmtPerFrac = Number(property.booking_amount) || 25000;
   const isOutright = property.listing_type === 'outright';
   const totalBookingAmt = isOutright ? fractionsToBuy * fractionPrice : fractionsToBuy * bookingAmtPerFrac;
@@ -235,446 +250,612 @@ export default function PropertyDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Full Screen Image Gallery */}
-        <View style={styles.imageGallery}>
-          <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false} onMomentumScrollEnd={(e) => {
-            const index = Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width);
-            setCurrentImageIndex(index);
-          }}>
-            {property.images && property.images.length > 0 ? (
-              property.images.map((img: any, idx: number) => (
-                <Image 
-                  key={idx} 
-                  source={{ uri: img.image_url }} 
-                  style={styles.heroImage} 
-                  contentFit="cover"
-                  cachePolicy="memory-disk"
-                  priority={idx === 0 ? 'high' : 'low'}
-                />
-              ))
-            ) : (
-              <View style={styles.heroImagePlaceholder} />
-            )}
-          </ScrollView>
-          <TouchableOpacity style={styles.backBtn} onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}>
-            <Text style={styles.iconBtnText}>←</Text>
+      {!isDesktop && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: Platform.OS === 'web' ? 16 : Platform.OS === 'android' ? 40 : 50, paddingBottom: 16, backgroundColor: '#fff', borderBottomWidth: 1, borderBottomColor: '#E2E8F0', zIndex: 10 }}>
+          <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.replace('/')} style={{ padding: 8, marginLeft: -8, zIndex: 20 }}>
+            <Ionicons name="arrow-back" size={24} color="#1E293B" />
           </TouchableOpacity>
-          <View style={styles.topRightBtns}>
-            <TouchableOpacity style={styles.iconBtn}><Text style={styles.iconBtnText}>🔗</Text></TouchableOpacity>
-            <TouchableOpacity style={styles.iconBtn}><Text style={styles.iconBtnText}>♡</Text></TouchableOpacity>
+          <View style={{ position: 'absolute', left: 0, right: 0, bottom: 16, alignItems: 'center', zIndex: 10 }}>
+            <Image 
+              source={require('../../../assets/logo.png')} 
+              style={{ width: 140, height: 40, transform: [{ scale: 1.1 }] }} 
+              contentFit="contain" 
+            />
           </View>
-          <View style={styles.imageCounter}>
-            <Text style={styles.imageCounterText}>{currentImageIndex + 1}/{property.images?.length || 1}</Text>
-          </View>
+          <TouchableOpacity onPress={toggleDrawer} style={{ padding: 8, marginRight: -8, zIndex: 20 }}>
+            <Ionicons name="menu" size={24} color="#1E293B" />
+          </TouchableOpacity>
         </View>
-
-        {/* Content */}
-        <View style={styles.content}>
-          <View style={styles.badgeRow}>
-            <TrustBadge type="verified" />
-            <View style={[styles.typeBadge, { backgroundColor: isOutright ? '#F3E8FF' : '#EFF6FF' }]}>
-              <Text style={[styles.typeText, { color: isOutright ? '#7E22CE' : '#1D4ED8' }]}>
-                {isOutright ? 'BUY / OUTRIGHT' : 'INVEST / FRACTIONAL'}
-              </Text>
-            </View>
-            <View style={styles.typeBadge}>
-              <Text style={styles.typeText}>{property.property_type}</Text>
-            </View>
-          </View>
-
-          <Text style={styles.title}>{property.title}</Text>
-          <Text style={styles.location}>📍 {property.locality || property.district}, {property.state}</Text>
-          {property.full_address ? (
-            <Text style={{ fontSize: 13, color: Neutrals.gray500, marginTop: 4, marginBottom: 8 }}>
-              {property.full_address}
-            </Text>
-          ) : null}
-
-          <View style={styles.priceCard}>
-            <View>
-              {fractionPrice !== 0 && (
-                <>
-                  <Text style={styles.priceLabel}>{isOutright ? 'Asking Price' : 'Price / Min. Investment'}</Text>
-                  <Text style={styles.priceValue}>
-                    ₹ {fractionPrice.toLocaleString('en-IN')}
-                    {!isOutright && <Text style={{ fontSize: 13, fontWeight: '400', color: Neutrals.gray500 }}> / fraction</Text>}
-                  </Text>
-                </>
-              )}
-            </View>
-            <View style={styles.scoreContainer}>
-              <InvestmentScore score={92} size={50} showLabel={false} strokeWidth={4} />
-            </View>
-          </View>
-
-          {canAskQuestion && (
-            <TouchableOpacity
-              style={[styles.askQuestionBtn, askingQuestion && { opacity: 0.6 }]}
-              onPress={handleAskQuestion}
-              disabled={askingQuestion}
-            >
-              {askingQuestion ? (
-                <ActivityIndicator size="small" color={GoldSystem.primaryGold} />
-              ) : (
-                <>
-                  <Text style={styles.askQuestionIcon}>💬</Text>
-                  <Text style={styles.askQuestionText}>Ask a question about this property</Text>
-                </>
-              )}
-            </TouchableOpacity>
-          )}
-
-          <View style={styles.highlightsGrid}>
-            <View style={styles.highlightBox}>
-              <Text style={styles.highlightLabel}>Expected ROI</Text>
-              <Text style={styles.highlightValue}>{property.assured_yield ? `${property.assured_yield}%` : '8.5%'}</Text>
-            </View>
-            <View style={styles.highlightBox}>
-              <Text style={styles.highlightLabel}>Built-up Area</Text>
-              <Text style={styles.highlightValue}>
-                {property.area_sqft ? `${Number(property.area_sqft).toLocaleString('en-IN')} sqft` : property.total_area ? `${property.total_area} sqft` : '—'}
-              </Text>
-            </View>
-            <View style={styles.highlightBox}>
-              <Text style={styles.highlightLabel}>Target IRR</Text>
-              <Text style={styles.highlightValue}>{property.target_irr ? `${property.target_irr}%` : '15.0%'}</Text>
-            </View>
-            <View style={styles.highlightBox}>
-              <Text style={styles.highlightLabel}>Listing Mode</Text>
-              <Text style={styles.highlightValue}>{isOutright ? 'Whole Unit' : 'Fractional'}</Text>
-            </View>
-          </View>
-
-          {/* Graphical Shares Representation */}
-          <Text style={styles.sectionTitle}>
-            {isOutright ? 'Ownership Details' : 'Investment Share Pool Availability'}
-          </Text>
-          {!isOutright ? (
-            <View style={styles.sharesCard}>
-              <View style={styles.sharesRow}>
-                <View style={styles.shareMetric}>
-                  <Text style={styles.shareValue}>{property.total_fractions || 100}</Text>
-                  <Text style={styles.shareLabel}>Total Shares</Text>
-                </View>
-                <View style={styles.shareMetric}>
-                  <Text style={[styles.shareValue, { color: '#059669' }]}>{property.sold_fractions || 0}</Text>
-                  <Text style={styles.shareLabel}>Sold Shares</Text>
-                </View>
-                <View style={styles.shareMetric}>
-                  <Text style={[styles.shareValue, { color: GoldSystem.primaryGold }]}>
-                    {property.available_fractions ?? ((property.total_fractions || 100) - (property.sold_fractions || 0))}
-                  </Text>
-                  <Text style={styles.shareLabel}>Available</Text>
-                </View>
-              </View>
-              <View style={styles.progressBarBg}>
-                <View
-                  style={[
-                    styles.progressBarFill,
-                    {
-                      width: `${property.percentage_sold !== undefined ? property.percentage_sold : Math.min(100, Math.max(0, Math.round(((property.sold_fractions || 0) / (property.total_fractions || 100)) * 100)))}%`,
-                    },
-                  ]}
-                />
-              </View>
-              <Text style={styles.progressText}>
-                {property.percentage_sold !== undefined ? property.percentage_sold : Math.min(100, Math.max(0, Math.round(((property.sold_fractions || 0) / (property.total_fractions || 100)) * 100)))}% Funded • {property.available_fractions ?? ((property.total_fractions || 100) - (property.sold_fractions || 0))} fractions remaining
-              </Text>
-            </View>
-          ) : (
-            <View style={[styles.sharesCard, { padding: 16 }]}>
-              <Text style={{ fontSize: 14, fontWeight: '700', color: Neutrals.obsidian, marginBottom: 4 }}>
-                100% Full Ownership Unit
-              </Text>
-              <Text style={{ fontSize: 13, color: Neutrals.gray600, lineHeight: 18 }}>
-                This is a whole-property listing with dedicated title registration. No fractional subdivision.
-              </Text>
+      )}
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: isDesktop ? 48 : 24, paddingBottom: 48 }}>
+        
+        {/* Desktop Container */}
+        <View style={{ width: '100%', maxWidth: 1400, paddingHorizontal: isDesktop ? 32 : 0, alignSelf: 'center' }}>
+          
+          {/* Breadcrumbs (Desktop only) */}
+          {isDesktop && (
+            <View style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 16 }}>
+              <Text style={{ color: '#64748B', fontSize: 13, fontWeight: '500' }}>Home</Text>
+              <Text style={{ color: '#94A3B8', fontSize: 13, marginHorizontal: 8 }}>›</Text>
+              <Text style={{ color: '#64748B', fontSize: 13, fontWeight: '500' }}>Properties</Text>
+              <Text style={{ color: '#94A3B8', fontSize: 13, marginHorizontal: 8 }}>›</Text>
+              <Text style={{ color: '#1E293B', fontSize: 13, fontWeight: '600' }}>{property.title}</Text>
             </View>
           )}
 
-          <Text style={styles.sectionTitle}>About Property</Text>
-          <Text style={styles.description}>
-            {property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.'}
-          </Text>
+          {/* Main Layout Wrapper */}
+          <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 40 : 0 }}>
+            
+            {/* Left Column (Main Content) */}
+            <View style={{ flex: 1 }}>
+              
+              {/* Desktop Header & Gallery Row */}
+              <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 32, padding: isDesktop ? 0 : 16, marginBottom: 32 }}>
+                
+                {/* Text Side (or top on mobile) */}
+                <View style={{ width: isDesktop ? 340 : '100%' }}>
+                  {/* Title + Status Badge */}
+                  <Text style={{ fontSize: isDesktop ? 28 : 22, fontWeight: '800', color: '#1E293B', marginBottom: 4 }}>
+                    {property.title}
+                  </Text>
+                  
+                  {property.approval_status === 'upcoming' && (
+                    <View style={{ alignSelf: 'flex-start', backgroundColor: '#FEF08A', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4, marginBottom: 12 }}>
+                      <Text style={{ fontSize: 12, fontWeight: '700', color: '#854D0E' }}>📅 Upcoming</Text>
+                    </View>
+                  )}
 
-          {/* Property Specific Details Card */}
-          <Text style={styles.sectionTitle}>About this Property</Text>
-          <View style={{ backgroundColor: '#FAFAFA', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16, marginBottom: 16 }}>
-            {/* Shared row: sub-type, area, floor */}
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 12 }}>
-              {property.sub_type ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.sub_type}</Text></View> : null}
-              {property.area_sqft ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{Number(property.area_sqft).toLocaleString('en-IN')} {property.area_unit === 'acres' ? 'Acres' : 'Sq.Ft'}</Text></View> : null}
-              {property.floor_type ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Floor</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.floor_type}</Text></View> : null}
+                  {/* Location + Google Maps link */}
+                  <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                    <Text style={{ fontSize: 14, color: '#475569', fontWeight: '500' }}>📍 {property.locality || property.district}, {property.state || 'Telangana'}</Text>
+                    {(property.google_maps_url || (property.lat && property.lng)) && (
+                      <TouchableOpacity
+                        onPress={() => {
+                          const url = property.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${property.lat},${property.lng}`;
+                          if (Platform.OS === 'web') window.open(url, '_blank');
+                          else require('react-native').Linking.openURL(url);
+                        }}
+                        style={{ marginLeft: 16 }}
+                      >
+                        <Text style={{ color: '#1E293B', fontWeight: '700', fontSize: 13 }}>Open in Google Maps ↗</Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+
+                  {/* Tagline + Short Description */}
+                  {property.tagline && (
+                    <Text style={{ fontSize: 18, fontWeight: '700', color: '#1E293B', marginBottom: 8 }}>
+                      {property.tagline}
+                    </Text>
+                  )}
+                  <Text style={{ fontSize: 14, color: '#64748B', lineHeight: 22, marginBottom: 20 }}>
+                    {(property.description || 'Premium property with excellent investment potential and high capital growth prospects.').substring(0, 200)}
+                    {(property.description || '').length > 200 ? '...' : ''}
+                  </Text>
+
+                  {/* Quick Stats Row */}
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#E2E8F0' }}>
+                    {(property.property_type === 'Residential' || property.property_type === 'Holiday') ? (
+                      <>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Ionicons name="business-outline" size={24} color="#64748B" />
+                          <View>
+                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
+                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.floor_type || 'High Rise'}</Text>
+                          </View>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Ionicons name="resize-outline" size={24} color="#64748B" />
+                          <View>
+                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
+                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} Sq.ft</Text>
+                          </View>
+                        </View>
+                      </>
+                    ) : (property.property_type === 'Commercial' || property.property_type === 'Fractional') ? (
+                      <>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Ionicons name="business-outline" size={24} color="#64748B" />
+                          <View>
+                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
+                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.sub_type || 'Office'}</Text>
+                          </View>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Ionicons name="resize-outline" size={24} color="#64748B" />
+                          <View>
+                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
+                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} Sq.ft</Text>
+                          </View>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Ionicons name="fast-food-outline" size={24} color="#B48811" />
+                          <View>
+                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.food_courts ? 'Food Courts, ' : ''}</Text>
+                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>{property.amenities || 'ATMs'}</Text>
+                          </View>
+                        </View>
+                      </>
+                    ) : (
+                      <>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Ionicons name="pricetag-outline" size={24} color="#64748B" />
+                          <View>
+                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
+                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.sub_type || 'Open Plot'}</Text>
+                          </View>
+                        </View>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                          <Ionicons name="resize-outline" size={24} color="#64748B" />
+                          <View>
+                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
+                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} {property.area_unit || 'Sq.ft'}</Text>
+                          </View>
+                        </View>
+                      </>
+                    )}
+                  </View>
+                </View>
+
+                {/* Gallery Side */}
+                <View style={{ flex: 1, width: isDesktop ? undefined : '100%' }}>
+                  <TouchableOpacity 
+                    activeOpacity={0.9}
+                    onPress={() => { setGalleryIndex(0); setShowGallery(true); }}
+                    style={{ width: '100%', height: isDesktop ? 420 : 240, borderRadius: 16, overflow: 'hidden', position: 'relative', marginBottom: 12 }}
+                  >
+                    <Image 
+                      source={{ uri: property.images?.[0]?.image_url || 'https://via.placeholder.com/800x600' }} 
+                      style={{ width: '100%', height: '100%' }} 
+                      contentFit="cover"
+                    />
+                    <TouchableOpacity style={{ position: 'absolute', top: 16, right: 72, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+                      <Ionicons name="heart-outline" size={22} color="#1E293B" />
+                    </TouchableOpacity>
+                    <TouchableOpacity style={{ position: 'absolute', top: 16, right: 16, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, alignItems: 'center', justifyContent: 'center', shadowColor: '#000', shadowOpacity: 0.1, shadowRadius: 4, elevation: 2 }}>
+                      <Ionicons name="share-social-outline" size={22} color="#1E293B" />
+                    </TouchableOpacity>
+                    <TouchableOpacity 
+                      onPress={() => { setGalleryIndex(0); setShowGallery(true); }}
+                      style={{ position: 'absolute', bottom: 16, right: 16, flexDirection: 'row', alignItems: 'center', backgroundColor: 'rgba(0,0,0,0.8)', paddingHorizontal: 16, paddingVertical: 10, borderRadius: 24 }}
+                    >
+                      <Ionicons name="play-circle-outline" size={18} color="#fff" style={{ marginRight: 6 }} />
+                      <Text style={{ color: '#fff', fontWeight: '600', fontSize: 14 }}>View Gallery</Text>
+                    </TouchableOpacity>
+                  </TouchableOpacity>
+                  {/* Thumbnails */}
+                  <View style={{ flexDirection: 'row', gap: 12 }}>
+                    {property.images?.slice(1, 6).map((img: any, idx: number) => {
+                      const isLast = idx === 4;
+                      const extraCount = (property.images?.length || 0) - 6;
+                      
+                      return (
+                        <TouchableOpacity 
+                          key={idx} 
+                          activeOpacity={0.8}
+                          onPress={() => { setGalleryIndex(idx + 1); setShowGallery(true); }}
+                          style={{ flex: 1, height: 80, borderRadius: 12, overflow: 'hidden', position: 'relative' }}
+                        >
+                          <Image source={{ uri: img.image_url }} style={{ width: '100%', height: '100%' }} contentFit="cover" />
+                          {isLast && extraCount > 0 && (
+                            <View style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)', alignItems: 'center', justifyContent: 'center' }}>
+                              <Text style={{ color: '#fff', fontSize: 16, fontWeight: '700' }}>+{extraCount}</Text>
+                            </View>
+                          )}
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                </View>
+              </View>
+
+              {/* Tabs Section */}
+              <View style={{ paddingHorizontal: isDesktop ? 0 : 16 }}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ borderBottomWidth: 1, borderBottomColor: '#E2E8F0', paddingBottom: 8, marginBottom: 24, gap: 24 }}>
+                  {['Overview', 'Property Details', 'Amenities', 'Location', 'Developer', 'Documents'].map((tab) => (
+                    <TouchableOpacity key={tab} onPress={() => setActiveTab(tab)}>
+                      <Text style={{ fontSize: 14, fontWeight: '700', color: activeTab === tab ? '#D4AF37' : '#64748B', paddingBottom: 4 }}>
+                        {tab}
+                      </Text>
+                      {activeTab === tab && <View style={{ position: 'absolute', bottom: -9, left: 0, right: 0, height: 2, backgroundColor: '#D4AF37' }} />}
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+
+                {/* Dynamic Tab Content */}
+                
+                {/* Overview Tab */}
+                {activeTab === 'Overview' && (
+                  <>
+                    <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 24, marginBottom: 32 }}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 16 }}>About this Property</Text>
+                        <Text style={{ fontSize: 14, color: '#475569', lineHeight: 24 }}>
+                          {property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.\n\nDesigned to serve the evolving needs of the growing urban population, the development aims to create a vibrant environment combining shopping, leisure and everyday conveniences under one destination.'}
+                        </Text>
+                      </View>
+
+                      <View style={{ width: isDesktop ? 280 : '100%', backgroundColor: '#FAFAFA', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16 }}>
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#1E293B', marginBottom: 16 }}>📋 Quick Facts</Text>
+                        
+                        {(property.property_type === 'Commercial' || property.property_type === 'Fractional') ? (
+                          <View style={{ gap: 12 }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                              <Text style={{ fontSize: 13, color: '#64748B' }}><Ionicons name="business-outline" /> Type</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.sub_type || 'Office'}</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                              <Text style={{ fontSize: 13, color: '#64748B' }}><Ionicons name="resize-outline" /> Area</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} Sq.ft</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                              <Text style={{ fontSize: 13, color: '#64748B' }}><Ionicons name="bed-outline" /> Furnished</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.furnished ? 'Yes' : 'No'}</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                              <Text style={{ fontSize: 13, color: '#64748B' }}><Ionicons name="flash-outline" /> Plug & Play</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.plug_and_play ? 'Yes' : 'No'}</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                              <Text style={{ fontSize: 13, color: '#64748B' }}><Ionicons name="snow-outline" /> Central AC</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.central_ac ? 'Yes' : 'No'}</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
+                              <Text style={{ fontSize: 13, color: '#64748B' }}><Ionicons name="construct-outline" /> Maintenance</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.maintenance_avail ? 'Yes' : 'No'}</Text>
+                            </View>
+                          </View>
+                        ) : (
+                          <View style={{ gap: 12 }}>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                              <Text style={{ fontSize: 13, color: '#64748B' }}><Ionicons name="home-outline" /> Type</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.floor_type || 'Residential'}</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                              <Text style={{ fontSize: 13, color: '#64748B' }}><Ionicons name="resize-outline" /> Area</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} Sq.ft</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                              <Text style={{ fontSize: 13, color: '#64748B' }}><Ionicons name="bed-outline" /> Bedrooms</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.bedrooms || 0}</Text>
+                            </View>
+                            <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                              <Text style={{ fontSize: 13, color: '#64748B' }}><Ionicons name="water-outline" /> Bathrooms</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.bathrooms || 0}</Text>
+                            </View>
+                          </View>
+                        )}
+                      </View>
+                    </View>
+                  </>
+                )}
+
+                {/* Property Details Tab */}
+                {activeTab === 'Property Details' && (
+                  <View style={{ backgroundColor: '#FAFAFA', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 24, marginBottom: 32 }}>
+                    <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 20 }}>Detailed Specifications</Text>
+                    
+                    {(property.property_type === 'Commercial' || property.property_type === 'Fractional') ? (
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 24 }}>
+                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="business-outline" /> Property Type</Text>
+                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.sub_type || 'Office'}</Text>
+                        </View>
+                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="resize-outline" /> Super Built-up Area</Text>
+                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} Sq.ft</Text>
+                        </View>
+                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="bed-outline" /> Furnishing</Text>
+                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.furnished ? 'Fully Furnished' : 'Unfurnished'}</Text>
+                        </View>
+                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="flash-outline" /> Plug & Play Status</Text>
+                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.plug_and_play ? 'Available' : 'Not Available'}</Text>
+                        </View>
+                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="snow-outline" /> HVAC / Central AC</Text>
+                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.central_ac ? 'Provided' : 'Not Provided'}</Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 24 }}>
+                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="home-outline" /> Property Type</Text>
+                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.floor_type || 'Residential'}</Text>
+                        </View>
+                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="resize-outline" /> Built-up Area</Text>
+                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} Sq.ft</Text>
+                        </View>
+                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="bed-outline" /> Bedrooms</Text>
+                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.bedrooms || 0}</Text>
+                        </View>
+                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="water-outline" /> Bathrooms</Text>
+                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.bathrooms || 0}</Text>
+                        </View>
+                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="car-outline" /> Parking</Text>
+                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.parking_count || 1} Reserved</Text>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {/* Amenities Tab (or always show in Overview) */}
+                {(activeTab === 'Overview' || activeTab === 'Amenities') && (
+                  <View style={{ marginBottom: 32 }}>
+                    <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 16 }}>Amenities</Text>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
+                      {(property.property_type === 'Commercial' || property.property_type === 'Fractional') ? (
+                        <>
+                          {property.food_courts && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="fast-food-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Food Courts</Text></View>}
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="card-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>ATMs</Text></View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="cart-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Retail Spaces</Text></View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="game-controller-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Entertainment</Text></View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="car-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Ample Parking</Text></View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="shield-checkmark-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>24x7 Security</Text></View>
+                        </>
+                      ) : (
+                        <>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="barbell-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Gym</Text></View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="water-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Swimming Pool</Text></View>
+                          {property.club_house && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="home-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Club House</Text></View>}
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="car-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Parking</Text></View>
+                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="shield-checkmark-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Security</Text></View>
+                        </>
+                      )}
+                    </View>
+                  </View>
+                )}
+
+                {/* Location Tab */}
+                {activeTab === 'Location' && (
+                  <View style={{ marginBottom: 32 }}>
+                    <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 16 }}>Location Map</Text>
+                    {property.lat && property.lng ? (
+                      <View style={{ height: 540, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#E2E8F0' }}>
+                        {Platform.OS === 'web' ? (
+                          <div
+                            style={{ width: '100%', height: '100%' }}
+                            dangerouslySetInnerHTML={{
+                              __html: `<iframe width="100%" height="100%" frameborder="0" style="border:0;" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q=${parseFloat(property.lat)},${parseFloat(property.lng)}&z=15&output=embed"></iframe>`,
+                            }}
+                          />
+                        ) : (
+                          <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: Neutrals.gray200 }}>
+                            <Ionicons name="location-outline" size={32} color="#64748B" />
+                            <Text style={{ color: Neutrals.gray600, fontWeight: '600', marginTop: 8 }}>{property.locality || property.district}</Text>
+                          </View>
+                        )}
+                      </View>
+                    ) : (
+                      <View style={{ height: 100, justifyContent: 'center', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' }}>
+                        <Ionicons name="map-outline" size={32} color="#CBD5E1" />
+                        <Text style={{ color: '#94A3B8', marginTop: 8 }}>Location map coordinates not provided</Text>
+                      </View>
+                    )}
+                  </View>
+                )}
+
+                {/* Developer / Documents Tabs */}
+                {activeTab === 'Developer' && (
+                  <View style={{ marginBottom: 32, padding: 24, backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' }}>
+                    <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 16 }}>About the Developer</Text>
+                    {property.developer ? (
+                      <View style={{ gap: 16 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                          {property.developer.logo_url && (
+                            <Image source={{ uri: property.developer.logo_url }} style={{ width: 64, height: 64, borderRadius: 8, backgroundColor: '#fff', borderWidth: 1, borderColor: '#E2E8F0' }} contentFit="contain" />
+                          )}
+                          <View>
+                            <Text style={{ fontSize: 18, fontWeight: '700', color: '#1E293B' }}>{property.developer.name}</Text>
+                            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
+                              <Text style={{ fontSize: 13, color: '#D4AF37', fontWeight: '700' }}>★ {property.developer.rating}</Text>
+                              {property.developer.established_year && <Text style={{ fontSize: 13, color: '#64748B' }}>• Est. {property.developer.established_year}</Text>}
+                              {property.developer.rera_registered && <Text style={{ fontSize: 11, color: '#16A34A', backgroundColor: '#DCFCE7', paddingHorizontal: 6, paddingVertical: 2, borderRadius: 4, fontWeight: '700', marginLeft: 4 }}>RERA</Text>}
+                            </View>
+                          </View>
+                        </View>
+                        <Text style={{ fontSize: 14, color: '#475569', lineHeight: 22 }}>
+                          {property.developer.bio || 'Information about the developer or agent will be listed here. They specialize in high-quality commercial and residential properties.'}
+                        </Text>
+                      </View>
+                    ) : property.profile ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16 }}>
+                        <View style={{ width: 48, height: 48, borderRadius: 24, backgroundColor: '#E2E8F0', alignItems: 'center', justifyContent: 'center' }}>
+                          <Ionicons name="person" size={24} color="#94A3B8" />
+                        </View>
+                        <View>
+                          <Text style={{ fontSize: 16, fontWeight: '700', color: '#1E293B' }}>{property.profile.full_name || 'Agent'}</Text>
+                          <Text style={{ fontSize: 13, color: '#64748B', marginTop: 2 }}>{property.profile.role ? property.profile.role.charAt(0).toUpperCase() + property.profile.role.slice(1) : 'Real Estate Agent'}</Text>
+                        </View>
+                      </View>
+                    ) : (
+                      <Text style={{ fontSize: 14, color: '#475569', lineHeight: 22 }}>
+                        Information about the developer or agent will be listed here. They specialize in high-quality commercial and residential properties.
+                      </Text>
+                    )}
+                  </View>
+                )}
+                {activeTab === 'Documents' && (
+                  <View style={{ marginBottom: 32, padding: 24, backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center' }}>
+                    <Ionicons name="document-text-outline" size={48} color="#CBD5E1" />
+                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#64748B', marginTop: 12 }}>No documents attached</Text>
+                  </View>
+                )}
+
+              </View>
             </View>
 
-            {/* Residential / Holiday */}
-            {(property.property_type === 'Residential' || property.property_type === 'Holiday') && (
-              <>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
-                  {property.bedrooms ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Bed Rooms</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.bedrooms} Bedrooms</Text></View> : null}
-                  {property.bathrooms ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Bath Rooms</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.bathrooms} Bathrooms</Text></View> : null}
-                  {property.flooring ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Flooring</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.flooring}</Text></View> : null}
-                  {property.kitchen_type ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Kitchen</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.kitchen_type} Kitchen</Text></View> : null}
-                  {property.parking_count != null ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Parking</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.parking_count} Car{property.parking_count !== 1 ? 's' : ''}</Text></View> : null}
-                  {property.club_house != null ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Club House</Text><Text style={{ fontSize: 13, color: property.club_house ? '#059669' : '#64748B', fontWeight: '700', marginTop: 2 }}>{property.club_house ? 'Yes' : 'No'}</Text></View> : null}
+            {/* Right Column (Sidebar) */}
+            <View style={{ width: isDesktop ? 380 : '100%', paddingHorizontal: isDesktop ? 0 : 16 }}>
+              
+              {/* Pricing Card */}
+              <View style={{ backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 24, marginBottom: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 }}>
+                <Text style={{ fontSize: 14, color: '#64748B', fontWeight: '600', marginBottom: 4 }}>Estimated Price</Text>
+                <Text style={{ fontSize: 32, fontWeight: '800', color: '#D4AF37', marginBottom: 20 }}>
+                  ₹ {(fractionPrice || property.price_per_fraction || 0).toLocaleString('en-IN')}
+                </Text>
+                <TouchableOpacity style={{ backgroundColor: '#B48811', borderRadius: 8, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                  <Ionicons name="calendar-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
+                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Request Details</Text>
+                </TouchableOpacity>
+                <TouchableOpacity style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 8, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+                  <Ionicons name="call-outline" size={18} color="#1E293B" style={{ marginRight: 8 }} />
+                  <Text style={{ color: '#1E293B', fontWeight: '700', fontSize: 15 }}>Contact Developer</Text>
+                </TouchableOpacity>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
+                  <Ionicons name="shield-checkmark-outline" size={14} color="#64748B" />
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>Your information is secure with RealShare</Text>
                 </View>
-                {property.amenities ? (
-                  <View>
-                    <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600', marginBottom: 6 }}>Amenities</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {property.amenities.split(',').map((a: string, i: number) => (
-                        <View key={i} style={{ backgroundColor: '#EFF6FF', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-                          <Text style={{ fontSize: 12, color: '#1D4ED8', fontWeight: '600' }}>{a.trim()}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                ) : null}
-              </>
-            )}
-
-            {/* Commercial / Fractional */}
-            {(property.property_type === 'Commercial' || property.property_type === 'Fractional') && (
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-                {[
-                  { label: 'Furnished', value: property.furnished },
-                  { label: 'Plug & Play', value: property.plug_and_play },
-                  { label: 'Central AC', value: property.central_ac },
-                  { label: 'Preleased', value: property.preleased },
-                  { label: 'Maintenance', value: property.maintenance_avail },
-                ].filter(f => f.value != null).map((f, i) => (
-                  <View key={i} style={{ flex: 1, minWidth: 100 }}>
-                    <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>{f.label}</Text>
-                    <Text style={{ fontSize: 13, color: f.value ? '#059669' : '#64748B', fontWeight: '700', marginTop: 2 }}>{f.value ? 'Yes' : 'No'}</Text>
-                  </View>
-                ))}
-                {property.parking_count != null ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Parking</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.parking_count > 0 ? `Yes – ${property.parking_count} Car${property.parking_count !== 1 ? 's' : ''}` : 'No'}</Text></View> : null}
-                {property.amenities ? (
-                  <View style={{ width: '100%', marginTop: 8 }}>
-                    <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600', marginBottom: 6 }}>Amenities</Text>
-                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                      {property.amenities.split(',').map((a: string, i: number) => (
-                        <View key={i} style={{ backgroundColor: '#EFF6FF', borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}>
-                          <Text style={{ fontSize: 12, color: '#1D4ED8', fontWeight: '600' }}>{a.trim()}</Text>
-                        </View>
-                      ))}
-                    </View>
-                  </View>
-                ) : null}
               </View>
-            )}
 
-            {/* Investor / Plot / Farm */}
-            {property.property_type === 'Investor' && (
-              <>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
-                  {[
-                    { label: 'Fencing', value: property.fencing },
-                    { label: 'Electricity', value: property.electricity_avail },
-                    { label: 'Farm Shed', value: property.farm_shed },
-                    { label: 'Bore Wells', value: property.bore_wells },
-                    { label: 'Plants', value: property.plants_available },
-                    { label: 'Loan Avail.', value: property.loan_availability },
-                  ].filter(f => f.value != null).map((f, i) => (
-                    <View key={i} style={{ flex: 1, minWidth: 90 }}>
-                      <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>{f.label}</Text>
-                      <Text style={{ fontSize: 13, color: f.value ? '#059669' : '#64748B', fontWeight: '700', marginTop: 2 }}>{f.value ? 'Yes' : 'No'}</Text>
-                    </View>
-                  ))}
+              {/* Payment Calculator Card */}
+              <View style={{ backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 24, marginBottom: 24 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                  <Ionicons name="calculator-outline" size={20} color="#1E293B" style={{ marginRight: 8 }} />
+                  <Text style={{ fontSize: 18, fontWeight: '800', color: '#1E293B' }}>Payment Calculator</Text>
                 </View>
-                <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600', marginBottom: 6, marginTop: 4 }}>Legal & Ownership</Text>
-                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginBottom: 8 }}>
-                  {[
-                    { label: 'Registered', value: property.land_registered },
-                    { label: 'Pass Book', value: property.pass_book },
-                    { label: 'Raithu Bharosa', value: property.raithu_bharosa },
-                    { label: 'Under Irrigation', value: property.under_irrigation },
-                  ].filter(f => f.value != null).map((f, i) => (
-                    <View key={i} style={{ flex: 1, minWidth: 100 }}>
-                      <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>{f.label}</Text>
-                      <Text style={{ fontSize: 13, color: f.value ? '#059669' : '#64748B', fontWeight: '700', marginTop: 2 }}>{f.value ? 'Yes' : 'No'}</Text>
-                    </View>
-                  ))}
-                  {property.approach_road ? <View style={{ flex: 1, minWidth: 100 }}><Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Approach Road</Text><Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{property.approach_road}</Text></View> : null}
-                </View>
-              </>
-            )}
-          </View>
-
-          {/* Payment Calculator */}
-          {fractionPrice > 0 && (
-            <>
-              <Text style={styles.sectionTitle}>Payment Calculator</Text>
-              <View style={{ backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16, marginBottom: 16 }}>
+                
                 {(() => {
-                  const price = fractionPrice;
-                  const downPct = 0.20;
-                  const down = Math.round(price * downPct);
-                  const loan = price - down;
-                  const r = 7.25 / 100 / 12;
-                  const n = 30 * 12;
-                  const emi = Math.round(loan * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1));
+                  const initialPrice = fractionPrice;
+                  const currentPriceText = calcPriceStr !== "" ? calcPriceStr : (initialPrice > 0 ? initialPrice.toString() : "0");
+                  const priceNum = parseFloat(currentPriceText) || 0;
+                  const downPctNum = parseFloat(calcDownPct) || 0;
+                  const interestNum = parseFloat(calcInterest) || 0;
+                  const yearsNum = parseFloat(calcYears) || 0;
+                  
+                  const down = Math.round(priceNum * (downPctNum / 100));
+                  const loan = priceNum - down;
+                  const r = (interestNum / 100) / 12;
+                  const n = yearsNum * 12;
+                  
+                  let emi = 0;
+                  if (loan > 0) {
+                    if (r === 0) {
+                      emi = n > 0 ? Math.round(loan / n) : 0;
+                    } else if (n > 0) {
+                      emi = Math.round(loan * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1));
+                    }
+                  }
+
                   return (
                     <>
-                      {[
-                        { label: 'Property Price', value: `₹ ${price.toLocaleString('en-IN')}` },
-                        { label: 'Down Payment (20%)', value: `₹ ${down.toLocaleString('en-IN')}` },
-                        { label: 'Loan Amount (80%)', value: `₹ ${loan.toLocaleString('en-IN')}` },
-                        { label: 'Loan Details', value: '30 Year – Fixed – @7.25%' },
-                      ].map((row, i) => (
-                        <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderBottomWidth: i < 3 ? 1 : 0, borderBottomColor: '#E2E8F0' }}>
-                          <Text style={{ fontSize: 13, color: '#64748B', fontWeight: '500' }}>{row.label}</Text>
-                          <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{row.value}</Text>
-                        </View>
-                      ))}
-                      <View style={{ marginTop: 10, backgroundColor: '#EFF6FF', borderRadius: 8, padding: 12, alignItems: 'center' }}>
-                        <Text style={{ fontSize: 12, color: '#1D4ED8', fontWeight: '600' }}>Estimated Monthly EMI</Text>
-                        <Text style={{ fontSize: 22, color: '#1D4ED8', fontWeight: '800', marginTop: 4 }}>₹ {emi.toLocaleString('en-IN')} <Text style={{ fontSize: 13, fontWeight: '400' }}>/ Month</Text></Text>
+                      <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>Property Price (₹)</Text>
+                      <TextInput 
+                        style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 6, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, marginBottom: 16 }}
+                        keyboardType="numeric"
+                        value={currentPriceText}
+                        onChangeText={setCalcPriceStr}
+                      />
+                      
+                      <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>Down Payment (%)</Text>
+                      <TextInput 
+                        style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 6, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, marginBottom: 16 }}
+                        keyboardType="numeric"
+                        value={calcDownPct}
+                        onChangeText={setCalcDownPct}
+                      />
+                      
+                      <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>Loan Amount</Text>
+                      <Text style={{ fontSize: 14, fontWeight: '600', color: '#1E293B', marginBottom: 16 }}>₹ {loan.toLocaleString('en-IN')}</Text>
+
+                      <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>Interest Rate (%)</Text>
+                      <TextInput 
+                        style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 6, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, marginBottom: 16 }}
+                        keyboardType="numeric"
+                        value={calcInterest}
+                        onChangeText={setCalcInterest}
+                      />
+                      
+                      <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 4 }}>Loan Tenure (Years)</Text>
+                      <TextInput 
+                        style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 6, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, marginBottom: 20 }}
+                        keyboardType="numeric"
+                        value={calcYears}
+                        onChangeText={setCalcYears}
+                      />
+
+                      <View style={{ backgroundColor: '#FEFCE8', borderRadius: 8, padding: 16 }}>
+                        <Text style={{ fontSize: 12, color: '#854D0E', fontWeight: '600', marginBottom: 4 }}>Estimated Monthly EMI</Text>
+                        <Text style={{ fontSize: 24, color: '#1E293B', fontWeight: '800' }}>₹ {emi.toLocaleString('en-IN')} <Text style={{ fontSize: 13, fontWeight: '500', color: '#B48811' }}>/ Month</Text></Text>
                       </View>
                     </>
                   );
                 })()}
               </View>
-            </>
-          )}
 
-          {/* Contact Builder / Agent */}
-          {property.profile && (
-            <>
-              <Text style={styles.sectionTitle}>Contact {property.profile.role === 'builder' ? 'Builder' : property.profile.role === 'agent' ? 'Agent' : 'Owner'}</Text>
-              <View style={{ backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16, marginBottom: 16 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-                  <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#EFF6FF', alignItems: 'center', justifyContent: 'center', marginRight: 12 }}>
-                    <Text style={{ fontSize: 18 }}>👤</Text>
-                  </View>
-                  <View>
-                    <Text style={{ fontSize: 15, fontWeight: '700', color: '#1E293B' }}>{property.profile.full_name || 'Agent / Builder'}</Text>
-                    <Text style={{ fontSize: 12, color: '#64748B', textTransform: 'capitalize', marginTop: 2 }}>{property.profile.role}</Text>
-                  </View>
+              {/* Ownership Details */}
+              <View style={{ backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 24 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 8 }}>
+                  <Ionicons name="people-outline" size={20} color="#1E293B" style={{ marginRight: 8 }} />
+                  <Text style={{ fontSize: 16, fontWeight: '800', color: '#1E293B' }}>Ownership Details</Text>
                 </View>
-                {[
-                  { icon: '📞', label: 'Phone No', value: property.profile.phone_number },
-                  { icon: '✉️', label: 'Email', value: property.profile.email },
-                ].map((item, i) => item.value ? (
-                  <View key={i} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8, borderTopWidth: 1, borderTopColor: '#E2E8F0' }}>
-                    <Text style={{ fontSize: 16, marginRight: 10 }}>{item.icon}</Text>
-                    <View>
-                      <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>{item.label}</Text>
-                      <Text style={{ fontSize: 13, color: '#1D4ED8', fontWeight: '700', marginTop: 1 }}>{item.value}</Text>
-                    </View>
-                  </View>
-                ) : null)}
-                <TouchableOpacity
-                  style={{ marginTop: 12, backgroundColor: GoldSystem.primaryGold, borderRadius: 10, paddingVertical: 12, alignItems: 'center' }}
-                  onPress={() => setShowInquiryModal(true)}
-                >
-                  <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>SUBMIT INQUIRY</Text>
-                </TouchableOpacity>
-                <Text style={{ fontSize: 11, color: '#94A3B8', textAlign: 'center', marginTop: 8 }}>
-                  Thanks for your interest. Agent / Builder will contact you.
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#1E293B', marginBottom: 4 }}>
+                  {isOutright ? '100% Full Ownership Unit' : 'Fractional Ownership'}
+                </Text>
+                <Text style={{ fontSize: 13, color: '#64748B', lineHeight: 20 }}>
+                  {isOutright 
+                    ? 'This is a whole-property listing with dedicated title registration. No fractional subdivision.'
+                    : `Invest in fractions. ${property.available_fractions ?? 100} fractions remaining in the pool.`}
                 </Text>
               </View>
-            </>
-          )}
 
-
-          <Text style={styles.sectionTitle}>Location Details</Text>
-          {property.lat && property.lng ? (
-            <View>
-              <View style={[styles.mapContainer, { height: 200, borderRadius: 12, overflow: 'hidden' }]}>
-                {Platform.OS === 'web' ? (
-                  <div
-                    style={{ width: '100%', height: '100%' }}
-                    dangerouslySetInnerHTML={{
-                      __html: `<iframe width="100%" height="100%" frameborder="0" style="border:0;" loading="lazy" allowfullscreen src="https://maps.google.com/maps?q=${parseFloat(property.lat)},${parseFloat(property.lng)}&z=15&output=embed"></iframe>`,
-                    }}
-                  />
-                ) : (
-                  <View style={{ width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center', backgroundColor: Neutrals.gray200 }}>
-                    <Text style={{ color: Neutrals.gray600, fontWeight: '600' }}>📍 {property.locality || property.district}</Text>
-                    <Text style={{ color: Neutrals.gray500, fontSize: 12, marginTop: 4 }}>Lat: {Number(property.lat).toFixed(4)}, Lng: {Number(property.lng).toFixed(4)}</Text>
-                  </View>
-                )}
-              </View>
-              <TouchableOpacity
-                onPress={() => {
-                  const url = property.google_maps_url || `https://www.google.com/maps/search/?api=1&query=${property.lat},${property.lng}`;
-                  if (Platform.OS === 'web') {
-                    window.open(url, '_blank');
-                  } else {
-                    const Linking = require('react-native').Linking;
-                    Linking.openURL(url);
-                  }
-                }}
-                style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 10, paddingVertical: 8, borderRadius: 8, backgroundColor: '#EFF6FF' }}
-              >
-                <Text style={{ color: '#2563EB', fontWeight: '700', fontSize: 13 }}>Open in Google Maps ↗</Text>
-              </TouchableOpacity>
             </View>
-          ) : property.google_maps_url ? (
-            <TouchableOpacity
-              onPress={() => {
-                if (Platform.OS === 'web') {
-                  window.open(property.google_maps_url, '_blank');
-                } else {
-                  const Linking = require('react-native').Linking;
-                  Linking.openURL(property.google_maps_url);
-                }
-              }}
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingVertical: 12, borderRadius: 8, backgroundColor: '#EFF6FF' }}
-            >
-              <Text style={{ color: '#2563EB', fontWeight: '700', fontSize: 14 }}>📍 View Location on Google Maps ↗</Text>
-            </TouchableOpacity>
-          ) : (
-            <View style={[styles.mapContainer, { height: 80, justifyContent: 'center', alignItems: 'center' }]}>
-              <Text style={{ color: Neutrals.gray500 }}>Location map coordinates not provided</Text>
-            </View>
-          )}
-
+          </View>
         </View>
+
+        {isDesktop && <WebFooter />}
       </ScrollView>
 
-      {/* Bottom Action Bar */}
-      <View style={styles.bottomBar}>
-        {isSoldOut ? (
-          <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FEE2E2', paddingVertical: 12, borderRadius: Radius.md }}>
-            <Text style={{ ...Typography.headlineMedium, color: '#DC2626' }}>THIS PROPERTY IS SOLD OUT</Text>
-          </View>
-        ) : fractionPrice === 0 ? (
-          <>
-            <View style={styles.bottomBarText}>
-              <Text style={styles.bottomLabel}>Pricing</Text>
-              <Text style={styles.bottomPrice}>On Request</Text>
+      {/* Bottom Action Bar (Mobile Only) */}
+      {!isDesktop && (
+        <View style={styles.bottomBar}>
+          {isSoldOut ? (
+            <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FEE2E2', paddingVertical: 12, borderRadius: Radius.md }}>
+              <Text style={{ ...Typography.headlineMedium, color: '#DC2626' }}>THIS PROPERTY IS SOLD OUT</Text>
             </View>
-            <GoldButton 
-              title="Request Details"
-              onPress={() => setShowInquiryModal(true)} 
-              style={{ width: 160 }}
-            />
-          </>
-        ) : (
-          <>
-            <View style={styles.bottomBarText}>
-              <Text style={styles.bottomLabel}>{isOutright ? 'Full Property Price' : 'Booking Amount'}</Text>
-              <Text style={styles.bottomPrice}>
-                ₹ {(isOutright ? fractionPrice : bookingAmtPerFrac).toLocaleString('en-IN')}
-              </Text>
-            </View>
-            <GoldButton 
-              title={isOutright ? 'Buy Now' : 'Invest Now'} 
-              onPress={() => {
-                if (!auth.currentUser) {
-                  router.push('/(auth)/sign-in');
-                  return;
-                }
-                setShowPaymentModal(true);
-              }} 
-              style={{ width: 160 }}
-            />
-          </>
-        )}
-      </View>
+          ) : fractionPrice === 0 ? (
+            <>
+              <View style={styles.bottomBarText}>
+                <Text style={styles.bottomLabel}>Pricing</Text>
+                <Text style={styles.bottomPrice}>On Request</Text>
+              </View>
+              <GoldButton 
+                title="Request Details"
+                onPress={() => setShowInquiryModal(true)} 
+                style={{ width: 160 }}
+              />
+            </>
+          ) : (
+            <>
+              <View style={styles.bottomBarText}>
+                <Text style={styles.bottomLabel}>
+                  {isOutright ? 'Price' : 'Per Fraction'}
+                </Text>
+                <Text style={styles.bottomPrice}>
+                  ₹{(fractionPrice || property.price_per_fraction || 0).toLocaleString('en-IN')}
+                </Text>
+              </View>
+              <GoldButton 
+                title={isOutright ? "Contact Builder" : "Invest Now"} 
+                onPress={() => {
+                  if (!auth.currentUser) {
+                    router.push('/(auth)/sign-in' as any);
+                    return;
+                  }
+                  isOutright ? setShowInquiryModal(true) : setShowPaymentModal(true);
+                }} 
+                style={{ width: 160 }}
+              />
+            </>
+          )}
+        </View>
+      )}
 
       {/* Payment Modal */}
       <Modal visible={showPaymentModal} animationType="slide" transparent>
@@ -743,6 +924,36 @@ export default function PropertyDetailsScreen() {
               style={{ width: '100%', marginTop: 24 }}
             />
           </View>
+        </View>
+      </Modal>
+
+      {/* Gallery Modal */}
+      <Modal visible={showGallery} animationType="fade" transparent={false}>
+        <View style={{ flex: 1, backgroundColor: '#000' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', padding: 24, paddingTop: Platform.OS === 'ios' ? 60 : 24 }}>
+            <Text style={{ color: '#fff', fontSize: 16, fontWeight: '600' }}>{galleryIndex + 1} / {property.images?.length || 1}</Text>
+            <TouchableOpacity onPress={() => setShowGallery(false)} style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: 22 }}>
+              <Ionicons name="close" size={24} color="#fff" />
+            </TouchableOpacity>
+          </View>
+          
+          <ScrollView 
+            horizontal 
+            pagingEnabled 
+            showsHorizontalScrollIndicator={false}
+            contentOffset={{ x: galleryIndex * width, y: 0 }}
+            onMomentumScrollEnd={(e) => {
+              const index = Math.round(e.nativeEvent.contentOffset.x / e.nativeEvent.layoutMeasurement.width);
+              setGalleryIndex(index);
+            }}
+            style={{ flex: 1 }}
+          >
+            {property.images?.map((img: any, idx: number) => (
+              <View key={idx} style={{ width, flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                <Image source={{ uri: img.image_url }} style={{ width: '100%', height: '80%' }} contentFit="contain" />
+              </View>
+            ))}
+          </ScrollView>
         </View>
       </Modal>
 
@@ -991,7 +1202,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 32, // Safe area
+    paddingBottom: Platform.OS === 'web' ? 16 : 32, // Safe area for native
     ...Shadows.strong,
   },
   bottomBarText: {},

@@ -117,7 +117,7 @@ export default function HomeScreen() {
     );
 
     const allowedMakuta = [
-      'makuta horizon', 'makuta nirvana', 'makuta green woods', 'makuta taranga',
+      'makuta horizon', 'makuta nirvana', 'makuta greenwoods', 'makuta taranga',
       'makuta prime', 'makuta aruna arcade', 'makuta mall'
     ];
     const makutaProjects = byCategory.filter(p => allowedMakuta.includes((p.title || '').toLowerCase()));

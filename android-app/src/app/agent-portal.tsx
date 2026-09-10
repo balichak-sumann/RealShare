@@ -216,7 +216,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
       }
     } catch (err: any) {
       console.error('Agent dashboard fetch error:', err);
-      setError(err.message || 'An error occurred while loading Wealth Partner Hub');
+      setError(err.message || 'An error occurred while loading RealShare - Partner Hub');
     } finally {
       setLoading(false);
     }
@@ -289,7 +289,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
           <TouchableOpacity style={styles.iconBtn} onPress={openDrawer}>
             <Ionicons name="menu-outline" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>Wealth Partner Hub</Text>
+          <Text style={styles.headerTitle}>RealShare - Partner Hub</Text>
           <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/notifications')}>
             <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
           </TouchableOpacity>

@@ -59,7 +59,7 @@ export function WebFooter() {
           </View>
         </View>
         <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>{"RealShare Properties Pvt. Ltd.\nNizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212"}</Text>
-        <Text style={{ color: Neutrals.gray600, fontSize: 8, marginTop: 6 }}>© {new Date().getFullYear()} Realshare Properties. All rights reserved.</Text>
+        <Text style={{ color: Neutrals.gray600, fontSize: 8, marginTop: 6 }}>© {new Date().getFullYear()} RealShare. All rights reserved.</Text>
       </View>
     );
   }
@@ -109,7 +109,7 @@ export function WebFooter() {
         </View>
 
         <View style={[styles.bottomBar, { marginTop: 32, paddingTop: 20 }]}>
-          <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © Copyright {new Date().getFullYear()} Realshare Properties Pvt Ltd</Text>
+          <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © Copyright {new Date().getFullYear()} RealShare Properties Pvt Ltd</Text>
         </View>
       </View>
     </View>

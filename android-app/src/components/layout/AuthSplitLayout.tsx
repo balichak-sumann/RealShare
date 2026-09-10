@@ -33,6 +33,21 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
   const router = useRouter();
   const { isDesktop } = useResponsive();
 
+  const [displayText, setDisplayText] = React.useState('');
+  const fullText = 'RealShare';
+
+  React.useEffect(() => {
+    let i = 0;
+    const timer = setInterval(() => {
+      setDisplayText(fullText.slice(0, i + 1));
+      i++;
+      if (i >= fullText.length) {
+        clearInterval(timer);
+      }
+    }, 150);
+    return () => clearInterval(timer);
+  }, []);
+
   // Desktop Split Layout
   if (isDesktop && Platform.OS === 'web') {
     return (
@@ -43,19 +58,26 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
           <View style={styles.leftSide}>
           <ImageBackground source={require('../../../assets/images/auth_bg.jpg')} style={styles.backgroundImage}>
             <LinearGradient
-              colors={['rgba(250, 248, 245, 0.95)', 'rgba(250, 248, 245, 0.8)', 'rgba(250, 248, 245, 0.3)']}
+              colors={['rgba(250, 248, 245, 0)', 'rgba(250, 248, 245, 0.95)', 'rgba(250, 248, 245, 0)']}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={styles.gradientOverlay}
             >
               <ScrollView contentContainerStyle={styles.leftContent} showsVerticalScrollIndicator={false}>
-                <View style={styles.eyebrowContainer}>
+                <View style={styles.leftContentInner}>
+                  <View style={styles.eyebrowContainer}>
                   <View style={styles.eyebrowLine} />
                   <Text style={styles.eyebrow}>REAL PEOPLE. REAL OPPORTUNITIES.</Text>
                 </View>
                 
                 <Text style={styles.headline}>
-                  Welcome{'\n'}to <Text style={{ color: GoldSystem.primaryGold }}>RealShare</Text>
+                  Welcome{'\n'}to <Text style={{ color: GoldSystem.primaryGold }}>
+                    {displayText}
+                    <Text style={{ 
+                      opacity: displayText.length === fullText.length ? 0 : 1, 
+                      color: GoldSystem.primaryGold 
+                    }}>|</Text>
+                  </Text>
                 </Text>
                 
                 <Text style={styles.subtitle}>
@@ -97,6 +119,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
                     <Text style={styles.statNumber}>4.8 ★</Text>
                     <Text style={styles.statLabel}>User Rating</Text>
                   </View>
+                </View>
                 </View>
               </ScrollView>
             </LinearGradient>
@@ -185,16 +208,22 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   leftContent: {
-    paddingLeft: '12%',
-    paddingRight: '15%',
+    paddingHorizontal: 40,
     paddingTop: 40,
     paddingBottom: 40,
     flexGrow: 1,
     justifyContent: 'center',
+    alignItems: 'center',
+  },
+  leftContentInner: {
+    width: '100%',
+    maxWidth: 480,
+    alignItems: 'center',
   },
   eyebrowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     marginBottom: 16,
   },
   eyebrowLine: {
@@ -208,6 +237,7 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 2,
     color: Neutrals.gray600,
+    textAlign: 'center',
   },
   headline: {
     fontSize: 52,
@@ -216,12 +246,14 @@ const styles = StyleSheet.create({
     lineHeight: 56,
     marginBottom: 12,
     fontFamily: 'serif',
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
     color: Neutrals.gray600,
     lineHeight: 24,
     marginBottom: 32,
+    textAlign: 'center',
   },
   featuresList: {
     gap: 16,
@@ -260,10 +292,12 @@ const styles = StyleSheet.create({
     lineHeight: 28,
     marginBottom: 12,
     fontFamily: 'serif',
+    textAlign: 'center',
   },
   quoteAuthorRow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   quoteAuthorLine: {
     width: 16,
@@ -279,9 +313,12 @@ const styles = StyleSheet.create({
   },
   statsRow: {
     flexDirection: 'row',
+    justifyContent: 'center',
     gap: 32,
   },
-  statItem: {},
+  statItem: {
+    alignItems: 'center',
+  },
   statNumber: {
     fontSize: 18,
     fontWeight: '800',

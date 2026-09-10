@@ -83,14 +83,13 @@ function PropertyCardInner({
         )}
         <View style={styles.badgesTop}>
           {isVerified && <TrustBadge type="verified" />}
-        </View>
-        {isSoldOut && (
-          <View style={styles.soldOutOverlay}>
-            <View style={styles.soldOutBadge}>
-              <Text style={styles.soldOutText}>SOLD OUT</Text>
+          {isSoldOut && (
+            <View style={[styles.smallSoldOutBadge, isVerified && { marginLeft: 8 }]}>
+              <Text style={styles.smallSoldOutText}>Sold Out</Text>
             </View>
-          </View>
-        )}
+          )}
+        </View>
+        {/* Sold out is now a small badge, not a full overlay */}
         <TouchableOpacity style={styles.shortlistBtn} onPress={handleShortlist}>
           <Text style={[styles.shortlistIcon, isSaved && styles.shortlistIconSaved]}>
             {isSaved ? '♥' : '♡'}
@@ -217,24 +216,19 @@ const styles = StyleSheet.create({
     left: 12,
     flexDirection: 'row',
   },
-  soldOutOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(255, 255, 255, 0.4)',
-    alignItems: 'center',
+  smallSoldOutBadge: {
+    backgroundColor: '#111827',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: Radius.sm,
     justifyContent: 'center',
   },
-  soldOutBadge: {
-    backgroundColor: '#EF4444',
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: Radius.md,
-    transform: [{ rotate: '-10deg' }],
-  },
-  soldOutText: {
-    color: '#fff',
-    fontWeight: '900',
-    fontSize: 16,
-    letterSpacing: 2,
+  smallSoldOutText: {
+    color: '#F9FAFB',
+    fontSize: 10,
+    fontWeight: '700',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   shortlistBtn: {
     position: 'absolute',

@@ -123,7 +123,7 @@ export default function HowItWorksScreen() {
           <Text style={styles.sectionTitle}>Effortless resale, with gains</Text>
           <Text style={styles.bodyText}>
             Part of owning a RealShare property is the flexibility to resell your share.
-            RealShare properties have historically seen an average appreciation of 10–18% —
+            RealShare has historically seen an average appreciation of 10–18% —
             about twice the appreciation of a traditional luxury vacation home or commercial
             property purchased outright.
           </Text>

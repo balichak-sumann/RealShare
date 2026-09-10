@@ -40,9 +40,11 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
   const { isDesktop, width: viewportWidth, height: viewportHeight } = useResponsive();
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState<1 | 2 | 3>(1);
-  // Measured width of the content column itself (not the raw browser viewport),
-  // so the category grid sizes to the dialog on desktop instead of the screen.
-  const [contentWidth, setContentWidth] = useState(Dimensions.get('window').width);
+  // Measured width of the content column itself
+  const initialWidth = isDesktop 
+    ? Math.min(520 - 40, Dimensions.get('window').width - 40) 
+    : Dimensions.get('window').width - 40;
+  const [contentWidth, setContentWidth] = useState(initialWidth);
   const [category, setCategory] = useState('');
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
@@ -194,13 +196,15 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
                     >
                       {CATEGORIES.map((item) => {
                         const isSelected = category === item.id;
-                        const cardWidth = (contentWidth - 16) / 2;
+                        const columns = isDesktop ? 3 : 2;
+                        const cardWidth = (contentWidth - (16 * (columns - 1))) / columns;
+                        
                         return (
                           <TouchableOpacity
                             key={item.id}
                             style={[
                               styles.categoryCard,
-                              { width: cardWidth },
+                              { width: Math.floor(cardWidth) },
                               isSelected && styles.categoryCardSelected
                             ]}
                             onPress={() => setCategory(item.id)}
@@ -400,9 +404,6 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   categoryCard: {
-    // overridden inline per-render from measured contentWidth; this is just a
-    // safe fallback before the first onLayout fires.
-    width: (Dimensions.get('window').width - 56) / 2,
     backgroundColor: Neutrals.white,
     borderWidth: 1.5,
     borderColor: Neutrals.gray200,

@@ -75,7 +75,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         <header className={styles.header}>
           <div>
             <h1 className={styles.headerTitle}>{title}</h1>
-            <p className={styles.headerSubtitle}>RealShare Properties Management Portal</p>
+            <p className={styles.headerSubtitle}>RealShare Management Portal</p>
           </div>
           <div className={styles.headerActions}>
             <div className={styles.searchBar}>

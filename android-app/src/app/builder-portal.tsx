@@ -368,7 +368,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
 
         {/* Builder Portal Badge Bar */}
         <View style={styles.subHeaderBar}>
-          <Text style={styles.portalTagText}>REALSHARE PROPERTIES • BUILDER PORTAL</Text>
+          <Text style={styles.portalTagText}>REALSHARE • BUILDER PORTAL</Text>
         </View>
       </View>
 
@@ -770,7 +770,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
 
       {/* Footer Branding */}
       <View style={styles.footerBranding}>
-        <Text style={styles.footerBrandText}>REALSHARE PROPERTIES</Text>
+        <Text style={styles.footerBrandText}>REALSHARE</Text>
       </View>
     </ScrollView>
 

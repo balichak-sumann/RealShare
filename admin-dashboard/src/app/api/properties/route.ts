@@ -119,7 +119,7 @@ export async function GET(request: Request) {
             }
           : {}),
         // Non-admin callers only see approved listings unless querying their own listings
-        ...(isAdmin || isOwner ? {} : { approval_status: 'approved', profile: { is_approved: true } }),
+        ...(isAdmin || isOwner ? {} : { approval_status: 'approved' }),
       },
       include: {
         images: {

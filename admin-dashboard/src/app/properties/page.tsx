@@ -48,7 +48,78 @@ interface Property {
   lng?: number | string;
   views_count?: number;
   is_sold_out?: boolean;
+  area_unit?: string;
+  sub_type?: string;
+  floor_type?: string;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  flooring?: string;
+  kitchen_type?: string;
+  parking_count?: number | null;
+  club_house?: boolean;
+  amenities?: string;
+  furnished?: boolean;
+  plug_and_play?: boolean;
+  central_ac?: boolean;
+  preleased?: boolean;
+  maintenance_avail?: boolean;
+  fencing?: boolean;
+  electricity_avail?: boolean;
+  farm_shed?: boolean;
+  bore_wells?: boolean;
+  plants_available?: boolean;
+  loan_availability?: boolean;
+  land_registered?: boolean;
+  pass_book?: boolean;
+  raithu_bharosa?: boolean;
+  approach_road?: string;
+  under_irrigation?: boolean;
 }
+
+const INITIAL_NEW_PROP_STATE = {
+  title: "",
+  shortDescription: "",
+  description: "",
+  state: "Telangana",
+  district: "Hyderabad",
+  locality: "",
+  fullAddress: "",
+  type: "Commercial" as "Commercial" | "Fractional" | "Residential" | "Holiday" | "Investor",
+  listingType: "fractional" as "fractional" | "outright" | "rental" | "resale",
+  areaSqft: 1200,
+  areaUnit: "sqft" as "sqft" | "acres",
+  googleMapsUrl: "",
+  totalFractions: 50,
+  price: 500000,
+  yield: 8.5,
+  irr: 15.0,
+  postedBy: "Admin" as const,
+  subType: "",
+  floorType: "",
+  bedrooms: null as number | null,
+  bathrooms: null as number | null,
+  flooring: "",
+  kitchenType: "",
+  parkingCount: null as number | null,
+  clubHouse: false,
+  amenities: "",
+  furnished: false,
+  plugAndPlay: false,
+  centralAc: false,
+  preleased: false,
+  maintenanceAvail: false,
+  fencing: false,
+  electricityAvail: false,
+  farmShed: false,
+  boreWells: false,
+  plantsAvailable: false,
+  loanAvailability: false,
+  landRegistered: false,
+  passBook: false,
+  raithuBharosa: false,
+  approachRoad: "",
+  underIrrigation: false,
+};
 
 const MAJOR_CITIES = [
   { name: "Hyderabad", state: "Telangana", lat: 17.3850, lng: 78.4867 },
@@ -182,54 +253,7 @@ export default function PropertiesPage() {
   };
 
   // New Property Form State
-  const [newProp, setNewProp] = useState({
-    title: "",
-    shortDescription: "",
-    description: "",
-    state: "Telangana",
-    district: "Hyderabad",
-    locality: "",
-    fullAddress: "",
-    type: "Commercial" as "Commercial" | "Fractional" | "Residential" | "Holiday" | "Investor",
-    listingType: "fractional" as "fractional" | "outright" | "rental" | "resale",
-    areaSqft: 1200,
-    areaUnit: "sqft" as "sqft" | "acres",
-    googleMapsUrl: "",
-    totalFractions: 50,
-    price: 500000,
-    yield: 8.5,
-    irr: 15.0,
-    postedBy: "Admin" as const,
-    // Shared
-    subType: "",
-    floorType: "",
-    // Residential
-    bedrooms: null as number | null,
-    bathrooms: null as number | null,
-    flooring: "",
-    kitchenType: "",
-    parkingCount: null as number | null,
-    clubHouse: false,
-    amenities: "",
-    // Commercial
-    furnished: false,
-    plugAndPlay: false,
-    centralAc: false,
-    preleased: false,
-    maintenanceAvail: false,
-    // Farm/Plot
-    fencing: false,
-    electricityAvail: false,
-    farmShed: false,
-    boreWells: false,
-    plantsAvailable: false,
-    loanAvailability: false,
-    landRegistered: false,
-    passBook: false,
-    raithuBharosa: false,
-    approachRoad: "",
-    underIrrigation: false,
-  });
+  const [newProp, setNewProp] = useState({ ...INITIAL_NEW_PROP_STATE });
   // Helper to extract lat/lng from a Google Maps share link
   const parseGoogleMapsUrl = (url: string) => {
     try {
@@ -844,7 +868,7 @@ export default function PropertiesPage() {
           </div>
           <button className={styles.addButton} onClick={() => {
             setEditingPropertyId(null);
-            setNewProp({ title: "", shortDescription: "", description: "", state: "Telangana", district: "Hyderabad", locality: "", fullAddress: "", type: "Commercial", listingType: "fractional", areaSqft: 1200, googleMapsUrl: "", totalFractions: 50, price: 500000, yield: 8.5, irr: 15.0, postedBy: "Admin" });
+            setNewProp({ ...INITIAL_NEW_PROP_STATE });
             setShowAddModal(true);
           }}>
             + Post Property (Admin)

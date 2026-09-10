@@ -17,7 +17,8 @@
 }
 
 .logo {
-  padding: 24px 20px;
+  height: 72px;
+  padding: 0 20px;
   font-size: 1.25rem;
   font-weight: 800;
   color: var(--text-primary);

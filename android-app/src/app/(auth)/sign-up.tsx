@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView, Image, Modal, ImageBackground } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView, Image, Modal, ImageBackground, Linking } from 'react-native';
 import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
@@ -310,6 +310,19 @@ export default function SignUpScreen() {
             <Text style={isDesktopWeb ? styles.desktopFooterText : styles.mobileFooterText}>Already have an account? </Text>
             <TouchableOpacity onPress={() => router.replace('/sign-in')}>
               <Text style={styles.linkText}>Log in</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[isDesktopWeb ? styles.desktopFooter : styles.mobileFooter, { marginTop: 16 }]}>
+            <Text style={isDesktopWeb ? styles.desktopFooterText : styles.mobileFooterText}>Are you an admin? </Text>
+            <TouchableOpacity onPress={() => {
+              if (Platform.OS === 'web') {
+                window.location.href = 'https://admin.realshare.in';
+              } else {
+                Linking.openURL('https://admin.realshare.in');
+              }
+            }}>
+              <Text style={styles.linkText}>Admin Login</Text>
             </TouchableOpacity>
           </View>
         </View>

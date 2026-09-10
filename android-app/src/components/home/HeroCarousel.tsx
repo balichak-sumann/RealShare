@@ -189,8 +189,8 @@ export function HeroCarousel() {
   );
 }
 
-const HERO_H = 450;
-const HERO_H_DESKTOP = 650;
+const HERO_H = 350;
+const HERO_H_DESKTOP = 480;
 
 const styles = StyleSheet.create({
   container: {

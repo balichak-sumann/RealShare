@@ -700,14 +700,15 @@ export default function PropertyDetailsScreen() {
                 <Text style={{ fontSize: 32, fontWeight: '800', color: '#D4AF37', marginBottom: 20 }}>
                   ₹ {(fractionPrice || property.price_per_fraction || 0).toLocaleString('en-IN')}
                 </Text>
-                <TouchableOpacity style={{ backgroundColor: '#B48811', borderRadius: 8, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}>
+                <TouchableOpacity 
+                  style={{ backgroundColor: '#B48811', borderRadius: 8, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 12 }}
+                  onPress={() => setShowInquiryModal(true)}
+                  activeOpacity={0.8}
+                >
                   <Ionicons name="calendar-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
                   <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Request Details</Text>
                 </TouchableOpacity>
-                <TouchableOpacity style={{ backgroundColor: '#fff', borderWidth: 1, borderColor: '#CBD5E1', borderRadius: 8, paddingVertical: 14, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
-                  <Ionicons name="call-outline" size={18} color="#1E293B" style={{ marginRight: 8 }} />
-                  <Text style={{ color: '#1E293B', fontWeight: '700', fontSize: 15 }}>Contact Developer</Text>
-                </TouchableOpacity>
+
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   <Ionicons name="shield-checkmark-outline" size={14} color="#64748B" />
                   <Text style={{ fontSize: 12, color: '#64748B' }}>Your information is secure with RealShare</Text>

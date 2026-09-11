@@ -63,7 +63,7 @@ export default function ContactScreen() {
       if (!res.ok) throw new Error('Request failed');
       setSubmitted(true);
     } catch (e) {
-      Alert.alert('Something went wrong', 'Please try again in a moment, or call us at +91 40 4010 1212 / 95 8172 8172.');
+      Alert.alert('Something went wrong', 'Please try again in a moment, or call us at +91 40 4010 1212 / +91 95 8172 8172.');
     } finally {
       setSubmitting(false);
     }
@@ -88,7 +88,7 @@ export default function ContactScreen() {
               Take the next step in buying, selling, or listing your property with RealShare.
               Tell us a bit about what you're looking for, and our team will reach out.
             </Text>
-            <Text style={styles.bodyText}>Give us a call at +91 40 4010 1212 / 95 8172 8172</Text>
+            <Text style={styles.bodyText}>Give us a call at +91 40 4010 1212 / +91 95 8172 8172</Text>
           </View>
 
           <View style={styles.formCol}>

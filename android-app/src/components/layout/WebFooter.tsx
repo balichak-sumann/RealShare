@@ -59,7 +59,7 @@ export function WebFooter() {
             <TouchableOpacity onPress={() => router.push('/disclaimer' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Disclaimer</Text></TouchableOpacity>
           </View>
         </View>
-        <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>{"RealShare Properties Pvt. Ltd.\nNizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212 / 95 8172 8172"}</Text>
+        <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>{"RealShare Properties Pvt. Ltd.\nNizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212\n+91 95 8172 8172"}</Text>
         <Text style={{ color: Neutrals.gray600, fontSize: 8, marginTop: 6 }}>© {new Date().getFullYear()} RealShare. All rights reserved.</Text>
       </View>
     );
@@ -106,7 +106,7 @@ export function WebFooter() {
               206, Panchsheel Complex, Nizampet{'\n'}
               Hyderabad – 500090, Telangana, India
             </Text>
-            <Text style={styles.addressText}>+91 40 4010 1212 / 95 8172 8172</Text>
+            <Text style={styles.addressText}>+91 40 4010 1212{'\n'}+91 95 8172 8172</Text>
           </View>
         </View>
 

@@ -399,8 +399,8 @@ const desktopStyles = StyleSheet.create({
   },
   bgShape: {
     position: 'absolute',
-    top: 40,
-    bottom: 40,
+    top: 24,
+    bottom: 24,
     left: -200,
     right: '40%',
     backgroundColor: Neutrals.white,
@@ -431,7 +431,7 @@ const desktopStyles = StyleSheet.create({
     width: '35%',
     paddingRight: 24,
     justifyContent: 'center',
-    paddingVertical: 20,
+    paddingVertical: 0,
   },
   superTitle: {
     ...Typography.labelMedium,
@@ -442,7 +442,7 @@ const desktopStyles = StyleSheet.create({
   headerTopRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   superTitleLine: {
     height: 1,
@@ -451,23 +451,23 @@ const desktopStyles = StyleSheet.create({
     opacity: 0.5,
   },
   mainTitle: {
-    fontSize: 36,
-    lineHeight: 42,
+    fontSize: 28,
+    lineHeight: 34,
     fontWeight: '700',
     color: Neutrals.obsidian,
-    marginBottom: 16,
+    marginBottom: 12,
     fontFamily: Platform.OS === 'web' ? 'Georgia, "Times New Roman", serif' : undefined,
   },
   subtitle: {
-    ...Typography.bodyLarge,
+    ...Typography.bodyMedium,
     color: Neutrals.gray600,
-    marginBottom: 24,
-    lineHeight: 24,
+    marginBottom: 16,
+    lineHeight: 22,
   },
   controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   controlBtn: {
     width: 44,

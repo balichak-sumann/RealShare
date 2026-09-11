@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   slide: {
-    height: 130,
+    height: 260,
     position: 'relative',
     ...(Platform.OS === 'web' ? { boxShadow: '0 10px 20px rgba(0,0,0,0.1)' } as any : { elevation: 5 }),
   },

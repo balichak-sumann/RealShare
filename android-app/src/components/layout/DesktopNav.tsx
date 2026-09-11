@@ -71,13 +71,13 @@ export function DesktopNav() {
 
   const navItems: NavItem[] = [
     { label: 'Home', route: '/', match: /^\/$|^\/\(tabs\)$/ },
+    { label: 'About Us', route: '/about', match: /^\/about/ },
+    { label: 'How It Works', route: '/how-it-works', match: /^\/how-it-works/ },
     { label: 'Properties', route: '/search', match: /^\/search/ },
     { label: 'Portfolio', route: '/portfolio', match: /^\/portfolio/ },
     ...(isAgent
       ? [{ label: 'Clients', route: '/clients', match: /^\/clients/ }]
       : []),
-    { label: 'How It Works', route: '/how-it-works', match: /^\/how-it-works/ },
-    { label: 'About', route: '/about', match: /^\/about/ },
     { label: 'Partners', route: '/partners', match: /^\/partners/ },
     { label: 'Contact', route: '/contact', match: /^\/contact/ },
   ];

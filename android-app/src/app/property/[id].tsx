@@ -67,6 +67,8 @@ export default function PropertyDetailsScreen() {
   const [activeTab, setActiveTab] = useState("Overview");
   const [showGallery, setShowGallery] = useState(false);
   const [galleryIndex, setGalleryIndex] = useState(0);
+  const [descMaxLines, setDescMaxLines] = useState(5);
+  const [totalDescLines, setTotalDescLines] = useState(0);
   const { width } = useWindowDimensions();
   const isDesktop = width >= 1024;
 
@@ -333,67 +335,136 @@ export default function PropertyDetailsScreen() {
                     {(property.description || '').length > 200 ? '...' : ''}
                   </Text>
 
-                  {/* Quick Stats Row */}
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 24, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#E2E8F0' }}>
-                    {(property.property_type === 'Residential' || property.property_type === 'Holiday') ? (
-                      <>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Ionicons name="business-outline" size={24} color="#64748B" />
-                          <View>
-                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
-                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.floor_type || 'High Rise'}</Text>
+                  {/* Quick Stats & Details Container */}
+                  <View style={{ marginTop: 16, backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16 }}>
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 16, columnGap: 12 }}>
+                      {(property.property_type === 'Residential' || property.property_type === 'Holiday') ? (
+                        <>
+                          <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Ionicons name="business-outline" size={20} color="#64748B" />
+                            <View>
+                              <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.floor_type || 'High Rise'}</Text>
+                            </View>
                           </View>
-                        </View>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Ionicons name="resize-outline" size={24} color="#64748B" />
-                          <View>
-                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
-                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} Sq.ft</Text>
+                          <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Ionicons name="resize-outline" size={20} color="#64748B" />
+                            <View>
+                              <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')}{property.area_sqft_max ? ` - ${Number(property.area_sqft_max).toLocaleString('en-IN')}` : ''} {property.area_unit || 'Sq.ft'}</Text>
+                            </View>
                           </View>
-                        </View>
-                      </>
-                    ) : (property.property_type === 'Commercial' || property.property_type === 'Fractional') ? (
-                      <>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Ionicons name="business-outline" size={24} color="#64748B" />
-                          <View>
-                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
-                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.sub_type || 'Office'}</Text>
+                          {property.flooring && (
+                            <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Ionicons name="grid-outline" size={20} color="#64748B" />
+                              <View>
+                                <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Flooring</Text>
+                                <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.flooring}</Text>
+                              </View>
+                            </View>
+                          )}
+                        </>
+                      ) : (property.property_type === 'Commercial' || property.property_type === 'Fractional') ? (
+                        <>
+                          <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Ionicons name="business-outline" size={20} color="#64748B" />
+                            <View>
+                              <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.sub_type || 'Office'}</Text>
+                            </View>
                           </View>
-                        </View>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Ionicons name="resize-outline" size={24} color="#64748B" />
-                          <View>
-                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
-                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} Sq.ft</Text>
+                          <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Ionicons name="resize-outline" size={20} color="#64748B" />
+                            <View>
+                              <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')}{property.area_sqft_max ? ` - ${Number(property.area_sqft_max).toLocaleString('en-IN')}` : ''} {property.area_unit || 'Sq.ft'}</Text>
+                            </View>
                           </View>
-                        </View>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Ionicons name="fast-food-outline" size={24} color="#B48811" />
-                          <View>
-                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.food_courts ? 'Food Courts, ' : ''}</Text>
-                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>{property.amenities || 'ATMs'}</Text>
+                          <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Ionicons name={property.food_courts ? "fast-food-outline" : "card-outline"} size={20} color="#B48811" />
+                            <View>
+                              <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Facilities</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>
+                                {property.food_courts ? 'Food Courts, ' : ''}{property.amenities || 'ATMs'}
+                              </Text>
+                            </View>
                           </View>
-                        </View>
-                      </>
-                    ) : (
-                      <>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Ionicons name="pricetag-outline" size={24} color="#64748B" />
-                          <View>
-                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
-                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.sub_type || 'Open Plot'}</Text>
+                          {property.flooring && (
+                            <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Ionicons name="grid-outline" size={20} color="#64748B" />
+                              <View>
+                                <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Flooring</Text>
+                                <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.flooring}</Text>
+                              </View>
+                            </View>
+                          )}
+                        </>
+                      ) : (
+                        <>
+                          <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Ionicons name="pricetag-outline" size={20} color="#64748B" />
+                            <View>
+                              <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{property.sub_type || 'Open Plot'}</Text>
+                            </View>
                           </View>
-                        </View>
-                        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          <Ionicons name="resize-outline" size={24} color="#64748B" />
-                          <View>
-                            <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
-                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} {property.area_unit || 'Sq.ft'}</Text>
+                          <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Ionicons name="resize-outline" size={20} color="#64748B" />
+                            <View>
+                              <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')}{property.area_sqft_max ? ` - ${Number(property.area_sqft_max).toLocaleString('en-IN')}` : ''} {property.area_unit || 'Sq.ft'}</Text>
+                            </View>
                           </View>
-                        </View>
-                      </>
+                        </>
+                      )}
+                    </View>
+
+                    {/* RERA and Permission Number */}
+                    {(property.rera_number || property.permission_number) && (
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 16, columnGap: 12, paddingTop: 16, borderTopWidth: 1, borderTopColor: '#E2E8F0', marginTop: 16 }}>
+                        {property.rera_number && (
+                          <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Ionicons name="document-text-outline" size={20} color="#64748B" />
+                            <View>
+                              <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>RERA Number</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }} numberOfLines={1}>{property.rera_number}</Text>
+                            </View>
+                          </View>
+                        )}
+                        {property.permission_number && (
+                          <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            <Ionicons name="shield-checkmark-outline" size={20} color="#64748B" />
+                            <View>
+                              <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Permission Number</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }} numberOfLines={1}>{property.permission_number}</Text>
+                            </View>
+                          </View>
+                        )}
+                      </View>
                     )}
+                  </View>
+
+                  {/* Property Posted By Card */}
+                  <View style={{ marginTop: 16, padding: 14, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    {property.profile?.avatar_url ? (
+                      <Image 
+                        source={{ uri: property.profile.avatar_url }} 
+                        style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#CBD5E1' }} 
+                      />
+                    ) : (
+                      <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }}>
+                        <Ionicons name="person" size={24} color="#94A3B8" />
+                      </View>
+                    )}
+                    <View style={{ flex: 1 }}>
+                      <Text style={{ fontSize: 10, color: '#64748B', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        PROPERTY POSTED BY {property.profile?.role === 'admin' ? 'REALSHARE(ADMIN)' : property.profile?.role ? property.profile.role.toUpperCase() : 'USER'}
+                      </Text>
+                      <Text style={{ fontSize: 15, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>
+                        {property.profile?.role === 'admin' ? 'RealShare Official' : property.profile?.full_name || property.developer?.name || 'Unknown User'}
+                      </Text>
+                    </View>
+                    <Ionicons name="checkmark-circle" size={20} color="#059669" />
                   </View>
                 </View>
 
@@ -468,11 +539,30 @@ export default function PropertyDetailsScreen() {
                 {activeTab === 'Overview' && (
                   <>
                     <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 24, marginBottom: 32 }}>
-                      <View style={{ flex: 1 }}>
+                      <View style={{ flex: 1, position: 'relative' }}>
                         <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 16 }}>About this Property</Text>
-                        <Text style={{ fontSize: 14, color: '#475569', lineHeight: 24 }}>
+                        
+                        {/* Hidden text to calculate total lines accurately */}
+                        <Text 
+                          style={{ fontSize: 14, color: '#475569', lineHeight: 24, position: 'absolute', opacity: 0, zIndex: -10, width: '100%' }}
+                          onTextLayout={(e) => setTotalDescLines(e.nativeEvent.lines.length || 0)}
+                        >
                           {property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.\n\nDesigned to serve the evolving needs of the growing urban population, the development aims to create a vibrant environment combining shopping, leisure and everyday conveniences under one destination.'}
                         </Text>
+
+                        {/* Visible constrained text */}
+                        <Text style={{ fontSize: 14, color: '#475569', lineHeight: 24 }} numberOfLines={descMaxLines}>
+                          {property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.\n\nDesigned to serve the evolving needs of the growing urban population, the development aims to create a vibrant environment combining shopping, leisure and everyday conveniences under one destination.'}
+                        </Text>
+
+                        {(totalDescLines > descMaxLines || ((property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.\n\nDesigned to serve the evolving needs of the growing urban population, the development aims to create a vibrant environment combining shopping, leisure and everyday conveniences under one destination.').length > descMaxLines * 50 && totalDescLines === 0)) && (
+                          <TouchableOpacity 
+                            onPress={() => setDescMaxLines(prev => prev + 5)}
+                            style={{ marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4 }}
+                          >
+                            <Text style={{ color: '#059669', fontWeight: '700', fontSize: 14 }}>Read More ▾</Text>
+                          </TouchableOpacity>
+                        )}
                       </View>
 
                       <View style={{ width: isDesktop ? 280 : '100%', backgroundColor: '#FAFAFA', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16 }}>
@@ -617,7 +707,7 @@ export default function PropertyDetailsScreen() {
                   <View style={{ marginBottom: 32 }}>
                     <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 16 }}>Location Map</Text>
                     {property.lat && property.lng ? (
-                      <View style={{ height: 540, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#E2E8F0' }}>
+                      <View style={{ height: 340, borderRadius: 12, overflow: 'hidden', borderWidth: 1, borderColor: '#E2E8F0' }}>
                         {Platform.OS === 'web' ? (
                           <div
                             style={{ width: '100%', height: '100%' }}

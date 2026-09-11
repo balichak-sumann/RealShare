@@ -138,6 +138,7 @@ export async function GET(request: Request) {
             ? Number(agent.commission_rate_pct)
             : 2.5,
         is_active: agent.is_active,
+        is_approved: agent.is_approved,
         bank_account_name: agent.bank_account_name || null,
         bank_account_number: agent.bank_account_number || null,
         bank_ifsc: agent.bank_ifsc || null,

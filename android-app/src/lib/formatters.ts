@@ -25,7 +25,7 @@ export const propertyToCardProps = (p: any) => {
     : ['https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=400&fit=crop'];
 
   const areaDisplay = p.area_sqft
-    ? `${Number(p.area_sqft).toLocaleString('en-IN')} ${p.area_unit === 'acres' ? 'Acres' : 'sq.ft'}`
+    ? `${Number(p.area_sqft).toLocaleString('en-IN')}${p.area_sqft_max ? ` - ${Number(p.area_sqft_max).toLocaleString('en-IN')}` : ''} ${p.area_unit === 'acres' ? 'Acres' : 'sq.ft'}`
     : isOutright
       ? 'Outright Buy'
       : `${p.sold_fractions ?? 0}/${p.total_fractions ?? 100} sold`;

@@ -135,6 +135,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     }
 
     const areaSqft = data.area_sqft !== undefined ? (data.area_sqft !== null && data.area_sqft !== '' ? Number(data.area_sqft) : null) : undefined;
+    const areaSqftMax = data.area_sqft_max !== undefined ? (data.area_sqft_max !== null && data.area_sqft_max !== '' ? Number(data.area_sqft_max) : null) : undefined;
 
     const updated = await prisma.property.update({
       where: { id },
@@ -160,7 +161,10 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         video_url: data.video_url !== undefined ? data.video_url : undefined,
         brochure_url: data.brochure_url !== undefined ? data.brochure_url : undefined,
         area_sqft: areaSqft !== undefined ? areaSqft : undefined,
+        area_sqft_max: areaSqftMax !== undefined ? areaSqftMax : undefined,
         area_unit: data.area_unit !== undefined ? data.area_unit : undefined,
+        rera_number: data.rera_number !== undefined ? data.rera_number : undefined,
+        permission_number: data.permission_number !== undefined ? data.permission_number : undefined,
         google_maps_url: googleMapsUrl,
         featured: data.featured !== undefined ? data.featured : undefined,
         developer_id: data.developer_id !== undefined ? data.developer_id : undefined,

@@ -13,7 +13,7 @@ export async function GET() {
         orderBy: { created_at: 'desc' },
       }),
       prisma.profile.findMany({
-        where: { role: { in: ['builder', 'developer'] }, is_approved: true },
+        where: { role: { in: ['builder', 'developer'] } },
         include: {
           posted_properties: { select: { id: true, title: true, approval_status: true } },
         },
@@ -34,6 +34,7 @@ export async function GET() {
         established_year: d.established_year,
         rera_registered: d.rera_registered,
         type: 'firm',
+        is_approved: true,
         _count: { properties: d._count.properties },
         properties: d.properties,
         created_at: d.created_at,
@@ -54,6 +55,7 @@ export async function GET() {
           established_year: new Date(b.created_at).getFullYear(),
           rera_registered: b.kyc_status === 'verified',
           type: 'account',
+          is_approved: b.is_approved ?? true,
           _count: { properties: b.posted_properties.length },
           properties: b.posted_properties,
           created_at: b.created_at,

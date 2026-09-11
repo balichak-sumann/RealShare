@@ -312,7 +312,7 @@ const styles = StyleSheet.create({
 const desktopStyles = StyleSheet.create({
   container: {
     width: '100%',
-    paddingVertical: 32,
+    paddingVertical: 24,
     paddingHorizontal: '4%',
     position: 'relative',
     overflow: 'hidden',
@@ -346,7 +346,7 @@ const desktopStyles = StyleSheet.create({
     alignItems: 'stretch',
     justifyContent: 'space-between',
     zIndex: 2,
-    minHeight: 460,
+    minHeight: 345,
   },
   leftCol: {
     width: '35%',
@@ -372,23 +372,23 @@ const desktopStyles = StyleSheet.create({
     opacity: 0.5,
   },
   mainTitle: {
-    fontSize: 46,
-    lineHeight: 52,
+    fontSize: 36,
+    lineHeight: 42,
     fontWeight: '700',
     color: Neutrals.obsidian,
-    marginBottom: 24,
+    marginBottom: 16,
     fontFamily: Platform.OS === 'web' ? 'Georgia, "Times New Roman", serif' : undefined,
   },
   subtitle: {
     ...Typography.bodyLarge,
     color: Neutrals.gray600,
-    marginBottom: 40,
+    marginBottom: 24,
     lineHeight: 24,
   },
   controlsRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 48,
+    marginBottom: 24,
   },
   controlBtn: {
     width: 44,
@@ -416,7 +416,7 @@ const desktopStyles = StyleSheet.create({
   premiumLineRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
+    marginBottom: 16,
   },
   verticalLine: {
     width: 2,

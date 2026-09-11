@@ -198,7 +198,8 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                     }
                   ]}
                 >
-                  <Image source={{ uri: getImg(prop) }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                  <Image source={{ uri: getImg(prop) }} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={20} />
+                  <Image source={{ uri: getImg(prop) }} style={StyleSheet.absoluteFill} contentFit="contain" />
                   <LinearGradient colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']} style={StyleSheet.absoluteFill} />
                   
                   <Animated.View style={[StyleSheet.absoluteFill, { opacity: contentOpacity }]}>
@@ -270,7 +271,8 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
       </View>
 
       <View style={[styles.slide, { marginHorizontal: 16, borderRadius: Radius.lg, overflow: 'hidden' }]}>
-        <Image source={{ uri: getImg(activeMobileSlide) }} style={StyleSheet.absoluteFill} contentFit="cover" />
+        <Image source={{ uri: getImg(activeMobileSlide) }} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={20} />
+        <Image source={{ uri: getImg(activeMobileSlide) }} style={StyleSheet.absoluteFill} contentFit="contain" />
         <LinearGradient colors={['transparent', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.9)']} style={StyleSheet.absoluteFill} />
         
         <View style={styles.badgeContainer}>

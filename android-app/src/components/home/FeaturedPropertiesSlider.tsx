@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Platform, TouchableOpacity, useWindowDimensions } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Dimensions, Platform, TouchableOpacity, useWindowDimensions, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -35,21 +35,46 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
   // Use first 5 properties
   const slides = properties.slice(0, 5);
   
-  const handleNext = () => {
-    setActiveIndex((prev) => (prev + 1) % slides.length);
-  };
+  const slideAnim = useRef(new Animated.Value(0)).current;
+  const isAnimating = useRef(false);
+
+  const handleNext = React.useCallback(() => {
+    if (isAnimating.current) return;
+    isAnimating.current = true;
+    
+    Animated.timing(slideAnim, {
+      toValue: 1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start(() => {
+      setActiveIndex((prev) => (prev + 1) % slides.length);
+      slideAnim.setValue(0);
+      isAnimating.current = false;
+    });
+  }, [slides.length, slideAnim]);
   
-  const handlePrev = () => {
-    setActiveIndex((prev) => (prev - 1 + slides.length) % slides.length);
-  };
+  const handlePrev = React.useCallback(() => {
+    if (isAnimating.current) return;
+    isAnimating.current = true;
+    
+    Animated.timing(slideAnim, {
+      toValue: -1,
+      duration: 400,
+      useNativeDriver: true,
+    }).start(() => {
+      setActiveIndex((prev) => (prev - 1 + slides.length) % slides.length);
+      slideAnim.setValue(0);
+      isAnimating.current = false;
+    });
+  }, [slides.length, slideAnim]);
 
   useEffect(() => {
     if (slides.length <= 1) return;
     const interval = setInterval(() => {
-      setActiveIndex((prev) => (prev + 1) % slides.length);
+      handleNext();
     }, 5000);
     return () => clearInterval(interval);
-  }, [slides.length]);
+  }, [handleNext, slides.length]);
 
   const getImg = (prop: any) => {
     if (!prop) return '';
@@ -120,37 +145,64 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
 
           {/* CENTER COLUMN (ACTIVE CARD STACK) */}
           <View style={desktopStyles.centerCol}>
-            {[2, 1, 0].map((offset) => {
-              if (slides.length <= offset) return null;
-              const idx = (activeIndex + offset) % slides.length;
+            {[3, 2, 1, 0, -1].map((offset) => {
+              if (slides.length <= offset && offset !== -1) return null;
+              const idx = (activeIndex + offset + slides.length) % slides.length;
               const prop = slides[idx];
-              const isFront = offset === 0;
+
+              let translateX, translateY, scale, opacity, contentOpacity;
+              if (offset === -1) {
+                translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, -500, -500] });
+                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0] });
+                scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [1, 1, 1] });
+                opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [1, 0, 0] });
+                contentOpacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [1, 0, 0] });
+              } else if (offset === 0) {
+                translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [24, 0, -500] });
+                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [24, 0, 0] });
+                scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1] });
+                opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.85, 1, 0] });
+                contentOpacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 1, 0] });
+              } else if (offset === 1) {
+                translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 24, 0] });
+                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 24, 0] });
+                scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.90, 0.95, 1] });
+                opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.70, 0.85, 1] });
+                contentOpacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 1] });
+              } else if (offset === 2) {
+                translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 48, 24] });
+                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 48, 24] });
+                scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.90, 0.90, 0.95] });
+                opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0.70, 0.85] });
+                contentOpacity = 0;
+              } else {
+                translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 48, 48] });
+                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 48, 48] });
+                scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.90, 0.90, 0.90] });
+                opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0.70] });
+                contentOpacity = 0;
+              }
 
               return (
-                <View 
+                <Animated.View 
                   key={`${prop.id}-${offset}`} 
                   style={[
                     desktopStyles.mainCard,
                     {
-                      position: isFront ? 'relative' : 'absolute',
+                      position: 'absolute',
                       width: '100%',
                       height: '100%',
                       zIndex: 10 - offset,
-                      transform: [
-                        { scale: 1 - (offset * 0.05) },
-                        { translateY: offset * 24 },
-                        { translateX: offset * 24 }
-                      ],
-                      opacity: 1 - (offset * 0.15)
+                      transform: [{ translateX }, { translateY }, { scale }],
+                      opacity
                     }
                   ]}
                 >
                   <Image source={{ uri: getImg(prop) }} style={StyleSheet.absoluteFill} contentFit="cover" />
                   <LinearGradient colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']} style={StyleSheet.absoluteFill} />
                   
-                  {isFront && (
-                    <View style={StyleSheet.absoluteFill}>
-                      <View style={desktopStyles.mainBadge}>
+                  <Animated.View style={[StyleSheet.absoluteFill, { opacity: contentOpacity }]}>
+                    <View style={desktopStyles.mainBadge}>
                         <Ionicons name="star" size={12} color={GoldSystem.primaryGold} style={{ marginRight: 4 }} />
                         <Text style={desktopStyles.mainBadgeText}>FEATURED</Text>
                       </View>
@@ -193,9 +245,8 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                           </TouchableOpacity>
                         </View>
                       </View>
-                    </View>
-                  )}
-                </View>
+                    </Animated.View>
+                </Animated.View>
               );
             })}
           </View>

@@ -7,7 +7,14 @@ import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
 import { getApiUrl } from '@/lib/api';
-import { Property } from '@/types/property';
+interface Property {
+  id: string | number;
+  title: string;
+  price: string | number;
+  location: string;
+  images: any[];
+  [key: string]: any;
+}
 
 interface FeaturedPropertiesSliderProps {
   properties: Property[];

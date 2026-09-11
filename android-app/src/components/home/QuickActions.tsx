@@ -299,18 +299,4 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-  heroExploreButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: GoldSystem.primaryGold,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 9999,
-  },
-  heroExploreText: {
-    ...Typography.labelMedium,
-    color: '#000',
-    fontWeight: '700',
-    marginRight: 4,
-  },
 });

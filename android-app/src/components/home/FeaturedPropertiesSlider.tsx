@@ -7,6 +7,8 @@ import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
 import { getApiUrl } from '@/lib/api';
+import { getFullImageUrl } from '@/lib/formatters';
+
 interface Property {
   id: string | number;
   title: string;
@@ -67,14 +69,7 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
     return null;
   }
 
-  const getImageUrl = (url: string) => {
-    if (!url) return '';
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    // For relative URLs like /uploads/xxx.png, resolve to the admin dashboard
-    const isLocalhost = Platform.OS === 'web' && typeof window !== 'undefined' && window.location.hostname === 'localhost';
-    const base = isLocalhost ? 'http://localhost:3000' : getApiUrl();
-    return `${base}${url.startsWith('/') ? '' : '/'}${url}`;
-  };
+  // using getFullImageUrl from formatters instead
 
   return (
     <View style={[styles.container, isDesktop && styles.containerDesktop]} onLayout={(e) => {
@@ -89,13 +84,15 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
         onMomentumScrollEnd={handleScroll}
       >
         {slides.map((prop, index) => {
-          const image = prop.images?.[0]?.image_url || prop.image_url || '';
+          const firstImg = prop.images?.[0];
+          const rawImage = typeof firstImg === 'string' ? firstImg : (firstImg?.image_url || prop.image_url || '');
+          const finalImageUrl = getFullImageUrl(rawImage);
           return (
             <View key={prop.id} style={[styles.slide, isDesktop && styles.slideDesktop, { width: containerWidth }]}>
-              {image ? (
+              {finalImageUrl ? (
                 Platform.OS === 'web' ? (
                   <img
-                    src={getImageUrl(image)}
+                    src={finalImageUrl}
                     alt={prop.title}
                     style={{
                       width: '100%',
@@ -110,7 +107,7 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                   />
                 ) : (
                   <Image
-                    source={{ uri: getImageUrl(image) }}
+                    source={{ uri: finalImageUrl }}
                     style={styles.image}
                     contentFit="cover"
                     priority={index === 0 ? 'high' : 'low'}

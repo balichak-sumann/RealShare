@@ -317,7 +317,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   slide: {
-    height: 172,
+    height: 130,
     position: 'relative',
     ...(Platform.OS === 'web' ? { boxShadow: '0 10px 20px rgba(0,0,0,0.1)' } as any : { elevation: 5 }),
   },
@@ -422,7 +422,7 @@ const desktopStyles = StyleSheet.create({
   },
   layoutRow: {
     flexDirection: 'row',
-    alignItems: 'stretch',
+    alignItems: 'center',
     justifyContent: 'space-between',
     zIndex: 2,
     minHeight: 220,
@@ -530,6 +530,7 @@ const desktopStyles = StyleSheet.create({
   
   centerCol: {
     width: '62%',
+    height: 260,
     justifyContent: 'center',
   },
   mainCard: {

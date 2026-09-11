@@ -116,18 +116,6 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                 Premium Homes{'\n'}in Prime Locations
               </Text>
             </View>
-
-            {/* Thumbnail previews */}
-            <View style={desktopStyles.thumbRow}>
-              {activeSlide.images?.slice(0, 3).map((img: any, i: number) => {
-                const raw = typeof img === 'string' ? img : (img?.image_url || '');
-                return (
-                  <View key={i} style={desktopStyles.thumbWrapper}>
-                    <Image source={{ uri: getFullImageUrl(raw) }} style={desktopStyles.thumbImage} contentFit="cover" />
-                  </View>
-                );
-              })}
-            </View>
           </View>
 
           {/* CENTER COLUMN (ACTIVE CARD) */}
@@ -162,6 +150,16 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                 </View>
 
                 <View style={desktopStyles.mainCardAction}>
+                  <View style={desktopStyles.thumbRowInside}>
+                    {activeSlide.images?.slice(0, 3).map((img: any, i: number) => {
+                      const raw = typeof img === 'string' ? img : (img?.image_url || '');
+                      return (
+                        <View key={i} style={desktopStyles.thumbWrapperInside}>
+                          <Image source={{ uri: getFullImageUrl(raw) }} style={desktopStyles.thumbImage} contentFit="cover" />
+                        </View>
+                      );
+                    })}
+                  </View>
                   <Text style={desktopStyles.priceText}>{getPriceDisplay(activeSlide)}</Text>
                   <TouchableOpacity style={desktopStyles.viewBtn} onPress={() => router.push(`/property/${activeSlide.id}` as any)}>
                     <Text style={desktopStyles.viewBtnText}>View Property</Text>
@@ -429,18 +427,20 @@ const desktopStyles = StyleSheet.create({
     color: Neutrals.gray600,
     fontWeight: '500',
   },
-  thumbRow: {
+  thumbRowInside: {
     flexDirection: 'row',
-    gap: 12,
+    gap: 8,
+    marginBottom: 16,
+    alignSelf: 'flex-end',
   },
-  thumbWrapper: {
-    width: 72,
-    height: 90,
-    borderRadius: 12,
+  thumbWrapperInside: {
+    width: 60,
+    height: 48,
+    borderRadius: 8,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: GoldSystem.primaryGold,
-    ...(Platform.OS === 'web' ? { boxShadow: '0 4px 8px rgba(0,0,0,0.1)' } as any : { elevation: 2 }),
+    borderWidth: 1.5,
+    borderColor: Neutrals.white,
+    ...(Platform.OS === 'web' ? { boxShadow: '0 4px 8px rgba(0,0,0,0.2)' } as any : { elevation: 3 }),
   },
   thumbImage: {
     width: '100%',

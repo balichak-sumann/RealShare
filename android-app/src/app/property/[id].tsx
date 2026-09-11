@@ -557,7 +557,7 @@ export default function PropertyDetailsScreen() {
 
                         {(totalDescLines > descMaxLines || ((property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.\n\nDesigned to serve the evolving needs of the growing urban population, the development aims to create a vibrant environment combining shopping, leisure and everyday conveniences under one destination.').length > descMaxLines * 50 && totalDescLines === 0)) && (
                           <TouchableOpacity 
-                            onPress={() => setDescMaxLines(prev => prev + 5)}
+                            onPress={() => setDescMaxLines(9999)}
                             style={{ marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4 }}
                           >
                             <Text style={{ color: '#059669', fontWeight: '700', fontSize: 14 }}>Read More ▾</Text>

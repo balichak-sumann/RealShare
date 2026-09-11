@@ -118,56 +118,86 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
             </View>
           </View>
 
-          {/* CENTER COLUMN (ACTIVE CARD) */}
+          {/* CENTER COLUMN (ACTIVE CARD STACK) */}
           <View style={desktopStyles.centerCol}>
-            <View style={desktopStyles.mainCard}>
-              <Image source={{ uri: getImg(activeSlide) }} style={StyleSheet.absoluteFill} contentFit="cover" />
-              <LinearGradient colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']} style={StyleSheet.absoluteFill} />
-              
-              <View style={desktopStyles.mainBadge}>
-                <Ionicons name="star" size={12} color={GoldSystem.primaryGold} style={{ marginRight: 4 }} />
-                <Text style={desktopStyles.mainBadgeText}>FEATURED</Text>
-              </View>
+            {[2, 1, 0].map((offset) => {
+              if (slides.length <= offset) return null;
+              const idx = (activeIndex + offset) % slides.length;
+              const prop = slides[idx];
+              const isFront = offset === 0;
 
-              <View style={desktopStyles.mainCardBottom}>
-                <View style={desktopStyles.mainCardInfo}>
-                  <View style={desktopStyles.locationRow}>
-                    <Ionicons name="location" size={14} color={Neutrals.white} />
-                    <Text style={desktopStyles.locationText}>{activeSlide.locality}, {activeSlide.district}</Text>
-                  </View>
-                  <Text style={desktopStyles.cardTitle}>{activeSlide.title}</Text>
-                  {!!activeSlide.description && (
-                    <Text style={desktopStyles.cardDesc} numberOfLines={2}>
-                      {activeSlide.description}
-                    </Text>
-                  )}
+              return (
+                <View 
+                  key={`${prop.id}-${offset}`} 
+                  style={[
+                    desktopStyles.mainCard,
+                    {
+                      position: isFront ? 'relative' : 'absolute',
+                      width: '100%',
+                      height: '100%',
+                      zIndex: 10 - offset,
+                      transform: [
+                        { scale: 1 - (offset * 0.05) },
+                        { translateY: offset * 24 },
+                        { translateX: offset * 24 }
+                      ],
+                      opacity: 1 - (offset * 0.15)
+                    }
+                  ]}
+                >
+                  <Image source={{ uri: getImg(prop) }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']} style={StyleSheet.absoluteFill} />
                   
-                  <View style={desktopStyles.amenitiesRow}>
-                    {!!activeSlide.bedrooms && <View style={desktopStyles.amenityItem}><Ionicons name="bed-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{activeSlide.bedrooms} Beds</Text></View>}
-                    {!!activeSlide.bathrooms && <View style={desktopStyles.amenityItem}><Ionicons name="water-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{activeSlide.bathrooms} Baths</Text></View>}
-                    {!!activeSlide.area_sqft && <View style={desktopStyles.amenityItem}><Ionicons name="expand-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{activeSlide.area_sqft} Sq.Ft</Text></View>}
-                  </View>
-                </View>
+                  {isFront && (
+                    <View style={StyleSheet.absoluteFill}>
+                      <View style={desktopStyles.mainBadge}>
+                        <Ionicons name="star" size={12} color={GoldSystem.primaryGold} style={{ marginRight: 4 }} />
+                        <Text style={desktopStyles.mainBadgeText}>FEATURED</Text>
+                      </View>
 
-                <View style={desktopStyles.mainCardAction}>
-                  <View style={desktopStyles.thumbRowInside}>
-                    {activeSlide.images?.slice(0, 3).map((img: any, i: number) => {
-                      const raw = typeof img === 'string' ? img : (img?.image_url || '');
-                      return (
-                        <View key={i} style={desktopStyles.thumbWrapperInside}>
-                          <Image source={{ uri: getFullImageUrl(raw) }} style={desktopStyles.thumbImage} contentFit="cover" />
+                      <View style={desktopStyles.mainCardBottom}>
+                        <View style={desktopStyles.mainCardInfo}>
+                          <View style={desktopStyles.locationRow}>
+                            <Ionicons name="location" size={14} color={Neutrals.white} />
+                            <Text style={desktopStyles.locationText}>{prop.locality}, {prop.district}</Text>
+                          </View>
+                          <Text style={desktopStyles.cardTitle}>{prop.title}</Text>
+                          {!!prop.description && (
+                            <Text style={desktopStyles.cardDesc} numberOfLines={2}>
+                              {prop.description}
+                            </Text>
+                          )}
+                          
+                          <View style={desktopStyles.amenitiesRow}>
+                            {!!prop.bedrooms && <View style={desktopStyles.amenityItem}><Ionicons name="bed-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{prop.bedrooms} Beds</Text></View>}
+                            {!!prop.bathrooms && <View style={desktopStyles.amenityItem}><Ionicons name="water-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{prop.bathrooms} Baths</Text></View>}
+                            {!!prop.area_sqft && <View style={desktopStyles.amenityItem}><Ionicons name="expand-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{prop.area_sqft} Sq.Ft</Text></View>}
+                          </View>
                         </View>
-                      );
-                    })}
-                  </View>
-                  <Text style={desktopStyles.priceText}>{getPriceDisplay(activeSlide)}</Text>
-                  <TouchableOpacity style={desktopStyles.viewBtn} onPress={() => router.push(`/property/${activeSlide.id}` as any)}>
-                    <Text style={desktopStyles.viewBtnText}>View Property</Text>
-                    <Ionicons name="arrow-forward" size={16} color={Neutrals.obsidian} />
-                  </TouchableOpacity>
+
+                        <View style={desktopStyles.mainCardAction}>
+                          <View style={desktopStyles.thumbRowInside}>
+                            {prop.images?.slice(0, 3).map((img: any, i: number) => {
+                              const raw = typeof img === 'string' ? img : (img?.image_url || '');
+                              return (
+                                <View key={i} style={desktopStyles.thumbWrapperInside}>
+                                  <Image source={{ uri: getFullImageUrl(raw) }} style={desktopStyles.thumbImage} contentFit="cover" />
+                                </View>
+                              );
+                            })}
+                          </View>
+                          <Text style={desktopStyles.priceText}>{getPriceDisplay(prop)}</Text>
+                          <TouchableOpacity style={desktopStyles.viewBtn} onPress={() => router.push(`/property/${prop.id}` as any)}>
+                            <Text style={desktopStyles.viewBtnText}>View Property</Text>
+                            <Ionicons name="arrow-forward" size={16} color={Neutrals.obsidian} />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </View>
+                  )}
                 </View>
-              </View>
-            </View>
+              );
+            })}
           </View>
         </View>
 

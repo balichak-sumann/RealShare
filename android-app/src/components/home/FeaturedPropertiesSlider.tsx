@@ -71,18 +71,6 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
   // --- DESKTOP LAYOUT ---
   if (isDesktop) {
     const activeSlide = slides[activeIndex];
-    
-    const getNextIndices = () => {
-      if (slides.length <= 1) return [];
-      if (slides.length === 2) return [(activeIndex + 1) % slides.length];
-      if (slides.length === 3) return [(activeIndex + 1) % slides.length, (activeIndex + 2) % slides.length];
-      return [
-        (activeIndex + 1) % slides.length,
-        (activeIndex + 2) % slides.length,
-        (activeIndex + 3) % slides.length
-      ];
-    };
-    const nextIndices = getNextIndices();
 
     return (
       <View style={desktopStyles.container}>
@@ -182,29 +170,6 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                 </View>
               </View>
             </View>
-          </View>
-
-          {/* RIGHT COLUMN (CASCADING CARDS) */}
-          <View style={desktopStyles.rightCol}>
-            {nextIndices.map((idx, offset) => {
-              const prop = slides[idx];
-              const hPercent = 95 - (offset * 15); // 95%, 80%, 65%
-              return (
-                <View key={prop.id} style={[desktopStyles.cascadeCard, { height: `${hPercent}%` }]}>
-                  <Image source={{ uri: getImg(prop) }} style={StyleSheet.absoluteFill} contentFit="cover" />
-                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.8)']} style={StyleSheet.absoluteFill} />
-                  
-                  <View style={desktopStyles.cascadeContent}>
-                    <Text style={desktopStyles.cascadeTitle} numberOfLines={2}>{prop.title}</Text>
-                    <Text style={desktopStyles.cascadeLocation} numberOfLines={1}>{prop.locality}</Text>
-                  </View>
-
-                  <TouchableOpacity style={desktopStyles.cascadeArrowBtn} onPress={() => setActiveIndex(idx)}>
-                    <Ionicons name="arrow-forward" size={16} color={Neutrals.white} />
-                  </TouchableOpacity>
-                </View>
-              );
-            })}
           </View>
         </View>
 
@@ -378,15 +343,16 @@ const desktopStyles = StyleSheet.create({
   },
   layoutRow: {
     flexDirection: 'row',
-    alignItems: 'center',
+    alignItems: 'stretch',
     justifyContent: 'space-between',
     zIndex: 2,
-    height: 460,
+    minHeight: 460,
   },
   leftCol: {
-    width: '28%',
+    width: '35%',
     paddingRight: 24,
     justifyContent: 'center',
+    paddingVertical: 20,
   },
   superTitle: {
     ...Typography.labelMedium,
@@ -482,8 +448,7 @@ const desktopStyles = StyleSheet.create({
   },
   
   centerCol: {
-    width: '46%',
-    height: '100%',
+    width: '62%',
     justifyContent: 'center',
   },
   mainCard: {

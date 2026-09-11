@@ -36,7 +36,7 @@ export function QuickActions({ children }: { children?: React.ReactNode }) {
   const { isDesktop } = useResponsive();
 
   return (
-    <View style={styles.wrapper}>
+    <View style={[styles.wrapper, !isDesktop && { marginTop: 8 }]}>
       {/* Section Header */}
       <View style={styles.headerContainer}>
         <Text style={styles.superTitle}>DISCOVER MORE</Text>

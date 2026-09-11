@@ -313,7 +313,7 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
 const styles = StyleSheet.create({
   container: {
     width: '100%',
-    marginBottom: 48,
+    marginBottom: 0,
     marginTop: 24,
   },
   slide: {

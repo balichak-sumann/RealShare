@@ -255,28 +255,7 @@ export default function ShortlistScreen() {
     </View>
   );
 
-  if (isAgent) {
-    return (
-      <View style={{ flex: 1, backgroundColor: '#F3F4F6' }}>
-        <View style={styles.agentTabBar}>
-          <TouchableOpacity 
-            style={[styles.agentTab, agentTab === 'My Properties' && styles.agentTabActive]} 
-            onPress={() => setAgentTab('My Properties')}
-          >
-            <Text style={[styles.agentTabText, agentTab === 'My Properties' && styles.agentTabTextActive]}>List of Properties</Text>
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.agentTab, agentTab === 'Shortlist' && styles.agentTabActive]} 
-            onPress={() => setAgentTab('Shortlist')}
-          >
-            <Text style={[styles.agentTabText, agentTab === 'Shortlist' && styles.agentTabTextActive]}>Shortlisted Properties</Text>
-          </TouchableOpacity>
-        </View>
-
-        {agentTab === 'My Properties' ? <AgentListingsScreen /> : renderShortlistContent()}
-      </View>
-    );
-  }
+  // Render the shortlist directly for everyone (agents will see Assign buttons inside it)
 
   return (
     <TabAnimationWrapper>

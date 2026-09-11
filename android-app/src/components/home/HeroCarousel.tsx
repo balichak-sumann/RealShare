@@ -6,8 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
 import { useResponsive } from '@/hooks/useResponsive';
-import { getApiUrl, resilientFetch } from '@/lib/api';
-import { getFullImageUrl } from '@/lib/formatters';
+import { getApiUrl, resilientFetch, getFullImageUrl } from '@/lib/api';
 
 type Banner = {
   id: string;

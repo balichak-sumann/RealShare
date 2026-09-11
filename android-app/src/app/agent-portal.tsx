@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
 import { useDrawer } from '@/contexts/DrawerContext';
+import { useResponsive } from '@/hooks/useResponsive';
 import { getApiUrl } from '@/lib/api';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Radius } from '@/constants/design';
@@ -44,6 +45,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
   const router = useRouter();
   const { profile } = useUser();
   const { openDrawer } = useDrawer();
+  const { isDesktop } = useResponsive();
   const scrollRef = useRef<ScrollView>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
@@ -284,7 +286,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
       {/* Premium Header */}
-      <LinearGradient colors={['#0F172A', '#1E293B']} style={styles.header}>
+      <LinearGradient colors={['#0F172A', '#1E293B']} style={[styles.header, (isDesktop && isEmbedded) ? { paddingTop: 32 } : {}]}>
         <View style={styles.headerTop}>
           <TouchableOpacity style={styles.iconBtn} onPress={openDrawer}>
             <Ionicons name="menu-outline" size={24} color="#FFFFFF" />
@@ -338,64 +340,92 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
         <TopLocalities properties={properties} />
         <ServicesStrip />
 
-        {/* Referral Link Generator - Gold Accent */}
-        <View style={styles.referralCard}>
-          <View style={styles.referralHeader}>
-            <Text style={styles.cardTitle}>🔗 Private Client Referral Link</Text>
-            <Text style={styles.cardSubtitle}>
-              Share this secure link with your clients. Any investments made will automatically attribute your 2.5% platinum commission.
-            </Text>
+        {/* Referral Link Generator - Premium Dark */}
+        <View style={styles.premiumReferralCard}>
+          <View style={styles.premiumReferralHeader}>
+            <View style={styles.iconCircle}>
+              <Ionicons name="link" size={20} color="#D4AF37" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={styles.premiumCardTitle}>Private Client Referral Link</Text>
+              <Text style={styles.premiumCardSubtitle}>
+                Share this secure link with your clients to automatically attribute your 2.5% platinum commission.
+              </Text>
+            </View>
           </View>
           
-          <View style={styles.linkContainer}>
+          <View style={styles.premiumLinkContainer}>
             <TextInput
-              style={styles.linkInput}
+              style={styles.premiumLinkInput}
               value={referralLink}
               editable={false}
               selectionColor="#D4AF37"
             />
-            <TouchableOpacity style={styles.copyBtn} onPress={handleCopy}>
-              <Text style={styles.copyBtnText}>{copied ? 'COPIED ✓' : 'COPY'}</Text>
+            <TouchableOpacity style={[styles.premiumCopyBtn, copied && { backgroundColor: '#10B981' }]} onPress={handleCopy}>
+              <Ionicons name={copied ? "checkmark-done" : "copy-outline"} size={16} color="#111827" style={{ marginRight: 4 }} />
+              <Text style={styles.premiumCopyBtnText}>{copied ? 'COPIED' : 'COPY'}</Text>
             </TouchableOpacity>
           </View>
         </View>
 
         {/* My Listings (Agent Posting) */}
-        <View style={styles.sectionContainer}>
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <Text style={styles.sectionTitle}>My Listings</Text>
-            <TouchableOpacity style={styles.addClientBtn} onPress={() => router.push('/post-property' as any)}>
-              <Text style={styles.addClientText}>+ Post Property</Text>
+        <View style={styles.listingsContainer}>
+          <View style={styles.listingsHeaderRow}>
+            <Text style={styles.listingsTitle}>My Listings</Text>
+            <TouchableOpacity style={styles.postPropertyBtn} onPress={() => router.push('/post-property' as any)}>
+              <Ionicons name="add-circle" size={18} color="#111827" style={{ marginRight: 6 }} />
+              <Text style={styles.postPropertyBtnText}>Post Property</Text>
             </TouchableOpacity>
           </View>
+          
           {myListings.length === 0 ? (
-            <Text style={{ fontSize: 13, color: '#6B7280' }}>You haven't posted any properties yet. Post one for admin approval.</Text>
+            <View style={styles.emptyListingsBox}>
+              <Ionicons name="business-outline" size={40} color="#9CA3AF" style={{ marginBottom: 12 }} />
+              <Text style={styles.emptyListingsTitle}>No properties posted yet.</Text>
+              <Text style={styles.emptyListingsSub}>Submit a property to RealShare Admin for approval to get it listed on the marketplace.</Text>
+            </View>
           ) : (
-            myListings.map((p) => (
-              <View key={p.id} style={styles.leadCard}>
-                <View style={styles.leadInfo}>
-                  <Text style={styles.leadName}>{p.title}</Text>
-                  <Text style={{ fontSize: 12, color: '#6B7280' }}>
-                    {p.locality}, {p.district} · {p.listing_type === 'outright' ? 'Outright' : 'Fractional'}
-                  </Text>
-                </View>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    p.approval_status === 'approved' ? styles.statusPaid : styles.statusPending,
-                  ]}
-                >
-                  <Text
+            myListings.map((p) => {
+              const isApproved = p.approval_status === 'approved';
+              return (
+                <View key={p.id} style={styles.premiumLeadCard}>
+                  <View style={styles.premiumLeadImagePlaceholder}>
+                    {(() => {
+                      const getImageUrl = (url: string) => url.startsWith('/') ? `${getApiUrl()}${url}` : url;
+                      
+                      if (p.images && p.images.length > 0 && p.images[0].image_url) {
+                        return <Image source={{ uri: getImageUrl(p.images[0].image_url) }} style={{ width: '100%', height: '100%', borderRadius: 8 }} />;
+                      } else if (p.image_url) {
+                        return <Image source={{ uri: getImageUrl(p.image_url) }} style={{ width: '100%', height: '100%', borderRadius: 8 }} />;
+                      } else {
+                        return <Ionicons name="image-outline" size={24} color="#9CA3AF" />;
+                      }
+                    })()}
+                  </View>
+                  <View style={styles.premiumLeadInfo}>
+                    <Text style={styles.premiumLeadName} numberOfLines={1}>{p.title}</Text>
+                    <Text style={styles.premiumLeadMeta}>
+                      {p.locality}, {p.district} • {p.listing_type === 'outright' ? 'Outright' : 'Fractional'}
+                    </Text>
+                  </View>
+                  <View
                     style={[
-                      styles.statusText,
-                      p.approval_status === 'approved' ? styles.statusTextPaid : styles.statusTextPending,
+                      styles.premiumStatusBadge,
+                      isApproved ? { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)' } : { backgroundColor: 'rgba(217, 119, 6, 0.15)', borderColor: 'rgba(217, 119, 6, 0.3)' },
                     ]}
                   >
-                    {p.approval_status === 'approved' ? 'Live' : p.approval_status === 'pending_approval' ? 'Pending' : p.approval_status}
-                  </Text>
+                    <Text
+                      style={[
+                        styles.premiumStatusText,
+                        isApproved ? { color: '#10B981' } : { color: '#D97706' },
+                      ]}
+                    >
+                      {isApproved ? 'Live' : 'Pending'}
+                    </Text>
+                  </View>
                 </View>
-              </View>
-            ))
+              );
+            })
           )}
         </View>
 
@@ -642,58 +672,72 @@ const styles = StyleSheet.create({
     fontSize: 11,
     color: '#6B7280',
   },
-  referralCard: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 16,
-    padding: 20,
-    marginBottom: 24,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
+  premiumReferralCard: {
+    backgroundColor: '#111827', // Obsidian
+    borderRadius: 20,
+    padding: 24,
+    marginHorizontal: 16,
+    marginBottom: 32,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: 'rgba(212, 175, 55, 0.2)', // Subtle Gold Border
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.1,
+    shadowRadius: 16,
+    elevation: 6,
   },
-  referralHeader: {
-    marginBottom: 16,
+  premiumReferralHeader: {
+    flexDirection: 'row',
+    marginBottom: 20,
+    alignItems: 'flex-start',
   },
-  cardTitle: {
-    fontSize: 15,
+  iconCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  premiumCardTitle: {
+    fontSize: 16,
     fontWeight: '800',
-    color: '#111827',
+    color: '#F9FAFB',
     marginBottom: 6,
   },
-  cardSubtitle: {
-    fontSize: 12,
-    color: '#6B7280',
-    lineHeight: 18,
-  },
-  linkContainer: {
-    flexDirection: 'row',
-    gap: 10,
-  },
-  linkInput: {
-    flex: 1,
-    backgroundColor: '#F9FAFB',
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#D1D5DB',
-    paddingHorizontal: 14,
+  premiumCardSubtitle: {
     fontSize: 13,
-    color: '#374151',
+    color: '#9CA3AF',
+    lineHeight: 20,
+  },
+  premiumLinkContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  premiumLinkInput: {
+    flex: 1,
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    paddingHorizontal: 16,
+    fontSize: 13,
+    color: '#D1D5DB',
     fontWeight: '500',
   },
-  copyBtn: {
-    backgroundColor: '#111827',
-    paddingHorizontal: 16,
+  premiumCopyBtn: {
+    backgroundColor: '#D4AF37',
+    paddingHorizontal: 20,
+    flexDirection: 'row',
+    alignItems: 'center',
     justifyContent: 'center',
-    borderRadius: 10,
+    borderRadius: 12,
   },
-  copyBtnText: {
-    color: '#D4AF37',
+  premiumCopyBtnText: {
+    color: '#111827',
     fontWeight: '800',
-    fontSize: 11,
+    fontSize: 12,
     letterSpacing: 0.5,
   },
   chartCard: {
@@ -725,50 +769,108 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     marginTop: 4,
   },
-  pipelineSection: {
-    marginBottom: 20,
+  listingsContainer: {
+    paddingHorizontal: 16,
+    marginBottom: 40,
   },
-  pipelineHeader: {
+  listingsHeaderRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 20,
   },
-  addClientBtn: {
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 8,
+  listingsTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    color: '#111827',
   },
-  addClientText: {
-    color: '#D4AF37',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  leadCard: {
+  postPropertyBtn: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#D4AF37',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 12,
+    shadowColor: '#D4AF37',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  postPropertyBtnText: {
+    color: '#111827',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  emptyListingsBox: {
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderStyle: 'dashed',
+    borderRadius: 16,
+    padding: 32,
+    alignItems: 'center',
+  },
+  emptyListingsTitle: {
+    fontSize: 16,
+    fontWeight: '700',
+    color: '#374151',
+    marginBottom: 8,
+  },
+  emptyListingsSub: {
+    fontSize: 13,
+    color: '#6B7280',
+    textAlign: 'center',
+    lineHeight: 20,
+  },
+  premiumLeadCard: {
+    flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FFFFFF',
     borderRadius: 16,
-    padding: 16,
+    padding: 12,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.03,
-    shadowRadius: 6,
-    elevation: 2,
     borderWidth: 1,
     borderColor: '#F3F4F6',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.04,
+    shadowRadius: 12,
+    elevation: 2,
   },
-  leadInfo: {
+  premiumLeadImagePlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 8,
+    backgroundColor: '#F3F4F6',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  premiumLeadInfo: {
     flex: 1,
+    marginRight: 12,
   },
-  leadName: {
-    fontSize: 15,
+  premiumLeadName: {
+    fontSize: 16,
     fontWeight: '800',
+    color: '#111827',
+    marginBottom: 4,
+  },
+  premiumLeadMeta: {
+    fontSize: 13,
     color: '#6B7280',
-    marginTop: 4,
+  },
+  premiumStatusBadge: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+  },
+  premiumStatusText: {
+    fontSize: 11,
+    fontWeight: '800',
+    textTransform: 'uppercase',
   },
   quickActionsContainer: {
     flexDirection: 'row',

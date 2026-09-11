@@ -362,38 +362,51 @@ export default function PostPropertyScreen() {
         throw new Error(data.error || 'Failed to create listing');
       }
 
-      Alert.alert(
-        'Success! 🎉',
-        `Property "${title}" has been submitted successfully${profile?.role === 'admin' ? ' and is now LIVE' : ' and is pending admin approval'}.`,
-        [
-          {
-            text: 'View Property',
-            onPress: () => {
-              if (data.id) {
-                router.replace(`/property/${data.id}`);
-              } else if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace('/');
-              }
+      const successMsg = `Property "${title}" has been submitted successfully${profile?.role === 'admin' ? ' and is now LIVE' : ' and is pending admin approval'}.`;
+      
+      if (Platform.OS === 'web') {
+        alert('Success! 🎉\n\n' + successMsg);
+        if (profile?.role === 'agent') {
+          router.replace('/agent-portal');
+        } else if (profile?.role === 'builder') {
+          router.replace('/builder-portal');
+        } else {
+          router.replace('/');
+        }
+      } else {
+        Alert.alert(
+          'Success! 🎉',
+          successMsg,
+          [
+            {
+              text: 'View Property',
+              onPress: () => {
+                if (data.id) {
+                  router.replace(`/property/${data.id}`);
+                } else if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/');
+                }
+              },
             },
-          },
-          {
-            text: 'Return to Portal',
-            onPress: () => {
-              if (profile?.role === 'agent') {
-                router.replace('/agent-portal');
-              } else if (profile?.role === 'builder') {
-                router.replace('/builder-portal');
-              } else if (router.canGoBack()) {
-                router.back();
-              } else {
-                router.replace('/');
-              }
+            {
+              text: 'Return to Portal',
+              onPress: () => {
+                if (profile?.role === 'agent') {
+                  router.replace('/agent-portal');
+                } else if (profile?.role === 'builder') {
+                  router.replace('/builder-portal');
+                } else if (router.canGoBack()) {
+                  router.back();
+                } else {
+                  router.replace('/');
+                }
+              },
             },
-          },
-        ]
-      );
+          ]
+        );
+      }
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to submit property listing.');
     } finally {
@@ -418,11 +431,11 @@ export default function PostPropertyScreen() {
   if (profile && (profile.role === 'agent' || profile.role === 'builder') && profile.is_approved === false) {
     return (
       <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
-        <Ionicons name="time-outline" size={80} color={GoldSystem.primary} style={{ marginBottom: 16 }} />
+        <Ionicons name="time-outline" size={80} color={GoldSystem.primaryGold} style={{ marginBottom: 16 }} />
         <Text style={{ fontSize: 24, fontWeight: '700', color: Neutrals.obsidian, marginBottom: 12, textAlign: 'center' }}>
           Account Under Review
         </Text>
-        <Text style={{ fontSize: 16, color: Neutrals.slate, textAlign: 'center', lineHeight: 24, marginBottom: 32 }}>
+        <Text style={{ fontSize: 16, color: Neutrals.textSecondary, textAlign: 'center', lineHeight: 24, marginBottom: 32 }}>
           Your {profile.role} account is currently pending administrator approval. You can browse the app, but you will not be able to post properties until approved.
         </Text>
         <TouchableOpacity 
@@ -1337,5 +1350,28 @@ const styles = StyleSheet.create({
     color: Neutrals.obsidian,
     fontWeight: '700',
     fontSize: 14,
+  },
+  tagBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    backgroundColor: '#FFFFFF',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  tagBtnActive: {
+    borderColor: GoldSystem.primaryGold,
+    backgroundColor: GoldSystem.paleGold,
+  },
+  tagBtnText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: Neutrals.textSecondary,
+  },
+  tagBtnTextActive: {
+    color: GoldSystem.darkGold,
+    fontWeight: '700',
   },
 });

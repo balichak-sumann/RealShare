@@ -250,7 +250,11 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   heroOverlay: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   heroContent: {
     padding: 24,

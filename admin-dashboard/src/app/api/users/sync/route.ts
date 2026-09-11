@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     const existingProfile = await prisma.profile.findUnique({
       where: { id: decodedToken.uid },
-      select: { role: true },
+      select: { role: true, phone_number: true },
     });
 
     let requestedRole = 'investor';
@@ -60,7 +60,7 @@ export async function POST(req: Request) {
       },
       update: {
         email: decodedToken.email || null,
-        phone_number: decodedToken.phone_number || null,
+        phone_number: decodedToken.phone_number || body.phone_number || existingProfile?.phone_number || null,
         full_name: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
         avatar_url: decodedToken.picture || null,
         ...(referredByCode ? { referred_by_code: referredByCode } : {}),
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
       create: {
         id: decodedToken.uid,
         email: decodedToken.email || null,
-        phone_number: decodedToken.phone_number || null,
+        phone_number: decodedToken.phone_number || body.phone_number || null,
         full_name: decodedToken.name || decodedToken.email?.split('@')[0] || 'User',
         avatar_url: decodedToken.picture || null,
         role: requestedRole,

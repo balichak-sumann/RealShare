@@ -11,6 +11,7 @@ export default function DisclaimerScreen() {
   return (
     <LegalPageLayout
       title="Disclaimer"
+      lastUpdated="September 2026"
       intro="Thank you for visiting www.realshare.in"
       sections={[
         {

@@ -71,7 +71,8 @@ export function DesktopNav() {
 
   const navItems: NavItem[] = [
     { label: 'Home', route: '/', match: /^\/$|^\/\(tabs\)$/ },
-    { label: 'Properties', route: '/shortlist', match: /^\/shortlist/ },
+    { label: 'Properties', route: '/search', match: /^\/search/ },
+    { label: 'Saved', route: '/shortlist', match: /^\/shortlist/ },
     { label: 'Portfolio', route: '/portfolio', match: /^\/portfolio/ },
     ...(isAgent
       ? [{ label: 'Clients', route: '/clients', match: /^\/clients/ }]

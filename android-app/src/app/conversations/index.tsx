@@ -15,6 +15,7 @@ import { useUser } from '@/contexts/UserContext';
 import { getSocket } from '@/lib/socket';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { getApiUrl } from '@/lib/api';
+import { Ionicons } from '@expo/vector-icons';
 
 interface ConversationRow {
   id: string;
@@ -125,6 +126,39 @@ export default function ConversationsInboxScreen() {
     fetchConversations();
   };
 
+  const handleNewChat = () => {
+    if (isStaff || profile?.role === 'agent' || profile?.role === 'builder') {
+      router.push('/my-tickets' as any);
+    } else {
+      createAdvisorChat();
+    }
+  };
+
+  const createAdvisorChat = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const token = await user.getIdToken();
+      const res = await fetch(`${getApiUrl()}/api/conversations`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ type: 'advisor' })
+      });
+      const data = await res.json();
+      if (res.ok && data.id) {
+        router.push(`/conversations/${data.id}` as any);
+      } else {
+        alert(data.error || 'Failed to start chat. You may not have an assigned advisor yet.');
+      }
+    } catch (err) {
+      console.error(err);
+      alert('Network error while creating chat');
+    }
+  };
+
   if (loading) {
     return (
       <View style={styles.center}>
@@ -156,6 +190,16 @@ export default function ConversationsInboxScreen() {
             <Text style={styles.emptySub}>
               Conversations with your advisor or about a property will show up here.
             </Text>
+            <TouchableOpacity 
+              style={styles.newChatEmptyBtn}
+              activeOpacity={0.8}
+              onPress={handleNewChat}
+            >
+              <Ionicons name={isStaff || profile?.role === 'agent' ? "help-buoy-outline" : "chatbubbles-outline"} size={20} color={Neutrals.obsidian} style={{ marginRight: 8 }} />
+              <Text style={styles.newChatEmptyBtnText}>
+                {isStaff || profile?.role === 'agent' || profile?.role === 'builder' ? 'Contact Support' : 'Chat with Advisor'}
+              </Text>
+            </TouchableOpacity>
           </View>
         ) : (
           conversations.map((conv) => {
@@ -198,6 +242,16 @@ export default function ConversationsInboxScreen() {
           })
         )}
       </ScrollView>
+
+      {conversations.length > 0 && (
+        <TouchableOpacity 
+          style={styles.fab} 
+          activeOpacity={0.8} 
+          onPress={handleNewChat}
+        >
+          <Ionicons name={isStaff || profile?.role === 'agent' ? "help-buoy" : "chatbubbles"} size={28} color={Neutrals.obsidian} />
+        </TouchableOpacity>
+      )}
     </View>
   );
 }
@@ -322,4 +376,32 @@ const styles = StyleSheet.create({
     borderRadius: 5,
     backgroundColor: GoldSystem.primaryGold,
   },
+  newChatEmptyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: GoldSystem.primaryGold,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: Radius.full,
+    marginTop: 24,
+    ...Shadows.medium,
+  },
+  newChatEmptyBtnText: {
+    ...Typography.bodyLarge,
+    fontWeight: '700',
+    color: Neutrals.obsidian,
+  },
+  fab: {
+    position: 'absolute',
+    bottom: 24,
+    right: 24,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: GoldSystem.primaryGold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...Shadows.strong,
+    zIndex: 100,
+  }
 });

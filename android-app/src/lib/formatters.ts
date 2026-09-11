@@ -1,4 +1,5 @@
 import { getFullImageUrl } from './api';
+export { getFullImageUrl };
 
 export const formatPrice = (amount: number): string => {
   if (amount >= 10000000) {

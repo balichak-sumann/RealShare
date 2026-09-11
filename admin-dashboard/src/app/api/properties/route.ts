@@ -339,7 +339,7 @@ export async function POST(request: Request) {
     return NextResponse.json(attachComputedFields(property), { status: 201 });
   } catch (error: any) {
     console.error('Failed to create property:', error);
-    return NextResponse.json({ error: error.message || 'Failed to create property' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to create property', details: error.toString() }, { status: 500 });
   }
 }
 

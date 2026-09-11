@@ -5,18 +5,24 @@ import {
   Text,
   ScrollView,
   TouchableOpacity,
-  Alert
+  Alert,
+  Modal,
+  Platform,
+  ActivityIndicator
 } from 'react-native';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { auth } from '@/lib/firebase';
 import { getApiUrl } from '@/lib/api';
-import { ActivityIndicator } from 'react-native';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
 
 export function AgentClientsScreen() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('All');
   const [dashboardData, setDashboardData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [showPayouts, setShowPayouts] = useState(false);
 
   React.useEffect(() => {
     fetchDashboardData();
@@ -63,7 +69,7 @@ export function AgentClientsScreen() {
   // Assuming 2.5% commission, total investment is commission * 40
   const totalClientInvestments = totalCommission > 0 ? totalCommission * 40 : 0;
 
-  // Real monthly commission trend from the backend (labels + data), no invented numbers
+  // Real monthly commission trend from the backend
   const monthlyTrends = dashboardData?.monthlyTrends || { labels: [], data: [] };
   const trendMax = Math.max(1, ...(monthlyTrends.data || [0]));
   const trendMonths = (monthlyTrends.labels || []).map((label: string, i: number) => ({
@@ -75,41 +81,43 @@ export function AgentClientsScreen() {
   const prevMonthAmt = monthlyTrends.data?.[monthlyTrends.data.length - 2] || 0;
   const growthPercent = prevMonthAmt > 0 ? Math.round(((lastMonthAmt - prevMonthAmt) / prevMonthAmt) * 100) : null;
 
-  // Real upcoming payout — the highest-value client lead still pending, if any
-  const pendingLeads = clientLeads.filter((c: any) => c.status === 'Pending Payout');
-  const nextPayout = pendingLeads.length > 0
-    ? [...pendingLeads].sort((a: any, b: any) => parseCurrency(b.commission) - parseCurrency(a.commission))[0]
-    : null;
-
   // Real client pipeline breakdown from actual lead statuses
   const pipelineTotal = clientLeads.length;
   const activeCount = clientLeads.filter((c: any) => c.status === 'Commission Paid').length;
   const pendingCount = clientLeads.filter((c: any) => c.status === 'Pending Payout').length;
   const leadsCount = pipelineTotal - activeCount - pendingCount;
-  const pct = (n: number) => (pipelineTotal > 0 ? Math.round((n / pipelineTotal) * 100) : 0);
 
   return (
     <TabAnimationWrapper>
     <View style={styles.container}>
       {/* Top Header */}
       <View style={styles.header}>
-        <Text style={styles.headerTitle}>Commission Earnings</Text>
-        <View style={{ width: 24 }} />
+        <Text style={styles.headerTitle}>Agent Console</Text>
+        <TouchableOpacity style={styles.notificationBtn}>
+          <Ionicons name="notifications-outline" size={24} color={Neutrals.obsidian} />
+        </TouchableOpacity>
       </View>
 
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 100 }}>
         
-        {/* Net Worth Hero Section - Repurposed for Commissions */}
+        {/* ─── EARNINGS HERO CARD ─── */}
         <View style={styles.heroSection}>
           <View style={styles.heroCard}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+            {/* Decorative BG element */}
+            <View style={styles.heroBgCircle} />
+            
+            <View style={styles.heroTopRow}>
               <View>
-                <Text style={styles.heroSubtitle}>Total Commission</Text>
-                <Text style={styles.heroTitle}>₹ {totalCommission.toLocaleString('en-IN')}</Text>
+                <Text style={styles.heroSubtitle}>TOTAL COMMISSION EARNED</Text>
+                <View style={{ flexDirection: 'row', alignItems: 'baseline', marginTop: 4 }}>
+                  <Text style={styles.currencySymbol}>₹</Text>
+                  <Text style={styles.heroTitle}>{totalCommission.toLocaleString('en-IN')}</Text>
+                </View>
               </View>
               {growthPercent !== null && (
                 <View style={styles.growthBadge}>
-                  <Text style={styles.growthBadgeText}>{growthPercent >= 0 ? '↑' : '↓'} {growthPercent >= 0 ? '+' : ''}{growthPercent}%</Text>
+                  <Ionicons name={growthPercent >= 0 ? "trending-up" : "trending-down"} size={14} color="#10B981" />
+                  <Text style={styles.growthBadgeText}>{growthPercent}%</Text>
                 </View>
               )}
             </View>
@@ -122,197 +130,176 @@ export function AgentClientsScreen() {
               <View style={styles.heroSplitDivider} />
               <View style={styles.heroSplitItem}>
                 <Text style={styles.heroSplitLabel}>Pending</Text>
-                <Text style={styles.heroSplitValue}>₹ {pendingCommission.toLocaleString('en-IN')}</Text>
+                <Text style={[styles.heroSplitValue, { color: GoldSystem.primaryGold }]}>₹ {pendingCommission.toLocaleString('en-IN')}</Text>
               </View>
             </View>
 
-            <View style={styles.heroActions}>
-              <TouchableOpacity style={[styles.heroBtnOutline, { flex: 1, backgroundColor: 'transparent' }]} onPress={() => Alert.alert('Payouts', 'View detailed payout history.')}>
-                <Text style={styles.heroBtnOutlineText}>View Payout History</Text>
-              </TouchableOpacity>
-            </View>
+            <TouchableOpacity style={styles.heroBtnSolid} onPress={() => setShowPayouts(true)} activeOpacity={0.8}>
+              <Ionicons name="receipt-outline" size={18} color={Neutrals.obsidian} style={{ marginRight: 8 }} />
+              <Text style={styles.heroBtnSolidText}>View Payout Ledger</Text>
+            </TouchableOpacity>
           </View>
         </View>
 
-        {/* Sales Trends Over Time (Bar Chart) */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Sales Trends Over Time</Text>
-          <View style={styles.chartCard}>
-            <View style={styles.chartHeader}>
-              <Text style={styles.chartSubtitle}>Monthly Commission Earned</Text>
-              {growthPercent !== null && (
-                <Text style={styles.chartHighlight}>{growthPercent >= 0 ? '+' : ''}{growthPercent}% vs Last Month</Text>
-              )}
+        {/* ─── QUICK METRICS ROW ─── */}
+        <View style={styles.metricsRow}>
+          <View style={styles.metricCard}>
+            <View style={[styles.metricIconBox, { backgroundColor: 'rgba(59, 130, 246, 0.1)' }]}>
+              <Ionicons name="people" size={20} color="#3B82F6" />
             </View>
-            <View style={styles.chartArea}>
-              {/* Bars — real data from the last 6 months of paid commissions */}
-              {trendMonths.length === 0 ? (
-                <Text style={{ color: Neutrals.gray400, fontSize: 13, paddingVertical: 20 }}>No commission history yet.</Text>
-              ) : (
-                trendMonths.map((data: any, index: number) => (
-                  <View key={index} style={styles.barColumn}>
-                    <Text style={[styles.barValue, data.active && styles.barValueActive]}>
-                      {data.amount >= 1000 ? `₹${Math.round(data.amount / 1000)}k` : `₹${data.amount}`}
-                    </Text>
-                    <View style={styles.barTrack}>
-                      <View style={[
-                        styles.barFill,
-                        { height: `${Math.max(4, Math.round((data.amount / trendMax) * 100))}%` },
-                        data.active && { backgroundColor: GoldSystem.primaryGold }
-                      ]} />
-                    </View>
-                    <Text style={[styles.barLabel, data.active && styles.barLabelActive]}>{data.month}</Text>
-                  </View>
-                ))
-              )}
+            <Text style={styles.metricValue}>{pipelineTotal}</Text>
+            <Text style={styles.metricLabel}>Total Clients</Text>
+          </View>
+          <View style={styles.metricCard}>
+            <View style={[styles.metricIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+              <Ionicons name="checkmark-circle" size={20} color="#10B981" />
             </View>
+            <Text style={styles.metricValue}>{activeCount}</Text>
+            <Text style={styles.metricLabel}>Closed Deals</Text>
+          </View>
+          <View style={styles.metricCard}>
+            <View style={[styles.metricIconBox, { backgroundColor: 'rgba(217, 119, 6, 0.1)' }]}>
+              <Ionicons name="time" size={20} color="#D97706" />
+            </View>
+            <Text style={styles.metricValue}>{pendingCount}</Text>
+            <Text style={styles.metricLabel}>In Pipeline</Text>
           </View>
         </View>
 
-        {/* Passive Income Section - Repurposed for Client Metrics */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Client Performance</Text>
-          <View style={styles.incomeCard}>
-            <View style={styles.incomeMain}>
-              <Text style={styles.incomeLabel}>Total Client Investments</Text>
-              <Text style={styles.incomeValue}>₹ {totalClientInvestments.toLocaleString('en-IN')}</Text>
-              <Text style={styles.incomeBadge}>{totalClientInvestments > 0 ? 'Active Agent' : 'Getting Started'}</Text>
-            </View>
-            <View style={styles.incomeDivider} />
-            <View style={styles.incomeSecondary}>
-              <View style={styles.incomeStatBlock}>
-                <Text style={styles.incomeSubLabel}>Completed Deals</Text>
-                <Text style={styles.incomeSubValue}>{clientLeads.filter((c: any) => c.status === 'Commission Paid').length}</Text>
-              </View>
-              <View style={styles.incomeStatBlock}>
-                <Text style={styles.incomeSubLabel}>Pending Deals</Text>
-                <Text style={styles.incomeSubValue}>{clientLeads.filter((c: any) => c.status !== 'Commission Paid').length}</Text>
-              </View>
-            </View>
-          </View>
-        </View>
-
-        {/* Upcoming Payouts */}
+        {/* ─── SALES TRENDS ─── */}
         <View style={styles.sectionContainer}>
           <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>Upcoming Payouts</Text>
-            <TouchableOpacity onPress={() => Alert.alert('Calendar', 'Full payout calendar coming soon.')}>
-              <Text style={styles.sectionLink}>View Calendar</Text>
-            </TouchableOpacity>
+            <Text style={styles.sectionTitle}>Sales Trends</Text>
           </View>
-          {nextPayout ? (
-            <View style={styles.payoutCard}>
-              <View style={styles.payoutDateBox}>
-                <Text style={styles.payoutDateMonth}>{nextPayout.date ? new Date(nextPayout.date).toLocaleDateString('en-IN', { month: 'short' }).toUpperCase() : 'TBD'}</Text>
-                <Text style={styles.payoutDateDay}>{nextPayout.date ? new Date(nextPayout.date).getDate() : '--'}</Text>
-              </View>
-              <View style={styles.payoutContent}>
-                <Text style={styles.payoutTitle}>Referral Commission</Text>
-                <Text style={styles.payoutSub}>{nextPayout.name} - {nextPayout.property}</Text>
-              </View>
-              <Text style={styles.payoutAmount}>+{nextPayout.commission}</Text>
-            </View>
-          ) : (
-            <View style={[styles.payoutCard, { justifyContent: 'center' }]}>
-              <Text style={{ color: Neutrals.gray400, fontSize: 13 }}>No pending payouts right now.</Text>
-            </View>
-          )}
-        </View>
-
-        {/* Asset Allocation - Repurposed for Client Pipeline */}
-        <View style={styles.sectionContainer}>
-          <Text style={styles.sectionTitle}>Client Pipeline</Text>
-          <View style={styles.allocationCard}>
-            {pipelineTotal === 0 ? (
-              <Text style={{ color: Neutrals.gray400, fontSize: 13 }}>No clients yet — leads you bring in will show up here.</Text>
-            ) : (
-              <>
-                <View style={styles.allocationBar}>
-                  <View style={[styles.allocationSegment, { flex: Math.max(activeCount, 0.001), backgroundColor: GoldSystem.primaryGold }]} />
-                  <View style={[styles.allocationSegment, { flex: Math.max(pendingCount, 0.001), backgroundColor: Neutrals.obsidian }]} />
-                  <View style={[styles.allocationSegment, { flex: Math.max(leadsCount, 0.001), backgroundColor: Neutrals.gray400 }]} />
+          <View style={styles.chartCard}>
+            <Text style={styles.chartSubtitle}>Monthly Commissions (Last 6 Mos)</Text>
+            <View style={styles.chartArea}>
+              {trendMonths.length === 0 ? (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  <Text style={{ color: Neutrals.gray400, ...Typography.bodyMedium }}>No commission history yet.</Text>
                 </View>
-                <View style={styles.allocationLegend}>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: GoldSystem.primaryGold }]} />
-                    <Text style={styles.legendText}>Active ({pct(activeCount)}%)</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: Neutrals.obsidian }]} />
-                    <Text style={styles.legendText}>Pending ({pct(pendingCount)}%)</Text>
-                  </View>
-                  <View style={styles.legendItem}>
-                    <View style={[styles.legendDot, { backgroundColor: Neutrals.gray400 }]} />
-                    <Text style={styles.legendText}>Leads ({pct(leadsCount)}%)</Text>
-                  </View>
-                </View>
-              </>
-            )}
-          </View>
-        </View>
-
-        {/* Tabs for Client List */}
-        <View style={styles.tabsRow}>
-          {['All', 'Active', 'Pending'].map((tab) => (
-            <TouchableOpacity 
-              key={tab} 
-              style={[styles.tabBtn, activeTab === tab && styles.tabBtnActive]}
-              onPress={() => setActiveTab(tab)}
-            >
-              <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
-            </TouchableOpacity>
-          ))}
-        </View>
-
-        {/* Client List */}
-        <View style={styles.assetList}>
-          {loading ? (
-            <ActivityIndicator size="large" color="#D4AF37" style={{ marginTop: 40 }} />
-          ) : filteredClients.length === 0 ? (
-            <View style={{ padding: 20, alignItems: 'center', marginTop: 40 }}>
-              <Text style={{ fontSize: 16, color: '#6B7280' }}>No deals found.</Text>
-            </View>
-          ) : (
-            filteredClients.map((client: any) => (
-              <View key={client.id} style={styles.assetCard}>
-                <View style={styles.assetHeader}>
-                  <View style={styles.assetImagePlaceholder}>
-                    <Text style={styles.avatarText}>{client.name.charAt(0)}</Text>
-                  </View>
-                  <View style={styles.assetInfo}>
-                    <Text style={styles.assetTitle}>{client.name}</Text>
-                    <Text style={styles.assetLoc}>{client.property}</Text>
-                    <View style={styles.assetMetaRow}>
-                      <Text style={styles.assetMetaText}>Fractions: {client.fractions}</Text>
-                      <View style={styles.assetDot} />
-                      <Text style={[
-                        styles.assetMetaText, 
-                        { color: client.status === 'Commission Paid' ? '#059669' : '#D97706', fontWeight: '700' }
-                      ]}>
-                        {client.status}
+              ) : (
+                trendMonths.map((data: any, index: number) => {
+                  const barHeight = Math.max(10, Math.round((data.amount / trendMax) * 100));
+                  return (
+                    <View key={index} style={styles.barColumn}>
+                      <Text style={[styles.barValue, data.active && styles.barValueActive]}>
+                        {data.amount >= 1000 ? `₹${(data.amount / 1000).toFixed(1)}k` : `₹${data.amount}`}
                       </Text>
+                      <View style={styles.barTrack}>
+                        <View style={[
+                          styles.barFill,
+                          { height: `${barHeight}%` },
+                          data.active && { backgroundColor: GoldSystem.primaryGold }
+                        ]} />
+                      </View>
+                      <Text style={[styles.barLabel, data.active && styles.barLabelActive]}>{data.month}</Text>
+                    </View>
+                  );
+                })
+              )}
+            </View>
+          </View>
+        </View>
+
+        {/* ─── CLIENT CRM LIST ─── */}
+        <View style={styles.sectionContainer}>
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>My Clients</Text>
+            <TouchableOpacity onPress={() => router.push('/clients' as any)}>
+              <Text style={styles.sectionLink}>+ Add Lead</Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* CRM Tabs */}
+          <View style={styles.tabsRow}>
+            {['All', 'Active', 'Pending'].map((tab) => (
+              <TouchableOpacity 
+                key={tab} 
+                style={[styles.tabBtn, activeTab === tab && styles.tabBtnActive]}
+                onPress={() => setActiveTab(tab)}
+              >
+                <Text style={[styles.tabText, activeTab === tab && styles.tabTextActive]}>{tab}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+
+          {/* List */}
+          {loading ? (
+            <ActivityIndicator size="large" color={GoldSystem.primaryGold} style={{ marginTop: 40 }} />
+          ) : filteredClients.length === 0 ? (
+            <View style={styles.emptyStateBox}>
+              <Ionicons name="folder-open-outline" size={48} color={Neutrals.gray300} style={{ marginBottom: 16 }} />
+              <Text style={styles.emptyStateTitle}>No clients found.</Text>
+              <Text style={styles.emptyStateSub}>When you pitch properties to leads, they will appear here in your CRM.</Text>
+            </View>
+          ) : (
+            filteredClients.map((client: any, idx: number) => {
+              const isPaid = client.status === 'Commission Paid';
+              const isPending = client.status === 'Pending Payout' || client.status === 'Under Review';
+              const statusColor = isPaid ? '#10B981' : isPending ? '#D97706' : Neutrals.gray500;
+              const statusBg = isPaid ? 'rgba(16, 185, 129, 0.1)' : isPending ? 'rgba(217, 119, 6, 0.1)' : Neutrals.gray100;
+
+              return (
+                <View key={client.id || idx} style={styles.crmCard}>
+                  <View style={styles.crmHeader}>
+                    <View style={styles.crmAvatar}>
+                      <Text style={styles.crmAvatarText}>{client.name.charAt(0).toUpperCase()}</Text>
+                    </View>
+                    <View style={styles.crmInfo}>
+                      <Text style={styles.crmName}>{client.name}</Text>
+                      <Text style={styles.crmProperty} numberOfLines={1}>{client.property}</Text>
+                    </View>
+                    <View style={[styles.crmStatusBadge, { backgroundColor: statusBg }]}>
+                      <Text style={[styles.crmStatusText, { color: statusColor }]}>{client.status}</Text>
                     </View>
                   </View>
-                </View>
-                
-                <View style={styles.assetDivider} />
-                
-                <View style={styles.assetFinancials}>
-                  <View style={styles.assetFinBox}>
-                    <Text style={styles.assetFinLabel}>Status</Text>
-                    <Text style={styles.assetFinValue}>{client.status}</Text>
+                  
+                  <View style={styles.crmDivider} />
+                  
+                  <View style={styles.crmFooter}>
+                    <View style={styles.crmStat}>
+                      <Text style={styles.crmStatLabel}>Fractions</Text>
+                      <Text style={styles.crmStatValue}>{client.fractions}</Text>
+                    </View>
+                    <View style={styles.crmStat}>
+                      <Text style={styles.crmStatLabel}>Earned</Text>
+                      <Text style={[styles.crmStatValue, isPaid && { color: '#10B981' }]}>{client.commission}</Text>
+                    </View>
+                    <TouchableOpacity style={styles.crmChatBtn} onPress={() => Alert.alert('Chat', `Open chat with ${client.name}`)}>
+                      <Ionicons name="chatbubble-ellipses" size={16} color={GoldSystem.primaryGold} style={{ marginRight: 6 }} />
+                      <Text style={styles.crmChatText}>Message</Text>
+                    </TouchableOpacity>
                   </View>
-                  <View style={styles.assetFinBox}>
-                    <Text style={styles.assetFinLabel}>Earned</Text>
-                    <Text style={[styles.assetFinValue, { color: '#059669' }]}>{client.commission}</Text>
-                  </View>
                 </View>
-              </View>
-            ))
+              );
+            })
           )}
         </View>
 
       </ScrollView>
+
+      {/* Payout History Modal */}
+      <Modal visible={showPayouts} animationType="slide" presentationStyle="pageSheet" onRequestClose={() => setShowPayouts(false)}>
+        <View style={styles.modalContainer}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Payout Ledger</Text>
+            <TouchableOpacity onPress={() => setShowPayouts(false)} style={styles.modalCloseBtn}>
+              <Ionicons name="close" size={24} color={Neutrals.obsidian} />
+            </TouchableOpacity>
+          </View>
+          <ScrollView style={styles.modalBody}>
+            <View style={styles.emptyLedgerCard}>
+              <Text style={{ fontSize: 48, marginBottom: 16 }}>🧾</Text>
+              <Text style={styles.emptyLedgerTitle}>No Payouts Yet</Text>
+              <Text style={styles.emptyLedgerSub}>
+                Your payout history ledger will appear here automatically once your pending commissions are cleared and deposited into your verified bank account.
+              </Text>
+            </View>
+          </ScrollView>
+        </View>
+      </Modal>
+
     </View>
     </TabAnimationWrapper>
   );
@@ -328,54 +315,88 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 60,
+    paddingTop: Platform.OS === 'web' ? 24 : 60,
     paddingBottom: 16,
     backgroundColor: Neutrals.surface,
   },
   headerTitle: {
-    ...Typography.displayMedium,
+    ...Typography.headlineMedium,
     color: Neutrals.obsidian,
   },
+  notificationBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Neutrals.gray100,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   heroSection: {
-    backgroundColor: Neutrals.surface,
     paddingHorizontal: 20,
+    paddingTop: 12,
     paddingBottom: 24,
-    borderBottomWidth: 1,
-    borderBottomColor: Neutrals.border,
   },
   heroCard: {
     backgroundColor: Neutrals.obsidian,
     borderRadius: Radius.xl,
     padding: 24,
+    overflow: 'hidden',
     ...Shadows.strong,
   },
+  heroBgCircle: {
+    position: 'absolute',
+    top: -50,
+    right: -20,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: 'rgba(255, 255, 255, 0.03)',
+  },
+  heroTopRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
   heroSubtitle: {
-    ...Typography.labelMedium,
-    color: Neutrals.gray400,
-    marginBottom: 4,
+    ...Typography.caption,
+    color: GoldSystem.paleGold,
+    letterSpacing: 1.2,
+    fontWeight: '700',
+  },
+  currencySymbol: {
+    ...Typography.headlineMedium,
+    color: Neutrals.gray300,
+    marginRight: 4,
   },
   heroTitle: {
     ...Typography.displayLarge,
     color: Neutrals.surface,
-    fontSize: 32,
+    fontSize: 36,
   },
   growthBadge: {
-    backgroundColor: 'rgba(16, 185, 129, 0.2)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.sm,
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.3)',
   },
   growthBadgeText: {
     ...Typography.caption,
     color: '#10B981',
-    fontWeight: '700',
+    fontWeight: '800',
+    marginLeft: 4,
   },
   heroSplit: {
     flexDirection: 'row',
     marginTop: 24,
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    backgroundColor: 'rgba(255, 255, 255, 0.06)',
     borderRadius: Radius.lg,
     padding: 16,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
   },
   heroSplitItem: {
     flex: 1,
@@ -388,43 +409,61 @@ const styles = StyleSheet.create({
   heroSplitLabel: {
     ...Typography.caption,
     color: Neutrals.gray400,
-    marginBottom: 4,
+    marginBottom: 6,
   },
   heroSplitValue: {
     ...Typography.headlineMedium,
     color: Neutrals.surface,
   },
-  heroActions: {
+  heroBtnSolid: {
     flexDirection: 'row',
     marginTop: 24,
-    gap: 12,
-  },
-  heroBtnOutline: {
-    flex: 1,
-    paddingVertical: 14,
-    borderRadius: Radius.md,
-    borderWidth: 1,
-    borderColor: 'rgba(255, 255, 255, 0.2)',
-    alignItems: 'center',
-  },
-  heroBtnOutlineText: {
-    ...Typography.labelMedium,
-    color: Neutrals.surface,
-  },
-  heroBtnSolid: {
-    flex: 1,
     paddingVertical: 14,
     borderRadius: Radius.md,
     backgroundColor: GoldSystem.primaryGold,
     alignItems: 'center',
+    justifyContent: 'center',
   },
   heroBtnSolidText: {
     ...Typography.labelMedium,
     color: Neutrals.obsidian,
   },
+  metricsRow: {
+    flexDirection: 'row',
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 24,
+  },
+  metricCard: {
+    flex: 1,
+    backgroundColor: Neutrals.surface,
+    borderRadius: Radius.lg,
+    padding: 16,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+    ...Shadows.soft,
+  },
+  metricIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  metricValue: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+    marginBottom: 4,
+  },
+  metricLabel: {
+    ...Typography.caption,
+    color: Neutrals.gray500,
+  },
   sectionContainer: {
-    padding: 20,
-    paddingBottom: 0,
+    paddingHorizontal: 20,
+    marginBottom: 32,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
@@ -435,7 +474,10 @@ const styles = StyleSheet.create({
   sectionTitle: {
     ...Typography.headlineMedium,
     color: Neutrals.obsidian,
-    marginBottom: 16,
+  },
+  sectionLink: {
+    ...Typography.labelMedium,
+    color: GoldSystem.primaryGold,
   },
   chartCard: {
     backgroundColor: Neutrals.surface,
@@ -445,34 +487,22 @@ const styles = StyleSheet.create({
     padding: 20,
     ...Shadows.soft,
   },
-  chartHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 24,
-  },
   chartSubtitle: {
-    ...Typography.labelMedium,
-    color: Neutrals.gray600,
-  },
-  chartHighlight: {
     ...Typography.caption,
-    color: '#059669',
-    fontWeight: '700',
-    backgroundColor: 'rgba(16, 185, 129, 0.1)',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: Radius.sm,
+    color: Neutrals.gray500,
+    marginBottom: 24,
+    textTransform: 'uppercase',
+    letterSpacing: 1,
   },
   chartArea: {
-    height: 180,
+    height: 160,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
   barColumn: {
     alignItems: 'center',
-    width: 40,
+    width: 44,
   },
   barValue: {
     ...Typography.caption,
@@ -485,8 +515,8 @@ const styles = StyleSheet.create({
     fontWeight: '800',
   },
   barTrack: {
-    width: 24,
-    height: 120,
+    width: 32,
+    height: 100,
     backgroundColor: Neutrals.gray100,
     borderRadius: Radius.sm,
     justifyContent: 'flex-end',
@@ -495,171 +525,34 @@ const styles = StyleSheet.create({
   barFill: {
     width: '100%',
     backgroundColor: Neutrals.obsidian,
-    borderRadius: Radius.sm,
+    borderTopLeftRadius: Radius.sm,
+    borderTopRightRadius: Radius.sm,
   },
   barLabel: {
     ...Typography.caption,
-    color: Neutrals.gray600,
+    color: Neutrals.gray500,
     marginTop: 8,
   },
   barLabelActive: {
     color: Neutrals.obsidian,
     fontWeight: '800',
   },
-  sectionLink: {
-    ...Typography.labelMedium,
-    color: GoldSystem.primaryGold,
-    marginBottom: 16,
-  },
-  incomeCard: {
-    backgroundColor: Neutrals.surface,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Neutrals.border,
-    ...Shadows.soft,
-  },
-  incomeMain: {
-    padding: 20,
-    alignItems: 'center',
-  },
-  incomeLabel: {
-    ...Typography.labelMedium,
-    color: Neutrals.gray600,
-    marginBottom: 4,
-  },
-  incomeValue: {
-    ...Typography.displayMedium,
-    color: Neutrals.obsidian,
-    marginBottom: 8,
-  },
-  incomeBadge: {
-    backgroundColor: 'rgba(212, 175, 55, 0.1)',
-    color: GoldSystem.primaryGold,
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: Radius.full,
-    ...Typography.caption,
-    fontWeight: '700',
-  },
-  incomeDivider: {
-    height: 1,
-    backgroundColor: Neutrals.border,
-  },
-  incomeSecondary: {
-    flexDirection: 'row',
-    padding: 16,
-  },
-  incomeRow: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  incomeStatBlock: {
-    flex: 1,
-    alignItems: 'center',
-  },
-  incomeSubLabel: {
-    ...Typography.caption,
-    color: Neutrals.gray600,
-    marginBottom: 4,
-  },
-  incomeSubValue: {
-    ...Typography.labelLarge,
-    color: Neutrals.obsidian,
-  },
-  payoutCard: {
-    flexDirection: 'row',
-    backgroundColor: Neutrals.surface,
-    borderRadius: Radius.lg,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Neutrals.border,
-    alignItems: 'center',
-    ...Shadows.soft,
-  },
-  payoutDateBox: {
-    backgroundColor: Neutrals.gray100,
-    borderRadius: Radius.md,
-    padding: 8,
-    alignItems: 'center',
-    width: 56,
-  },
-  payoutDateMonth: {
-    ...Typography.caption,
-    color: Neutrals.gray600,
-    textTransform: 'uppercase',
-  },
-  payoutDateDay: {
-    ...Typography.labelLarge,
-    color: Neutrals.obsidian,
-  },
-  payoutContent: {
-    flex: 1,
-    marginLeft: 16,
-  },
-  payoutTitle: {
-    ...Typography.labelMedium,
-    color: Neutrals.obsidian,
-  },
-  payoutSub: {
-    ...Typography.caption,
-    color: Neutrals.gray600,
-    marginTop: 2,
-  },
-  payoutAmount: {
-    ...Typography.labelMedium,
-    color: '#059669',
-  },
-  allocationCard: {
-    backgroundColor: Neutrals.surface,
-    borderRadius: Radius.lg,
-    borderWidth: 1,
-    borderColor: Neutrals.border,
-    padding: 16,
-    ...Shadows.soft,
-  },
-  allocationBar: {
-    height: 12,
-    flexDirection: 'row',
-    borderRadius: 6,
-    overflow: 'hidden',
-    marginBottom: 16,
-  },
-  allocationSegment: {
-    height: '100%',
-  },
-  allocationLegend: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  legendItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  legendDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    marginRight: 6,
-  },
-  legendText: {
-    ...Typography.caption,
-    color: Neutrals.obsidian,
-  },
   tabsRow: {
     flexDirection: 'row',
-    paddingHorizontal: 20,
-    marginTop: 32,
     marginBottom: 16,
   },
   tabBtn: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: Radius.full,
-    backgroundColor: Neutrals.gray100,
+    backgroundColor: Neutrals.surface,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
     marginRight: 8,
   },
   tabBtnActive: {
     backgroundColor: Neutrals.obsidian,
+    borderColor: Neutrals.obsidian,
   },
   tabText: {
     ...Typography.labelMedium,
@@ -668,83 +561,163 @@ const styles = StyleSheet.create({
   tabTextActive: {
     color: Neutrals.surface,
   },
-  assetList: {
-    paddingHorizontal: 20,
-  },
-  assetCard: {
+  crmCard: {
     backgroundColor: Neutrals.surface,
     borderRadius: Radius.lg,
     borderWidth: 1,
     borderColor: Neutrals.border,
-    marginBottom: 16,
-    padding: 16,
+    marginBottom: 12,
     ...Shadows.soft,
   },
-  assetHeader: {
+  crmHeader: {
     flexDirection: 'row',
+    padding: 16,
     alignItems: 'center',
   },
-  assetImagePlaceholder: {
-    width: 60,
-    height: 60,
-    borderRadius: Radius.md,
+  crmAvatar: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     backgroundColor: Neutrals.gray100,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
   },
-  avatarText: {
-    fontSize: 24,
-    fontWeight: '800',
-    color: Neutrals.obsidian,
+  crmAvatarText: {
+    ...Typography.headlineMedium,
+    color: Neutrals.gray600,
   },
-  assetInfo: {
+  crmInfo: {
     flex: 1,
   },
-  assetTitle: {
+  crmName: {
     ...Typography.labelLarge,
     color: Neutrals.obsidian,
-    marginBottom: 4,
+    marginBottom: 2,
   },
-  assetLoc: {
+  crmProperty: {
     ...Typography.caption,
-    color: Neutrals.gray600,
-    marginBottom: 4,
+    color: Neutrals.gray500,
   },
-  assetMetaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  crmStatusBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: Radius.full,
   },
-  assetMetaText: {
+  crmStatusText: {
     ...Typography.caption,
-    color: Neutrals.gray600,
+    fontWeight: '700',
+    fontSize: 10,
+    textTransform: 'uppercase',
   },
-  assetDot: {
-    width: 4,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Neutrals.gray400,
-    marginHorizontal: 8,
-  },
-  assetDivider: {
+  crmDivider: {
     height: 1,
     backgroundColor: Neutrals.border,
-    marginVertical: 16,
   },
-  assetFinancials: {
+  crmFooter: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    padding: 12,
+    paddingHorizontal: 16,
+    backgroundColor: Neutrals.gray100,
+    borderBottomLeftRadius: Radius.lg,
+    borderBottomRightRadius: Radius.lg,
+    alignItems: 'center',
   },
-  assetFinBox: {
+  crmStat: {
     flex: 1,
   },
-  assetFinLabel: {
+  crmStatLabel: {
     ...Typography.caption,
-    color: Neutrals.gray600,
-    marginBottom: 4,
+    color: Neutrals.gray500,
+    fontSize: 10,
+    textTransform: 'uppercase',
+    marginBottom: 2,
   },
-  assetFinValue: {
+  crmStatValue: {
     ...Typography.labelMedium,
     color: Neutrals.obsidian,
+  },
+  crmChatBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Neutrals.surface,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+  },
+  crmChatText: {
+    ...Typography.labelMedium,
+    color: Neutrals.obsidian,
+  },
+  emptyStateBox: {
+    padding: 32,
+    alignItems: 'center',
+    backgroundColor: Neutrals.surface,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+    borderStyle: 'dashed',
+    marginTop: 16,
+  },
+  emptyStateTitle: {
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
+    marginBottom: 8,
+  },
+  emptyStateSub: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray500,
+    textAlign: 'center',
+  },
+  modalContainer: {
+    flex: 1,
+    backgroundColor: Neutrals.background,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: 20,
+    paddingTop: Platform.OS === 'web' ? 24 : 60,
+    borderBottomWidth: 1,
+    borderColor: Neutrals.border,
+    backgroundColor: Neutrals.surface,
+  },
+  modalTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+  },
+  modalCloseBtn: {
+    padding: 8,
+    backgroundColor: Neutrals.gray100,
+    borderRadius: 20,
+  },
+  modalBody: {
+    padding: 20,
+  },
+  emptyLedgerCard: {
+    backgroundColor: Neutrals.surface,
+    borderRadius: Radius.lg,
+    padding: 32,
+    alignItems: 'center',
+    marginTop: 20,
+    borderWidth: 1,
+    borderColor: Neutrals.border,
+    ...Shadows.soft,
+  },
+  emptyLedgerTitle: {
+    ...Typography.headlineMedium,
+    color: Neutrals.obsidian,
+    marginBottom: 12,
+  },
+  emptyLedgerSub: {
+    ...Typography.bodyMedium,
+    color: Neutrals.gray500,
+    textAlign: 'center',
+    lineHeight: 22,
   },
 });

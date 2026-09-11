@@ -11,6 +11,7 @@ import {
   TouchableWithoutFeedback,
   Modal,
   useWindowDimensions,
+  ScrollView,
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -61,7 +62,6 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
   // Role specific menu items
   const roleMenuItems: { icon: IoniconName; label: string; route: string }[] = [
     ...(profile?.role === 'builder' ? [{ icon: 'business-outline' as IoniconName, label: 'Builder Console', route: '/builder-portal' }] : []),
-    ...(profile?.role === 'agent' ? [{ icon: 'briefcase-outline' as IoniconName, label: 'Agent Console', route: '/agent-portal' }] : []),
     ...(profile?.role === 'employee' || profile?.role === 'admin' ? [{ icon: 'people-outline' as IoniconName, label: 'Employee Portal', route: '/employee-portal' }] : []),
     ...BASE_MENU_ITEMS,
   ];
@@ -236,7 +236,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
         <View style={styles.drawerDivider} />
 
         {/* Menu Items */}
-        <View style={styles.drawerMenuList}>
+        <ScrollView style={styles.drawerMenuList} showsVerticalScrollIndicator={false}>
           {roleMenuItems.map((item) => {
             const isActive = pathname === item.route || pathname.startsWith(item.route + '/');
             const iconSize = isCompact ? 18 : 22;
@@ -268,7 +268,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
               </TouchableOpacity>
             );
           })}
-        </View>
+        </ScrollView>
 
         {/* Bottom Section */}
         <View style={styles.drawerBottom}>

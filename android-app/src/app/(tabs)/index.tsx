@@ -301,12 +301,12 @@ export default function HomeScreen() {
         {/* 1. Recent Activity */}
         <RecentActivity />
 
-        {/* Featured Property Slider */}
-        {(featuredProperties.length > 0 || hotProperties.length > 0) && (
-          <FeaturedPropertiesSlider properties={featuredProperties.length > 0 ? featuredProperties : hotProperties} />
-        )}
-
-        <QuickActions />
+        {/* QuickActions & Featured Property Slider */}
+        <QuickActions>
+          {(featuredProperties.length > 0 || hotProperties.length > 0) && (
+            <FeaturedPropertiesSlider properties={featuredProperties.length > 0 ? featuredProperties : hotProperties} />
+          )}
+        </QuickActions>
 
         {/* 2. Hot Selling Projects */}
         <View style={styles.featuredSection}>

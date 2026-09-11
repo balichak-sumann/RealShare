@@ -31,7 +31,7 @@ const ACTION_ICON_COLORS: Record<string, string> = {
   'q4': '#9A3412', 
 };
 
-export function QuickActions() {
+export function QuickActions({ children }: { children?: React.ReactNode }) {
   const router = useRouter();
   const { isDesktop } = useResponsive();
 
@@ -47,6 +47,12 @@ export function QuickActions() {
           Explore opportunities, services and insights — all in one place.
         </Text>
       </View>
+
+      {children && (
+        <View style={{ marginBottom: 32 }}>
+          {children}
+        </View>
+      )}
 
       {/* Cards Row */}
       <View 
@@ -110,11 +116,11 @@ export function QuickActions() {
 
 const styles = StyleSheet.create({
   wrapper: {
-    paddingHorizontal: 16,
     marginTop: 48,
     marginBottom: 32,
   },
   headerContainer: {
+    paddingHorizontal: 16,
     marginBottom: 32,
     alignItems: Platform.OS === 'web' ? 'center' : 'flex-start',
   },
@@ -140,6 +146,7 @@ const styles = StyleSheet.create({
     textAlign: Platform.OS === 'web' ? 'center' : 'left',
   },
   cardsContainer: {
+    paddingHorizontal: 16,
     paddingBottom: 24,
   },
   cardsContainerMobile: {

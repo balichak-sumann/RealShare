@@ -65,7 +65,7 @@ export default function PartnersScreen() {
       if (!res.ok) throw new Error('Request failed');
       setSubmitted(true);
     } catch (e) {
-      Alert.alert('Something went wrong', 'Please try again in a moment, or call us at +91 40 4010 1212.');
+      Alert.alert('Something went wrong', 'Please try again in a moment, or call us at +91 40 4010 1212 / 95 8172 8172.');
     } finally {
       setSubmitting(false);
     }

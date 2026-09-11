@@ -13,21 +13,27 @@ const DEFAULT_SERVICES = [
     id: '3', 
     title: 'Home Loans & Finance', 
     video: require('../../../assets/videos/home_loan.mp4'),
-    image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+    image: require('../../../assets/images/indian_home_loan.png')
   },
   { 
     id: '1', 
     title: 'Interior Design', 
     video: require('../../../assets/videos/interior_design.mp4'),
-    image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+    image: require('../../../assets/images/indian_interior_design.png')
   },
   { 
     id: '2', 
     title: 'Property Management', 
     video: require('../../../assets/videos/property_mgnt.mp4'),
-    image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80'
+    image: require('../../../assets/images/indian_property_management.png')
   },
 ];
+
+const getImageSource = (img: any, fallbackUrl?: string) => {
+  if (typeof img === 'string' && img.trim().length > 0) return { uri: img };
+  if (img) return img;
+  return { uri: fallbackUrl || '' };
+};
 
 const AnimatedServiceItem = ({ item, onPress, isDesktop }: { item: any, onPress: () => void, isDesktop: boolean }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -61,7 +67,7 @@ const AnimatedServiceItem = ({ item, onPress, isDesktop }: { item: any, onPress:
       ]}>
         {isDesktop && item.video ? (
           <ImageBackground 
-            source={{ uri: item.image || item.image_url }} 
+            source={getImageSource(item.image, item.image_url)} 
             style={styles.imageBg}
             imageStyle={{ borderRadius: isDesktop ? Radius.xl : Radius.lg }}
           >
@@ -73,7 +79,7 @@ const AnimatedServiceItem = ({ item, onPress, isDesktop }: { item: any, onPress:
           </ImageBackground>
         ) : (
           <ImageBackground 
-            source={{ uri: item.image || item.image_url }} 
+            source={getImageSource(item.image, item.image_url)} 
             style={styles.imageBg}
             imageStyle={{ borderRadius: isDesktop ? Radius.xl : Radius.lg }}
           >
@@ -104,7 +110,7 @@ export function ServicesStrip() {
             setServices(data.map((s) => ({
               id: s.id,
               title: s.title,
-              image: s.image_url,
+              image: DEFAULT_SERVICES.find(ds => ds.title === s.title)?.image || s.image_url,
               video: DEFAULT_SERVICES.find(ds => ds.title === s.title)?.video,
             })));
           }

@@ -95,7 +95,7 @@ export default function TermsOfServiceScreen() {
         {
           heading: '13. Contact us',
           body: [
-            'RealShare Properties Pvt. Ltd.\n206, Panchsheel Complex, Nizampet\nHyderabad – 500090, Telangana, India\n+91 40 4010 1212',
+            'RealShare Properties Pvt. Ltd.\n206, Panchsheel Complex, Nizampet\nHyderabad – 500090, Telangana, India\n+91 40 4010 1212 / 95 8172 8172',
           ],
         },
       ]}

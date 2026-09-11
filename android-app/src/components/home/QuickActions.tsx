@@ -66,81 +66,41 @@ export function QuickActions() {
             onPress={() => router.push(action.route as any)}
             activeOpacity={0.8}
           >
-            <View style={[
-              styles.imageContainer,
-              !isDesktop && index === 0 && { height: 230 },
-              !isDesktop && index !== 0 && { height: 60 }
-            ]}>
-              <Image 
-                source={{ uri: CARD_IMAGES[action.id] }} 
-                style={styles.cardImage} 
-                contentFit="cover" 
-              />
-              {index === 0 && (
-                <LinearGradient
-                  colors={['rgba(0,0,0,0.85)', 'rgba(0,0,0,0.4)', 'transparent']}
-                  start={{ x: 0, y: 0.5 }}
-                  end={{ x: 1, y: 0.5 }}
-                  style={StyleSheet.absoluteFill}
-                />
-              )}
-            </View>
+            <Image 
+              source={{ uri: CARD_IMAGES[action.id] }} 
+              style={StyleSheet.absoluteFill} 
+              contentFit="cover" 
+            />
+            <LinearGradient
+              colors={['transparent', 'rgba(0,0,0,0.2)', 'rgba(0,0,0,0.85)']}
+              start={{ x: 0.5, y: 0 }}
+              end={{ x: 0.5, y: 1 }}
+              style={StyleSheet.absoluteFill}
+            />
             
-            {index === 0 && !isDesktop ? (
-              <View style={styles.heroContentContainer}>
-                <View style={styles.heroSuperTitleRow}>
-                  <Text style={styles.heroSuperTitle}>FEATURED</Text>
-                  <View style={styles.heroGoldLine} />
-                </View>
-                <Text style={styles.heroTitle}>
-                  Buy Premium{'\n'}
-                  <Text style={{ color: GoldSystem.primaryGold }}>Properties</Text>
-                </Text>
-                <Text style={styles.heroSubtitle}>{action.subtitle}</Text>
-                
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-                  <View style={styles.heroExploreButton}>
-                    <Text style={styles.heroExploreText}>Buy Properties</Text>
-                    <Ionicons name="arrow-forward" size={16} color="#000" />
-                  </View>
-                  
-                  {/* Floating Glass Box */}
-                  <View style={styles.heroGlassBox}>
-                    <Text style={styles.heroGlassText}>Zero{'\n'}Brokerage</Text>
-                    <View style={styles.heroGlassLine} />
-                  </View>
+            {/* Top Icon */}
+            <View style={styles.topIconContainer}>
+              <View style={[styles.iconWrapper, { backgroundColor: ACTION_COLORS[action.id] }]}>
+                <Ionicons
+                  name={action.icon as IoniconName}
+                  size={20}
+                  color={ACTION_ICON_COLORS[action.id]}
+                />
+              </View>
+            </View>
+
+            {/* Bottom Content overlaid on image */}
+            <View style={styles.overlayContent}>
+              <Text style={styles.overlayTitle}>{action.title}</Text>
+              <Text style={styles.overlaySubtitle} numberOfLines={1}>{action.subtitle}</Text>
+              
+              <View style={styles.overlayFooter}>
+                <View style={styles.heroExploreButton}>
+                  <Text style={styles.heroExploreText}>Explore</Text>
+                  <Ionicons name="arrow-forward" size={14} color="#000" />
                 </View>
               </View>
-            ) : (
-              <View style={[styles.contentContainer, !isDesktop && index !== 0 && { padding: 8, alignItems: 'center' }]}>
-                <View style={[styles.iconWrapper, { backgroundColor: ACTION_COLORS[action.id] }, !isDesktop && index !== 0 && { width: 32, height: 32, borderRadius: 16, marginTop: -24 }]}>
-                  <Ionicons
-                    name={action.icon as IoniconName}
-                    size={!isDesktop && index !== 0 ? 16 : 24}
-                    color={ACTION_ICON_COLORS[action.id]}
-                  />
-                </View>
-
-                <Text style={[styles.cardTitle, !isDesktop && index !== 0 && { fontSize: 12, textAlign: 'center', marginBottom: 0 }]} numberOfLines={!isDesktop && index !== 0 ? 2 : 1}>{action.title}</Text>
-                
-                {(!(!isDesktop && index !== 0)) && (
-                  <>
-                    <Text style={styles.cardSubtitle}>{action.subtitle}</Text>
-
-                    <View style={styles.cardFooter}>
-                      <View style={styles.exploreLink}>
-                        <Text style={styles.exploreText}>Explore Now</Text>
-                        <Ionicons name="arrow-forward" size={16} color={GoldSystem.primaryGold} style={{marginLeft: 4}} />
-                      </View>
-                      
-                      <View style={[styles.arrowButton, { backgroundColor: ACTION_COLORS[action.id] }]}>
-                        <Ionicons name="arrow-forward" size={18} color={ACTION_ICON_COLORS[action.id]} />
-                      </View>
-                    </View>
-                  </>
-                )}
-              </View>
-            )}
+            </View>
           </TouchableOpacity>
         ))}
       </View>
@@ -191,29 +151,29 @@ const styles = StyleSheet.create({
   },
   cardsContainerDesktop: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'center',
-    alignItems: 'flex-start',
-    gap: 24,
+    flexWrap: 'nowrap',
+    justifyContent: 'space-between',
+    gap: 16,
     width: '100%',
   },
   card: {
-    backgroundColor: Neutrals.white,
+    backgroundColor: Neutrals.obsidian,
     borderRadius: Radius.xl,
-    width: 280,
+    overflow: 'hidden',
+    position: 'relative',
     ...(Platform.OS === 'web'
       ? ({
-          boxShadow: '0 12px 30px rgba(0,0,0,0.08)',
+          boxShadow: '0 12px 30px rgba(0,0,0,0.15)',
         } as any)
       : Shadows.medium),
   },
   cardDesktop: {
-    width: 300,
+    flex: 1,
+    aspectRatio: 1, // Makes it a perfect square
   },
   cardMobileHero: {
     width: '100%',
-    backgroundColor: Neutrals.obsidian, // Dark background for the hero card
-    overflow: 'hidden',
+    aspectRatio: 1,
   },
   cardMobileHalf: {
     width: '48%',
@@ -304,49 +264,53 @@ const styles = StyleSheet.create({
     paddingTop: 0,
     position: 'relative',
   },
+  topIconContainer: {
+    position: 'absolute',
+    top: 16,
+    left: 16,
+  },
   iconWrapper: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    marginTop: -24,
-    marginBottom: 12,
-    borderWidth: 3,
-    borderColor: Neutrals.white,
   },
-  cardTitle: {
+  overlayContent: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    padding: 20,
+    justifyContent: 'flex-end',
+  },
+  overlayTitle: {
     ...Typography.headlineSmall,
-    color: Neutrals.obsidian,
-    marginBottom: 8,
+    color: Neutrals.white,
+    fontWeight: '700',
+    marginBottom: 4,
   },
-  cardSubtitle: {
+  overlaySubtitle: {
     ...Typography.bodyMedium,
-    color: Neutrals.gray500,
-    lineHeight: 18,
-    marginBottom: 8,
+    color: Neutrals.gray300,
+    marginBottom: 16,
   },
-  cardFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Neutrals.gray100,
-  },
-  exploreLink: {
+  overlayFooter: {
     flexDirection: 'row',
     alignItems: 'center',
   },
-  exploreText: {
-    ...Typography.labelLarge,
-    color: GoldSystem.primaryGold,
-  },
-  arrowButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+  heroExploreButton: {
+    flexDirection: 'row',
     alignItems: 'center',
-    justifyContent: 'center',
+    backgroundColor: GoldSystem.primaryGold,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 9999,
+  },
+  heroExploreText: {
+    ...Typography.labelMedium,
+    color: '#000',
+    fontWeight: '700',
+    marginRight: 4,
   },
 });

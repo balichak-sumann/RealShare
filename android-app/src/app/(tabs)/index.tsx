@@ -28,6 +28,7 @@ import { HeroCarousel } from '@/components/home/HeroCarousel';
 import { CategoryGrid } from '@/components/home/CategoryGrid';
 import { QuickActions } from '@/components/home/QuickActions';
 import { RecentActivity } from '@/components/home/RecentActivity';
+import { FeaturedPropertiesSlider } from '@/components/home/FeaturedPropertiesSlider';
 import { HotProjects } from '@/components/home/HotProjects';
 import { TopLocalities } from '@/components/home/TopLocalities';
 import { ServicesStrip } from '@/components/home/ServicesStrip';
@@ -134,6 +135,7 @@ export default function HomeScreen() {
   const hotProperties = filtered.hot;
   const rentalProperties = filtered.rental;
   const resaleProperties = filtered.resale;
+  const featuredProperties = allCityProperties.filter(p => p.featured === true);
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -300,6 +302,12 @@ export default function HomeScreen() {
         <RecentActivity />
 
         <QuickActions />
+        
+        {/* Featured Property Slider (above Hot Selling) */}
+        {(featuredProperties.length > 0 || hotProperties.length > 0) && (
+          <FeaturedPropertiesSlider properties={featuredProperties.length > 0 ? featuredProperties : hotProperties} />
+        )}
+
         {/* 2. Hot Selling Projects */}
         <View style={styles.featuredSection}>
           <SectionHeader title="Hot Selling Projects" onViewAll={() => router.push('/(tabs)/search')} />
@@ -554,7 +562,7 @@ const styles = StyleSheet.create({
     padding: 8,
     paddingLeft: 16,
     width: '100%',
-    maxWidth: 560,
+    maxWidth: 768,
     ...(Platform.OS === 'web'
       ? ({
           boxShadow: '0 4px 16px rgba(0,0,0,0.08)',

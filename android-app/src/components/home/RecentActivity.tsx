@@ -1,14 +1,16 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Image } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { SectionHeader } from '../ui/SectionHeader';
 import { Ionicons } from '@expo/vector-icons';
 import { useActivityHistory } from '@/hooks/useActivityHistory';
+import { getApiUrl } from '@/lib/api';
 
 export function RecentActivity() {
   const router = useRouter();
   const { recentSearches, recentViews } = useActivityHistory();
+  const [showViews, setShowViews] = useState(false);
 
   return (
     <View style={styles.container}>
@@ -20,22 +22,51 @@ export function RecentActivity() {
       <View style={styles.buttonContainer}>
         
         {/* 1. Recently Viewed Button */}
-        <TouchableOpacity 
-          style={styles.actionButton} 
-          onPress={() => router.push('/recently-viewed')}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.iconBg, { backgroundColor: '#F5F3FF' }]}>
-            <Ionicons name="eye-outline" size={24} color="#8B5CF6" />
-          </View>
-          <View style={styles.buttonTextContent}>
-            <Text style={styles.buttonTitle}>Recently Viewed</Text>
-            <Text style={styles.buttonSubtitle}>
-              {recentViews.length > 0 ? `View your ${recentViews.length} past properties` : 'No recent properties'}
-            </Text>
-          </View>
-          <Ionicons name="chevron-forward" size={20} color={Neutrals.gray400} />
-        </TouchableOpacity>
+        <View style={styles.expandableCard}>
+          <TouchableOpacity 
+            style={styles.actionButton} 
+            onPress={() => setShowViews(!showViews)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.iconBg, { backgroundColor: '#F5F3FF' }]}>
+              <Ionicons name="eye-outline" size={24} color="#8B5CF6" />
+            </View>
+            <View style={styles.buttonTextContent}>
+              <Text style={styles.buttonTitle}>Recently Viewed</Text>
+              <Text style={styles.buttonSubtitle}>
+                {recentViews.length > 0 ? `View your ${recentViews.length} past properties` : 'No recent properties'}
+              </Text>
+            </View>
+            <Ionicons name={showViews ? "chevron-down" : "chevron-forward"} size={20} color={Neutrals.gray400} />
+          </TouchableOpacity>
+          
+          {showViews && recentViews.length > 0 && (
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.thumbnailSequence}>
+              {recentViews.map((p) => {
+                const imageUrl = p.image_url 
+                  ? (p.image_url.startsWith('/') ? `${getApiUrl()}${p.image_url}` : p.image_url) 
+                  : null;
+
+                return (
+                  <TouchableOpacity 
+                    key={p.id} 
+                    style={styles.thumbnailCard}
+                    onPress={() => router.push(`/property/${p.id}`)}
+                  >
+                    {imageUrl ? (
+                      <Image source={{ uri: imageUrl }} style={styles.thumbnailImage} />
+                    ) : (
+                      <View style={[styles.thumbnailImage, { backgroundColor: Neutrals.gray100, justifyContent: 'center', alignItems: 'center' }]}>
+                        <Ionicons name="image-outline" size={16} color={Neutrals.gray400} />
+                      </View>
+                    )}
+                    <Text style={styles.thumbnailTitle} numberOfLines={1}>{p.title}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          )}
+        </View>
 
         {/* 2. Continue Search Button */}
         <TouchableOpacity 
@@ -69,22 +100,25 @@ export function RecentActivity() {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 16,
+    marginTop: -8,
     marginBottom: 8,
   },
   buttonContainer: {
     paddingHorizontal: 16,
     gap: 12,
   },
-  actionButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
+  expandableCard: {
     backgroundColor: Neutrals.white,
-    padding: 16,
     borderRadius: Radius.lg,
     ...Shadows.md,
     borderWidth: 1,
     borderColor: Neutrals.gray100,
+    overflow: 'hidden',
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
   },
   iconBg: {
     width: 48,
@@ -105,5 +139,26 @@ const styles = StyleSheet.create({
   buttonSubtitle: {
     ...Typography.caption,
     color: Neutrals.gray500,
+  },
+  thumbnailSequence: {
+    paddingHorizontal: 16,
+    paddingBottom: 16,
+    gap: 12,
+  },
+  thumbnailCard: {
+    width: 80,
+    alignItems: 'center',
+  },
+  thumbnailImage: {
+    width: 80,
+    height: 60,
+    borderRadius: Radius.md,
+    marginBottom: 6,
+  },
+  thumbnailTitle: {
+    ...Typography.caption,
+    fontSize: 10,
+    color: Neutrals.obsidian,
+    textAlign: 'center',
   },
 });

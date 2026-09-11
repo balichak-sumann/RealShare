@@ -97,6 +97,30 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
     }
   };
 
+  const handleDeleteProperty = async (id: string) => {
+    if (Platform.OS === 'web') {
+      if (!window.confirm("Are you sure you want to delete this listing?")) return;
+    }
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const token = await user.getIdToken();
+      const apiUrl = getApiUrl();
+      const res = await fetch(`${apiUrl}/api/properties/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setMyListings(prev => prev.filter(p => p.id !== id));
+      } else {
+        alert("Failed to delete listing.");
+      }
+    } catch (err) {
+      console.error("Error deleting listing:", err);
+      alert("Failed to delete listing.");
+    }
+  };
+
   const handlePostProperty = async () => {
     if (!postTitle || !postLocality) {
       alert('Please enter a title and locality.');
@@ -387,6 +411,25 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
           ) : (
             myListings.map((p) => {
               const isApproved = p.approval_status === 'approved';
+              const isRejected = p.approval_status === 'rejected';
+              
+              let badgeBg = 'rgba(217, 119, 6, 0.15)'; // Pending (Orange)
+              let badgeBorder = 'rgba(217, 119, 6, 0.3)';
+              let textColor = '#D97706';
+              let textLabel = 'Pending';
+              
+              if (isApproved) {
+                badgeBg = 'rgba(16, 185, 129, 0.15)'; // Live (Green)
+                badgeBorder = 'rgba(16, 185, 129, 0.3)';
+                textColor = '#10B981';
+                textLabel = 'Live';
+              } else if (isRejected) {
+                badgeBg = 'rgba(239, 68, 68, 0.15)'; // Rejected (Red)
+                badgeBorder = 'rgba(239, 68, 68, 0.3)';
+                textColor = '#EF4444';
+                textLabel = 'Rejected';
+              }
+
               return (
                 <View key={p.id} style={styles.premiumLeadCard}>
                   <View style={styles.premiumLeadImagePlaceholder}>
@@ -408,20 +451,38 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
                       {p.locality}, {p.district} • {p.listing_type === 'outright' ? 'Outright' : 'Fractional'}
                     </Text>
                   </View>
-                  <View
-                    style={[
-                      styles.premiumStatusBadge,
-                      isApproved ? { backgroundColor: 'rgba(16, 185, 129, 0.15)', borderColor: 'rgba(16, 185, 129, 0.3)' } : { backgroundColor: 'rgba(217, 119, 6, 0.15)', borderColor: 'rgba(217, 119, 6, 0.3)' },
-                    ]}
-                  >
-                    <Text
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                    <View
                       style={[
-                        styles.premiumStatusText,
-                        isApproved ? { color: '#10B981' } : { color: '#D97706' },
+                        styles.premiumStatusBadge,
+                        { backgroundColor: badgeBg, borderColor: badgeBorder },
                       ]}
                     >
-                      {isApproved ? 'Live' : 'Pending'}
-                    </Text>
+                      <Text
+                        style={[
+                          styles.premiumStatusText,
+                          { color: textColor },
+                        ]}
+                      >
+                        {textLabel}
+                      </Text>
+                    </View>
+                    
+                    {!isApproved && (
+                      <TouchableOpacity 
+                        onPress={() => handleDeleteProperty(p.id)}
+                        style={{
+                          width: 32,
+                          height: 32,
+                          borderRadius: 16,
+                          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                        }}
+                      >
+                        <Ionicons name="trash-outline" size={16} color="#EF4444" />
+                      </TouchableOpacity>
+                    )}
                   </View>
                 </View>
               );

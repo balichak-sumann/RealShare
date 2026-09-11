@@ -84,7 +84,7 @@ export default function AboutScreen() {
             RealShare Properties Pvt. Ltd.{'\n'}
             206, Panchsheel Complex, Nizampet{'\n'}
             Hyderabad – 500090, Telangana, India{'\n'}
-            +91 40 4010 1212
+            +91 40 4010 1212 / 95 8172 8172
           </Text>
         </View>
 

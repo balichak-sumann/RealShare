@@ -19,8 +19,8 @@ export function QuoteSection() {
 const styles = StyleSheet.create({
   container: {
     backgroundColor: Neutrals.warmIvory,
-    paddingVertical: 32,
-    marginTop: 24,
+    paddingVertical: 16,
+    marginTop: 12,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -38,15 +38,16 @@ const styles = StyleSheet.create({
     opacity: 0.3,
   },
   quoteText: {
-    ...Typography.bodyLarge,
-    color: Neutrals.charcoal,
+    ...Typography.headlineSmall,
+    color: Neutrals.obsidian,
     textAlign: 'center',
-    fontStyle: 'normal',
-    lineHeight: 28,
-    marginBottom: 16,
+    fontStyle: 'italic',
+    fontWeight: '600',
+    lineHeight: 32,
+    marginBottom: 12,
   },
   author: {
-    ...Typography.bodyLarge,
+    ...Typography.labelMedium,
     color: Neutrals.gray500,
     textTransform: 'uppercase',
     letterSpacing: 2,

@@ -89,8 +89,8 @@ export function QuickActions({ children }: { children?: React.ReactNode }) {
             </View>
 
             {/* Bottom Content overlaid on image */}
-            <View style={[styles.overlayContent, !isDesktop && { padding: 8, justifyContent: 'flex-end' }]}>
-              <Text style={[styles.overlayTitle, !isDesktop && { fontSize: 11, marginBottom: 0 }]} numberOfLines={1}>{action.title}</Text>
+            <View style={[styles.overlayContent, !isDesktop && { padding: 4, paddingBottom: 6, justifyContent: 'flex-end' }]}>
+              <Text style={[styles.overlayTitle, !isDesktop && { fontSize: 10, lineHeight: 12, marginBottom: 0, textAlign: 'center' }]} numberOfLines={2}>{action.title}</Text>
               {isDesktop && (
                 <>
                   <Text style={styles.overlaySubtitle} numberOfLines={1}>{action.subtitle}</Text>

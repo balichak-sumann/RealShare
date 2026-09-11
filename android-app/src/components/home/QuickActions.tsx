@@ -56,19 +56,12 @@ export function QuickActions({ children }: { children?: React.ReactNode }) {
 
       {/* Cards Row */}
       <View 
-        style={[styles.cardsContainer, isDesktop ? styles.cardsContainerDesktop : styles.cardsContainerMobile]}
+        style={[styles.cardsContainer, styles.cardsContainerDesktop, !isDesktop && { gap: 8 }]}
       >
-        {(isDesktop ? QUICK_ACTIONS : QUICK_ACTIONS.filter(a => a.id !== 'q4')).map((action, index) => (
+        {QUICK_ACTIONS.map((action, index) => (
           <TouchableOpacity
             key={action.id}
-            style={[
-              styles.card, 
-              isDesktop 
-                ? styles.cardDesktop 
-                : index === 0 
-                  ? styles.cardMobileHero 
-                  : styles.cardMobileHalf
-            ]}
+            style={[styles.card, styles.cardDesktop]}
             onPress={() => router.push(action.route as any)}
             activeOpacity={0.8}
           >
@@ -85,27 +78,31 @@ export function QuickActions({ children }: { children?: React.ReactNode }) {
             />
             
             {/* Top Icon */}
-            <View style={styles.topIconContainer}>
-              <View style={[styles.iconWrapper, { backgroundColor: ACTION_COLORS[action.id] }]}>
+            <View style={[styles.topIconContainer, !isDesktop && { top: 8, left: 8 }]}>
+              <View style={[styles.iconWrapper, { backgroundColor: ACTION_COLORS[action.id] }, !isDesktop && { width: 28, height: 28, borderRadius: 14 }]}>
                 <Ionicons
                   name={action.icon as IoniconName}
-                  size={20}
+                  size={isDesktop ? 20 : 14}
                   color={ACTION_ICON_COLORS[action.id]}
                 />
               </View>
             </View>
 
             {/* Bottom Content overlaid on image */}
-            <View style={styles.overlayContent}>
-              <Text style={styles.overlayTitle}>{action.title}</Text>
-              <Text style={styles.overlaySubtitle} numberOfLines={1}>{action.subtitle}</Text>
-              
-              <View style={styles.overlayFooter}>
-                <View style={styles.heroExploreButton}>
-                  <Text style={styles.heroExploreText}>Explore</Text>
-                  <Ionicons name="arrow-forward" size={14} color="#000" />
-                </View>
-              </View>
+            <View style={[styles.overlayContent, !isDesktop && { padding: 8, justifyContent: 'flex-end' }]}>
+              <Text style={[styles.overlayTitle, !isDesktop && { fontSize: 11, marginBottom: 0 }]} numberOfLines={1}>{action.title}</Text>
+              {isDesktop && (
+                <>
+                  <Text style={styles.overlaySubtitle} numberOfLines={1}>{action.subtitle}</Text>
+                  
+                  <View style={styles.overlayFooter}>
+                    <View style={styles.heroExploreButton}>
+                      <Text style={styles.heroExploreText}>Explore</Text>
+                      <Ionicons name="arrow-forward" size={14} color="#000" />
+                    </View>
+                  </View>
+                </>
+              )}
             </View>
           </TouchableOpacity>
         ))}

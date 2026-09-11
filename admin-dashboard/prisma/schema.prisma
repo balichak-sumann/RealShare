@@ -97,7 +97,10 @@ model Property {
   video_url           String?   @db.Text
   brochure_url        String?   @db.Text
   area_sqft           Decimal?  @db.Decimal(10, 2)
+  area_sqft_max       Decimal?  @db.Decimal(10, 2)
   area_unit           String?   @default("sqft") @db.VarChar(20) // "sqft" | "acres"
+  rera_number         String?   @db.VarChar(100)
+  permission_number   String?   @db.VarChar(100)
   google_maps_url     String?   @db.Text
   posted_by           String?   @db.VarChar(128)
   developer_id        String?   @db.VarChar(36)

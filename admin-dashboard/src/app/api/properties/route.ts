@@ -206,6 +206,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'area_sqft must be a positive number.' }, { status: 400 });
     }
 
+    const areaSqftMax = data.area_sqft_max !== undefined && data.area_sqft_max !== null ? Number(data.area_sqft_max) : null;
+    if (areaSqftMax !== null && (isNaN(areaSqftMax) || areaSqftMax <= 0)) {
+      return NextResponse.json({ error: 'area_sqft_max must be a positive number.' }, { status: 400 });
+    }
+
     // Financial calculations and validations
     const isSingleUnit = listingType !== 'fractional';
     let totalFractions = 1;
@@ -272,7 +277,10 @@ export async function POST(request: Request) {
           video_url: data.video_url || null,
           brochure_url: data.brochure_url || null,
           area_sqft: areaSqft !== null ? areaSqft : null,
+          area_sqft_max: areaSqftMax !== null ? areaSqftMax : null,
           area_unit: data.area_unit || 'sqft',
+          rera_number: data.rera_number || null,
+          permission_number: data.permission_number || null,
           google_maps_url: data.google_maps_url || null,
           featured: data.featured || false,
           posted_by: userId,

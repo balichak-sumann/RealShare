@@ -63,6 +63,7 @@ interface Agent {
   bankAcc: string | null;
   bankIfsc: string | null;
   status: "Active" | "Suspended";
+  is_approved: boolean;
   joinedDate: string;
   commissions: CommissionItem[];
   clients: ClientLead[];
@@ -149,6 +150,7 @@ export default function AgentsPage() {
             bankAcc: d.bank_account_number || null,
             bankIfsc: d.bank_ifsc || null,
             status: (d.is_active ? "Active" : "Suspended") as "Active" | "Suspended",
+            is_approved: d.is_approved ?? true,
             joinedDate: d.created_at
               ? new Date(d.created_at).toLocaleDateString()
               : "—",
@@ -164,6 +166,28 @@ export default function AgentsPage() {
       showError("Could not load agent records.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleToggleApproval = async (id: string, is_approved: boolean) => {
+    try {
+      const authHeader = await getAuthHeader();
+      if (!authHeader) return;
+      const res = await fetch(`/api/investors/${id}`, {
+        method: "PATCH",
+        headers: { ...authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify({ is_approved }),
+      });
+      if (!res.ok) throw new Error("Failed to update approval status");
+      const updated = await res.json();
+      setAgents((prev) => prev.map((a) => (a.id === id ? { ...a, is_approved: updated.is_approved } : a)));
+      showToast(`Agent ${updated.is_approved ? "Approved" : "Approval Revoked"}`);
+      if (selectedAgent && selectedAgent.id === id) {
+        setSelectedAgent((prev) => prev ? { ...prev, is_approved: updated.is_approved } : null);
+      }
+    } catch (err) {
+      console.error(err);
+      showError("Could not update approval status.");
     }
   };
 
@@ -868,21 +892,38 @@ export default function AgentsPage() {
 
                   {/* Status */}
                   <td className={styles.td}>
-                    <span
-                      style={{
-                        display: "inline-block",
-                        padding: "4px 10px",
-                        borderRadius: "6px",
-                        fontSize: "0.75rem",
-                        fontWeight: 700,
-                        background:
-                          agent.status === "Active" ? "#DCFCE7" : "#FEE2E2",
-                        color:
-                          agent.status === "Active" ? "#15803D" : "#B91C1C",
-                      }}
-                    >
-                      {agent.status}
-                    </span>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          padding: "4px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          background:
+                            agent.status === "Active" ? "#DCFCE7" : "#FEE2E2",
+                          color:
+                            agent.status === "Active" ? "#15803D" : "#B91C1C",
+                          textAlign: "center"
+                        }}
+                      >
+                        {agent.status}
+                      </span>
+                      <span
+                        style={{
+                          display: "inline-block",
+                          padding: "4px 10px",
+                          borderRadius: "6px",
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          background: agent.is_approved ? "#D1FAE5" : "#FEF3C7",
+                          color: agent.is_approved ? "#059669" : "#D97706",
+                          textAlign: "center"
+                        }}
+                      >
+                        {agent.is_approved ? "✓ Approved" : "⏳ Pending"}
+                      </span>
+                    </div>
                   </td>
 
                   {/* Actions */}
@@ -905,6 +946,23 @@ export default function AgentsPage() {
                         }}
                       >
                         <span>👤</span> Manage
+                      </button>
+
+                      <button
+                        onClick={() => handleToggleApproval(agent.id, !agent.is_approved)}
+                        style={{
+                          padding: "6px 12px",
+                          borderRadius: 8,
+                          background: agent.is_approved ? "#FEF2F2" : "#ECFDF5",
+                          color: agent.is_approved ? "#DC2626" : "#059669",
+                          border: `1px solid ${agent.is_approved ? "#FECACA" : "#A7F3D0"}`,
+                          fontSize: "0.75rem",
+                          fontWeight: 700,
+                          cursor: "pointer",
+                        }}
+                        title={agent.is_approved ? "Revoke Approval" : "Approve Agent"}
+                      >
+                        {agent.is_approved ? "Revoke" : "Approve"}
                       </button>
 
                       {agent.rawCommissionPending > 0 && (

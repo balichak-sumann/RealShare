@@ -29,11 +29,6 @@ const HOLIDAY_FEATURES = [
   { title: 'Rental Income', desc: 'Earn a fixed monthly rental income on your property when you are not using it.' },
 ] as const;
 
-const FUTURE_MARKETS = {
-  international: ['Bali', 'Bangkok', 'Vietnam', 'Miami', 'Los Angeles', 'New York'],
-  resorts: ['Goa', 'Udaipur', 'Pushkar', 'Mangalore / Coorg', 'Manali'],
-};
-
 export default function HowItWorksScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
@@ -119,44 +114,25 @@ export default function HowItWorksScreen() {
           </View>
         </View>
 
-        <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
-          <Text style={styles.sectionTitle}>Effortless resale, with gains</Text>
-          <Text style={styles.bodyText}>
-            Part of owning a RealShare property is the flexibility to resell your share.
-            RealShare has historically seen an average appreciation of 10–18% —
-            about twice the appreciation of a traditional luxury vacation home or commercial
-            property purchased outright.
-          </Text>
-        </View>
-
-        <View style={styles.futureSection}>
-          <View style={isDesktop ? styles.sectionDesktop : undefined}>
-            <Text style={[styles.sectionTitle, { color: Neutrals.surface }]}>Where we're headed next</Text>
-            <Text style={[styles.bodyText, { color: Neutrals.gray300 }]}>
-              RealShare listings are currently live in Hyderabad only. International Collections
-              and curated resort destinations are part of our roadmap — shown here so you know
-              what's coming, not as properties available to invest in today.
-            </Text>
-            <Text style={styles.futureGroupLabel}>International Collections · Coming soon</Text>
-            <View style={styles.chipRow}>
-              {FUTURE_MARKETS.international.map((c) => (
-                <View key={c} style={styles.chip}><Text style={styles.chipText}>{c}</Text></View>
-              ))}
+        <View style={[styles.section, isDesktop && styles.sectionDesktop, { paddingVertical: 60 }]}>
+          <View style={[styles.resaleBanner, isDesktop && styles.resaleBannerDesktop]}>
+            <View style={styles.resaleBannerContent}>
+              <View style={styles.resaleIconWrap}>
+                <Ionicons name="trending-up-outline" size={32} color={GoldSystem.metallicGold} />
+              </View>
+              <Text style={styles.resaleTitle}>Effortless resale, with gains</Text>
+              <Text style={styles.resaleDesc}>
+                Part of owning a RealShare property is the flexibility to resell your share.
+                RealShare has historically seen an average appreciation that is about twice the appreciation of a traditional luxury vacation home or commercial property purchased outright.
+              </Text>
             </View>
-            <Text style={[styles.futureGroupLabel, { marginTop: 20 }]}>Resort & Holiday Destinations · Coming soon</Text>
-            <View style={styles.chipRow}>
-              {FUTURE_MARKETS.resorts.map((c) => (
-                <View key={c} style={styles.chip}><Text style={styles.chipText}>{c}</Text></View>
-              ))}
+            <View style={[styles.resaleStatBlock, isDesktop && styles.resaleStatBlockDesktop]}>
+              <Text style={styles.resaleStatValue}>10–18%</Text>
+              <Text style={styles.resaleStatLabel}>Historical Avg. Appreciation</Text>
             </View>
           </View>
         </View>
 
-        <View style={styles.ctaRow}>
-          <TouchableOpacity style={styles.ctaBtn} onPress={() => router.push('/(tabs)/explore')}>
-            <Text style={styles.ctaBtnText}>Explore Hyderabad Properties</Text>
-          </TouchableOpacity>
-        </View>
         <WebFooter />
       </ScrollView>
     </View>
@@ -210,15 +186,64 @@ const styles = StyleSheet.create({
   },
   badgeTitle: { ...Typography.labelLarge, color: Neutrals.obsidian, marginBottom: 6 },
   badgeDesc: { ...Typography.bodyMedium, color: Neutrals.gray500, lineHeight: 18 },
-  futureSection: { backgroundColor: Neutrals.obsidian, padding: 24, paddingVertical: 40 },
-  futureGroupLabel: { ...Typography.labelMedium, color: GoldSystem.primaryGold, marginTop: 8, marginBottom: 12 },
-  chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  chip: {
-    borderWidth: 1, borderColor: 'rgba(212,175,55,0.35)', borderRadius: Radius.full,
-    paddingVertical: 8, paddingHorizontal: 16,
+  resaleBanner: {
+    backgroundColor: Neutrals.obsidian,
+    borderRadius: Radius.xl,
+    padding: 32,
+    flexDirection: 'column',
+    gap: 32,
+    ...Shadows.strong,
   },
-  chipText: { ...Typography.labelMedium, color: Neutrals.gray300 },
-  ctaRow: { paddingHorizontal: 24, marginTop: 32, alignItems: 'center' },
-  ctaBtn: { backgroundColor: GoldSystem.primaryGold, paddingVertical: 14, paddingHorizontal: 28, borderRadius: Radius.md },
-  ctaBtnText: { ...Typography.labelLarge, color: Neutrals.obsidian },
+  resaleBannerDesktop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 48,
+  },
+  resaleBannerContent: {
+    flex: 1,
+  },
+  resaleIconWrap: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: 'rgba(212, 175, 55, 0.1)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  resaleTitle: {
+    ...Typography.displayMedium,
+    color: Neutrals.surface,
+    marginBottom: 16,
+  },
+  resaleDesc: {
+    ...Typography.bodyLarge,
+    color: Neutrals.gray300,
+    lineHeight: 26,
+  },
+  resaleStatBlock: {
+    backgroundColor: 'rgba(255, 255, 255, 0.05)',
+    padding: 24,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.2)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  resaleStatBlockDesktop: {
+    minWidth: 280,
+    padding: 32,
+    marginLeft: 32,
+  },
+  resaleStatValue: {
+    ...Typography.displayLarge,
+    color: GoldSystem.metallicGold,
+    marginBottom: 8,
+  },
+  resaleStatLabel: {
+    ...Typography.labelLarge,
+    color: Neutrals.gray300,
+    textAlign: 'center',
+  },
+
 });

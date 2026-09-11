@@ -43,6 +43,9 @@ interface Property {
   description?: string;
   full_address?: string;
   area_sqft?: number | string;
+  area_sqft_max?: number | string;
+  rera_number?: string;
+  permission_number?: string;
   google_maps_url?: string;
   lat?: number | string;
   lng?: number | string;
@@ -87,7 +90,10 @@ const INITIAL_NEW_PROP_STATE = {
   type: "Commercial" as "Commercial" | "Fractional" | "Residential" | "Holiday" | "Investor",
   listingType: "fractional" as "fractional" | "outright" | "rental" | "resale",
   areaSqft: 1200,
+  areaSqftMax: null as number | null,
   areaUnit: "sqft" as "sqft" | "acres",
+  reraNumber: "",
+  permissionNumber: "",
   googleMapsUrl: "",
   totalFractions: 50,
   price: 500000,
@@ -210,7 +216,10 @@ export default function PropertiesPage() {
         : "Commercial") as any,
       listingType: (p.listing_type as any) || "fractional",
       areaSqft: Number(p.area_sqft) || 1200,
+      areaSqftMax: p.area_sqft_max ? Number(p.area_sqft_max) : null,
       areaUnit: (p.area_unit as any) || "sqft",
+      reraNumber: p.rera_number || "",
+      permissionNumber: p.permission_number || "",
       googleMapsUrl: p.google_maps_url || "",
       totalFractions: p.total_fractions || 50,
       price: Number(p.price_per_fraction) || 500000,
@@ -587,7 +596,10 @@ export default function PropertiesPage() {
           property_type: newProp.type,
           listing_type: newProp.listingType,
           area_sqft: Number(newProp.areaSqft),
+          area_sqft_max: newProp.areaSqftMax ? Number(newProp.areaSqftMax) : undefined,
           area_unit: newProp.areaUnit || 'sqft',
+          rera_number: newProp.reraNumber || undefined,
+          permission_number: newProp.permissionNumber || undefined,
           total_fractions: newProp.listingType === "fractional" ? Number(newProp.totalFractions) : 1,
           available_fractions: newProp.listingType === "fractional" ? Number(newProp.totalFractions) : 1,
           price_per_fraction: Number(newProp.price),
@@ -1331,7 +1343,7 @@ export default function PropertiesPage() {
                 </div>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
-                    Area <span style={{ color: "#EF4444" }}>*</span>
+                    Area (Min) <span style={{ color: "#EF4444" }}>*</span>
                     {newProp.type === "Investor" && (
                       <span style={{ marginLeft: "8px", fontSize: "0.7rem" }}>
                         <button type="button" onClick={() => setNewProp({ ...newProp, areaUnit: "sqft" })}
@@ -1343,9 +1355,22 @@ export default function PropertiesPage() {
                   </label>
                   <input
                     type="number" required min={0}
-                    placeholder={newProp.areaUnit === "acres" ? "e.g. 4" : "e.g. 2467"}
+                    placeholder={newProp.areaUnit === "acres" ? "e.g. 4" : "e.g. 1200"}
                     value={newProp.areaSqft}
                     onChange={(e) => setNewProp({ ...newProp, areaSqft: Number(e.target.value) })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                  <div style={{ fontSize: "0.7rem", color: "#94A3B8", marginTop: "2px" }}>{newProp.areaUnit === "acres" ? "Acres" : "Sq. Ft."}</div>
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
+                    Area (Max) <span style={{ fontSize: "0.7rem", color: "#94A3B8" }}>(Optional Range)</span>
+                  </label>
+                  <input
+                    type="number" min={0}
+                    placeholder={newProp.areaUnit === "acres" ? "e.g. 6" : "e.g. 1500"}
+                    value={newProp.areaSqftMax || ""}
+                    onChange={(e) => setNewProp({ ...newProp, areaSqftMax: e.target.value ? Number(e.target.value) : null })}
                     style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                   />
                   <div style={{ fontSize: "0.7rem", color: "#94A3B8", marginTop: "2px" }}>{newProp.areaUnit === "acres" ? "Acres" : "Sq. Ft."}</div>
@@ -1376,6 +1401,30 @@ export default function PropertiesPage() {
                   onChange={(e) => setNewProp({ ...newProp, shortDescription: e.target.value })}
                   style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                 />
+              </div>
+
+              {/* RERA and Permission Numbers */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", marginTop: "14px" }}>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>RERA Number <span style={{ fontSize: "0.7rem", color: "#94A3B8" }}>(Optional)</span></label>
+                  <input
+                    type="text"
+                    placeholder="e.g. P02400001234"
+                    value={newProp.reraNumber}
+                    onChange={(e) => setNewProp({ ...newProp, reraNumber: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Permission Number <span style={{ fontSize: "0.7rem", color: "#94A3B8" }}>(Optional)</span></label>
+                  <input
+                    type="text"
+                    placeholder="e.g. HMDA/123/2024"
+                    value={newProp.permissionNumber}
+                    onChange={(e) => setNewProp({ ...newProp, permissionNumber: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
               </div>
 
               {/* 5. Long Description */}
@@ -1490,13 +1539,21 @@ export default function PropertiesPage() {
                 {/* ---- COMMERCIAL / FRACTIONAL ---- */}
                 {(newProp.type === "Commercial" || newProp.type === "Fractional") && (
                   <>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "12px" }}>
                       <div>
                         <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Floor Type</label>
                         <select value={newProp.floorType} onChange={(e) => setNewProp({ ...newProp, floorType: e.target.value })}
                           style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
                           <option value="">—</option>
                           {["High Rise", "Low Rise", "Multiple"].map(f => <option key={f} value={f}>{f}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Flooring</label>
+                        <select value={newProp.flooring} onChange={(e) => setNewProp({ ...newProp, flooring: e.target.value })}
+                          style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}>
+                          <option value="">—</option>
+                          {["Vitrified Tiles", "Marble", "Wooden", "Granite", "Ceramic", "Other"].map(f => <option key={f} value={f}>{f}</option>)}
                         </select>
                       </div>
                       <div>

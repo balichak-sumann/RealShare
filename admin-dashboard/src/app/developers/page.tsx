@@ -13,6 +13,7 @@ interface Developer {
   established_year?: number | null;
   rera_registered: boolean;
   type?: 'firm' | 'account';
+  is_approved?: boolean;
   email?: string | null;
   phone_number?: string | null;
   _count?: { properties: number };
@@ -151,6 +152,25 @@ export default function DevelopersPage() {
     }
   };
 
+  const handleToggleApproval = async (id: string, is_approved: boolean) => {
+    try {
+      const authHeader = await getAuthHeader();
+      if (!authHeader) return;
+      const res = await fetch(`/api/investors/${id}`, {
+        method: "PATCH",
+        headers: { ...authHeader, "Content-Type": "application/json" },
+        body: JSON.stringify({ is_approved }),
+      });
+      if (!res.ok) throw new Error("Failed to update approval status");
+      const updated = await res.json();
+      setDevelopers((prev) => prev.map((d) => (d.id === id ? { ...d, is_approved: updated.is_approved } : d)));
+      showToast(`Account ${updated.is_approved ? "Approved" : "Approval Revoked"}`);
+    } catch (err) {
+      console.error(err);
+      alert("Could not update approval status.");
+    }
+  };
+
   const handleDeleteDeveloper = async (d: Developer) => {
     if (!confirm(`Delete developer "${d.name}" and all associated properties? This action cannot be undone.`)) return;
     try {
@@ -191,6 +211,7 @@ export default function DevelopersPage() {
               <th className={styles.th}>Rating</th>
               <th className={styles.th}>Est.</th>
               <th className={styles.th}>RERA</th>
+              <th className={styles.th}>Status</th>
               <th className={styles.th}>Total Projects</th>
               <th className={styles.th}>Actions</th>
             </tr>
@@ -198,11 +219,11 @@ export default function DevelopersPage() {
           <tbody>
             {loading ? (
               <tr>
-                <td className={styles.td} colSpan={6}>Loading developers...</td>
+                <td className={styles.td} colSpan={7}>Loading developers...</td>
               </tr>
             ) : developers.length === 0 ? (
               <tr>
-                <td className={styles.td} colSpan={6}>No developers added yet.</td>
+                <td className={styles.td} colSpan={7}>No developers added yet.</td>
               </tr>
             ) : (
               developers.map((d) => (
@@ -232,16 +253,38 @@ export default function DevelopersPage() {
                     )}
                   </td>
                   <td className={styles.td}>
+                    {d.type === "account" ? (
+                      <span className={styles.badge} style={{ background: d.is_approved ? "#D1FAE5" : "#FEF3C7", color: d.is_approved ? "#059669" : "#D97706" }}>
+                        {d.is_approved ? "✓ Approved" : "⏳ Pending"}
+                      </span>
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  <td className={styles.td}>
                     <span style={{ fontWeight: 600 }}>{d._count?.properties ?? 0}</span>
                   </td>
                   <td className={styles.td}>
                     <div className={styles.actions}>
-                      <button onClick={() => openEditModal(d)} className={styles.viewBtn}>
-                        Edit
-                      </button>
-                      <button onClick={() => handleDeleteDeveloper(d)} className={styles.deleteBtn}>
-                        Delete
-                      </button>
+                      {d.type === "account" && (
+                        <button 
+                          onClick={() => handleToggleApproval(d.id, !d.is_approved)} 
+                          className={styles.viewBtn} 
+                          style={{ background: d.is_approved ? "#FEF2F2" : "#ECFDF5", color: d.is_approved ? "#DC2626" : "#059669", borderColor: d.is_approved ? "#FECACA" : "#A7F3D0" }}
+                        >
+                          {d.is_approved ? "Revoke" : "Approve"}
+                        </button>
+                      )}
+                      {d.type !== "account" && (
+                        <>
+                          <button onClick={() => openEditModal(d)} className={styles.viewBtn}>
+                            Edit
+                          </button>
+                          <button onClick={() => handleDeleteDeveloper(d)} className={styles.deleteBtn}>
+                            Delete
+                          </button>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>

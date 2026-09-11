@@ -43,6 +43,14 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
     setActiveIndex((prev) => (prev - 1 + slides.length) % slides.length);
   };
 
+  useEffect(() => {
+    if (slides.length <= 1) return;
+    const interval = setInterval(() => {
+      setActiveIndex((prev) => (prev + 1) % slides.length);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [slides.length]);
+
   const getImg = (prop: any) => {
     if (!prop) return '';
     const firstImg = prop.images?.[0];
@@ -80,11 +88,6 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
       <View style={desktopStyles.container}>
         {/* Background shape */}
         <View style={desktopStyles.bgShape} />
-
-        {/* Script floating text */}
-        <Text style={desktopStyles.scriptFloatingText}>
-          Find More{'\n'}Than a Home
-        </Text>
 
         <View style={desktopStyles.layoutRow}>
           
@@ -150,13 +153,6 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                 <Text style={desktopStyles.mainBadgeText}>FEATURED</Text>
               </View>
 
-              <TouchableOpacity style={desktopStyles.playBtn}>
-                <View style={desktopStyles.playBtnCircle}>
-                  <Ionicons name="play" size={24} color={Neutrals.white} style={{ marginLeft: 4 }} />
-                </View>
-                <Text style={desktopStyles.playText}>Watch Tour</Text>
-              </TouchableOpacity>
-
               <View style={desktopStyles.mainCardBottom}>
                 <View style={desktopStyles.mainCardInfo}>
                   <View style={desktopStyles.locationRow}>
@@ -164,14 +160,16 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                     <Text style={desktopStyles.locationText}>{activeSlide.locality}, {activeSlide.district}</Text>
                   </View>
                   <Text style={desktopStyles.cardTitle}>{activeSlide.title}</Text>
-                  <Text style={desktopStyles.cardDesc} numberOfLines={2}>
-                    A stunning property with world-class amenities and breathtaking views.
-                  </Text>
+                  {!!activeSlide.description && (
+                    <Text style={desktopStyles.cardDesc} numberOfLines={2}>
+                      {activeSlide.description}
+                    </Text>
+                  )}
                   
                   <View style={desktopStyles.amenitiesRow}>
-                    <View style={desktopStyles.amenityItem}><Ionicons name="bed-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{activeSlide.bedrooms || 3} Beds</Text></View>
-                    <View style={desktopStyles.amenityItem}><Ionicons name="water-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{activeSlide.bathrooms || 3} Baths</Text></View>
-                    <View style={desktopStyles.amenityItem}><Ionicons name="expand-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{activeSlide.area_sqft || 2500} Sq.Ft</Text></View>
+                    {!!activeSlide.bedrooms && <View style={desktopStyles.amenityItem}><Ionicons name="bed-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{activeSlide.bedrooms} Beds</Text></View>}
+                    {!!activeSlide.bathrooms && <View style={desktopStyles.amenityItem}><Ionicons name="water-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{activeSlide.bathrooms} Baths</Text></View>}
+                    {!!activeSlide.area_sqft && <View style={desktopStyles.amenityItem}><Ionicons name="expand-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{activeSlide.area_sqft} Sq.Ft</Text></View>}
                   </View>
                 </View>
 
@@ -207,51 +205,6 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                 </View>
               );
             })}
-          </View>
-        </View>
-
-        {/* BOTTOM STATS BAR */}
-        <View style={desktopStyles.statsBar}>
-          <View style={desktopStyles.statItem}>
-            <Ionicons name="people" size={24} color={GoldSystem.primaryGold} style={{ marginRight: 12 }} />
-            <View>
-              <Text style={desktopStyles.statVal}>1000+</Text>
-              <Text style={desktopStyles.statLabel}>Happy Families</Text>
-            </View>
-          </View>
-          <View style={desktopStyles.statDivider} />
-          
-          <View style={desktopStyles.statItem}>
-            <Ionicons name="location" size={24} color={GoldSystem.primaryGold} style={{ marginRight: 12 }} />
-            <View>
-              <Text style={desktopStyles.statVal}>20+</Text>
-              <Text style={desktopStyles.statLabel}>Prime Locations</Text>
-            </View>
-          </View>
-          <View style={desktopStyles.statDivider} />
-
-          <View style={desktopStyles.statItem}>
-            <Ionicons name="home" size={24} color={GoldSystem.primaryGold} style={{ marginRight: 12 }} />
-            <View>
-              <Text style={desktopStyles.statVal}>500+</Text>
-              <Text style={desktopStyles.statLabel}>Properties Listed</Text>
-            </View>
-          </View>
-          <View style={desktopStyles.statDivider} />
-
-          <View style={desktopStyles.statItem}>
-            <Ionicons name="star" size={24} color={GoldSystem.primaryGold} style={{ marginRight: 12 }} />
-            <View>
-              <Text style={desktopStyles.statVal}>4.8/5</Text>
-              <Text style={desktopStyles.statLabel}>Customer Rating</Text>
-            </View>
-          </View>
-          <View style={desktopStyles.statDivider} />
-
-          <View style={[desktopStyles.statItem, { flex: 1.2 }]}>
-            <Text style={desktopStyles.statFooterDesc}>
-              <Text style={{ fontWeight: '700' }}>More Than Properties.</Text>{'\n'}Better Lives.
-            </Text>
           </View>
         </View>
 
@@ -308,24 +261,6 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
         <TouchableOpacity onPress={handleNext} style={[desktopStyles.controlBtn, { backgroundColor: Neutrals.gray200 }]}>
           <Ionicons name="chevron-forward" size={20} color={Neutrals.obsidian} />
         </TouchableOpacity>
-      </View>
-
-      {/* Mobile Stats Bar (Stacked) */}
-      <View style={styles.mobileStatsBar}>
-        <View style={styles.mobileStatItem}>
-          <Ionicons name="people" size={24} color={GoldSystem.primaryGold} style={{ marginRight: 12 }} />
-          <View>
-            <Text style={desktopStyles.statVal}>1000+</Text>
-            <Text style={desktopStyles.statLabel}>Happy Families</Text>
-          </View>
-        </View>
-        <View style={styles.mobileStatItem}>
-          <Ionicons name="home" size={24} color={GoldSystem.primaryGold} style={{ marginRight: 12 }} />
-          <View>
-            <Text style={desktopStyles.statVal}>500+</Text>
-            <Text style={desktopStyles.statLabel}>Properties Listed</Text>
-          </View>
-        </View>
       </View>
     </View>
   );
@@ -412,7 +347,7 @@ const styles = StyleSheet.create({
 const desktopStyles = StyleSheet.create({
   container: {
     width: '100%',
-    paddingVertical: 64,
+    paddingVertical: 32,
     paddingHorizontal: '4%',
     position: 'relative',
     overflow: 'hidden',
@@ -421,7 +356,7 @@ const desktopStyles = StyleSheet.create({
   bgShape: {
     position: 'absolute',
     top: 40,
-    bottom: 120,
+    bottom: 40,
     left: -200,
     right: '40%',
     backgroundColor: Neutrals.white,
@@ -446,7 +381,7 @@ const desktopStyles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     zIndex: 2,
-    height: 560,
+    height: 460,
   },
   leftCol: {
     width: '28%',

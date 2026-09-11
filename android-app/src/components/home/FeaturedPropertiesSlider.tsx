@@ -159,25 +159,25 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                 contentOpacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [1, 0, 0] });
               } else if (offset === 0) {
                 translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [24, 0, 0] });
-                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [24, 0, -500] });
+                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, -500] });
                 scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1] });
                 opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.85, 1, 0] });
                 contentOpacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 1, 0] });
               } else if (offset === 1) {
                 translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 24, 0] });
-                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 24, 0] });
+                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0] });
                 scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.90, 0.95, 1] });
                 opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.70, 0.85, 1] });
                 contentOpacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 1] });
               } else if (offset === 2) {
                 translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 48, 24] });
-                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 48, 24] });
+                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0] });
                 scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.90, 0.90, 0.95] });
                 opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0.70, 0.85] });
                 contentOpacity = 0;
               } else {
                 translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 48, 48] });
-                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 48, 48] });
+                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0] });
                 scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.90, 0.90, 0.90] });
                 opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0.70] });
                 contentOpacity = 0;

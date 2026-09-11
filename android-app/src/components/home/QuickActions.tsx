@@ -191,6 +191,7 @@ const styles = StyleSheet.create({
   },
   cardsContainerDesktop: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     justifyContent: 'center',
     alignItems: 'flex-start',
     gap: 24,

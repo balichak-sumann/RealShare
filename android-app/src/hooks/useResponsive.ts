@@ -11,8 +11,12 @@ import { Platform, useWindowDimensions } from 'react-native';
 export const Breakpoints = {
   /** below this = phone layout */
   mobile: 768,
-  /** at/above this = full desktop layout */
-  desktop: 1100,
+  /** top end of tablet layout */
+  tabletMax: 1100,
+  /** at/above this = full desktop layout. 
+   * NOTE: We set this to 768 so that legacy `isDesktop` checks 
+   * automatically apply to tablets, fixing their layouts. */
+  desktop: 768,
 };
 
 export const FrameWidth = {
@@ -50,8 +54,8 @@ export function useResponsive(): Responsive {
   }
 
   const isMobile = width < Breakpoints.mobile;
+  const isTablet = width >= Breakpoints.mobile && width < Breakpoints.tabletMax;
   const isDesktop = width >= Breakpoints.desktop;
-  const isTablet = !isMobile && !isDesktop;
 
   return {
     isWeb: true,

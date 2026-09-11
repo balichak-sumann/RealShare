@@ -9,6 +9,25 @@ import { TrustBadge } from './TrustBadge';
 import { useShortlist } from '@/contexts/ShortlistContext';
 import { Ionicons } from '@expo/vector-icons';
 
+// Map amenity names to Ionicons
+const AMENITY_ICONS: Record<string, { icon: string; label: string }> = {
+  'swimming_pool': { icon: 'water-outline', label: 'Pool' },
+  'gym': { icon: 'fitness-outline', label: 'Gym' },
+  'parking': { icon: 'car-outline', label: 'Parking' },
+  'security': { icon: 'shield-checkmark-outline', label: 'Security' },
+  'garden': { icon: 'leaf-outline', label: 'Garden' },
+  'clubhouse': { icon: 'home-outline', label: 'Clubhouse' },
+  'power_backup': { icon: 'flash-outline', label: 'Power' },
+  'elevator': { icon: 'swap-vertical-outline', label: 'Elevator' },
+  'playground': { icon: 'football-outline', label: 'Play Area' },
+  'cctv': { icon: 'videocam-outline', label: 'CCTV' },
+  'wifi': { icon: 'wifi-outline', label: 'Wi-Fi' },
+  'rainwater_harvesting': { icon: 'rainy-outline', label: 'Rainwater' },
+  'jogging_track': { icon: 'walk-outline', label: 'Jogging' },
+  'sports': { icon: 'basketball-outline', label: 'Sports' },
+  'intercom': { icon: 'call-outline', label: 'Intercom' },
+};
+
 interface PropertyCardProps {
   id: string;
   title: string;
@@ -26,6 +45,7 @@ interface PropertyCardProps {
   areaSuffix?: string;
   description?: string;
   isSoldOut?: boolean;
+  amenities?: string[];
 }
 
 // A neutral gray placeholder shown while the real image loads.
@@ -48,6 +68,7 @@ function PropertyCardInner({
   areaSuffix = 'sq.ft',
   description,
   isSoldOut = false,
+  amenities = [],
 }: PropertyCardProps) {
   const router = useRouter();
   const { isDesktop } = useResponsive();
@@ -63,6 +84,12 @@ function PropertyCardInner({
   // Only load the FIRST image in the card to avoid mass-downloading all
   // property gallery images at once. Users see the full gallery on tap.
   const heroImage = images?.[0] || 'https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=400&fit=crop';
+
+  // Resolve amenities to display (max 4 for compact cards)
+  const displayAmenities = amenities
+    .map(a => AMENITY_ICONS[a])
+    .filter(Boolean)
+    .slice(0, compact ? 4 : 6);
 
   return (
     <PremiumCard style={[styles.card, compact && styles.compactCard, compact && isDesktop && styles.compactCardDesktop] as any} onPress={() => router.push(`/property/${id}` as any)}>
@@ -97,21 +124,23 @@ function PropertyCardInner({
         </TouchableOpacity>
       </View>
 
-      <View style={styles.content}>
-        <View style={styles.headerRow}>
-          {price ? (
+      <View style={[styles.content, !price && { position: 'relative' }]}>
+        {price ? (
+          <View style={styles.headerRow}>
             <View style={styles.priceContainer}>
               <Text style={styles.price}>{price}</Text>
             </View>
-          ) : (
-            <View style={{ flex: 1 }} />
-          )}
-          <View style={styles.scoreBadge}>
+            <View style={styles.scoreBadge}>
+              <Text style={styles.scoreText}>{score}</Text>
+            </View>
+          </View>
+        ) : (
+          <View style={styles.scoreBadgeFloating}>
             <Text style={styles.scoreText}>{score}</Text>
           </View>
-        </View>
+        )}
 
-        <Text style={styles.title} numberOfLines={1}>{title}</Text>
+        <Text style={[styles.title, !price && { paddingRight: 40 }]} numberOfLines={1}>{title}</Text>
         <View style={styles.locationRow}>
           <Ionicons name="location-outline" size={14} color={Neutrals.textSecondary} style={{ marginRight: 4 }} />
           <Text style={styles.location}>{location}</Text>
@@ -124,13 +153,25 @@ function PropertyCardInner({
         </View>
 
         {description && (
-          <Text style={styles.descriptionText} numberOfLines={2}>
+          <Text style={styles.descriptionText} numberOfLines={4}>
             {description}
           </Text>
         )}
 
+        {/* Amenities row — fills the bottom of the card */}
+        {displayAmenities.length > 0 && (
+          <View style={styles.amenitiesRow}>
+            {displayAmenities.map((a, i) => (
+              <View key={i} style={styles.amenityChip}>
+                <Ionicons name={a.icon as any} size={12} color={GoldSystem.darkGold} />
+                <Text style={styles.amenityLabel}>{a.label}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
         {agentCommission && (
-          <View style={{ marginTop: 12, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <View style={{ marginTop: 8, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
             <Text style={{ fontSize: 13, color: '#4B5563', fontWeight: '500' }}>Commission</Text>
             <View style={{ backgroundColor: '#D1FAE5', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 }}>
               <Text style={{ color: '#059669', fontSize: 12, fontWeight: '800' }}>{agentCommission}</Text>
@@ -142,7 +183,7 @@ function PropertyCardInner({
           <TouchableOpacity 
             onPress={onShare}
             style={{ 
-              marginTop: 16, 
+              marginTop: 12, 
               backgroundColor: '#111827', 
               paddingVertical: 10, 
               borderRadius: 8, 
@@ -249,13 +290,15 @@ const styles = StyleSheet.create({
     color: GoldSystem.primaryGold,
   },
   content: {
-    padding: 16,
+    paddingHorizontal: 12,
+    paddingTop: 8,
+    paddingBottom: 12,
   },
   headerRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 4,
   },
   priceContainer: {
     flex: 1,
@@ -274,6 +317,20 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GoldSystem.primaryGold,
   },
+  scoreBadgeFloating: {
+    position: 'absolute',
+    top: 8,
+    right: 12,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: GoldSystem.paleGold,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: GoldSystem.primaryGold,
+    zIndex: 1,
+  },
   scoreText: {
     ...Typography.labelMedium,
     color: GoldSystem.darkGold,
@@ -281,12 +338,12 @@ const styles = StyleSheet.create({
   title: {
     ...Typography.headlineMedium,
     color: Neutrals.obsidian,
-    marginBottom: 4,
+    marginBottom: 2,
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 6,
   },
   location: {
     ...Typography.bodyMedium,
@@ -312,6 +369,30 @@ const styles = StyleSheet.create({
   descriptionText: {
     ...Typography.bodySmall,
     color: Neutrals.textSecondary,
-    marginTop: 8,
+    marginTop: 6,
+  },
+  amenitiesRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: Neutrals.gray100,
+    paddingTop: 10,
+  },
+  amenityChip: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: GoldSystem.paleGold,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  amenityLabel: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: GoldSystem.darkGold,
   },
 });
+

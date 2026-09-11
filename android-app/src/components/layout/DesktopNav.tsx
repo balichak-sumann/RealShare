@@ -9,6 +9,7 @@ import {
   TextInput,
 } from 'react-native';
 import { useRouter, usePathname } from 'expo-router';
+import { useResponsive } from '@/hooks/useResponsive';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
@@ -35,6 +36,7 @@ interface NavItem {
 export function DesktopNav() {
   const router = useRouter();
   const pathname = usePathname();
+  const { isTablet } = useResponsive();
   const { profile } = useUser();
   const { city } = useLocation();
   const [query, setQuery] = React.useState('');
@@ -106,9 +108,9 @@ export function DesktopNav() {
           style={{
             position: 'fixed',
             top: 0,
-            left: 48,
-            width: 105,
-            height: 90,
+            left: isTablet ? 16 : 48,
+            width: isTablet ? 90 : 105,
+            height: isTablet ? 80 : 90,
             backgroundColor: '#fff',
             display: 'flex',
             justifyContent: 'center',
@@ -129,13 +131,13 @@ export function DesktopNav() {
         </div>
       )}
 
-      <View style={styles.container}>
+      <View style={[styles.container, isTablet && { overflow: 'hidden' }]}>
         {/* Top Gold Header - Sticky */}
         <View style={styles.topHeader}>
           {/* Native-only logo */}
           {Platform.OS !== 'web' && (
             <TouchableOpacity
-              style={styles.brand}
+              style={[styles.brand, isTablet && { left: 16, width: 90, height: 110 }]}
               onPress={() => router.push('/' as any)}
               activeOpacity={1}
             >
@@ -149,10 +151,10 @@ export function DesktopNav() {
 
           <View style={styles.inner}>
             {/* Brand spacer */}
-            <View style={styles.brandPlaceholder} />
+            <View style={[styles.brandPlaceholder, isTablet && { width: 90, marginRight: 8 }]} />
 
           {/* Primary nav */}
-          <View style={styles.navLinks}>
+          <View style={[styles.navLinks, { gap: isTablet ? 8 : 32 }]}>
             {navItems.map((item) => {
               const active = item.match.test(pathname);
               return (
@@ -162,7 +164,7 @@ export function DesktopNav() {
                   style={styles.navLink}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.navLabel, active && styles.navLabelActive]}>
+                  <Text style={[styles.navLabel, isTablet && { fontSize: 12 }, active && styles.navLabelActive]}>
                     {item.label}
                   </Text>
                   {active && <View style={styles.navUnderline} />}

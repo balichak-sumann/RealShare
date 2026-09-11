@@ -31,7 +31,7 @@ const FEATURES = [
 
 export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
 
   const [displayText, setDisplayText] = React.useState('');
   const fullText = 'RealShare';
@@ -55,7 +55,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
         <DesktopNav />
         <View style={styles.desktopContainer}>
           {/* Left Promotional Side */}
-          <View style={styles.leftSide}>
+          <View style={[styles.leftSide, isTablet && { flex: 0.8 }]}>
           <ImageBackground source={require('../../../assets/images/auth_bg.jpg')} style={styles.backgroundImage}>
             <LinearGradient
               colors={['rgba(250, 248, 245, 0)', 'rgba(250, 248, 245, 0.95)', 'rgba(250, 248, 245, 0)']}
@@ -70,7 +70,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
                   <Text style={styles.eyebrow}>REAL PEOPLE. REAL OPPORTUNITIES.</Text>
                 </View>
                 
-                <Text style={styles.headline}>
+                <Text style={[styles.headline, isTablet && { fontSize: 36, lineHeight: 42 }]}>
                   Welcome{'\n'}to <Text style={{ color: GoldSystem.primaryGold }}>
                     {displayText}
                     <Text style={{ 

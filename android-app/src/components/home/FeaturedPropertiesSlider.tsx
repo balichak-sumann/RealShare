@@ -198,9 +198,8 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
                     }
                   ]}
                 >
-                  <Image source={{ uri: getImg(prop) }} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={20} />
-                  <Image source={{ uri: getImg(prop) }} style={StyleSheet.absoluteFill} contentFit="contain" />
-                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']} style={StyleSheet.absoluteFill} />
+                  <Image source={{ uri: getImg(prop) }} style={[StyleSheet.absoluteFill, { borderRadius: 32 }]} contentFit="cover" />
+                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']} style={[StyleSheet.absoluteFill, { borderRadius: 32 }]} />
                   
                   <Animated.View style={[StyleSheet.absoluteFill, { opacity: contentOpacity }]}>
                     <View style={desktopStyles.mainBadge}>
@@ -271,9 +270,8 @@ export function FeaturedPropertiesSlider({ properties }: FeaturedPropertiesSlide
       </View>
 
       <View style={[styles.slide, { marginHorizontal: 16, borderRadius: Radius.lg, overflow: 'hidden' }]}>
-        <Image source={{ uri: getImg(activeMobileSlide) }} style={StyleSheet.absoluteFill} contentFit="cover" blurRadius={20} />
-        <Image source={{ uri: getImg(activeMobileSlide) }} style={StyleSheet.absoluteFill} contentFit="contain" />
-        <LinearGradient colors={['transparent', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.9)']} style={StyleSheet.absoluteFill} />
+        <Image source={{ uri: getImg(activeMobileSlide) }} style={[StyleSheet.absoluteFill, { borderRadius: Radius.lg }]} contentFit="cover" />
+        <LinearGradient colors={['transparent', 'rgba(0,0,0,0.35)', 'rgba(0,0,0,0.9)']} style={[StyleSheet.absoluteFill, { borderRadius: Radius.lg }]} />
         
         <View style={styles.badgeContainer}>
           <Text style={styles.badgeText}>FEATURED</Text>

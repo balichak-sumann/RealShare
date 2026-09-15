@@ -2,6 +2,9 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
 
+export const dynamic = 'force-dynamic';
+export const fetchCache = 'force-no-store';
+
 const TRANSACTION_TYPE_ACTION_LABELS: Record<string, string> = {
   property_booking: 'booked a share in',
   fraction_purchase: 'purchased shares in',
@@ -26,6 +29,7 @@ export async function GET(request: Request) {
       verifiedInvestorCount,
       pendingKycCount,
       activeAgentsCount,
+      developerCount,
       openTicketsCount,
       totalInquiriesCount,
       investments,
@@ -43,6 +47,7 @@ export async function GET(request: Request) {
       prisma.profile.count({ where: { role: 'investor', kyc_status: 'verified' } }).catch(() => 0),
       prisma.profile.count({ where: { role: 'investor', kyc_status: 'pending' } }).catch(() => 0),
       prisma.profile.count({ where: { role: 'agent', is_active: true } }).catch(() => 0),
+      prisma.developer.count().catch(() => 0),
       prisma.supportTicket.count({ where: { status: 'open' } }).catch(() => 0),
       prisma.serviceInquiry.count().catch(() => 0),
       prisma.investment.findMany({ select: { total_amount: true, property_id: true } }).catch(() => []),
@@ -234,6 +239,7 @@ export async function GET(request: Request) {
         avgYield: Math.round(avgYield * 10) / 10,
         avgIrr: Math.round(avgIrr * 10) / 10,
         activeAgents: activeAgentsCount,
+        totalBuilders: developerCount,
         openTickets: openTicketsCount,
         totalInquiries: totalInquiriesCount,
       },

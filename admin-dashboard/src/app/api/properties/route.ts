@@ -125,6 +125,7 @@ export async function GET(request: Request) {
         images: {
           orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
         },
+        documents: { orderBy: { uploaded_at: 'asc' } },
         profile: { select: { full_name: true, role: true, avatar_url: true } },
         developer: true,
       },
@@ -285,7 +286,14 @@ export async function POST(request: Request) {
           featured: data.featured || false,
           posted_by: userId,
           developer_id: data.developer_id || null,
-          approval_status: isAdmin ? 'approved' : 'pending_approval',
+          approval_status: data.approval_status === 'draft' ? 'draft' : (isAdmin ? 'approved' : 'pending_approval'),
+          // Speciality
+          speciality: data.speciality || null,
+          // Rental-specific
+          deposit_type: data.deposit_type || null,
+          deposit_months: data.deposit_months ? Number(data.deposit_months) : null,
+          deposit_amount: data.deposit_amount ? Number(data.deposit_amount) : null,
+          rental_amount: data.rental_amount ? Number(data.rental_amount) : null,
           // Residential fields
           floor_type: data.floor_type || null,
           bedrooms: data.bedrooms ? Number(data.bedrooms) : null,
@@ -328,12 +336,28 @@ export async function POST(request: Request) {
         });
       }
 
+      // Handle document uploads
+      const documentUrls: Array<{ url: string; title: string; file_type: string; file_size?: number }> =
+        Array.isArray(data.document_urls) ? data.document_urls : [];
+      if (documentUrls.length > 0) {
+        await (tx as any).propertyDocument.createMany({
+          data: documentUrls.map((d) => ({
+            property_id: created.id,
+            title: d.title || 'Document',
+            document_url: d.url,
+            file_type: d.file_type || 'pdf',
+            file_size: d.file_size ? BigInt(d.file_size) : null,
+          })),
+        });
+      }
+
       return await tx.property.findUnique({
         where: { id: created.id },
         include: {
           images: {
             orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
           },
+          documents: { orderBy: { uploaded_at: 'asc' } },
           developer: true,
           profile: { select: { full_name: true, role: true, avatar_url: true } },
         },

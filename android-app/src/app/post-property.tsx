@@ -18,6 +18,7 @@ import { getApiUrl } from '@/lib/api';
 import { Neutrals, GoldSystem, Radius, Typography } from '@/constants/design';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import * as DocumentPicker from 'expo-document-picker';
 
 const CATEGORIES = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Investor'] as const;
 
@@ -60,6 +61,7 @@ export default function PostPropertyScreen() {
   const [title, setTitle] = useState('');
   const [shortDescription, setShortDescription] = useState('');
   const [description, setDescription] = useState('');
+  const [speciality, setSpeciality] = useState('');
   const [areaSqft, setAreaSqft] = useState('');
   const [district, setDistrict] = useState('Hyderabad');
   const [customDistrict, setCustomDistrict] = useState('');
@@ -103,14 +105,22 @@ export default function PostPropertyScreen() {
   });
 
   // Financials
-  const [price, setPrice] = useState('500000');
+  const [price, setPrice] = useState('');
+  const [totalPriceStr, setTotalPriceStr] = useState('');
   const [totalFractions, setTotalFractions] = useState('100');
   const [bookingAmount, setBookingAmount] = useState('50000');
   const [assuredYield, setAssuredYield] = useState('8.5');
   const [targetIrr, setTargetIrr] = useState('15.0');
+  
+  // Rental Financials
+  const [rentalAmount, setRentalAmount] = useState('');
+  const [depositType, setDepositType] = useState('months');
+  const [depositMonths, setDepositMonths] = useState('3');
+  const [depositAmount, setDepositAmount] = useState('');
 
   // Media
   const [localImageUris, setLocalImageUris] = useState<string[]>([]);
+  const [localDocumentUris, setLocalDocumentUris] = useState<string[]>([]);
   const [videoUrl, setVideoUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
@@ -134,6 +144,26 @@ export default function PostPropertyScreen() {
 
   const handleRemoveImage = (index: number) => {
     setLocalImageUris(prev => prev.filter((_, idx) => idx !== index));
+  };
+
+  const handlePickDocuments = async () => {
+    try {
+      const result = await DocumentPicker.getDocumentAsync({
+        type: ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/vnd.ms-excel', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+        multiple: true,
+      });
+
+      if (!result.canceled && result.assets && result.assets.length > 0) {
+        const uris = result.assets.map(a => a.uri);
+        setLocalDocumentUris(prev => [...prev, ...uris]);
+      }
+    } catch (e: any) {
+      Alert.alert('Error', 'Could not open document picker: ' + e.message);
+    }
+  };
+
+  const handleRemoveDocument = (index: number) => {
+    setLocalDocumentUris(prev => prev.filter((_, idx) => idx !== index));
   };
 
   const [isResolvingCoords, setIsResolvingCoords] = useState(false);
@@ -286,6 +316,20 @@ export default function PostPropertyScreen() {
         }
       }
 
+      // 2. Upload documents
+      const uploadedDocUrls: string[] = [];
+      if (localDocumentUris.length > 0) {
+        for (let i = 0; i < localDocumentUris.length; i++) {
+          setStatusMessage(`Uploading document ${i + 1} of ${localDocumentUris.length}...`);
+          try {
+            const url = await uploadFileToServer(localDocumentUris[i], token);
+            uploadedDocUrls.push(url);
+          } catch (e: any) {
+            console.error('Document upload failed:', e);
+          }
+        }
+      }
+
       if (uploadedUrls.length === 0) {
         uploadedUrls.push('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=400&fit=crop');
       }
@@ -315,6 +359,13 @@ export default function PostPropertyScreen() {
         target_irr: targetIrr ? Number(targetIrr) : undefined,
         video_url: videoUrl.trim() || undefined,
         image_urls: uploadedUrls,
+        document_urls: uploadedDocUrls,
+        speciality: speciality.trim() || undefined,
+        // Rental specific
+        deposit_type: listingType === 'rental' ? depositType : undefined,
+        deposit_months: listingType === 'rental' && depositType === 'months' ? Number(depositMonths) : undefined,
+        deposit_amount: listingType === 'rental' && depositType === 'amount' ? Number(depositAmount) : undefined,
+        rental_amount: listingType === 'rental' ? Number(rentalAmount) : undefined,
         // Shared
         sub_type: newProp.subType || undefined,
         floor_type: newProp.floorType || undefined,
@@ -503,25 +554,54 @@ export default function PostPropertyScreen() {
 
             {/* Pricing & Financials (Directly below Listing Mode) */}
             <Text style={[styles.inputLabel, { marginTop: 20 }]}>
-              2. {listingType === 'fractional' ? 'Price Per Fraction (₹) *' : listingType === 'rental' ? 'Monthly Rent (₹) *' : 'Total Asking Price (₹) *'}
+              2. {listingType === 'rental' ? 'Monthly Rent (₹) *' : 'Total Property Value (₹) *'}
             </Text>
-            <TextInput
-              style={styles.textInput}
-              keyboardType="numeric"
-              placeholder="e.g. 500000"
-              value={price}
-              onChangeText={setPrice}
-            />
+            {listingType === 'rental' ? (
+              <TextInput
+                style={styles.textInput}
+                keyboardType="numeric"
+                placeholder="e.g. 25000"
+                value={rentalAmount}
+                onChangeText={setRentalAmount}
+              />
+            ) : (
+              <TextInput
+                style={styles.textInput}
+                keyboardType="numeric"
+                placeholder="e.g. 50000000"
+                value={totalPriceStr}
+                onChangeText={(val) => {
+                  setTotalPriceStr(val);
+                  if (listingType === 'fractional') {
+                    const pricePer = Number(val) / Number(totalFractions || 1);
+                    setPrice(pricePer.toString());
+                  } else {
+                    setPrice(val);
+                  }
+                }}
+              />
+            )}
 
             {listingType === 'fractional' && (
               <>
-                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Total Fractions in Pool *</Text>
+                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Number of Fractions *</Text>
                 <TextInput
                   style={styles.textInput}
                   keyboardType="numeric"
                   placeholder="e.g. 100"
                   value={totalFractions}
-                  onChangeText={setTotalFractions}
+                  onChangeText={(val) => {
+                    setTotalFractions(val);
+                    const pricePer = Number(totalPriceStr || 0) / Number(val || 1);
+                    setPrice(pricePer.toString());
+                  }}
+                />
+
+                <Text style={[styles.inputLabel, { marginTop: 14, color: GoldSystem.primaryGold }]}>Calculated Price per Fraction (₹)</Text>
+                <TextInput
+                  style={[styles.textInput, { backgroundColor: '#F8FAFC', color: '#64748B' }]}
+                  editable={false}
+                  value={price && Number(price) > 0 ? `₹ ${Number(price).toLocaleString('en-IN')}` : '₹ 0'}
                 />
 
                 <Text style={[styles.inputLabel, { marginTop: 14 }]}>Booking Amount Per Fraction (₹)</Text>
@@ -532,6 +612,50 @@ export default function PostPropertyScreen() {
                   value={bookingAmount}
                   onChangeText={setBookingAmount}
                 />
+              </>
+            )}
+
+            {listingType === 'rental' && (
+              <>
+                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Security Deposit Type *</Text>
+                <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
+                  <TouchableOpacity
+                    style={[styles.modeCard, { flex: 1, padding: 12 }, depositType === 'months' && styles.modeCardActive]}
+                    onPress={() => setDepositType('months')}
+                  >
+                    <Text style={[styles.modeCardLabel, { fontSize: 13 }, depositType === 'months' && styles.modeCardLabelActive]}>By Months</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity
+                    style={[styles.modeCard, { flex: 1, padding: 12 }, depositType === 'amount' && styles.modeCardActive]}
+                    onPress={() => setDepositType('amount')}
+                  >
+                    <Text style={[styles.modeCardLabel, { fontSize: 13 }, depositType === 'amount' && styles.modeCardLabelActive]}>Fixed Amount</Text>
+                  </TouchableOpacity>
+                </View>
+
+                {depositType === 'months' ? (
+                  <>
+                    <Text style={[styles.inputLabel, { marginTop: 14 }]}>Number of Months *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      keyboardType="numeric"
+                      placeholder="e.g. 3"
+                      value={depositMonths}
+                      onChangeText={setDepositMonths}
+                    />
+                  </>
+                ) : (
+                  <>
+                    <Text style={[styles.inputLabel, { marginTop: 14 }]}>Deposit Amount (₹) *</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      keyboardType="numeric"
+                      placeholder="e.g. 100000"
+                      value={depositAmount}
+                      onChangeText={setDepositAmount}
+                    />
+                  </>
+                )}
               </>
             )}
 
@@ -594,15 +718,38 @@ export default function PostPropertyScreen() {
               onChangeText={setTitle}
             />
 
-            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Built-up Area (Sq. Ft.) *</Text>
-            <TextInput
-              style={styles.textInput}
-              placeholder="e.g. 1500"
-              placeholderTextColor={Neutrals.gray400}
-              keyboardType="numeric"
-              value={areaSqft}
-              onChangeText={setAreaSqft}
-            />
+            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Total Area / Size *</Text>
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TextInput
+                style={[styles.textInput, { flex: 2 }]}
+                placeholder="e.g. 1500"
+                placeholderTextColor={Neutrals.gray400}
+                keyboardType="numeric"
+                value={areaSqft}
+                onChangeText={setAreaSqft}
+              />
+              <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' }}>
+                <TouchableOpacity
+                  style={{ paddingVertical: 12, alignItems: 'center' }}
+                  onPress={() => {
+                    Alert.alert(
+                      'Select Area Unit',
+                      'Choose the unit of measurement',
+                      [
+                        { text: 'Sq.Ft', onPress: () => setNewProp({ ...newProp, areaUnit: 'sqft' }) },
+                        { text: 'Sq.Yards', onPress: () => setNewProp({ ...newProp, areaUnit: 'sqyards' as any }) },
+                        { text: 'Acres', onPress: () => setNewProp({ ...newProp, areaUnit: 'acres' }) },
+                        { text: 'Cancel', style: 'cancel' }
+                      ]
+                    );
+                  }}
+                >
+                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#334155' }}>
+                    {newProp.areaUnit === 'sqyards' ? 'Sq.Yards' : newProp.areaUnit === 'acres' ? 'Acres' : 'Sq.Ft'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
 
             <Text style={[styles.inputLabel, { marginTop: 16 }]}>Short Description</Text>
             <TextInput
@@ -622,6 +769,17 @@ export default function PostPropertyScreen() {
               numberOfLines={4}
               value={description}
               onChangeText={setDescription}
+            />
+
+            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Property Highlights / Speciality (Optional)</Text>
+            <TextInput
+              style={[styles.textInput, { height: 80, textAlignVertical: 'top' }]}
+              placeholder="e.g. Sea-facing, 5 min from Metro Station, Corner plot..."
+              placeholderTextColor={Neutrals.gray400}
+              multiline
+              numberOfLines={3}
+              value={speciality}
+              onChangeText={setSpeciality}
             />
 
             <View style={styles.buttonRow}>
@@ -713,7 +871,73 @@ export default function PostPropertyScreen() {
                   </TouchableOpacity>
                 </View>
                 <Text style={[styles.inputLabel, { marginTop: 14 }]}>Amenities</Text>
-                <TextInput style={styles.textInput} placeholder="Comma separated: Gym, Pool, etc" value={newProp.amenities} onChangeText={t => setNewProp({...newProp, amenities: t})} />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                  {[
+                    'Swimming Pool', 'Gymnasium', 'Creche / Day care', 'Lounge', 
+                    'Childrens Play area / TOT LOT', 'Theatre', 'Rooftop Lounge', 
+                    'Landscape Garden', 'Food Court', 'Convenience store', 'Cafeteria', 
+                    'ATM', 'Senior citizen Lounge', 'Fire safety system', 'Power Backup', 
+                    '24/7 Security', 'CCTV', 'Central air conditioning', 'High Speed lifts', 
+                    'Conference room', 'Party hall', 'Games room', 'Outdoor Seating'
+                  ].map(amenity => {
+                    const isSelected = (newProp.amenities || '').split(',').includes(amenity);
+                    return (
+                      <TouchableOpacity
+                        key={amenity}
+                        style={[styles.tagBtn, isSelected && styles.tagBtnActive, { marginBottom: 4, marginRight: 0 }]}
+                        onPress={() => {
+                          const arr = (newProp.amenities || '').split(',').filter(Boolean);
+                          setNewProp({ ...newProp, amenities: (isSelected ? arr.filter(x => x !== amenity) : [...arr, amenity]).join(',') });
+                        }}
+                      >
+                        <Text style={[styles.tagBtnText, isSelected && styles.tagBtnTextActive]}>{amenity}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  {(newProp.amenities || '').split(',').filter(Boolean).filter(a => ![
+                    'Swimming Pool', 'Gymnasium', 'Creche / Day care', 'Lounge', 
+                    'Childrens Play area / TOT LOT', 'Theatre', 'Rooftop Lounge', 
+                    'Landscape Garden', 'Food Court', 'Convenience store', 'Cafeteria', 
+                    'ATM', 'Senior citizen Lounge', 'Fire safety system', 'Power Backup', 
+                    '24/7 Security', 'CCTV', 'Central air conditioning', 'High Speed lifts', 
+                    'Conference room', 'Party hall', 'Games room', 'Outdoor Seating'
+                  ].includes(a)).map(customA => (
+                    <TouchableOpacity
+                      key={customA}
+                      style={[styles.tagBtn, styles.tagBtnActive, { marginBottom: 4 }]}
+                      onPress={() => {
+                        const arr = (newProp.amenities || '').split(',').filter(Boolean);
+                        setNewProp({ ...newProp, amenities: arr.filter(x => x !== customA).join(',') });
+                      }}
+                    >
+                      <Text style={[styles.tagBtnText, styles.tagBtnTextActive]}>{customA} ✕</Text>
+                    </TouchableOpacity>
+                  ))}
+                  
+                  <TouchableOpacity
+                    style={[styles.tagBtn, { borderStyle: 'dashed', backgroundColor: '#F8FAFC' }]}
+                    onPress={() => {
+                      Alert.prompt(
+                        "Add Custom Amenity",
+                        "Enter the name of the amenity",
+                        [
+                          { text: "Cancel", style: "cancel" },
+                          { text: "Add", onPress: (val) => {
+                            if (val && val.trim()) {
+                              const arr = (newProp.amenities || '').split(',').filter(Boolean);
+                              if (!arr.includes(val.trim())) {
+                                setNewProp({ ...newProp, amenities: [...arr, val.trim()].join(',') });
+                              }
+                            }
+                          }}
+                        ],
+                        "plain-text"
+                      );
+                    }}
+                  >
+                    <Text style={[styles.tagBtnText, { color: '#64748B' }]}>+ Add Custom</Text>
+                  </TouchableOpacity>
+                </View>
               </>
             )}
 
@@ -753,7 +977,67 @@ export default function PostPropertyScreen() {
                   ))}
                 </View>
                 <Text style={[styles.inputLabel, { marginTop: 14 }]}>Amenities</Text>
-                <TextInput style={styles.textInput} placeholder="Comma separated: Gym, ATM, etc" value={newProp.amenities} onChangeText={t => setNewProp({...newProp, amenities: t})} />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
+                  {[
+                    'Cafeteria', 'Conference room', 'High Speed lifts', 'Central air conditioning',
+                    '24/7 Security', 'CCTV', 'Power Backup', 'Fire safety system', 'Lounge',
+                    'ATM', 'Food Court', 'Convenience store', 'Outdoor Seating'
+                  ].map(amenity => {
+                    const isSelected = (newProp.amenities || '').split(',').includes(amenity);
+                    return (
+                      <TouchableOpacity
+                        key={amenity}
+                        style={[styles.tagBtn, isSelected && styles.tagBtnActive, { marginBottom: 4, marginRight: 0 }]}
+                        onPress={() => {
+                          const arr = (newProp.amenities || '').split(',').filter(Boolean);
+                          setNewProp({ ...newProp, amenities: (isSelected ? arr.filter(x => x !== amenity) : [...arr, amenity]).join(',') });
+                        }}
+                      >
+                        <Text style={[styles.tagBtnText, isSelected && styles.tagBtnTextActive]}>{amenity}</Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                  {(newProp.amenities || '').split(',').filter(Boolean).filter(a => ![
+                    'Cafeteria', 'Conference room', 'High Speed lifts', 'Central air conditioning',
+                    '24/7 Security', 'CCTV', 'Power Backup', 'Fire safety system', 'Lounge',
+                    'ATM', 'Food Court', 'Convenience store', 'Outdoor Seating'
+                  ].includes(a)).map(customA => (
+                    <TouchableOpacity
+                      key={customA}
+                      style={[styles.tagBtn, styles.tagBtnActive, { marginBottom: 4 }]}
+                      onPress={() => {
+                        const arr = (newProp.amenities || '').split(',').filter(Boolean);
+                        setNewProp({ ...newProp, amenities: arr.filter(x => x !== customA).join(',') });
+                      }}
+                    >
+                      <Text style={[styles.tagBtnText, styles.tagBtnTextActive]}>{customA} ✕</Text>
+                    </TouchableOpacity>
+                  ))}
+                  
+                  <TouchableOpacity
+                    style={[styles.tagBtn, { borderStyle: 'dashed', backgroundColor: '#F8FAFC' }]}
+                    onPress={() => {
+                      Alert.prompt(
+                        "Add Custom Amenity",
+                        "Enter the name of the amenity",
+                        [
+                          { text: "Cancel", style: "cancel" },
+                          { text: "Add", onPress: (val) => {
+                            if (val && val.trim()) {
+                              const arr = (newProp.amenities || '').split(',').filter(Boolean);
+                              if (!arr.includes(val.trim())) {
+                                setNewProp({ ...newProp, amenities: [...arr, val.trim()].join(',') });
+                              }
+                            }
+                          }}
+                        ],
+                        "plain-text"
+                      );
+                    }}
+                  >
+                    <Text style={[styles.tagBtnText, { color: '#64748B' }]}>+ Add Custom</Text>
+                  </TouchableOpacity>
+                </View>
               </>
             )}
 
@@ -973,6 +1257,31 @@ export default function PostPropertyScreen() {
               value={videoUrl}
               onChangeText={setVideoUrl}
             />
+
+            <Text style={[styles.inputLabel, { marginTop: 18 }]}>Property Documents (PDF, Word, Excel)</Text>
+            <TouchableOpacity style={styles.uploadBox} onPress={handlePickDocuments}>
+              <Ionicons name="document-attach-outline" size={32} color={GoldSystem.primaryGold} />
+              <Text style={styles.uploadBoxTitle}>Tap to select documents</Text>
+              <Text style={styles.uploadBoxSub}>Attach brochures, floor plans, or legal documents</Text>
+            </TouchableOpacity>
+
+            {localDocumentUris.length > 0 && (
+              <View style={{ marginTop: 12, gap: 8 }}>
+                {localDocumentUris.map((uri, idx) => (
+                  <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F8FAFC', padding: 10, borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0' }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', flex: 1 }}>
+                      <Ionicons name="document-text" size={20} color="#64748B" style={{ marginRight: 8 }} />
+                      <Text style={{ fontSize: 13, color: '#334155', flex: 1 }} numberOfLines={1}>
+                        {uri.split('/').pop() || `Document ${idx + 1}`}
+                      </Text>
+                    </View>
+                    <TouchableOpacity onPress={() => handleRemoveDocument(idx)} style={{ padding: 4 }}>
+                      <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                    </TouchableOpacity>
+                  </View>
+                ))}
+              </View>
+            )}
 
             {/* Summary Preview Box */}
             <View style={styles.reviewCard}>

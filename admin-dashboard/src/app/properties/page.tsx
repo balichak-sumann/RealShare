@@ -77,6 +77,12 @@ interface Property {
   raithu_bharosa?: boolean;
   approach_road?: string;
   under_irrigation?: boolean;
+  speciality?: string;
+  deposit_type?: string;
+  deposit_months?: number | null;
+  deposit_amount?: number | string | null;
+  rental_amount?: number | string | null;
+  documents?: Array<{ id: string; title: string; document_url: string; file_type: string; file_size?: number | null }>;
 }
 
 const INITIAL_NEW_PROP_STATE = {
@@ -91,12 +97,13 @@ const INITIAL_NEW_PROP_STATE = {
   listingType: "fractional" as "fractional" | "outright" | "rental" | "resale",
   areaSqft: 1200,
   areaSqftMax: null as number | null,
-  areaUnit: "sqft" as "sqft" | "acres",
+  areaUnit: "sqft" as "sqft" | "sqyards" | "acres",
   reraNumber: "",
   permissionNumber: "",
   googleMapsUrl: "",
   totalFractions: 50,
-  price: 500000,
+  totalPrice: 25000000, // total property price for fractional
+  price: 500000,        // price per fraction (auto-calculated) or direct price for outright/rental
   yield: 8.5,
   irr: 15.0,
   postedBy: "Admin" as const,
@@ -125,7 +132,14 @@ const INITIAL_NEW_PROP_STATE = {
   raithuBharosa: false,
   approachRoad: "",
   underIrrigation: false,
+  // New fields
+  speciality: "",
+  depositType: "months" as "months" | "custom",
+  depositMonths: 2 as number,
+  depositAmount: null as number | null,
+  rentalAmount: null as number | null,
 };
+
 
 const MAJOR_CITIES = [
   { name: "Hyderabad", state: "Telangana", lat: 17.3850, lng: 78.4867 },
@@ -222,6 +236,7 @@ export default function PropertiesPage() {
       permissionNumber: p.permission_number || "",
       googleMapsUrl: p.google_maps_url || "",
       totalFractions: p.total_fractions || 50,
+      totalPrice: (Number(p.price_per_fraction) || 500000) * (p.total_fractions || 50),
       price: Number(p.price_per_fraction) || 500000,
       yield: Number(p.assured_yield) || 8.5,
       irr: Number(p.target_irr) || 15.0,
@@ -255,9 +270,18 @@ export default function PropertiesPage() {
       raithuBharosa: p.raithu_bharosa ?? false,
       approachRoad: p.approach_road || "",
       underIrrigation: p.under_irrigation ?? false,
+      // New fields
+      speciality: p.speciality || "",
+      depositType: (p.deposit_type as any) || "months",
+      depositMonths: p.deposit_months ?? 2,
+      depositAmount: p.deposit_amount ? Number(p.deposit_amount) : null,
+      rentalAmount: p.rental_amount ? Number(p.rental_amount) : null,
     });
     setMapLat(Number(p.lat) || 17.385);
     setMapLng(Number(p.lng) || 78.4867);
+    // Load existing documents
+    setExistingDocs(p.documents || []);
+    setSelectedDocs([]);
     setShowAddModal(true);
   };
 
@@ -296,9 +320,14 @@ export default function PropertiesPage() {
   const [isResolvingMapUrl, setIsResolvingMapUrl] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<File | null>(null);
+  const [selectedDocs, setSelectedDocs] = useState<File[]>([]);
+  const [existingDocs, setExistingDocs] = useState<Array<{ id: string; title: string; document_url: string; file_type: string }>>([]);
+  const [customAmenityInput, setCustomAmenityInput] = useState("");
+  const [showCustomAmenityInput, setShowCustomAmenityInput] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [mapLat, setMapLat] = useState(17.385);
   const [mapLng, setMapLng] = useState(78.4867);
+  const HOME_APP_URL = process.env.NEXT_PUBLIC_HOME_APP_URL || 'http://localhost:8081';
 
   const handleExtractMapLocation = async () => {
     if (!newProp.googleMapsUrl || !newProp.googleMapsUrl.trim()) {
@@ -578,6 +607,21 @@ export default function PropertiesPage() {
         }
       }
 
+      // Upload documents if selected
+      const uploadedDocumentUrls: Array<{ url: string; title: string; file_type: string; file_size: number }> = [];
+      if (selectedDocs.length > 0) {
+        for (const file of selectedDocs) {
+          try {
+            const url = await uploadFileToServer(file, authHeader);
+            const ext = file.name.split('.').pop()?.toLowerCase() || 'pdf';
+            uploadedDocumentUrls.push({ url, title: file.name, file_type: ext, file_size: file.size });
+          } catch (uploadError: any) {
+            console.error('Document upload failed:', uploadError);
+            showToast(`Failed to upload ${file.name}: ${uploadError.message}`);
+          }
+        }
+      }
+
       const isEdit = !!editingPropertyId;
       const url = isEdit ? `/api/properties/${editingPropertyId}` : '/api/properties';
       const method = isEdit ? 'PUT' : 'POST';
@@ -602,10 +646,23 @@ export default function PropertiesPage() {
           permission_number: newProp.permissionNumber || undefined,
           total_fractions: newProp.listingType === "fractional" ? Number(newProp.totalFractions) : 1,
           available_fractions: newProp.listingType === "fractional" ? Number(newProp.totalFractions) : 1,
-          price_per_fraction: Number(newProp.price),
-          booking_amount: Math.round(Number(newProp.price) * 0.1),
-          assured_yield: Number(newProp.yield),
-          target_irr: Number(newProp.irr),
+          // Fractional: fraction price = totalPrice / totalFractions; else direct price
+          price_per_fraction: newProp.listingType === "fractional"
+            ? Math.round(Number((newProp as any).totalPrice || 0) / Math.max(1, Number(newProp.totalFractions)))
+            : Number(newProp.price),
+          booking_amount: newProp.listingType === "fractional"
+            ? Math.round(Number((newProp as any).totalPrice || 0) / Math.max(1, Number(newProp.totalFractions)) * 0.1)
+            : Math.round(Number(newProp.price) * 0.1),
+          // Yield / IRR (non-rental)
+          assured_yield: newProp.listingType !== 'rental' ? Number(newProp.yield) : undefined,
+          target_irr: newProp.listingType !== 'rental' ? Number(newProp.irr) : undefined,
+          // Rental-specific
+          rental_amount: newProp.listingType === 'rental' ? Number((newProp as any).rentalAmount) || undefined : undefined,
+          deposit_type: newProp.listingType === 'rental' ? (newProp as any).depositType || undefined : undefined,
+          deposit_months: newProp.listingType === 'rental' && (newProp as any).depositType === 'months' ? Number((newProp as any).depositMonths) || undefined : undefined,
+          deposit_amount: newProp.listingType === 'rental' && (newProp as any).depositType === 'custom' ? Number((newProp as any).depositAmount) || undefined : undefined,
+          // Speciality
+          speciality: (newProp as any).speciality || undefined,
           lat: mapLat,
           lng: mapLng,
           google_maps_url: newProp.googleMapsUrl || undefined,
@@ -613,6 +670,7 @@ export default function PropertiesPage() {
           featured: false,
           image_urls: uploadedImageUrls,
           image_url: uploadedImageUrls[0],
+          document_urls: uploadedDocumentUrls.length > 0 ? uploadedDocumentUrls : undefined,
           // Shared
           sub_type: newProp.subType || undefined,
           floor_type: newProp.floorType || undefined,
@@ -656,13 +714,17 @@ export default function PropertiesPage() {
         showToast(`Property "${created.title}" successfully updated.`);
       } else {
         setProperties([created, ...properties]);
-        showToast(`Property "${created.title}" successfully added with ${uploadedImageUrls.length} images${videoUrl ? ' and 1 video' : ''}.`);
+        showToast(`Property "${created.title}" successfully added with ${uploadedImageUrls.length} images${videoUrl ? ' and 1 video' : ''}${uploadedDocumentUrls.length > 0 ? ` and ${uploadedDocumentUrls.length} document(s)` : ''}.`);
       }
       setShowAddModal(false);
       setEditingPropertyId(null);
       setSelectedFiles([]);
       setSelectedVideo(null);
-      setNewProp({ ...newProp, title: "", shortDescription: "", description: "", locality: "", fullAddress: "", googleMapsUrl: "" });
+      setSelectedDocs([]);
+      setExistingDocs([]);
+      setShowCustomAmenityInput(false);
+      setCustomAmenityInput("");
+      setNewProp({ ...INITIAL_NEW_PROP_STATE });
     } catch (error: any) {
       console.error("Error uploading property media:", error);
       showToast(error.message || "Failed to upload media. Please try again.");
@@ -950,7 +1012,14 @@ export default function PropertiesPage() {
                   <div className={styles.propCell}>
                     <img src={p.images?.[0]?.image_url || 'https://via.placeholder.com/150'} alt={p.title} className={styles.propThumb} />
                     <div>
-                      <div className={styles.propTitle}>{p.title}</div>
+                      <div
+                        className={styles.propTitle}
+                        style={{ cursor: 'pointer', color: '#2563EB', textDecoration: 'underline' }}
+                        onClick={() => window.open(`${HOME_APP_URL}/property/${p.id}`, '_blank')}
+                        title="View on Home App"
+                      >
+                        {p.title}
+                      </div>
                       <div className={styles.propLocation}>
                         {p.locality}, {p.district}
                       </div>
@@ -1026,16 +1095,27 @@ export default function PropertiesPage() {
                 <td className={styles.td}>
                   <strong>₹{Number(p.price_per_fraction).toLocaleString("en-IN")}</strong>
                   <div style={{ fontSize: "0.7rem", color: "#64748B" }}>
-                    {p.listing_type === "outright"
+                    {p.listing_type === "rental"
+                      ? `Rent: ₹${Number((p as any).rental_amount || p.price_per_fraction).toLocaleString("en-IN")}/mo`
+                      : p.listing_type === "outright"
                       ? "Full property price"
                       : `Booking: ₹${Number(p.booking_amount).toLocaleString("en-IN")}`}
                   </div>
                 </td>
                 <td className={styles.td}>
-                  <span className={styles.yieldVal}>{p.assured_yield}% Yield</span>
-                  <div style={{ fontSize: "0.7rem", color: "#7C3AED", fontWeight: 600 }}>
-                    {p.target_irr}% IRR
-                  </div>
+                  {p.listing_type === 'rental' ? (
+                    <div>
+                      <span className={styles.yieldVal} style={{ color: '#059669' }}>
+                        {(p as any).deposit_months ? `${(p as any).deposit_months}M Deposit` : (p as any).deposit_amount ? `₹${Number((p as any).deposit_amount).toLocaleString('en-IN')} Dep.` : '—'}
+                      </span>
+                      <div style={{ fontSize: "0.7rem", color: "#7C3AED", fontWeight: 600 }}>Rental</div>
+                    </div>
+                  ) : (
+                    <div>
+                      <span className={styles.yieldVal}>{p.assured_yield}% Yield</span>
+                      <div style={{ fontSize: "0.7rem", color: "#7C3AED", fontWeight: 600 }}>{p.target_irr}% IRR</div>
+                    </div>
+                  )}
                 </td>
                 <td className={styles.td}>
                   {isSoldOut(p) ? (
@@ -1251,61 +1331,127 @@ export default function PropertiesPage() {
                 </div>
               </div>
 
-              {/* 2. Financial & Pricing Details (Positioned directly below Listing Mode) */}
+              {/* 2. Financial & Pricing Details */}
               <div style={{ background: "#F1F5F9", padding: "14px", borderRadius: "10px", border: "1px solid #E2E8F0" }}>
                 <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#1E293B", marginBottom: "10px" }}>
                   💰 Pricing & Investment Metrics
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: newProp.listingType === "fractional" ? "1fr 1fr 1fr 1fr" : "1fr 1fr 1fr", gap: "10px" }}>
-                  {newProp.listingType === "fractional" && (
+                {/* FRACTIONAL MODE */}
+                {newProp.listingType === "fractional" && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
                     <div>
-                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Total Fractions <span style={{ color: "#EF4444" }}>*</span></label>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Total Property Price (₹) <span style={{ color: "#EF4444" }}>*</span></label>
                       <input
-                        type="number"
-                        required
-                        min={1}
-                        value={newProp.totalFractions}
-                        onChange={(e) => setNewProp({ ...newProp, totalFractions: Number(e.target.value) })}
+                        type="number" required min={0}
+                        placeholder="e.g. 25000000"
+                        value={(newProp as any).totalPrice || ""}
+                        onChange={(e) => {
+                          const tp = Number(e.target.value);
+                          const fp = Math.round(tp / Math.max(1, Number(newProp.totalFractions)));
+                          setNewProp({ ...newProp, totalPrice: tp, price: fp } as any);
+                        }}
                         style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#FFFFFF" }}
                       />
                     </div>
-                  )}
-                  <div>
-                    <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>
-                      {newProp.listingType === "fractional" ? "Price Per Fraction (₹)" : newProp.listingType === "rental" ? "Monthly Rent (₹)" : "Total Price (₹)"} <span style={{ color: "#EF4444" }}>*</span>
-                    </label>
-                    <input
-                      type="number"
-                      required
-                      min={0}
-                      value={newProp.price}
-                      onChange={(e) => setNewProp({ ...newProp, price: Number(e.target.value) })}
-                      style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#FFFFFF" }}
-                    />
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>No. of Fractions <span style={{ color: "#EF4444" }}>*</span></label>
+                      <input
+                        type="number" required min={1}
+                        value={newProp.totalFractions}
+                        onChange={(e) => {
+                          const tf = Number(e.target.value);
+                          const fp = Math.round(Number((newProp as any).totalPrice || 0) / Math.max(1, tf));
+                          setNewProp({ ...newProp, totalFractions: tf, price: fp } as any);
+                        }}
+                        style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#FFFFFF" }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Price Per Fraction (₹) — Auto</label>
+                      <div style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.95rem", background: "#F0FDF4", color: "#065F46", fontWeight: 800, minHeight: "36px", display: "flex", alignItems: "center" }}>
+                        ₹ {newProp.price > 0 ? Number(newProp.price).toLocaleString('en-IN') : '—'}
+                      </div>
+                      <div style={{ fontSize: "0.7rem", color: "#64748B", marginTop: "2px" }}>Calculated automatically</div>
+                    </div>
                   </div>
-                  <div>
-                    <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Assured Yield (%)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={newProp.yield}
-                      onChange={(e) => setNewProp({ ...newProp, yield: Number(e.target.value) })}
-                      style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#FFFFFF" }}
-                    />
+                )}
+                {/* OUTRIGHT / RESALE */}
+                {(newProp.listingType === "outright" || newProp.listingType === "resale") && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Total Price (₹) <span style={{ color: "#EF4444" }}>*</span></label>
+                      <input type="number" required min={0} value={newProp.price}
+                        onChange={(e) => setNewProp({ ...newProp, price: Number(e.target.value) })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#FFFFFF" }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Assured Yield (%)</label>
+                      <input type="number" step="0.1" value={newProp.yield}
+                        onChange={(e) => setNewProp({ ...newProp, yield: Number(e.target.value) })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#FFFFFF" }} />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Target IRR (%)</label>
+                      <input type="number" step="0.1" value={newProp.irr}
+                        onChange={(e) => setNewProp({ ...newProp, irr: Number(e.target.value) })}
+                        style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#FFFFFF" }} />
+                    </div>
                   </div>
-                  <div>
-                    <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Target IRR (%)</label>
-                    <input
-                      type="number"
-                      step="0.1"
-                      value={newProp.irr}
-                      onChange={(e) => setNewProp({ ...newProp, irr: Number(e.target.value) })}
-                      style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#FFFFFF" }}
-                    />
+                )}
+                {/* RENTAL MODE */}
+                {newProp.listingType === "rental" && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Monthly Rent (₹) <span style={{ color: "#EF4444" }}>*</span></label>
+                      <input
+                        type="number" required min={0}
+                        placeholder="e.g. 45000"
+                        value={(newProp as any).rentalAmount || ""}
+                        onChange={(e) => setNewProp({ ...newProp, rentalAmount: Number(e.target.value), price: Number(e.target.value) } as any)}
+                        style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#FFFFFF" }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Security Deposit</label>
+                      <select
+                        value={(newProp as any).depositType === 'custom' ? 'custom' : ((newProp as any).depositMonths || 2).toString()}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val === 'custom') {
+                            setNewProp({ ...newProp, depositType: 'custom' } as any);
+                          } else {
+                            setNewProp({ ...newProp, depositType: 'months', depositMonths: Number(val) } as any);
+                          }
+                        }}
+                        style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", background: "#fff", fontSize: "0.85rem" }}
+                      >
+                        {[1,2,3,4,5,6].map(m => <option key={m} value={m}>{m} Month{m > 1 ? 's' : ''} = ₹{((newProp as any).rentalAmount ? Number((newProp as any).rentalAmount) * m : 0).toLocaleString('en-IN')}</option>)}
+                        <option value="custom">Custom Amount</option>
+                      </select>
+                      
+                      {/* Custom amount input */}
+                      {(newProp as any).depositType === 'custom' && (
+                        <input
+                          type="number" min={0}
+                          placeholder="Custom deposit amount (₹)"
+                          value={(newProp as any).depositAmount || ""}
+                          onChange={(e) => setNewProp({ ...newProp, depositAmount: Number(e.target.value) } as any)}
+                          style={{ width: "100%", padding: "6px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.8rem" }}
+                        />
+                      )}
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Deposit Summary</label>
+                      <div style={{ width: "100%", padding: "8px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "4px", fontSize: "0.85rem", background: "#F0FDF4", color: "#065F46", fontWeight: 700, minHeight: "36px", display: "flex", alignItems: "center" }}>
+                        {(newProp as any).depositType === 'custom'
+                          ? `₹ ${Number((newProp as any).depositAmount || 0).toLocaleString('en-IN')} (Custom)`
+                          : `₹ ${((newProp as any).rentalAmount ? Number((newProp as any).rentalAmount) * Number((newProp as any).depositMonths || 2) : 0).toLocaleString('en-IN')} (${(newProp as any).depositMonths || 2} months)`
+                        }
+                      </div>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
-
 
               {/* 3. Category, Sub-type & Area */}
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
@@ -1344,36 +1490,38 @@ export default function PropertiesPage() {
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
                     Area (Min) <span style={{ color: "#EF4444" }}>*</span>
-                    {newProp.type === "Investor" && (
-                      <span style={{ marginLeft: "8px", fontSize: "0.7rem" }}>
-                        <button type="button" onClick={() => setNewProp({ ...newProp, areaUnit: "sqft" })}
-                          style={{ padding: "2px 6px", borderRadius: "4px", border: "1px solid #CBD5E1", background: newProp.areaUnit === "sqft" ? "#2563EB" : "#fff", color: newProp.areaUnit === "sqft" ? "#fff" : "#475569", cursor: "pointer", fontSize: "0.7rem" }}>Sq.Ft</button>
-                        <button type="button" onClick={() => setNewProp({ ...newProp, areaUnit: "acres" })}
-                          style={{ padding: "2px 6px", borderRadius: "4px", border: "1px solid #CBD5E1", background: newProp.areaUnit === "acres" ? "#2563EB" : "#fff", color: newProp.areaUnit === "acres" ? "#fff" : "#475569", cursor: "pointer", fontSize: "0.7rem", marginLeft: "2px" }}>Acres</button>
-                      </span>
-                    )}
                   </label>
-                  <input
-                    type="number" required min={0}
-                    placeholder={newProp.areaUnit === "acres" ? "e.g. 4" : "e.g. 1200"}
-                    value={newProp.areaSqft}
-                    onChange={(e) => setNewProp({ ...newProp, areaSqft: Number(e.target.value) })}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
-                  />
-                  <div style={{ fontSize: "0.7rem", color: "#94A3B8", marginTop: "2px" }}>{newProp.areaUnit === "acres" ? "Acres" : "Sq. Ft."}</div>
+                  <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+                    <input
+                      type="number" required min={0}
+                      placeholder={newProp.areaUnit === "acres" ? "e.g. 4" : newProp.areaUnit === "sqyards" ? "e.g. 150" : "e.g. 1200"}
+                      value={newProp.areaSqft}
+                      onChange={(e) => setNewProp({ ...newProp, areaSqft: Number(e.target.value) })}
+                      style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1" }}
+                    />
+                    <select
+                      value={newProp.areaUnit || 'sqft'}
+                      onChange={(e) => setNewProp({ ...newProp, areaUnit: e.target.value as any })}
+                      style={{ padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", background: "#fff", fontSize: "0.85rem", minWidth: "90px" }}
+                    >
+                      <option value="sqft">Sq.Ft</option>
+                      <option value="sqyards">Sq.Yards</option>
+                      <option value="acres">Acres</option>
+                    </select>
+                  </div>
                 </div>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
-                    Area (Max) <span style={{ fontSize: "0.7rem", color: "#94A3B8" }}>(Optional Range)</span>
+                    Area (Max) <span style={{ fontSize: "0.7rem", color: "#94A3B8" }}>(Optional)</span>
                   </label>
                   <input
                     type="number" min={0}
-                    placeholder={newProp.areaUnit === "acres" ? "e.g. 6" : "e.g. 1500"}
+                    placeholder={newProp.areaUnit === "acres" ? "e.g. 6" : newProp.areaUnit === "sqyards" ? "e.g. 200" : "e.g. 1500"}
                     value={newProp.areaSqftMax || ""}
                     onChange={(e) => setNewProp({ ...newProp, areaSqftMax: e.target.value ? Number(e.target.value) : null })}
                     style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                   />
-                  <div style={{ fontSize: "0.7rem", color: "#94A3B8", marginTop: "2px" }}>{newProp.areaUnit === "acres" ? "Acres" : "Sq. Ft."}</div>
+                  <div style={{ fontSize: "0.7rem", color: "#94A3B8", marginTop: "2px" }}>{newProp.areaUnit === "acres" ? "Acres" : newProp.areaUnit === "sqyards" ? "Sq. Yards" : "Sq. Ft."}</div>
                 </div>
               </div>
 
@@ -1514,7 +1662,14 @@ export default function PropertiesPage() {
                     <div>
                       <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "6px", display: "block" }}>Amenities (select all that apply)</label>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                        {["Gym", "Swimming Pool", "Party Hall", "ATM", "Club House", "Children's Play Area", "Jogging Track", "Power Backup", "24/7 Security", "CCTV", "Lift", "Visitor Parking", "Garden", "Tennis Court", "Badminton Court"].map(a => {
+                        {[
+                          "Swimming Pool", "Gymnasium", "Crèche / Day Care", "Lounge", "Children's Play Area / TOT LOT",
+                          "Theatre", "Rooftop Lounge", "Landscape Garden", "Food Court", "Convenience Store",
+                          "Cafeteria", "ATM", "Senior Citizen Lounge", "Fire Safety System", "Power Backup",
+                          "24/7 Security", "CCTV", "Central Air Conditioning", "High Speed Lifts", "Conference Room",
+                          "Party Hall", "Games Room", "Outdoor Seating", "Gym", "Club House",
+                          "Jogging Track", "Lift", "Visitor Parking", "Garden", "Tennis Court", "Badminton Court"
+                        ].map(a => {
                           const selected = (newProp.amenities || "").split(",").map(x => x.trim()).includes(a);
                           return (
                             <button key={a} type="button"
@@ -1528,10 +1683,49 @@ export default function PropertiesPage() {
                             </button>
                           );
                         })}
+                        {/* "+" Add Custom Amenity */}
+                        <button type="button"
+                          onClick={() => setShowCustomAmenityInput(true)}
+                          style={{ padding: "4px 12px", borderRadius: "12px", border: "1px dashed #2563EB", background: "#EFF6FF", color: "#2563EB", cursor: "pointer", fontSize: "0.75rem", fontWeight: 700 }}>
+                          + Add Custom
+                        </button>
                       </div>
-                      <input type="text" placeholder="Other amenities (comma separated)" value={newProp.amenities}
-                        onChange={(e) => setNewProp({ ...newProp, amenities: e.target.value })}
-                        style={{ width: "100%", padding: "7px 10px", borderRadius: "6px", border: "1px solid #CBD5E1", marginTop: "6px", fontSize: "0.8rem" }} />
+                      {showCustomAmenityInput && (
+                        <div style={{ display: "flex", gap: "6px", marginTop: "8px" }}>
+                          <input
+                            type="text"
+                            placeholder="Type custom amenity name"
+                            value={customAmenityInput}
+                            onChange={(e) => setCustomAmenityInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (customAmenityInput.trim()) {
+                                  const current = (newProp.amenities || "").split(",").map(x => x.trim()).filter(Boolean);
+                                  setNewProp({ ...newProp, amenities: [...current, customAmenityInput.trim()].join(", ") });
+                                  setCustomAmenityInput("");
+                                  setShowCustomAmenityInput(false);
+                                }
+                              }
+                            }}
+                            style={{ flex: 1, padding: "6px 10px", borderRadius: "6px", border: "1px solid #2563EB", fontSize: "0.8rem" }}
+                            autoFocus
+                          />
+                          <button type="button"
+                            onClick={() => {
+                              if (customAmenityInput.trim()) {
+                                const current = (newProp.amenities || "").split(",").map(x => x.trim()).filter(Boolean);
+                                setNewProp({ ...newProp, amenities: [...current, customAmenityInput.trim()].join(", ") });
+                                setCustomAmenityInput("");
+                                setShowCustomAmenityInput(false);
+                              }
+                            }}
+                            style={{ padding: "6px 12px", borderRadius: "6px", background: "#2563EB", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.8rem" }}>✓ Add</button>
+                          <button type="button"
+                            onClick={() => { setCustomAmenityInput(""); setShowCustomAmenityInput(false); }}
+                            style={{ padding: "6px 10px", borderRadius: "6px", background: "#F1F5F9", color: "#475569", border: "none", cursor: "pointer", fontWeight: 600, fontSize: "0.8rem" }}>✕</button>
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
@@ -1585,7 +1779,13 @@ export default function PropertiesPage() {
                     <div>
                       <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569", marginBottom: "6px", display: "block" }}>Amenities (select all that apply)</label>
                       <div style={{ display: "flex", flexWrap: "wrap", gap: "6px" }}>
-                        {["Food Court", "High Speed Lifts", "Central Airconditioning", "Power Backup", "24/7 Security", "CCTV", "Visitor Parking", "Conference Room", "Cafeteria", "ATM", "Fire Safety System", "Gymnasium"].map(a => {
+                        {[
+                          "Food Court", "High Speed Lifts", "Central Air Conditioning", "Power Backup", "24/7 Security",
+                          "CCTV", "Visitor Parking", "Conference Room", "Cafeteria", "ATM",
+                          "Fire Safety System", "Gymnasium", "Swimming Pool", "Lounge", "Rooftop Lounge",
+                          "Games Room", "Party Hall", "Outdoor Seating", "Crèche / Day Care", "Senior Citizen Lounge",
+                          "Landscape Garden", "Convenience Store", "Theatre", "Children's Play Area / TOT LOT"
+                        ].map(a => {
                           const selected = (newProp.amenities || "").split(",").map(x => x.trim()).includes(a);
                           return (
                             <button key={a} type="button"
@@ -1599,7 +1799,49 @@ export default function PropertiesPage() {
                             </button>
                           );
                         })}
+                        {/* "+" Add Custom Amenity */}
+                        <button type="button"
+                          onClick={() => setShowCustomAmenityInput(true)}
+                          style={{ padding: "4px 12px", borderRadius: "12px", border: "1px dashed #2563EB", background: "#EFF6FF", color: "#2563EB", cursor: "pointer", fontSize: "0.75rem", fontWeight: 700 }}>
+                          + Add Custom
+                        </button>
                       </div>
+                      {showCustomAmenityInput && (
+                        <div style={{ display: "flex", gap: "6px", marginTop: "8px" }}>
+                          <input
+                            type="text"
+                            placeholder="Type custom amenity name"
+                            value={customAmenityInput}
+                            onChange={(e) => setCustomAmenityInput(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (customAmenityInput.trim()) {
+                                  const current = (newProp.amenities || "").split(",").map(x => x.trim()).filter(Boolean);
+                                  setNewProp({ ...newProp, amenities: [...current, customAmenityInput.trim()].join(", ") });
+                                  setCustomAmenityInput("");
+                                  setShowCustomAmenityInput(false);
+                                }
+                              }
+                            }}
+                            style={{ flex: 1, padding: "6px 10px", borderRadius: "6px", border: "1px solid #2563EB", fontSize: "0.8rem" }}
+                            autoFocus
+                          />
+                          <button type="button"
+                            onClick={() => {
+                              if (customAmenityInput.trim()) {
+                                const current = (newProp.amenities || "").split(",").map(x => x.trim()).filter(Boolean);
+                                setNewProp({ ...newProp, amenities: [...current, customAmenityInput.trim()].join(", ") });
+                                setCustomAmenityInput("");
+                                setShowCustomAmenityInput(false);
+                              }
+                            }}
+                            style={{ padding: "6px 12px", borderRadius: "6px", background: "#2563EB", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700, fontSize: "0.8rem" }}>✓ Add</button>
+                          <button type="button"
+                            onClick={() => { setCustomAmenityInput(""); setShowCustomAmenityInput(false); }}
+                            style={{ padding: "6px 10px", borderRadius: "6px", background: "#F1F5F9", color: "#475569", border: "none", cursor: "pointer", fontWeight: 600, fontSize: "0.8rem" }}>✕</button>
+                        </div>
+                      )}
                     </div>
                   </>
                 )}
@@ -1652,6 +1894,24 @@ export default function PropertiesPage() {
                     </div>
                   </>
                 )}
+              </div>
+
+              {/* 5.9 Property Speciality Card (optional, shown on home property detail) */}
+              <div style={{ background: "linear-gradient(135deg, #FFFBEB, #FEF9C3)", padding: "16px", borderRadius: "12px", border: "1px solid #FDE68A" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                  <span style={{ fontSize: "1.2rem" }}>⭐</span>
+                  <div>
+                    <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#92400E" }}>Property Speciality</div>
+                    <div style={{ fontSize: "0.72rem", color: "#B45309" }}>Optional — Will be shown as a highlighted card on the property detail page</div>
+                  </div>
+                </div>
+                <textarea
+                  rows={3}
+                  placeholder="e.g. Prime location in Financial District • Award-winning architecture • IGBC Gold Rated • 5 mins from Metro • Managed by renowned developer"
+                  value={(newProp as any).speciality || ""}
+                  onChange={(e) => setNewProp({ ...newProp, speciality: e.target.value } as any)}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #FDE68A", resize: "vertical", fontFamily: "inherit", fontSize: "0.85rem", background: "#fff", color: "#1E293B" }}
+                />
               </div>
 
               {/* 6. Location Details */}
@@ -1930,21 +2190,86 @@ export default function PropertiesPage() {
                 )}
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "8px", paddingTop: "12px", borderTop: "1px solid #E2E8F0" }}>
+              {/* 9. Document Upload */}
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569", marginBottom: "6px", display: "block" }}>
+                  📄 Property Documents (Brochure, Legal Docs, etc.) — Optional
+                </label>
+                {/* Existing documents (on edit) */}
+                {existingDocs.length > 0 && (
+                  <div style={{ marginBottom: "10px" }}>
+                    <div style={{ fontSize: "0.72rem", color: "#64748B", marginBottom: "6px", fontWeight: 600 }}>Uploaded Documents:</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                      {existingDocs.map((doc) => (
+                        <div key={doc.id} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 10px", background: "#F8FAFC", borderRadius: "6px", border: "1px solid #E2E8F0" }}>
+                          <span style={{ fontSize: "0.75rem", padding: "2px 6px", borderRadius: "4px", background: doc.file_type === 'pdf' ? '#FEE2E2' : doc.file_type.startsWith('ppt') ? '#FEF3C7' : '#DBEAFE', color: doc.file_type === 'pdf' ? '#DC2626' : doc.file_type.startsWith('ppt') ? '#D97706' : '#2563EB', fontWeight: 700, textTransform: 'uppercase' }}>{doc.file_type}</span>
+                          <a href={doc.document_url} target="_blank" rel="noopener noreferrer" style={{ flex: 1, fontSize: "0.8rem", color: "#1E293B", textDecoration: "none", fontWeight: 600 }}>{doc.title}</a>
+                          <button type="button" onClick={() => setExistingDocs(prev => prev.filter(d => d.id !== doc.id))} style={{ background: "none", border: "none", color: "#DC2626", cursor: "pointer", fontWeight: 700, fontSize: "0.8rem" }}>✕</button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+                <div
+                  style={{ border: "2px dashed #CBD5E1", borderRadius: "10px", padding: "14px", textAlign: "center", background: "#F8FAFC", cursor: "pointer" }}
+                  onClick={() => document.getElementById('doc-input')?.click()}
+                  onDragOver={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#2563EB'; }}
+                  onDragLeave={(e) => { e.currentTarget.style.borderColor = '#CBD5E1'; }}
+                  onDrop={(e) => { e.preventDefault(); e.currentTarget.style.borderColor = '#CBD5E1'; const files = Array.from(e.dataTransfer.files); setSelectedDocs(prev => [...prev, ...files]); }}
+                >
+                  <div style={{ fontSize: "1.3rem", marginBottom: "2px" }}>📄</div>
+                  <div style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Click or drag PDF, DOC, DOCX, PPT, PPTX, XLS, XLSX files</div>
+                  <div style={{ fontSize: "0.72rem", color: "#94A3B8", marginTop: "2px" }}>Max 50MB per file • Multiple files allowed</div>
+                  <input id="doc-input" type="file" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.txt" multiple style={{ display: "none" }}
+                    onChange={(e) => { if (e.target.files) setSelectedDocs(prev => [...prev, ...Array.from(e.target.files!)]); }} />
+                </div>
+                {selectedDocs.length > 0 && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginTop: "8px" }}>
+                    {selectedDocs.map((file, idx) => {
+                      const ext = file.name.split('.').pop()?.toLowerCase() || 'doc';
+                      return (
+                        <div key={idx} style={{ display: "flex", alignItems: "center", gap: "8px", padding: "6px 10px", background: "#F0FDF4", borderRadius: "6px", border: "1px solid #D1FAE5" }}>
+                          <span style={{ fontSize: "0.72rem", padding: "2px 6px", borderRadius: "4px", background: ext === 'pdf' ? '#FEE2E2' : ext.startsWith('ppt') ? '#FEF3C7' : '#DBEAFE', color: ext === 'pdf' ? '#DC2626' : ext.startsWith('ppt') ? '#D97706' : '#2563EB', fontWeight: 700, textTransform: 'uppercase' }}>{ext}</span>
+                          <span style={{ flex: 1, fontSize: "0.8rem", color: "#1E293B", fontWeight: 600 }}>{file.name}</span>
+                          <span style={{ fontSize: "0.72rem", color: "#64748B" }}>{(file.size / 1024 / 1024).toFixed(1)} MB</span>
+                          <button type="button" onClick={() => setSelectedDocs(prev => prev.filter((_, i) => i !== idx))} style={{ background: "none", border: "none", color: "#DC2626", cursor: "pointer", fontWeight: 700, fontSize: "0.8rem" }}>✕</button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginTop: "8px", paddingTop: "12px", borderTop: "1px solid #E2E8F0" }}>
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => { setShowAddModal(false); setEditingPropertyId(null); }}
                   style={{ padding: "10px 18px", borderRadius: "8px", border: "1px solid #CBD5E1", background: "#fff", cursor: "pointer", fontWeight: 600 }}
                 >
                   Cancel
                 </button>
-                <button
-                  type="submit"
-                  disabled={isUploading}
-                  style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: isUploading ? "not-allowed" : "pointer", fontWeight: 700 }}
-                >
-                  {isUploading ? `Uploading media...` : "Publish Property Listing"}
-                </button>
+                <div style={{ display: "flex", gap: "10px" }}>
+                  <button
+                    type="button"
+                    disabled={!editingPropertyId}
+                    onClick={() => {
+                      if (editingPropertyId) {
+                        window.open(`${HOME_APP_URL}/property/${editingPropertyId}`, '_blank');
+                      }
+                    }}
+                    style={{ padding: "10px 18px", borderRadius: "8px", border: "1px solid #2563EB", background: "#EFF6FF", color: "#1D4ED8", cursor: editingPropertyId ? "pointer" : "not-allowed", opacity: editingPropertyId ? 1 : 0.5, fontWeight: 700, display: "flex", alignItems: "center", gap: "6px" }}
+                    title={editingPropertyId ? "Preview on Home App" : "Save property first to preview"}
+                  >
+                    👁️ Preview Home View
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isUploading}
+                    style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: isUploading ? "not-allowed" : "pointer", fontWeight: 700 }}
+                  >
+                    {isUploading ? `Uploading...` : editingPropertyId ? "Update Property" : "Publish Property Listing"}
+                  </button>
+                </div>
               </div>
             </form>
           </div>

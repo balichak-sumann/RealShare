@@ -52,6 +52,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         images: {
           orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
         },
+        documents: { orderBy: { uploaded_at: 'asc' } },
         developer: true,
         profile: { select: { full_name: true, role: true, avatar_url: true, phone_number: true, email: true } },
       },
@@ -63,6 +64,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           images: {
             orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
           },
+          documents: { orderBy: { uploaded_at: 'asc' } },
           developer: true,
           profile: { select: { full_name: true, role: true, avatar_url: true, phone_number: true, email: true } },
         },
@@ -168,6 +170,13 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         google_maps_url: googleMapsUrl,
         featured: data.featured !== undefined ? data.featured : undefined,
         developer_id: data.developer_id !== undefined ? data.developer_id : undefined,
+        // Speciality
+        speciality: data.speciality !== undefined ? data.speciality : undefined,
+        // Rental-specific
+        deposit_type: data.deposit_type !== undefined ? data.deposit_type : undefined,
+        deposit_months: data.deposit_months !== undefined ? (data.deposit_months ? Number(data.deposit_months) : null) : undefined,
+        deposit_amount: data.deposit_amount !== undefined ? (data.deposit_amount ? Number(data.deposit_amount) : null) : undefined,
+        rental_amount: data.rental_amount !== undefined ? (data.rental_amount ? Number(data.rental_amount) : null) : undefined,
         // Residential fields
         floor_type: data.floor_type !== undefined ? data.floor_type : undefined,
         bedrooms: data.bedrooms !== undefined ? (data.bedrooms ? Number(data.bedrooms) : null) : undefined,
@@ -202,10 +211,24 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         images: {
           orderBy: [{ is_primary: 'desc' }, { created_at: 'asc' }],
         },
+        documents: { orderBy: { uploaded_at: 'asc' } },
         developer: true,
         profile: { select: { full_name: true, role: true, avatar_url: true } },
       },
     });
+
+    // Handle document uploads if provided
+    if (Array.isArray(data.document_urls) && data.document_urls.length > 0) {
+      await (prisma as any).propertyDocument.createMany({
+        data: data.document_urls.map((d: any) => ({
+          property_id: id,
+          title: d.title || 'Document',
+          document_url: d.url,
+          file_type: d.file_type || 'pdf',
+          file_size: d.file_size ? BigInt(d.file_size) : null,
+        })),
+      });
+    }
 
     return NextResponse.json(attachComputedFields(updated));
   } catch (error: any) {

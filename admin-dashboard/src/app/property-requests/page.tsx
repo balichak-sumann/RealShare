@@ -140,7 +140,7 @@ export default function PropertyRequestsPage() {
         <div className={styles.header}>
           <div>
             <h1 className={styles.title}>Property Requests</h1>
-            <p className={styles.subtitle}>Manage inquiries for zero-priced properties.</p>
+            <p className={styles.subtitle}>Manage inquiries for properties.</p>
           </div>
         </div>
 

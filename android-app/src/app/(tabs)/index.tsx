@@ -23,6 +23,7 @@ import { Ionicons } from '@expo/vector-icons';
 import AgentPortalScreen from '../agent-portal';
 import BuilderPortalScreen from '../builder-portal';
 import EmployeePortalScreen from '../employee-portal';
+import { InvestorDashboard } from '@/components/investor/InvestorDashboard';
 
 import { HeroCarousel } from '@/components/home/HeroCarousel';
 import { CategoryGrid } from '@/components/home/CategoryGrid';
@@ -191,6 +192,9 @@ export default function HomeScreen() {
   }
   if (profile?.role === 'employee' || profile?.role === 'admin') {
     return <EmployeePortalScreen isEmbedded={true} />;
+  }
+  if (profile?.role === 'investor') {
+    return <InvestorDashboard />;
   }
 
   return (

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView, Image, ImageBackground, Linking } from 'react-native';
-import { signInWithEmailAndPassword, signOut } from 'firebase/auth';
+import { signInWithEmailAndPassword, signOut, signInWithCustomToken } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 import { useRouter } from 'expo-router';
 import { AuthSplitLayout } from '@/components/layout/AuthSplitLayout';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
@@ -71,11 +72,22 @@ export default function SignInScreen() {
           return;
         }
         
-        // Simulate network delay for OTP sending
-        setTimeout(() => {
-          setPendingVerification(true);
-          setLoading(false);
-        }, 800);
+        try {
+          const res = await fetch(`${getApiUrl()}/api/otp/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: cleanedPhone }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            setPendingVerification(true);
+          } else {
+            setError(data.error || 'Failed to send OTP.');
+          }
+        } catch (e: any) {
+          setError('Failed to connect to the server.');
+        }
+        setLoading(false);
       }
     } catch (err: any) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
@@ -92,8 +104,8 @@ export default function SignInScreen() {
   };
 
   const onVerifyOtpPress = async () => {
-    if (code !== '123456') {
-      setError('Invalid OTP. Please use 123456 for testing.');
+    if (!code || code.length !== 6) {
+      setError('Please enter a valid 6-digit OTP.');
       return;
     }
 
@@ -101,18 +113,26 @@ export default function SignInScreen() {
     setError('');
 
     try {
-      // Create the dummy email used for backend authentication
-      const dummyEmail = `${identifier.trim()}@realshare.test`;
-      const dummyPassword = `Realshare!123456`;
-
-      await signInWithEmailAndPassword(auth, dummyEmail, dummyPassword);
-      // onAuthStateChanged in _layout.tsx handles redirection
-    } catch (err: any) {
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        setError("Account not found. Please create an account first.");
+      const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
+      const res = await fetch(`${getApiUrl()}/api/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanedPhone, otp: code }),
+      });
+      const data = await res.json();
+      
+      if (data.success && data.firebaseToken) {
+        await signInWithCustomToken(auth, data.firebaseToken);
+        // onAuthStateChanged in _layout.tsx handles redirection
       } else {
-        setError(err.message || 'Invalid code.');
+        if (data.error && data.error.includes('Account not found')) {
+           setError('Account not found. Please create an account first.');
+        } else {
+           setError(data.error || 'Invalid OTP.');
+        }
       }
+    } catch (err: any) {
+      setError('Failed to verify OTP. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -256,9 +276,6 @@ export default function SignInScreen() {
           <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Verification Code</Text>
           <Text style={{ color: isDesktopWeb ? Neutrals.gray500 : '#94A3B8', marginBottom: 16 }}>
             We've sent a 6-digit code to +91 {identifier}
-          </Text>
-          <Text style={{ color: isDesktopWeb ? GoldSystem.primaryGold : '#D4AF37', marginBottom: 16, fontSize: 12 }}>
-            TEST MODE: Enter 123456
           </Text>
           {isDesktopWeb ? (
             <View style={[styles.desktopInputWrapper, { paddingHorizontal: 0 }]}>

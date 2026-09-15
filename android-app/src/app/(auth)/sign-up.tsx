@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView, Image, Modal, ImageBackground, Linking } from 'react-native';
-import { createUserWithEmailAndPassword, sendEmailVerification, signOut } from 'firebase/auth';
+import { createUserWithEmailAndPassword, sendEmailVerification, signOut, signInWithCustomToken } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 import { AuthSplitLayout } from '@/components/layout/AuthSplitLayout';
@@ -139,10 +139,22 @@ export default function SignUpScreen() {
           setLoading(false); return;
         }
         
-        setTimeout(() => {
-          setPendingVerification(true);
-          setLoading(false);
-        }, 500);
+        try {
+          const res = await fetch(`${getApiUrl()}/api/otp/send`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ phone: cleanedPhone }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            setPendingVerification(true);
+          } else {
+            setError(data.error || 'Failed to send OTP.');
+          }
+        } catch (e: any) {
+          setError('Failed to connect to the server.');
+        }
+        setLoading(false);
       }
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
@@ -158,8 +170,8 @@ export default function SignUpScreen() {
   };
 
   const onVerifyOtpPress = async () => {
-    if (code !== '123456') {
-      setError('Invalid OTP. Please use 123456 for testing.');
+    if (!code || code.length !== 6) {
+      setError('Please enter a valid 6-digit OTP.');
       return;
     }
     
@@ -167,17 +179,22 @@ export default function SignUpScreen() {
     setError('');
 
     try {
-      const dummyEmail = `${identifier.trim()}@realshare.test`;
-      const dummyPassword = `Realshare!123456`;
-
-      const userCredential = await createUserWithEmailAndPassword(auth, dummyEmail, dummyPassword);
-      await syncUserToBackend(userCredential.user);
-    } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') {
-        setError('This phone number is already registered. Please log in.');
+      const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
+      const res = await fetch(`${getApiUrl()}/api/otp/verify`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanedPhone, otp: code }),
+      });
+      const data = await res.json();
+      
+      if (data.success && data.firebaseToken) {
+        const userCredential = await signInWithCustomToken(auth, data.firebaseToken);
+        await syncUserToBackend(userCredential.user);
       } else {
-        setError(err.message || 'Failed to create account.');
+        setError(data.error || 'Invalid OTP.');
       }
+    } catch (err: any) {
+      setError('Failed to verify OTP. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -333,9 +350,6 @@ export default function SignUpScreen() {
           <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Verification Code</Text>
           <Text style={{ color: isDesktopWeb ? Neutrals.gray500 : '#94A3B8', marginBottom: 16 }}>
             We've sent a 6-digit code to +91 {identifier}
-          </Text>
-          <Text style={{ color: isDesktopWeb ? GoldSystem.primaryGold : '#D4AF37', marginBottom: 16, fontSize: 12 }}>
-            TEST MODE: Enter 123456
           </Text>
           {isDesktopWeb ? (
             <View style={[styles.desktopInputWrapper, { paddingHorizontal: 0 }]}>

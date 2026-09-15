@@ -503,6 +503,14 @@ export default function ProfileScreen() {
                   style={styles.docRow}
                   onPress={async () => {
                     try {
+                      let enteredNumber = '';
+                      if (Platform.OS === 'web') {
+                        const input = window.prompt(`Enter your ${doc.title} Number:`);
+                        if (input !== null) {
+                          enteredNumber = input.trim();
+                        }
+                      }
+
                       const result = await ImagePicker.launchImageLibraryAsync({
                         mediaTypes: ImagePicker.MediaTypeOptions.Images,
                         allowsEditing: true,
@@ -523,7 +531,6 @@ export default function ProfileScreen() {
                               const reader = new FileReader();
                               reader.onloadend = () => {
                                 const dataUrl = reader.result as string;
-                                // we can just pass the data url directly, the backend strips the prefix
                                 resolve(dataUrl);
                               };
                               reader.onerror = reject;
@@ -563,7 +570,7 @@ export default function ProfileScreen() {
 
                         const downloadUrl = uploadData.url;
 
-                        // 2. Submit real URL to Admin API
+                        // 2. Submit real URL & document number to Admin API
                         const res = await fetch(`${getApiUrl()}/api/kyc/submit`, {
                           method: 'POST',
                           headers: {
@@ -572,7 +579,7 @@ export default function ProfileScreen() {
                           },
                           body: JSON.stringify({
                             document_type: doc.type,
-                            document_number: 'UPLOADED-VIA-APP',
+                            document_number: enteredNumber || 'UPLOADED-VIA-APP',
                             document_front_url: downloadUrl,
                             document_back_url: null
                           })

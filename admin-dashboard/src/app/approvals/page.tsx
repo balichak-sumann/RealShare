@@ -235,6 +235,11 @@ export default function ApprovalsPage() {
                                   >
                                     {doc.document_type.toUpperCase()}
                                   </span>
+                                  {doc.document_number && doc.document_number !== 'UPLOADED-VIA-APP' && (
+                                    <span style={{ fontSize: "0.65rem", color: "#0F172A", fontWeight: 700, backgroundColor: "#F1F5F9", padding: "1px 4px", borderRadius: "3px", maxWidth: "84px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={doc.document_number}>
+                                      {doc.document_number}
+                                    </span>
+                                  )}
                                 </div>
                               );
                             })}

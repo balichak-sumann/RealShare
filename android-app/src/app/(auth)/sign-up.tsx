@@ -34,6 +34,9 @@ export default function SignUpScreen() {
   const [aadhaarDoc, setAadhaarDoc] = useState<any>(null);
   const [panDoc, setPanDoc] = useState<any>(null);
   const [passportDoc, setPassportDoc] = useState<any>(null);
+  const [aadhaarNumber, setAadhaarNumber] = useState('');
+  const [panNumber, setPanNumber] = useState('');
+  const [passportNumber, setPassportNumber] = useState('');
 
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -138,7 +141,7 @@ export default function SignUpScreen() {
              ? 'http://localhost:3000'
              : getApiUrl();
            
-           const uploadDoc = async (docData: any, docType: string) => {
+           const uploadDoc = async (docData: any, docType: string, docNumber: string) => {
              if (!docData) return;
              try {
                let base64Data = docData.base64;
@@ -169,7 +172,7 @@ export default function SignUpScreen() {
                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                  body: JSON.stringify({
                    document_type: docType,
-                   document_number: 'UPLOADED-VIA-APP',
+                   document_number: docNumber ? docNumber.trim() : 'UPLOADED-VIA-APP',
                    document_front_url: uploadData.url,
                    document_back_url: null
                  })
@@ -177,9 +180,9 @@ export default function SignUpScreen() {
              } catch (e) { console.error('KYC Upload failed', e); }
            };
            
-           await uploadDoc(aadhaarDoc, 'aadhaar');
-           await uploadDoc(panDoc, 'pan');
-           await uploadDoc(passportDoc, 'passport');
+           await uploadDoc(aadhaarDoc, 'aadhaar', aadhaarNumber);
+           await uploadDoc(panDoc, 'pan', panNumber);
+           await uploadDoc(passportDoc, 'passport', passportNumber);
         }
 
         // No email verification needed anymore
@@ -435,23 +438,66 @@ export default function SignUpScreen() {
                     <TextInput multiline value={aboutAgent} placeholder="Write something about your experience..." placeholderTextColor="#94A3B8" onChangeText={setAboutAgent} style={[styles.mobileInput, { height: 100, textAlignVertical: 'top' }]} />
                   )}
 
-                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>KYC Documents Upload</Text>
-                  <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>KYC Documents & Verification</Text>
+                  <View style={{ gap: 16, marginBottom: 24 }}>
                     {[
-                      { label: 'Aadhaar', state: aadhaarDoc, setter: setAadhaarDoc },
-                      { label: 'PAN Card', state: panDoc, setter: setPanDoc },
-                      { label: 'Passport', state: passportDoc, setter: setPassportDoc }
+                      { label: 'Aadhaar', numberVal: aadhaarNumber, setNumberVal: setAadhaarNumber, placeholder: 'Enter 12-digit Aadhaar Number', docState: aadhaarDoc, docSetter: setAadhaarDoc },
+                      { label: 'PAN Card', numberVal: panNumber, setNumberVal: setPanNumber, placeholder: 'Enter 10-character PAN Number', docState: panDoc, docSetter: setPanDoc },
+                      { label: 'Passport', numberVal: passportNumber, setNumberVal: setPassportNumber, placeholder: 'Enter Passport Number (Optional)', docState: passportDoc, docSetter: setPassportDoc }
                     ].map((doc) => (
-                      <TouchableOpacity key={doc.label} style={{ flex: 1, minWidth: 100, alignItems: 'center', backgroundColor: isDesktopWeb ? Neutrals.white : 'rgba(0,0,0,0.3)', borderWidth: 1, borderColor: isDesktopWeb ? Neutrals.gray200 : 'rgba(255,255,255,0.1)', borderRadius: Radius.md, padding: 12, ...(isDesktopWeb && Platform.OS === 'web' ? { boxShadow: '0 2px 4px rgba(0,0,0,0.02)' } as any : {}) }} onPress={() => handlePickDocument(doc.setter)}>
-                        {doc.state?.uri ? (
-                          <Image source={{ uri: doc.state.uri }} style={{ width: 40, height: 40, borderRadius: 4, marginBottom: 8 }} />
-                        ) : (
-                          <Ionicons name="cloud-upload-outline" size={24} color={isDesktopWeb ? Neutrals.gray500 : '#94A3B8'} style={{ marginBottom: 8 }} />
-                        )}
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: isDesktopWeb ? Neutrals.obsidian : '#FFFFFF', textAlign: 'center' }}>
-                          {doc.state?.uri ? `${doc.label} (Done)` : `Upload ${doc.label}`}
+                      <View key={doc.label} style={{ gap: 6 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: isDesktopWeb ? Neutrals.obsidian : '#E2E8F0' }}>
+                          {doc.label} Number & Document
                         </Text>
-                      </TouchableOpacity>
+                        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                          {isDesktopWeb ? (
+                            <View style={[styles.desktopInputWrapper, { flex: 1, marginBottom: 0 }]}>
+                              <Ionicons name="card-outline" size={18} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                              <TextInput
+                                value={doc.numberVal}
+                                placeholder={doc.placeholder}
+                                placeholderTextColor={Neutrals.gray400}
+                                onChangeText={doc.setNumberVal}
+                                style={styles.desktopInput}
+                                autoCapitalize={doc.label === 'PAN Card' ? 'characters' : 'none'}
+                              />
+                            </View>
+                          ) : (
+                            <TextInput
+                              value={doc.numberVal}
+                              placeholder={doc.placeholder}
+                              placeholderTextColor="#94A3B8"
+                              onChangeText={doc.setNumberVal}
+                              style={[styles.mobileInput, { flex: 1, marginBottom: 0 }]}
+                              autoCapitalize={doc.label === 'PAN Card' ? 'characters' : 'none'}
+                            />
+                          )}
+
+                          <TouchableOpacity
+                            style={{
+                              paddingHorizontal: 16,
+                              paddingVertical: isDesktopWeb ? 13 : 13,
+                              backgroundColor: doc.docState?.uri ? 'rgba(16, 185, 129, 0.15)' : (isDesktopWeb ? Neutrals.white : 'rgba(0,0,0,0.3)'),
+                              borderWidth: 1,
+                              borderColor: doc.docState?.uri ? '#10B981' : (isDesktopWeb ? Neutrals.gray200 : 'rgba(255,255,255,0.1)'),
+                              borderRadius: Radius.md,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                            onPress={() => handlePickDocument(doc.docSetter)}
+                          >
+                            {doc.docState?.uri ? (
+                              <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+                            ) : (
+                              <Ionicons name="cloud-upload-outline" size={18} color={isDesktopWeb ? Neutrals.gray500 : '#94A3B8'} />
+                            )}
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: doc.docState?.uri ? '#10B981' : (isDesktopWeb ? Neutrals.obsidian : '#FFFFFF') }}>
+                              {doc.docState?.uri ? 'Uploaded' : 'Upload Image'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
                     ))}
                   </View>
                 </>

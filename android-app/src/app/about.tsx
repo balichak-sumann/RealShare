@@ -89,14 +89,7 @@ export default function AboutScreen() {
           </Text>
         </View>
 
-        <View style={styles.ctaRow}>
-          <TouchableOpacity style={styles.ctaBtn} onPress={() => router.push('/how-it-works')}>
-            <Text style={styles.ctaBtnText}>See how it works</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.ctaBtnOutline} onPress={() => router.push('/(tabs)/explore')}>
-            <Text style={styles.ctaBtnOutlineText}>Explore Properties</Text>
-          </TouchableOpacity>
-        </View>
+
         <WebFooter />
       </ScrollView>
     </View>

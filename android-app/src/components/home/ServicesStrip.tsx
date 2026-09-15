@@ -121,6 +121,13 @@ export function ServicesStrip() {
     })();
   }, []);
 
+  const getServiceRoute = (title: string) => {
+    if (title.includes('Home Loans')) return '/services/home-loans';
+    if (title.includes('Interior Design')) return '/services/interior-design';
+    if (title.includes('Property Management')) return '/services/property-management';
+    return '/services';
+  };
+
   return (
     <View style={styles.container}>
       <SectionHeader title="Premium Services" onViewAll={() => router.push('/services')} />
@@ -132,7 +139,7 @@ export function ServicesStrip() {
               key={service.id} 
               item={service} 
               isDesktop={isDesktop}
-              onPress={() => router.push('/services')}
+              onPress={() => router.push(getServiceRoute(service.title) as any)}
             />
           ))}
         </View>
@@ -143,7 +150,7 @@ export function ServicesStrip() {
               key={service.id} 
               item={service} 
               isDesktop={isDesktop}
-              onPress={() => router.push('/services')}
+              onPress={() => router.push(getServiceRoute(service.title) as any)}
             />
           ))}
         </View>

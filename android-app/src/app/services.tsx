@@ -21,12 +21,6 @@ export default function ServicesScreen() {
   const { profile } = useUser();
   const { isDesktop } = useResponsive();
   const [services, setServices] = useState<any[]>(DEFAULT_SERVICES);
-  const [inquiryFor, setInquiryFor] = useState<string | null>(null);
-  const [name, setName] = useState(profile?.full_name || '');
-  const [phone, setPhone] = useState(profile?.phone_number || '');
-  const [budget, setBudget] = useState('');
-  const [notes, setNotes] = useState('');
-  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -51,45 +45,12 @@ export default function ServicesScreen() {
   }, []);
 
   const openInquiry = (serviceTitle: string) => {
-    setInquiryFor(serviceTitle);
-    if (profile?.full_name && !name) setName(profile.full_name);
-    if (profile?.phone_number && !phone) setPhone(profile.phone_number);
-  };
-
-  const submitInquiry = async () => {
-    if (!inquiryFor) return;
-    const cleanedPhone = phone.replace(/\D/g, '').slice(-10);
-    if (cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
-      Alert.alert('Invalid Mobile Number', 'Please enter a valid 10-digit mobile number starting with 7, 8, 9, or 6.');
-      return;
-    }
-    setSubmitting(true);
-    try {
-      const res = await fetch(`${getApiUrl()}/api/services`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          customer_name: name.trim() || 'Valued Investor',
-          phone: cleanedPhone,
-          email: profile?.email || undefined,
-          service_type: inquiryFor,
-          estimated_budget: budget.trim() || undefined,
-          notes: notes.trim() || undefined,
-        }),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        Alert.alert('Error', err.error || 'Failed to submit your request. Please try again.');
-        return;
-      }
-      Alert.alert('Request Received 🎉', `Thank you! Our concierge team will reach out regarding ${inquiryFor} shortly.`);
-      setInquiryFor(null);
-      setBudget('');
-      setNotes('');
-    } catch (e) {
-      Alert.alert('Error', 'Failed to submit your request. Please try again.');
-    } finally {
-      setSubmitting(false);
+    if (serviceTitle.includes('Home Loans')) router.push('/services/home-loans' as any);
+    else if (serviceTitle.includes('Interior Design')) router.push('/services/interior-design' as any);
+    else if (serviceTitle.includes('Property Management')) router.push('/services/property-management' as any);
+    else {
+      // Fallback for custom or general services (route to contact or show a general form)
+      router.push('/contact');
     }
   };
 
@@ -153,56 +114,7 @@ export default function ServicesScreen() {
 
       </ScrollView>
 
-      <Modal visible={!!inquiryFor} transparent animationType="slide" onRequestClose={() => setInquiryFor(null)}>
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>{inquiryFor}</Text>
-            <Text style={styles.modalSubtitle}>Leave your details and our team will call you back.</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="Your full name"
-              value={name}
-              onChangeText={setName}
-              placeholderTextColor={Neutrals.gray400}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="10-digit mobile number"
-              value={phone}
-              onChangeText={setPhone}
-              keyboardType="phone-pad"
-              placeholderTextColor={Neutrals.gray400}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder="Estimated budget (optional)"
-              value={budget}
-              onChangeText={setBudget}
-              placeholderTextColor={Neutrals.gray400}
-            />
-            <TextInput
-              style={[styles.input, { height: 60, textAlignVertical: 'top' }]}
-              placeholder="Additional notes / specific requirements"
-              value={notes}
-              onChangeText={setNotes}
-              multiline
-              placeholderTextColor={Neutrals.gray400}
-            />
-            <View style={styles.modalActions}>
-              <TouchableOpacity style={styles.modalCancelBtn} onPress={() => setInquiryFor(null)} disabled={submitting}>
-                <Text style={styles.modalCancelText}>Cancel</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.modalSubmitBtn} onPress={submitInquiry} disabled={submitting}>
-                {submitting ? (
-                  <ActivityIndicator color={Neutrals.surface} />
-                ) : (
-                  <Text style={styles.modalSubmitText}>Request Callback</Text>
-                )}
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
+
     </View>
   );
 }

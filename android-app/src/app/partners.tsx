@@ -32,6 +32,8 @@ export default function PartnersScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const isFormValid = fullName.trim() !== '' && email.trim() !== '' && phone.trim() !== '' && primaryMarket.trim() !== '' && consent;
+
   if (Platform.OS !== 'web') {
     return <Redirect href="/" />;
   }
@@ -125,18 +127,18 @@ export default function PartnersScreen() {
 
               <View style={[styles.row2, isDesktop && styles.row2Desktop]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.formLabel}>Email</Text>
+                  <Text style={styles.formLabel}>Email *</Text>
                   <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" placeholderTextColor={Neutrals.gray400} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.formLabel}>Phone</Text>
+                  <Text style={styles.formLabel}>Phone *</Text>
                   <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="+91 98765 43210" keyboardType="phone-pad" placeholderTextColor={Neutrals.gray400} />
                 </View>
               </View>
 
               <View style={[styles.row2, isDesktop && styles.row2Desktop]}>
                 <View style={{ flex: 1 }}>
-                  <Text style={styles.formLabel}>Primary Market</Text>
+                  <Text style={styles.formLabel}>Primary Market *</Text>
                   <TextInput style={styles.input} value={primaryMarket} onChangeText={setPrimaryMarket} placeholder="e.g. Hyderabad" placeholderTextColor={Neutrals.gray400} />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -149,11 +151,11 @@ export default function PartnersScreen() {
                 <View style={[styles.checkbox, consent && styles.checkboxChecked]} />
                 <Text style={styles.consentText}>
                   I authorize Realshare and its representatives to call, email, or WhatsApp me
-                  about the partner program.
+                  about the partner program. *
                 </Text>
               </TouchableOpacity>
 
-              <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
+              <TouchableOpacity style={[styles.submitBtn, (!isFormValid || submitting) && { opacity: 0.5 }]} onPress={handleSubmit} disabled={!isFormValid || submitting}>
                 {submitting ? <ActivityIndicator color={Neutrals.obsidian} /> : <Text style={styles.submitBtnText}>Submit</Text>}
               </TouchableOpacity>
             </View>

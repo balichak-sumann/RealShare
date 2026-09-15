@@ -51,6 +51,17 @@ export async function POST(req: Request) {
       }
     }
 
+    // Build builder-specific fields object
+    const builderFields: any = {};
+    if (body.company_name) builderFields.company_name = body.company_name;
+    if (body.office_address) builderFields.office_address = body.office_address;
+    if (body.website) builderFields.website = body.website;
+    if (body.rera_number) builderFields.rera_number = body.rera_number;
+    if (body.credai_member !== undefined) builderFields.credai_member = body.credai_member;
+    if (body.company_pan) builderFields.company_pan = body.company_pan;
+    if (body.company_gst) builderFields.company_gst = body.company_gst;
+    if (body.bio) builderFields.bio = body.bio;
+
     // Create or update the user in the database. Role is only ever written on
     // first creation above — an existing profile's role can never be changed
     // through this public, self-service endpoint.
@@ -66,6 +77,7 @@ export async function POST(req: Request) {
         avatar_url: decodedToken.picture || null,
         ...(referredByCode ? { referred_by_code: referredByCode } : {}),
         ...(expoPushToken ? { expo_push_token: expoPushToken } : {}),
+        ...builderFields,
       },
       create: {
         id: decodedToken.uid,
@@ -78,6 +90,7 @@ export async function POST(req: Request) {
         is_approved: requestedRole === 'admin',
         referred_by_code: referredByCode || null,
         expo_push_token: expoPushToken || null,
+        ...builderFields,
       },
       include: {
         kyc_documents: true,

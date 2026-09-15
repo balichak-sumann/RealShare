@@ -28,6 +28,14 @@ model Profile {
   bank_account_number  String?       @db.VarChar(50)
   bank_ifsc            String?       @db.VarChar(20)
   commission_rate_pct  Decimal?      @db.Decimal(5, 2) // agent commission rate, admin-settable
+  bio                  String?       @db.Text          // agent/builder bio
+  company_name         String?       @db.VarChar(255)  // builder: company name
+  office_address       String?       @db.Text          // builder: office address
+  website              String?       @db.VarChar(500)  // builder: website URL
+  rera_number          String?       @db.VarChar(100)  // builder: RERA registration number
+  credai_member        Boolean?                        // builder: CREDAI membership yes/no
+  company_pan          String?       @db.VarChar(20)   // builder: company PAN
+  company_gst          String?       @db.VarChar(30)   // builder: company GST number
   created_at           DateTime      @default(now()) @db.Timestamptz(6)
   updated_at           DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
 

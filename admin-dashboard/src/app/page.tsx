@@ -127,7 +127,10 @@ export default function Home() {
         return;
       }
       try {
-        const res = await fetch("/api/dashboard/summary", { headers: authHeader });
+        const res = await fetch("/api/dashboard/summary", { 
+          headers: authHeader,
+          cache: "no-store" 
+        });
         if (res.ok) {
           const data = await res.json();
           setSummary(data);
@@ -215,29 +218,11 @@ export default function Home() {
             <div className={styles.cardSub}>
               <span>🟢 {kpis?.activeProperties ?? 0} active</span>
               <span>•</span>
-              <span>🟡 {kpis?.pendingProperties ?? 0} pending review</span>
+              <span>🟡 {kpis?.pendingProperties ?? 0} pending</span>
             </div>
           </div>
 
-          {/* Card 2: Active Investors */}
-          <div className={styles.card}>
-            <div className={styles.cardHeader}>
-              <span className={styles.cardTitle}>Active Investors</span>
-              <div className={styles.cardIcon} style={{ background: "rgba(124, 58, 237, 0.1)", color: "#7C3AED" }}>
-                👥
-              </div>
-            </div>
-            <div>
-              <div className={styles.cardValue}>{loading ? "…" : kpis?.activeInvestors ?? 0}</div>
-            </div>
-            <div className={styles.cardSub}>
-              <span>🛡️ {kpis?.verifiedInvestors ?? 0} verified</span>
-              <span>•</span>
-              <span>⏳ {kpis?.pendingKyc ?? 0} KYC pending</span>
-            </div>
-          </div>
-
-          {/* Card 3: Total Investments */}
+          {/* Card 2: Total Investments */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
               <span className={styles.cardTitle}>Total Investments</span>
@@ -253,19 +238,53 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Card 4: Avg. Assured Yield */}
+          {/* Card 3: Buyers (Investors) */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <span className={styles.cardTitle}>Avg. Assured Yield</span>
-              <div className={styles.cardIcon} style={{ background: "rgba(217, 119, 6, 0.1)", color: "#D97706" }}>
-                📈
+              <span className={styles.cardTitle}>Investors (Buyers)</span>
+              <div className={styles.cardIcon} style={{ background: "rgba(124, 58, 237, 0.1)", color: "#7C3AED" }}>
+                👥
               </div>
             </div>
             <div>
-              <div className={styles.cardValue}>{loading ? "…" : `${kpis?.avgYield ?? 0}%`}</div>
+              <div className={styles.cardValue}>{loading ? "…" : kpis?.activeInvestors ?? 0}</div>
             </div>
             <div className={styles.cardSub}>
-              <span>🎯 Target IRR: ~{kpis?.avgIrr ?? 0}%</span>
+              <span>🛡️ {kpis?.verifiedInvestors ?? 0} verified</span>
+              <span>•</span>
+              <span>⏳ {kpis?.pendingKyc ?? 0} KYC pending</span>
+            </div>
+          </div>
+
+          {/* Card 4: Builders */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.cardTitle}>Builders</span>
+              <div className={styles.cardIcon} style={{ background: "rgba(217, 119, 6, 0.1)", color: "#D97706" }}>
+                🏗️
+              </div>
+            </div>
+            <div>
+              <div className={styles.cardValue}>{loading ? "…" : kpis?.totalBuilders ?? 0}</div>
+            </div>
+            <div className={styles.cardSub}>
+              <span>🏢 Developer Partners</span>
+            </div>
+          </div>
+
+          {/* Card 5: Agents */}
+          <div className={styles.card}>
+            <div className={styles.cardHeader}>
+              <span className={styles.cardTitle}>Sales Agents</span>
+              <div className={styles.cardIcon} style={{ background: "rgba(236, 72, 153, 0.1)", color: "#EC4899" }}>
+                🤝
+              </div>
+            </div>
+            <div>
+              <div className={styles.cardValue}>{loading ? "…" : kpis?.activeAgents ?? 0}</div>
+            </div>
+            <div className={styles.cardSub}>
+              <span>⭐ Active Network</span>
             </div>
           </div>
         </div>

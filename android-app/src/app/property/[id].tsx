@@ -444,7 +444,6 @@ export default function PropertyDetailsScreen() {
                     )}
                   </View>
 
-                  {/* Property Posted By Card */}
                   <View style={{ marginTop: 16, padding: 14, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                     {property.profile?.avatar_url ? (
                       <Image 
@@ -466,6 +465,17 @@ export default function PropertyDetailsScreen() {
                     </View>
                     <Ionicons name="checkmark-circle" size={20} color="#059669" />
                   </View>
+
+                  {/* Property Speciality Card */}
+                  {property.speciality && (
+                    <View style={{ marginTop: 16, padding: 16, backgroundColor: '#FFFBEB', borderRadius: 12, borderWidth: 1, borderColor: '#FDE68A' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                        <Text style={{ fontSize: 18 }}>⭐</Text>
+                        <Text style={{ fontSize: 14, fontWeight: '800', color: '#92400E', letterSpacing: 0.3 }}>Property Highlights</Text>
+                      </View>
+                      <Text style={{ fontSize: 14, color: '#78350F', lineHeight: 22, fontWeight: '500' }}>{property.speciality}</Text>
+                    </View>
+                  )}
                 </View>
 
                 {/* Gallery Side */}
@@ -680,24 +690,71 @@ export default function PropertyDetailsScreen() {
                   <View style={{ marginBottom: 32 }}>
                     <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 16 }}>Amenities</Text>
                     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
-                      {(property.property_type === 'Commercial' || property.property_type === 'Fractional') ? (
-                        <>
-                          {property.food_courts && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="fast-food-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Food Courts</Text></View>}
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="card-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>ATMs</Text></View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="cart-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Retail Spaces</Text></View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="game-controller-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Entertainment</Text></View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="car-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Ample Parking</Text></View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="shield-checkmark-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>24x7 Security</Text></View>
-                        </>
-                      ) : (
-                        <>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="barbell-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Gym</Text></View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="water-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Swimming Pool</Text></View>
-                          {property.club_house && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="home-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Club House</Text></View>}
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="car-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Parking</Text></View>
-                          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="shield-checkmark-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Security</Text></View>
-                        </>
-                      )}
+                      {(() => {
+                        // Dynamic amenities from DB (comma-separated string)
+                        const amenityList = property.amenities
+                          ? property.amenities.split(',').map((a: string) => a.trim()).filter(Boolean)
+                          : [];
+                        // Icon mapping for known amenity names
+                        const iconMap: Record<string, keyof typeof Ionicons.glyphMap> = {
+                          'gym': 'barbell-outline', 'gymnasium': 'barbell-outline',
+                          'swimming pool': 'water-outline', 'pool': 'water-outline',
+                          'club house': 'home-outline', 'clubhouse': 'home-outline',
+                          'parking': 'car-outline', 'visitor parking': 'car-outline',
+                          '24/7 security': 'shield-checkmark-outline', 'security': 'shield-checkmark-outline', 'cctv': 'eye-outline',
+                          'power backup': 'flash-outline',
+                          'lift': 'layers-outline', 'high speed lifts': 'layers-outline',
+                          'garden': 'leaf-outline', 'landscape garden': 'leaf-outline',
+                          'food court': 'fast-food-outline',
+                          'atm': 'card-outline',
+                          'cafeteria': 'cafe-outline',
+                          'conference room': 'people-outline',
+                          'party hall': 'musical-notes-outline',
+                          'games room': 'game-controller-outline',
+                          'jogging track': 'walk-outline',
+                          'tennis court': 'tennisball-outline', 'badminton court': 'tennisball-outline',
+                          'rooftop lounge': 'sunny-outline', 'lounge': 'wine-outline',
+                          'theatre': 'film-outline',
+                          'central air conditioning': 'snow-outline',
+                          'fire safety system': 'flame-outline',
+                          'outdoor seating': 'umbrella-outline',
+                          'children\'s play area / tot lot': 'happy-outline', 'children\'s play area': 'happy-outline',
+                          'senior citizen lounge': 'accessibility-outline',
+                          'convenience store': 'storefront-outline',
+                          'crèche / day care': 'heart-outline', 'creche': 'heart-outline',
+                        };
+                        if (amenityList.length === 0) {
+                          // Fallback to old hardcoded check
+                          if (property.property_type === 'Commercial' || property.property_type === 'Fractional') {
+                            return (
+                              <>
+                                {property.food_courts && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="fast-food-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Food Courts</Text></View>}
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="card-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>ATMs</Text></View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="shield-checkmark-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>24x7 Security</Text></View>
+                              </>
+                            );
+                          } else {
+                            return (
+                              <>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="barbell-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Gym</Text></View>
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="water-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Swimming Pool</Text></View>
+                                {property.club_house && <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="home-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Club House</Text></View>}
+                                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 160 }}><Ionicons name="shield-checkmark-outline" size={24} color="#D4AF37" /><Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '600' }}>Security</Text></View>
+                              </>
+                            );
+                          }
+                        }
+                        return amenityList.map((amenity: string) => {
+                          const iconKey = amenity.toLowerCase() as keyof typeof iconMap;
+                          const iconName = iconMap[iconKey] || 'checkmark-circle-outline';
+                          return (
+                            <View key={amenity} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 12, padding: 16, minWidth: 140, maxWidth: 200 }}>
+                              <Ionicons name={iconName} size={22} color="#D4AF37" />
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '600', flex: 1 }} numberOfLines={2}>{amenity}</Text>
+                            </View>
+                          );
+                        });
+                      })()}
                     </View>
                   </View>
                 )}
@@ -772,9 +829,46 @@ export default function PropertyDetailsScreen() {
                   </View>
                 )}
                 {activeTab === 'Documents' && (
-                  <View style={{ marginBottom: 32, padding: 24, backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center' }}>
-                    <Ionicons name="document-text-outline" size={48} color="#CBD5E1" />
-                    <Text style={{ fontSize: 16, fontWeight: '700', color: '#64748B', marginTop: 12 }}>No documents attached</Text>
+                  <View style={{ marginBottom: 32 }}>
+                    <Text style={{ fontSize: 20, fontWeight: '800', color: '#1E293B', marginBottom: 16 }}>Property Documents</Text>
+                    {property.documents && property.documents.length > 0 ? (
+                      <View style={{ gap: 12 }}>
+                        {property.documents.map((doc: any) => {
+                          const ext = (doc.file_type || 'doc').toLowerCase();
+                          const docColor = ext === 'pdf' ? '#DC2626' : ext.startsWith('ppt') ? '#D97706' : ext.startsWith('xls') ? '#16A34A' : '#2563EB';
+                          const docBg = ext === 'pdf' ? '#FEE2E2' : ext.startsWith('ppt') ? '#FEF3C7' : ext.startsWith('xls') ? '#DCFCE7' : '#DBEAFE';
+                          const iconName: any = ext === 'pdf' ? 'document-text-outline' : ext.startsWith('ppt') ? 'easel-outline' : ext.startsWith('xls') ? 'grid-outline' : 'document-outline';
+                          return (
+                            <TouchableOpacity
+                              key={doc.id}
+                              onPress={() => {
+                                if (Platform.OS === 'web') {
+                                  window.open(doc.document_url, '_blank');
+                                } else {
+                                  import('expo-linking').then(Linking => Linking.openURL(doc.document_url));
+                                }
+                              }}
+                              style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0' }}
+                            >
+                              <View style={{ width: 44, height: 44, borderRadius: 8, backgroundColor: docBg, alignItems: 'center', justifyContent: 'center' }}>
+                                <Ionicons name={iconName} size={24} color={docColor} />
+                              </View>
+                              <View style={{ flex: 1 }}>
+                                <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }} numberOfLines={2}>{doc.title}</Text>
+                                <Text style={{ fontSize: 12, color: '#64748B', marginTop: 2, textTransform: 'uppercase', fontWeight: '600' }}>{ext}</Text>
+                              </View>
+                              <Ionicons name="download-outline" size={20} color="#64748B" />
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    ) : (
+                      <View style={{ padding: 24, backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', alignItems: 'center' }}>
+                        <Ionicons name="document-text-outline" size={48} color="#CBD5E1" />
+                        <Text style={{ fontSize: 16, fontWeight: '700', color: '#64748B', marginTop: 12 }}>No documents attached</Text>
+                        <Text style={{ fontSize: 13, color: '#94A3B8', marginTop: 4 }}>Brochures and legal documents will appear here</Text>
+                      </View>
+                    )}
                   </View>
                 )}
 

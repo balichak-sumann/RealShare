@@ -20,6 +20,7 @@ interface Summary {
     activeAgents: number;
     openTickets: number;
     totalInquiries: number;
+    totalBuilders: number;
   };
   topProperties: {
     id: string;

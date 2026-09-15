@@ -21,7 +21,7 @@ interface PendingUser {
   created_at: string;
   bio: string | null;
   kyc_documents: KycDoc[];
-  _actionStatus?: 'approve' | 'reject' | 'delete';
+  _actionStatus?: 'approve' | 'reject' | 'delete' | 'deleted';
 }
 
 export default function ApprovalsPage() {

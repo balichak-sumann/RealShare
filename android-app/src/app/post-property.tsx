@@ -154,7 +154,7 @@ export default function PostPropertyScreen() {
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const uris = result.assets.map(a => a.uri);
+        const uris = result.assets.map((a: any) => a.uri);
         setLocalDocumentUris(prev => [...prev, ...uris]);
       }
     } catch (e: any) {
@@ -745,7 +745,7 @@ export default function PostPropertyScreen() {
                   }}
                 >
                   <Text style={{ fontSize: 15, fontWeight: '600', color: '#334155' }}>
-                    {newProp.areaUnit === 'sqyards' ? 'Sq.Yards' : newProp.areaUnit === 'acres' ? 'Acres' : 'Sq.Ft'}
+                    {(newProp.areaUnit as any) === 'sqyards' ? 'Sq.Yards' : newProp.areaUnit === 'acres' ? 'Acres' : 'Sq.Ft'}
                   </Text>
                 </TouchableOpacity>
               </View>
@@ -922,7 +922,7 @@ export default function PostPropertyScreen() {
                         "Enter the name of the amenity",
                         [
                           { text: "Cancel", style: "cancel" },
-                          { text: "Add", onPress: (val) => {
+                          { text: "Add", onPress: (val?: string) => {
                             if (val && val.trim()) {
                               const arr = (newProp.amenities || '').split(',').filter(Boolean);
                               if (!arr.includes(val.trim())) {
@@ -1022,7 +1022,7 @@ export default function PostPropertyScreen() {
                         "Enter the name of the amenity",
                         [
                           { text: "Cancel", style: "cancel" },
-                          { text: "Add", onPress: (val) => {
+                          { text: "Add", onPress: (val?: string) => {
                             if (val && val.trim()) {
                               const arr = (newProp.amenities || '').split(',').filter(Boolean);
                               if (!arr.includes(val.trim())) {

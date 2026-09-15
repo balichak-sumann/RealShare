@@ -27,7 +27,7 @@ interface PendingUser {
 export default function ApprovalsPage() {
   const [users, setUsers] = useState<PendingUser[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filterRole, setFilterRole] = useState<"all" | "investor" | "agent" | "builder">("all");
+  const [filterRole, setFilterRole] = useState<"all" | "buyer" | "agent" | "builder">("all");
   const [actionSuccess, setActionSuccess] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
 
@@ -142,7 +142,7 @@ export default function ApprovalsPage() {
         <div className={styles.title}>Pending Approvals ({users.length})</div>
         <div className={styles.headerRight}>
           <div className={styles.filterGroup}>
-            {["all", "investor", "agent", "builder"].map((role) => (
+            {["all", "buyer", "agent", "builder"].map((role) => (
               <button
                 key={role}
                 className={`${styles.filterPill} ${filterRole === role ? styles.filterActive : ""}`}
@@ -162,7 +162,7 @@ export default function ApprovalsPage() {
               <th className={styles.th}>Name</th>
               <th className={styles.th}>Role</th>
               <th className={styles.th}>Contact Info</th>
-              {filterRole !== "investor" && filterRole !== "builder" && (
+              {filterRole !== "buyer" && filterRole !== "builder" && (
                 <th className={styles.th}>KYC Documents</th>
               )}
               <th className={styles.th}>Date Registered</th>
@@ -190,7 +190,7 @@ export default function ApprovalsPage() {
                     <div>{user.email || "No email"}</div>
                     <div style={{ fontSize: "0.8rem", color: "#64748B" }}>{user.phone_number || "No phone"}</div>
                   </td>
-                  {filterRole !== "investor" && filterRole !== "builder" && (
+                  {filterRole !== "buyer" && filterRole !== "builder" && (
                     <td className={styles.td}>
                       {user.role === 'agent' ? (
                         user.kyc_documents && user.kyc_documents.length > 0 ? (

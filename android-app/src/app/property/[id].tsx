@@ -223,7 +223,7 @@ export default function PropertyDetailsScreen() {
             }
           },
           prefill: {
-            name: auth.currentUser?.displayName || 'Investor',
+            name: auth.currentUser?.displayName || 'Buyer',
             email: auth.currentUser?.email || '',
           },
           theme: {
@@ -561,16 +561,24 @@ export default function PropertyDetailsScreen() {
                         </Text>
 
                         {/* Visible constrained text */}
-                        <Text style={{ fontSize: 14, color: '#475569', lineHeight: 24 }} numberOfLines={descMaxLines}>
+                        <Text style={{ fontSize: 14, color: '#475569', lineHeight: 24 }} numberOfLines={descMaxLines === 9999 ? undefined : descMaxLines}>
                           {property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.\n\nDesigned to serve the evolving needs of the growing urban population, the development aims to create a vibrant environment combining shopping, leisure and everyday conveniences under one destination.'}
                         </Text>
 
-                        {(totalDescLines > descMaxLines || ((property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.\n\nDesigned to serve the evolving needs of the growing urban population, the development aims to create a vibrant environment combining shopping, leisure and everyday conveniences under one destination.').length > descMaxLines * 50 && totalDescLines === 0)) && (
+                        {descMaxLines !== 9999 && (totalDescLines > descMaxLines || ((property.description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.\n\nDesigned to serve the evolving needs of the growing urban population, the development aims to create a vibrant environment combining shopping, leisure and everyday conveniences under one destination.').length > descMaxLines * 50 && totalDescLines === 0)) && (
                           <TouchableOpacity 
                             onPress={() => setDescMaxLines(9999)}
                             style={{ marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4 }}
                           >
                             <Text style={{ color: '#059669', fontWeight: '700', fontSize: 14 }}>Read More ▾</Text>
+                          </TouchableOpacity>
+                        )}
+                        {descMaxLines === 9999 && (
+                          <TouchableOpacity 
+                            onPress={() => setDescMaxLines(5)}
+                            style={{ marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4 }}
+                          >
+                            <Text style={{ color: '#059669', fontWeight: '700', fontSize: 14 }}>Read Less ▴</Text>
                           </TouchableOpacity>
                         )}
                       </View>

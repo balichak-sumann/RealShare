@@ -12,19 +12,19 @@ export async function GET(request: Request) {
     const auth = await requireAuth(request);
     if (!auth.ok) return auth.response;
 
-    const role = auth.role ?? 'investor';
+    const role = auth.role ?? 'buyer';
 
     // A notification is visible to a user if its audience is 'all' or matches
-    // the user's role (mapped: investor→investors, agent→agents, builder→builders).
+    // the user's role (mapped: buyer→buyers, agent→agents, builder→builders).
     const audienceMap: Record<string, string> = {
-      investor: 'investors',
+      buyer: 'buyers',
       agent: 'agents',
       builder: 'builders',
       admin: 'all', // admins see everything
       employee: 'all',
     };
 
-    const targetAudience = audienceMap[role] ?? 'investors';
+    const targetAudience = audienceMap[role] ?? 'buyers';
     const whereClause =
       role === 'admin' || role === 'employee'
         ? {} // admins/employees see all notifications

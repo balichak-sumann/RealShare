@@ -44,7 +44,7 @@ interface KycDoc {
   rejection_reason: string | null;
 }
 
-interface Investor {
+interface Buyer {
   id: string;
   name: string;
   email: string;
@@ -81,15 +81,15 @@ interface Investor {
   };
 }
 
-function mapApiInvestor(inv: any): Investor {
-  const kycMap: Record<string, Investor["kyc"]> = {
+function mapApiInvestor(inv: any): Buyer {
+  const kycMap: Record<string, Buyer["kyc"]> = {
     verified: "Verified",
     pending: "Pending",
     rejected: "Rejected",
     not_submitted: "Not Submitted",
   };
 
-  const statusMap = (): Investor["status"] => {
+  const statusMap = (): Buyer["status"] => {
     if (inv.is_banned) return "Banned";
     if (inv.is_active === false) return "Deactivated";
     return "Active";
@@ -101,7 +101,7 @@ function mapApiInvestor(inv: any): Investor {
   const passport = docs.find((d: any) => d.document_type === "passport");
   const anyDoc = aadhaar || pan || passport;
 
-  const fullName = inv.full_name || inv.email?.split("@")[0] || "Investor";
+  const fullName = inv.full_name || inv.email?.split("@")[0] || "Buyer";
 
   return {
     id: inv.id,
@@ -128,7 +128,7 @@ function mapApiInvestor(inv: any): Investor {
         .slice(0, 2)
         .join("")
         .toUpperCase() || "IN",
-    role: inv.role || "investor",
+    role: inv.role || "buyer",
     is_approved: inv.is_approved ?? true,
     status: statusMap(),
     investments: inv.investments || [],
@@ -166,13 +166,13 @@ function getFullImageUrl(url: string | null | undefined): string {
 }
 
 export default function InvestorsPage() {
-  const [investors, setInvestors] = useState<Investor[]>([]);
+  const [buyers, setInvestors] = useState<Buyer[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
 
-  // Selected Investor Drawer
-  const [selectedInvestor, setSelectedInvestor] = useState<Investor | null>(null);
+  // Selected Buyer Drawer
+  const [selectedInvestor, setSelectedInvestor] = useState<Buyer | null>(null);
   const [activeTab, setActiveTab] = useState<"overview" | "portfolio" | "wallet" | "kyc" | "activity">("overview");
 
   // Edit Profile Form State
@@ -205,13 +205,13 @@ export default function InvestorsPage() {
         setLoading(false);
         return;
       }
-      const res = await fetch("/api/investors", { headers: authHeader });
+      const res = await fetch("/api/buyers", { headers: authHeader });
       if (res.ok) {
         const data = await res.json();
         setInvestors(Array.isArray(data) ? data.map(mapApiInvestor) : []);
       }
     } catch (e) {
-      console.error("Failed to load investors:", e);
+      console.error("Failed to load buyers:", e);
     } finally {
       setLoading(false);
     }
@@ -221,7 +221,7 @@ export default function InvestorsPage() {
     loadInvestors();
   }, []);
 
-  const openInvestorDrawer = (inv: Investor) => {
+  const openInvestorDrawer = (inv: Buyer) => {
     setSelectedInvestor(inv);
     setEditName(inv.name);
     setEditPhone(inv.phone === "—" ? "" : inv.phone);
@@ -239,7 +239,7 @@ export default function InvestorsPage() {
         setActionError("You must be signed in to do that.");
         return null;
       }
-      const res = await fetch(`/api/investors/${id}`, {
+      const res = await fetch(`/api/buyers/${id}`, {
         method: "PATCH",
         headers: { ...authHeader, "Content-Type": "application/json" },
         body: JSON.stringify(body),
@@ -253,7 +253,7 @@ export default function InvestorsPage() {
       return updatedData;
     } catch (e) {
       console.error(e);
-      setActionError("Failed to update investor.");
+      setActionError("Failed to update buyer.");
       return null;
     }
   };
@@ -375,7 +375,7 @@ export default function InvestorsPage() {
   };
 
   // Filtering
-  const filtered = investors.filter((inv) => {
+  const filtered = buyers.filter((inv) => {
     const q = search.trim().toLowerCase();
     const matchSearch =
       !q ||
@@ -398,19 +398,19 @@ export default function InvestorsPage() {
     return matchSearch && matchFilter;
   });
 
-  const totalRegisteredCount = investors.length;
-  const activeAccountsCount = investors.filter((i) => i.status === "Active").length;
-  const totalCapitalInvested = investors.reduce(
+  const totalRegisteredCount = buyers.length;
+  const activeAccountsCount = buyers.filter((i) => i.status === "Active").length;
+  const totalCapitalInvested = buyers.reduce(
     (sum, i) => sum + (Number(i.rawTotalInvested) || 0),
     0
   );
-  const totalFractionsHeld = investors.reduce(
+  const totalFractionsHeld = buyers.reduce(
     (sum, i) => sum + (Number(i.fractions) || 0),
     0
   );
 
   return (
-    <AdminLayout title="Investors & KYC Management">
+    <AdminLayout title="Buyers & KYC Management">
       {/* Toast Alert */}
       {actionSuccess && (
         <div
@@ -502,7 +502,7 @@ export default function InvestorsPage() {
               letterSpacing: "0.5px",
             }}
           >
-            Total Registered Investors
+            Total Registered Buyers
           </div>
           <div
             style={{
@@ -622,17 +622,17 @@ export default function InvestorsPage() {
           >
             {loading
               ? "…"
-              : `${investors.filter((i) => i.kyc === "Verified").length} / ${investors.length}`}
+              : `${buyers.filter((i) => i.kyc === "Verified").length} / ${buyers.length}`}
           </div>
           <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: "4px" }}>
-            {investors.filter((i) => i.kyc === "Pending").length} Pending Verification
+            {buyers.filter((i) => i.kyc === "Pending").length} Pending Verification
           </div>
         </div>
       </div>
 
       {/* Main Table Controls & Filters */}
       <div className={styles.header}>
-        <div className={styles.title}>Customer & Investor Directory ({filtered.length})</div>
+        <div className={styles.title}>Customer & Buyer Directory ({filtered.length})</div>
         <div className={styles.headerRight}>
           <div className={styles.filterGroup}>
             {["All", "Active", "Verified", "Pending", "Not Submitted", "Rejected"].map((k) => (
@@ -644,14 +644,14 @@ export default function InvestorsPage() {
                 onClick={() => setStatusFilter(k)}
               >
                 {k === "Pending"
-                  ? `Pending (${investors.filter((i) => i.kyc === "Pending").length})`
+                  ? `Pending (${buyers.filter((i) => i.kyc === "Pending").length})`
                   : k === "Verified"
-                  ? `Verified (${investors.filter((i) => i.kyc === "Verified").length})`
+                  ? `Verified (${buyers.filter((i) => i.kyc === "Verified").length})`
                   : k === "Active"
                   ? `Active (${activeAccountsCount})`
                   : k === "Not Submitted"
-                  ? `Not Submitted (${investors.filter((i) => i.kyc === "Not Submitted").length})`
-                  : `All (${investors.length})`}
+                  ? `Not Submitted (${buyers.filter((i) => i.kyc === "Not Submitted").length})`
+                  : `All (${buyers.length})`}
               </button>
             ))}
           </div>
@@ -716,12 +716,12 @@ export default function InvestorsPage() {
         />
       </div>
 
-      {/* Investors Table */}
+      {/* Buyers Table */}
       <div className={styles.tableContainer}>
         <table className={styles.table}>
           <thead>
             <tr>
-              <th className={styles.th}>Investor</th>
+              <th className={styles.th}>Buyer</th>
               <th className={styles.th}>Contact Info</th>
               <th className={styles.th}>Wallet Balance</th>
               <th className={styles.th}>KYC Status</th>
@@ -736,19 +736,19 @@ export default function InvestorsPage() {
             {loading ? (
               <tr>
                 <td className={styles.td} colSpan={9} style={{ textAlign: "center", padding: "40px" }}>
-                  Loading registered investors...
+                  Loading registered buyers...
                 </td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
                 <td className={styles.td} colSpan={9} style={{ textAlign: "center", padding: "40px" }}>
-                  No investors found matching the current search or filter.
+                  No buyers found matching the current search or filter.
                 </td>
               </tr>
             ) : (
               filtered.map((inv) => (
                 <tr key={inv.id} className={styles.tr}>
-                  {/* Investor Name & Avatar */}
+                  {/* Buyer Name & Avatar */}
                   <td className={styles.td}>
                     <div className={styles.propCell}>
                       <div
@@ -899,7 +899,7 @@ export default function InvestorsPage() {
         </table>
       </div>
 
-      {/* Comprehensive Investor 360° Management Drawer / Modal */}
+      {/* Comprehensive Buyer 360° Management Drawer / Modal */}
       {selectedInvestor && (
         <div
           style={{
@@ -1094,7 +1094,7 @@ export default function InvestorsPage() {
                   }}
                 >
                   <h3 style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "16px", color: "#1E293B" }}>
-                    Edit Investor Details
+                    Edit Buyer Details
                   </h3>
 
                   <div
@@ -1376,7 +1376,7 @@ export default function InvestorsPage() {
                       No Fractional Properties Owned Yet
                     </strong>
                     <p style={{ fontSize: "0.85rem", marginTop: "6px" }}>
-                      When this investor purchases fractions from the Realshare mobile app or website, their portfolio assets will show here.
+                      When this buyer purchases fractions from the Realshare mobile app or website, their portfolio assets will show here.
                     </p>
                   </div>
                 ) : (
@@ -1898,7 +1898,7 @@ export default function InvestorsPage() {
                       No KYC Documents Submitted Yet
                     </strong>
                     <p style={{ fontSize: "0.85rem", marginTop: 6, color: "#64748B", maxWidth: "480px", margin: "6px auto 16px auto" }}>
-                      The investor has not uploaded digital identity documents yet. If this user was verified offline / in-person, you can verify their account directly below.
+                      The buyer has not uploaded digital identity documents yet. If this user was verified offline / in-person, you can verify their account directly below.
                     </p>
                     <button
                       onClick={() => handleApproveKYC(selectedInvestor.id, true)}

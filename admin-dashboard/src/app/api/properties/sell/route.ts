@@ -31,13 +31,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'This property is already sold out.' }, { status: 400 });
     }
 
-    // Validate investor exists
-    const investor = await prisma.profile.findUnique({
+    // Validate buyer exists
+    const buyer = await prisma.profile.findUnique({
       where: { id: investorId },
     });
 
-    if (!investor) {
-      return NextResponse.json({ error: 'Investor not found.' }, { status: 404 });
+    if (!buyer) {
+      return NextResponse.json({ error: 'Buyer not found.' }, { status: 404 });
     }
 
     const totalFractions = property.total_fractions || 1;
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      message: `Property "${property.title}" sold to ${investor.full_name}.`,
+      message: `Property "${property.title}" sold to ${buyer.full_name}.`,
       investment: {
         id: result.investment.id,
         certificate_number: certNumber,
@@ -111,10 +111,10 @@ export async function POST(request: Request) {
         ownership_percentage: 100,
       },
       property: result.property,
-      investor: {
-        id: investor.id,
-        full_name: investor.full_name,
-        email: investor.email,
+      buyer: {
+        id: buyer.id,
+        full_name: buyer.full_name,
+        email: buyer.email,
       },
     });
   } catch (error: any) {

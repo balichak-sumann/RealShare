@@ -120,8 +120,8 @@ export default function LedgerPage() {
       "Transaction ID",
       "Gateway Ref",
       "Date & Time",
-      "Investor Name",
-      "Investor Email",
+      "Buyer Name",
+      "Buyer Email",
       "Property / Purpose",
       "Type",
       "Fractions Bought",
@@ -343,7 +343,7 @@ export default function LedgerPage() {
           <span>🔍</span>
           <input
             type="text"
-            placeholder="Search by Transaction ID, Investor Name, Email, Property, or Gateway Ref..."
+            placeholder="Search by Transaction ID, Buyer Name, Email, Property, or Gateway Ref..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{ border: "none", background: "transparent", width: "100%", padding: "12px", outline: "none" }}
@@ -396,7 +396,7 @@ export default function LedgerPage() {
             <tr>
               <th className={styles.th}>Transaction Ref</th>
               <th className={styles.th}>Date & Time</th>
-              <th className={styles.th}>Investor</th>
+              <th className={styles.th}>Buyer</th>
               <th className={styles.th}>Property / Context</th>
               <th className={styles.th}>Type</th>
               <th className={styles.th}>Fractions</th>
@@ -428,7 +428,7 @@ export default function LedgerPage() {
                     </td>
                     <td className={styles.td}>{new Date(txn.created_at).toLocaleString()}</td>
                     <td className={styles.td}>
-                      <strong>{txn.profile?.full_name || "Direct Investor"}</strong>
+                      <strong>{txn.profile?.full_name || "Direct Buyer"}</strong>
                       {txn.profile?.email && (
                         <div style={{ fontSize: "0.75rem", color: "#64748B" }}>{txn.profile.email}</div>
                       )}

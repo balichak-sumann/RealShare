@@ -102,7 +102,7 @@ export default function ReferralsPage() {
       "Referrer Name",
       "Email",
       "Referral Code",
-      "Investors Referred",
+      "Buyers Referred",
       "Investment Volume (INR)",
       "Total Commission (INR)",
       "Paid Commission (INR)",
@@ -333,7 +333,7 @@ export default function ReferralsPage() {
             <tr>
               <th className={styles.th}>Referrer</th>
               <th className={styles.th}>Referral Code</th>
-              <th className={styles.th}>Investors Referred</th>
+              <th className={styles.th}>Buyers Referred</th>
               <th className={styles.th}>Investment Volume</th>
               <th className={styles.th}>Commission Earned</th>
               <th className={styles.th}>Paid / Pending</th>
@@ -490,7 +490,7 @@ export default function ReferralsPage() {
                     </td>
                   </tr>
 
-                  {/* Expanded row: referred investors */}
+                  {/* Expanded row: referred buyers */}
                   {expandedAgent === r.agentId && (
                     <tr>
                       <td
@@ -510,7 +510,7 @@ export default function ReferralsPage() {
                             color: "#1E293B",
                           }}
                         >
-                          Referred Investors & Leads for {r.agentName} ({r.referredInvestors.length})
+                          Referred Buyers & Leads for {r.agentName} ({r.referredInvestors.length})
                         </div>
 
                         {r.referredInvestors.length === 0 ? (
@@ -524,7 +524,7 @@ export default function ReferralsPage() {
                               border: "1px solid #E2E8F0",
                             }}
                           >
-                            No investor signups recorded for this code yet.
+                            No buyer signups recorded for this code yet.
                           </div>
                         ) : (
                           <div style={{ display: "grid", gap: 10 }}>
@@ -549,11 +549,11 @@ export default function ReferralsPage() {
                                       height: 32,
                                       borderRadius: 8,
                                       background:
-                                        inv.status === "Converted Investor"
+                                        inv.status === "Converted Buyer"
                                           ? "#DCFCE7"
                                           : "#EFF6FF",
                                       color:
-                                        inv.status === "Converted Investor"
+                                        inv.status === "Converted Buyer"
                                           ? "#15803D"
                                           : "#2563EB",
                                       display: "flex",
@@ -563,7 +563,7 @@ export default function ReferralsPage() {
                                       fontSize: "0.75rem",
                                     }}
                                   >
-                                    {inv.status === "Converted Investor" ? "✓" : "👤"}
+                                    {inv.status === "Converted Buyer" ? "✓" : "👤"}
                                   </div>
                                   <div>
                                     <strong style={{ fontSize: "0.9rem", color: "#0F172A" }}>
@@ -615,11 +615,11 @@ export default function ReferralsPage() {
                                       fontSize: "0.7rem",
                                       fontWeight: 700,
                                       background:
-                                        inv.status === "Converted Investor"
+                                        inv.status === "Converted Buyer"
                                           ? "#DCFCE7"
                                           : "#EFF6FF",
                                       color:
-                                        inv.status === "Converted Investor"
+                                        inv.status === "Converted Buyer"
                                           ? "#15803D"
                                           : "#2563EB",
                                     }}

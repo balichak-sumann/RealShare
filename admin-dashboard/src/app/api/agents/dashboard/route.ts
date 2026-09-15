@@ -63,7 +63,7 @@ export async function GET(req: Request) {
     const commissions = await prisma.agentCommission.findMany({
       where: { agent_id: uid },
       include: {
-        investor: true,
+        buyer: true,
         property: true,
         investment: true
       },
@@ -88,7 +88,7 @@ export async function GET(req: Request) {
 
       return {
         id: c.id,
-        name: c.investor?.full_name || 'Direct Investor',
+        name: c.buyer?.full_name || 'Direct Buyer',
         property: c.property?.title || 'Commercial Asset',
         fractions: c.investment?.fractions_bought || 0,
         commission: `₹${amount.toLocaleString('en-IN')}`,

@@ -240,7 +240,7 @@ export default function ProfileScreen() {
   }
 
   const initials = (user?.full_name || 'U').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
-  const roleName = (user?.role || 'investor').charAt(0).toUpperCase() + (user?.role || 'investor').slice(1);
+  const roleName = (user?.role || 'buyer').charAt(0).toUpperCase() + (user?.role || 'buyer').slice(1);
   const memberSince = user?.created_at ? new Date(user.created_at).toLocaleDateString('en-IN', { year: 'numeric', month: 'short' }) : 'N/A';
 
   // KYC completion count
@@ -623,7 +623,7 @@ export default function ProfileScreen() {
         </Animated.View>
 
         {/* ─── WALLET ─── */}
-        {(!user?.role || user?.role === 'investor' || user?.role === 'admin') && (
+        {(!user?.role || user?.role === 'buyer' || user?.role === 'admin') && (
           <Animated.View style={[
             styles.sectionWrapper,
             { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }

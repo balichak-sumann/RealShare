@@ -31,7 +31,7 @@ interface Summary {
     property_type: string;
     listing_type: string;
     views: number;
-    investors: number;
+    buyers: number;
     raised: number;
     total_fractions: number;
     sold_fractions: number;
@@ -168,7 +168,7 @@ export default function Home() {
             </div>
             <div className={styles.alertActions}>
               {kpis?.pendingKyc ? (
-                <Link href="/investors" className={styles.alertBtn}>
+                <Link href="/buyers" className={styles.alertBtn}>
                   Review KYC ({kpis.pendingKyc})
                 </Link>
               ) : null}
@@ -186,8 +186,8 @@ export default function Home() {
           <Link href="/properties" className={styles.quickActionBtn}>
             <span>🏢</span> Manage Properties
           </Link>
-          <Link href="/investors" className={styles.quickActionBtn}>
-            <span>👥</span> Investors & KYC
+          <Link href="/buyers" className={styles.quickActionBtn}>
+            <span>👥</span> Buyers & KYC
           </Link>
           <Link href="/ledger" className={styles.quickActionBtn}>
             <span>💰</span> Financial Ledger
@@ -239,10 +239,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Card 3: Buyers (Investors) */}
+          {/* Card 3: Buyers (Buyers) */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <span className={styles.cardTitle}>Investors (Buyers)</span>
+              <span className={styles.cardTitle}>Buyers (Buyers)</span>
               <div className={styles.cardIcon} style={{ background: "rgba(124, 58, 237, 0.1)", color: "#7C3AED" }}>
                 👥
               </div>
@@ -327,7 +327,7 @@ export default function Home() {
                   <span>🔥</span> Most Viewed Properties
                 </div>
                 <div className={styles.sectionSubtitle}>
-                  Ranked by investor views, search traction & interest
+                  Ranked by buyer views, search traction & interest
                 </div>
               </div>
               <Link href="/properties" className={styles.viewAllBtn}>
@@ -387,7 +387,7 @@ export default function Home() {
                   <div className={styles.progressContainer}>
                     <div className={styles.progressMeta}>
                       <span>{prop.progress}% sold</span>
-                      <span>{prop.investors} inv.</span>
+                      <span>{prop.buyers} inv.</span>
                     </div>
                     <div className={styles.progressBar}>
                       <div className={styles.progressFill} style={{ width: `${Math.max(prop.progress, 4)}%` }} />

@@ -196,7 +196,7 @@ export default function SettingsPage() {
             <div style={toggleRow}>
               <div>
                 <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Secondary Marketplace</div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 2 }}>Allow investors to trade fractions with each other</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 2 }}>Allow buyers to trade fractions with each other</div>
               </div>
               <input type="checkbox" checked={settings.secondaryMarketplaceEnabled} onChange={(e) => set("secondaryMarketplaceEnabled", e.target.checked)} style={{ width: 20, height: 20, accentColor: "#2563EB" }} />
             </div>
@@ -210,7 +210,7 @@ export default function SettingsPage() {
             <div style={toggleRow}>
               <div>
                 <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Auto Yield Distribution</div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 2 }}>Automatically credit yield payouts to investor wallets</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 2 }}>Automatically credit yield payouts to buyer wallets</div>
               </div>
               <input type="checkbox" checked={settings.autoYieldDistributionEnabled} onChange={(e) => set("autoYieldDistributionEnabled", e.target.checked)} style={{ width: 20, height: 20, accentColor: "#2563EB" }} />
             </div>

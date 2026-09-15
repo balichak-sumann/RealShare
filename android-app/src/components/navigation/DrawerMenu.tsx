@@ -91,7 +91,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
   let displayName = profile?.full_name || currentUser?.displayName || '';
   if (!displayName && currentUser?.email) {
     if (currentUser.email.endsWith('@realshare.test')) {
-      displayName = 'Investor';
+      displayName = 'Buyer';
     } else {
       displayName = currentUser.email.split('@')[0];
     }
@@ -100,7 +100,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
     displayName = 'Guest';
   }
 
-  const roleName = profile?.role || (isGuest ? 'GUEST' : 'INVESTOR');
+  const roleName = profile?.role || (isGuest ? 'GUEST' : 'BUYER');
 
   useEffect(() => {
     Animated.spring(slideAnim, {

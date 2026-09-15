@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
 
-// GET: Full details for a single investor
+// GET: Full details for a single buyer
 export async function GET(
   request: Request,
   context: { params: Promise<{ id: string }> }
@@ -13,7 +13,7 @@ export async function GET(
 
     const { id } = await context.params;
 
-    const investor = await prisma.profile.findUnique({
+    const buyer = await prisma.profile.findUnique({
       where: { id },
       include: {
         kyc_documents: true,
@@ -44,21 +44,21 @@ export async function GET(
       },
     });
 
-    if (!investor) {
-      return NextResponse.json({ error: 'Investor not found' }, { status: 404 });
+    if (!buyer) {
+      return NextResponse.json({ error: 'Buyer not found' }, { status: 404 });
     }
 
-    return NextResponse.json(investor);
+    return NextResponse.json(buyer);
   } catch (error: any) {
-    console.error('Failed to fetch investor details:', error);
+    console.error('Failed to fetch buyer details:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to fetch investor details' },
+      { error: error.message || 'Failed to fetch buyer details' },
       { status: 500 }
     );
   }
 }
 
-// PATCH: Admin actions on an investor — profile updates, wallet adjustment, KYC approval/rejection/offline verification, status toggle.
+// PATCH: Admin actions on an buyer — profile updates, wallet adjustment, KYC approval/rejection/offline verification, status toggle.
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> }
@@ -208,9 +208,9 @@ export async function PATCH(
 
     return NextResponse.json(updated);
   } catch (error: any) {
-    console.error('Failed to update investor:', error);
+    console.error('Failed to update buyer:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to update investor' },
+      { error: error.message || 'Failed to update buyer' },
       { status: 500 }
     );
   }

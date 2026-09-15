@@ -5,7 +5,7 @@ import { auth } from '@/lib/firebase-admin';
 const ALLOWED_LISTING_TYPES = ['fractional', 'outright', 'rental', 'resale'] as const;
 type ListingType = (typeof ALLOWED_LISTING_TYPES)[number];
 
-const ALLOWED_CATEGORIES = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Investor'] as const;
+const ALLOWED_CATEGORIES = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Buyer'] as const;
 
 /**
  * Parses coordinates from Google Maps URLs in various formats:
@@ -81,7 +81,7 @@ async function getAuthContext(request: Request): Promise<{ uid: string; role: st
   try {
     const decoded = await auth.verifyIdToken(token);
     const profile = await prisma.profile.findUnique({ where: { id: decoded.uid }, select: { role: true } });
-    return { uid: decoded.uid, role: profile?.role || 'investor' };
+    return { uid: decoded.uid, role: profile?.role || 'buyer' };
   } catch (e) {
     return null;
   }
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
 
     const token = authHeader.split('Bearer ')[1];
     let userId: string;
-    let userRole = 'investor';
+    let userRole = 'buyer';
     try {
       const decodedToken = await auth.verifyIdToken(token);
       userId = decodedToken.uid;

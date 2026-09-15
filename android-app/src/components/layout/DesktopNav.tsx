@@ -88,7 +88,7 @@ export function DesktopNav() {
     (currentUser?.email && !currentUser.email.endsWith('@realshare.test')
       ? currentUser.email.split('@')[0]
       : currentUser
-      ? 'Investor'
+      ? 'Buyer'
       : '');
 
   const submitSearch = () => {

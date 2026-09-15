@@ -43,9 +43,9 @@ export async function GET(request: Request) {
       prisma.property.count().catch(() => 0),
       prisma.property.count({ where: { approval_status: 'approved' } }).catch(() => 0),
       prisma.property.count({ where: { approval_status: 'pending_approval' } }).catch(() => 0),
-      prisma.profile.count({ where: { role: 'investor' } }).catch(() => 0),
-      prisma.profile.count({ where: { role: 'investor', kyc_status: 'verified' } }).catch(() => 0),
-      prisma.profile.count({ where: { role: 'investor', kyc_status: 'pending' } }).catch(() => 0),
+      prisma.profile.count({ where: { role: 'buyer' } }).catch(() => 0),
+      prisma.profile.count({ where: { role: 'buyer', kyc_status: 'verified' } }).catch(() => 0),
+      prisma.profile.count({ where: { role: 'buyer', kyc_status: 'pending' } }).catch(() => 0),
       prisma.profile.count({ where: { role: 'agent', is_active: true } }).catch(() => 0),
       prisma.developer.count().catch(() => 0),
       prisma.supportTicket.count({ where: { status: 'open' } }).catch(() => 0),
@@ -85,7 +85,7 @@ export async function GET(request: Request) {
         },
       }).catch(() => []),
       prisma.profile.findMany({
-        where: { role: 'investor' },
+        where: { role: 'buyer' },
         orderBy: { created_at: 'desc' },
         take: 4,
         select: { id: true, full_name: true, email: true, created_at: true, kyc_status: true },
@@ -131,7 +131,7 @@ export async function GET(request: Request) {
             property_type: p.property_type || 'Commercial',
             listing_type: p.listing_type || 'fractional',
             views: p.views_count || 0,
-            investors: p._count?.investments ?? 0,
+            buyers: p._count?.investments ?? 0,
             raised,
             total_fractions: totalFractions,
             sold_fractions: soldFractions,
@@ -165,7 +165,7 @@ export async function GET(request: Request) {
         activityItems.push({
           id: `txn-${t.id}`,
           type: 'transaction',
-          user: t.profile?.full_name || t.profile?.email?.split('@')[0] || 'Investor',
+          user: t.profile?.full_name || t.profile?.email?.split('@')[0] || 'Buyer',
           action: TRANSACTION_TYPE_ACTION_LABELS[t.transaction_type] || t.transaction_type || 'transacted on',
           target: t.property?.title || 'Realshare Platform',
           amount: Number(t.amount || 0),
@@ -191,14 +191,14 @@ export async function GET(request: Request) {
       }
     }
 
-    // Add Investor Registrations
+    // Add Buyer Registrations
     if (Array.isArray(recentInvestors)) {
       for (const inv of recentInvestors) {
         activityItems.push({
           id: `inv-${inv.id}`,
           type: 'signup',
-          user: inv.full_name || inv.email?.split('@')[0] || 'New Investor',
-          action: 'registered as a new investor',
+          user: inv.full_name || inv.email?.split('@')[0] || 'New Buyer',
+          action: 'registered as a new buyer',
           target: 'Realshare Platform',
           amount: null,
           status: inv.kyc_status === 'verified' ? 'verified' : 'registered',

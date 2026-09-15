@@ -420,7 +420,7 @@ export default function EmployeesPage() {
                   </div>
                 </td>
                 <td className={styles.td}>
-                  <strong>{emp.assignedClientsCount}</strong> Investors
+                  <strong>{emp.assignedClientsCount}</strong> Buyers
                 </td>
                 <td className={styles.td}>
                   <span

@@ -93,7 +93,7 @@ const INITIAL_NEW_PROP_STATE = {
   district: "Hyderabad",
   locality: "",
   fullAddress: "",
-  type: "Commercial" as "Commercial" | "Fractional" | "Residential" | "Holiday" | "Investor",
+  type: "Commercial" as "Commercial" | "Fractional" | "Residential" | "Holiday" | "Buyer",
   listingType: "fractional" as "fractional" | "outright" | "rental" | "resale",
   areaSqft: 1200,
   areaSqftMax: null as number | null,
@@ -225,7 +225,7 @@ export default function PropertiesPage() {
       district: p.district || "Hyderabad",
       locality: p.locality || "",
       fullAddress: p.full_address || "",
-      type: (["Commercial", "Fractional", "Residential", "Holiday", "Investor"].includes(p.property_type ? p.property_type.trim().charAt(0).toUpperCase() + p.property_type.trim().slice(1).toLowerCase() : "") 
+      type: (["Commercial", "Fractional", "Residential", "Holiday", "Buyer"].includes(p.property_type ? p.property_type.trim().charAt(0).toUpperCase() + p.property_type.trim().slice(1).toLowerCase() : "") 
         ? p.property_type.trim().charAt(0).toUpperCase() + p.property_type.trim().slice(1).toLowerCase() 
         : "Commercial") as any,
       listingType: (p.listing_type as any) || "fractional",
@@ -466,13 +466,13 @@ export default function PropertiesPage() {
     try {
       const authHeader = await getAuthHeader();
       if (!authHeader) { showToast('You must be signed in.'); setLoadingInvestors(false); return; }
-      const res = await fetch('/api/investors', { headers: authHeader });
+      const res = await fetch('/api/buyers', { headers: authHeader });
       if (res.ok) {
         const data = await res.json();
         setAllInvestors(Array.isArray(data) ? data : []);
       }
     } catch (err) {
-      console.error('Failed to load investors:', err);
+      console.error('Failed to load buyers:', err);
     } finally {
       setLoadingInvestors(false);
     }
@@ -835,7 +835,7 @@ export default function PropertiesPage() {
             {totalAvailableFractions} Fractions
           </div>
           <div style={{ fontSize: "0.75rem", color: "#2563EB", marginTop: 4 }}>
-            Open for Investor Bookings
+            Open for Buyer Bookings
           </div>
         </div>
 
@@ -930,7 +930,7 @@ export default function PropertiesPage() {
 
         <div className={styles.headerRight}>
           <div className={styles.filterGroup}>
-            {["All", "Commercial", "Fractional", "Residential", "Holiday", "Investor"].map((t) => (
+            {["All", "Commercial", "Fractional", "Residential", "Holiday", "Buyer"].map((t) => (
               <button
                 key={t}
                 className={`${styles.filterPill} ${typeFilter === t ? styles.filterActive : ""}`}
@@ -1468,7 +1468,7 @@ export default function PropertiesPage() {
                     <option value="Fractional">📊 Fractional</option>
                     <option value="Residential">🏠 Residential / Apartment</option>
                     <option value="Holiday">🌴 Holiday / Resort</option>
-                    <option value="Investor">🌾 Plot / Farm Land</option>
+                    <option value="Buyer">🌾 Plot / Farm Land</option>
                   </select>
                 </div>
                 <div>
@@ -1481,7 +1481,7 @@ export default function PropertiesPage() {
                     <option value="">— Select —</option>
                     {(newProp.type === "Residential" || newProp.type === "Holiday")
                       ? ["Apartment", "Villa", "Independent House", "Row House", "Studio", "Penthouse"].map(s => <option key={s} value={s}>{s}</option>)
-                      : (newProp.type === "Investor")
+                      : (newProp.type === "Buyer")
                       ? ["Open Plot", "Farm Land", "Agricultural Land"].map(s => <option key={s} value={s}>{s}</option>)
                       : ["Office Space", "Retail Shop", "Showroom", "Warehouse", "Co-working"].map(s => <option key={s} value={s}>{s}</option>)
                     }
@@ -1593,7 +1593,7 @@ export default function PropertiesPage() {
               <div style={{ background: "#F8FAFC", padding: "16px", borderRadius: "12px", border: "1px solid #E2E8F0" }}>
                 <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1E293B", marginBottom: "14px" }}>
                   {newProp.type === "Residential" || newProp.type === "Holiday" ? "🏠 Apartment / Residential Details"
-                    : newProp.type === "Investor" ? "🌾 Plot / Farm Land Details"
+                    : newProp.type === "Buyer" ? "🌾 Plot / Farm Land Details"
                     : "🏢 Commercial Property Details"}
                 </div>
 
@@ -1846,8 +1846,8 @@ export default function PropertiesPage() {
                   </>
                 )}
 
-                {/* ---- INVESTOR / PLOT / FARM ---- */}
-                {newProp.type === "Investor" && (
+                {/* ---- BUYER / PLOT / FARM ---- */}
+                {newProp.type === "Buyer" && (
                   <>
                     <div style={{ display: "flex", flexWrap: "wrap", gap: "10px", marginBottom: "12px" }}>
                       {[
@@ -2408,7 +2408,7 @@ export default function PropertiesPage() {
         </div>
       )}
 
-      {/* Sell Property to Investor Modal */}
+      {/* Sell Property to Buyer Modal */}
       {sellModalProperty && (
         <div
           style={{
@@ -2450,7 +2450,7 @@ export default function PropertiesPage() {
             >
               <div>
                 <h2 style={{ fontSize: "1.15rem", fontWeight: 800, color: "#0F172A", margin: 0 }}>
-                  Sell Property to Investor
+                  Sell Property to Buyer
                 </h2>
                 <p style={{ fontSize: "0.8rem", color: "#64748B", marginTop: "4px", margin: 0 }}>
                   {sellModalProperty.title} — {sellModalProperty.locality}, {sellModalProperty.district}
@@ -2502,10 +2502,10 @@ export default function PropertiesPage() {
                 </div>
               </div>
 
-              {/* Investor Selection */}
+              {/* Buyer Selection */}
               <div style={{ marginBottom: "12px" }}>
                 <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "#334155", display: "block", marginBottom: "6px" }}>
-                  Select Investor / Buyer
+                  Select Buyer / Buyer
                 </label>
                 <input
                   type="text"
@@ -2522,7 +2522,7 @@ export default function PropertiesPage() {
                 />
               </div>
 
-              {/* Selected Investor Chip */}
+              {/* Selected Buyer Chip */}
               {selectedInvestor && (
                 <div
                   style={{
@@ -2553,7 +2553,7 @@ export default function PropertiesPage() {
                 </div>
               )}
 
-              {/* Investor List */}
+              {/* Buyer List */}
               {!selectedInvestor && (
                 <div
                   style={{
@@ -2565,7 +2565,7 @@ export default function PropertiesPage() {
                 >
                   {loadingInvestors ? (
                     <div style={{ padding: "24px", textAlign: "center", color: "#94A3B8", fontSize: "0.85rem" }}>
-                      Loading investors...
+                      Loading buyers...
                     </div>
                   ) : (() => {
                     const q = investorSearch.toLowerCase();
@@ -2578,7 +2578,7 @@ export default function PropertiesPage() {
                     if (filtered.length === 0) {
                       return (
                         <div style={{ padding: "24px", textAlign: "center", color: "#94A3B8", fontSize: "0.85rem" }}>
-                          No investors found{investorSearch ? ` matching "${investorSearch}"` : ""}.
+                          No buyers found{investorSearch ? ` matching "${investorSearch}"` : ""}.
                         </div>
                       );
                     }

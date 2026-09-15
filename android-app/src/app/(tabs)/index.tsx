@@ -53,7 +53,7 @@ export default function HomeScreen() {
   const { isDesktop } = useResponsive();
   const { city } = useLocation();
   const { toggleDrawer } = useDrawer();
-  const [userName, setUserName] = useState('Investor');
+  const [userName, setUserName] = useState('Buyer');
   const [showLocationPicker, setShowLocationPicker] = useState(false);
   const [activeCategory, setActiveCategory] = useState('All');
   const [allCityProperties, setAllCityProperties] = useState<any[]>([]);

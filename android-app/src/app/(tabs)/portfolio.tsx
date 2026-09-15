@@ -17,12 +17,16 @@ import { GuestView } from '@/components/ui/GuestView';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { useUser } from '@/contexts/UserContext';
 import { AgentClientsScreen } from '@/components/agent/AgentClientsScreen';
+import { InvestorDashboard } from '@/components/investor/InvestorDashboard';
 import { getApiUrl } from '@/lib/api';
 
 export default function PortfolioScreen() {
   const { profile } = useUser();
   if (profile?.role === 'agent') {
     return <AgentClientsScreen />;
+  }
+  if (profile?.role === 'investor') {
+    return <InvestorDashboard />;
   }
 
   const router = useRouter();
@@ -43,7 +47,7 @@ export default function PortfolioScreen() {
         });
         const data = await res.json();
 
-        // Real investments only — an investor with none genuinely has an
+        // Real investments only — an buyer with none genuinely has an
         // empty portfolio, and the UI below has a proper empty state for that.
         setPortfolio(Array.isArray(data.investments) ? data.investments : []);
         setUser(data.user || null);

@@ -7,7 +7,7 @@ export function BenefitsSection() {
     {
       id: 'b1',
       title: 'Premium Assets',
-      description: 'Access Grade-A commercial properties and luxury holiday homes previously reserved for institutional investors.',
+      description: 'Access Grade-A commercial properties and luxury holiday homes previously reserved for institutional buyers.',
       image: 'https://images.unsplash.com/photo-1497366216548-37526070297c?w=600&fit=crop'
     },
     {

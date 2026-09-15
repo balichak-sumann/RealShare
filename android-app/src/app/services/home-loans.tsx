@@ -31,7 +31,7 @@ export default function HomeLoansScreen() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_name: name.trim() || 'Valued Investor',
+          customer_name: name.trim() || 'Valued Buyer',
           phone: cleanedPhone,
           email: profile?.email || undefined,
           service_type: 'Home Loans',

@@ -156,7 +156,7 @@ export default function DevelopersPage() {
     try {
       const authHeader = await getAuthHeader();
       if (!authHeader) return;
-      const res = await fetch(`/api/investors/${id}`, {
+      const res = await fetch(`/api/buyers/${id}`, {
         method: "PATCH",
         headers: { ...authHeader, "Content-Type": "application/json" },
         body: JSON.stringify({ is_approved }),

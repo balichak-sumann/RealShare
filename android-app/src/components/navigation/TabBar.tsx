@@ -32,13 +32,13 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         // Explicitly hide these tabs from the bottom bar
         const hiddenRoutes = ['search', 'profile', 'clients'];
         
-        // Custom agent tabs vs investor tabs
+        // Custom agent tabs vs buyer tabs
         if (isAgent) {
           // Agents don't see search, but they do see clients
           const index = hiddenRoutes.indexOf('clients');
           if (index > -1) hiddenRoutes.splice(index, 1);
         } else {
-          // Investors see search, don't see clients
+          // Buyers see search, don't see clients
           const index = hiddenRoutes.indexOf('search');
           if (index > -1) hiddenRoutes.splice(index, 1);
         }
@@ -50,7 +50,7 @@ export function TabBar({ state, descriptors, navigation }: BottomTabBarProps) {
         // Desired order for Agents: Portfolio | Shortlist | Home | Clients | Explore
         const order = isAgent 
           ? ['portfolio', 'shortlist', 'index', 'clients', 'explore']
-          : ['portfolio', 'shortlist', 'index', 'search', 'explore']; // Investor order
+          : ['portfolio', 'shortlist', 'index', 'search', 'explore']; // Buyer order
 
         const sortedRoutes = [...visibleRoutes].sort((a, b) => {
           let indexA = order.indexOf(a.name);

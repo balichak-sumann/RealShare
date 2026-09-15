@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // Post-auth role gate: once we have a signed-in Firebase user, look up their
   // profile role and route them to the portal that matches it. Agents never
-  // land in the admin dashboard, and non-admin/employee/agent roles (investor,
+  // land in the admin dashboard, and non-admin/employee/agent roles (buyer,
   // builder, no profile at all) are not authorized for either portal and get
   // signed out.
   useEffect(() => {
@@ -77,7 +77,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             router.push('/');
           }
         } else {
-          // investor, builder, agent, or any other role not permitted in this dashboard
+          // buyer, builder, agent, or any other role not permitted in this dashboard
           await signOut(auth);
           router.push('/login?unauthorized=1');
         }

@@ -23,7 +23,7 @@ export default function SignUpScreen() {
 
   const [identifier, setIdentifier] = useState('');
   
-  // Investor & Builder & Agent specific fields
+  // Buyer & Builder & Agent specific fields
   const [fullName, setFullName] = useState('');
   const [mobileNumber, setMobileNumber] = useState('');
   const [email, setEmail] = useState('');
@@ -40,7 +40,7 @@ export default function SignUpScreen() {
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState('');
   const [referralCode, setReferralCode] = useState('');
-  const [role, setRole] = useState<'investor' | 'agent' | 'builder'>('investor');
+  const [role, setRole] = useState<'buyer' | 'investor' | 'agent' | 'builder'>('buyer');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -55,9 +55,9 @@ export default function SignUpScreen() {
       const url = `${apiUrl}/api/users/sync`;
       const body: any = { role };
       
-      if (role === 'investor' || role === 'builder' || role === 'agent') {
+      if (role === 'buyer' || role === 'builder' || role === 'agent' || role === 'investor') {
         body.full_name = fullName.trim();
-        body.phone_number = `+91 ${mobileNumber.replace(/\\D/g, '').slice(-10)}`;
+        body.phone_number = `+91 ${mobileNumber.replace(/\D/g, '').slice(-10)}`;
         body.full_address = fullAddress.trim();
       } else {
         body.full_name = fullName || '';
@@ -67,6 +67,15 @@ export default function SignUpScreen() {
       if (role === 'agent') {
         body.bio = aboutAgent.trim();
       }
+      
+      if (role === 'builder') {
+         body.developer_data = {
+           company_name: fullName.trim(), // We use fullName as company name for builder
+           office_address: fullAddress.trim(),
+           company_pan: panDoc?.fileName ? 'uploaded' : null,
+         };
+      }
+      
       if (referralCode) {
         body.referred_by_code = referralCode;
       }
@@ -101,7 +110,7 @@ export default function SignUpScreen() {
     setError('');
 
     try {
-      if (role === 'investor' || role === 'builder' || role === 'agent') {
+      if (role === 'buyer' || role === 'builder' || role === 'agent' || role === 'investor') {
         if (!fullName.trim() || !mobileNumber.trim() || !email.trim() || !fullAddress.trim() || !password) {
           setError('Please fill in all required fields.');
           setLoading(false); return;
@@ -131,7 +140,7 @@ export default function SignUpScreen() {
         const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
         await syncUserToBackend(userCredential.user);
         
-        if (role === 'agent') {
+        if (role === 'agent' || role === 'investor' || role === 'builder') {
            const token = await userCredential.user.getIdToken();
            // Use local admin server for uploads when developing locally on web
            const uploadBaseUrl = (Platform.OS === 'web' && window.location.hostname === 'localhost')
@@ -357,7 +366,7 @@ export default function SignUpScreen() {
         <View style={styles.form}>
           <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>I want to join as a:</Text>
           <View style={styles.roleRow}>
-            {['investor', 'agent', 'builder'].map((r) => {
+            {['buyer', 'investor', 'agent', 'builder'].map((r) => {
               const isActive = role === r;
               let rolePillStyle, roleTextStyle;
               if (isDesktopWeb) {
@@ -375,9 +384,9 @@ export default function SignUpScreen() {
             })}
           </View>
 
-          {role === 'investor' || role === 'builder' || role === 'agent' ? (
+          {role === 'buyer' || role === 'builder' || role === 'agent' || role === 'investor' ? (
             <>
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Full Name</Text>
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>{role === 'builder' ? 'Company / Builder Name' : 'Full Name'}</Text>
               {isDesktopWeb ? (
                 <View style={styles.desktopInputWrapper}>
                   <Ionicons name="person-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
@@ -451,7 +460,11 @@ export default function SignUpScreen() {
                   ) : (
                     <TextInput multiline value={aboutAgent} placeholder="Write something about your experience..." placeholderTextColor="#94A3B8" onChangeText={setAboutAgent} style={[styles.mobileInput, { height: 100, textAlignVertical: 'top' }]} />
                   )}
-
+                </>
+              )}
+              
+              {(role === 'agent' || role === 'investor' || role === 'builder') && (
+                <>
                   <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>KYC Documents Upload</Text>
                   <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
                     {[
@@ -548,7 +561,7 @@ export default function SignUpScreen() {
           <TouchableOpacity style={isDesktopWeb ? styles.desktopPrimaryButton : styles.mobilePrimaryButton} onPress={onSignUpPress} disabled={loading}>
             {loading ? <ActivityIndicator color={isDesktopWeb ? Neutrals.white : "#0F172A"} /> : (
               <Text style={isDesktopWeb ? styles.desktopPrimaryButtonText : styles.mobilePrimaryButtonText}>
-                {role === 'investor' || role === 'builder' || role === 'agent' || isEmail ? 'Create Account' : 'Send OTP'}
+                {role === 'buyer' || role === 'builder' || role === 'agent' || role === 'investor' || isEmail ? 'Create Account' : 'Send OTP'}
               </Text>
             )}
           </TouchableOpacity>

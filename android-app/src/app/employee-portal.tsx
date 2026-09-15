@@ -196,7 +196,7 @@ export default function EmployeePortalScreen({ isEmbedded = false }: { isEmbedde
                 <View style={styles.emptyState}>
                   <Text style={styles.emptyIcon}>👥</Text>
                   <Text style={styles.emptyTitle}>No Assigned Clients Yet</Text>
-                  <Text style={styles.emptyBody}>Your admin will assign investors to you, or add a new lead manually above.</Text>
+                  <Text style={styles.emptyBody}>Your admin will assign buyers to you, or add a new lead manually above.</Text>
                 </View>
               ) : (
                 salesClients.map((client, i) => (
@@ -371,7 +371,7 @@ export default function EmployeePortalScreen({ isEmbedded = false }: { isEmbedde
 
             {[
               { label: 'Total Assigned Leads', value: report.total, color: '#1E3A8A' },
-              { label: 'Converted to Investor', value: report.converted, color: '#15803D' },
+              { label: 'Converted to Buyer', value: report.converted, color: '#15803D' },
               { label: 'Pending Follow-up', value: report.pending, color: '#B45309' },
               { label: 'New Leads', value: report.leads, color: '#475569' },
               { label: 'Conversion Rate', value: report.total > 0 ? `${Math.round((report.converted / report.total) * 100)}%` : '0%', color: '#7C3AED' },

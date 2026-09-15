@@ -148,8 +148,6 @@ function RootLayoutNav() {
                 router.replace('/agent-portal');
               } else if (data.profile.role === 'employee') {
                 router.replace('/employee-portal');
-              } else if (data.profile.role === 'investor') {
-                router.replace('/profile');
               } else {
                 router.replace('/');
               }

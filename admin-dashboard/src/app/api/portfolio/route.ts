@@ -19,8 +19,8 @@ export async function GET(request: Request) {
         data: {
           id: userId,
           email: decodedToken.email || null,
-          full_name: decodedToken.name || decodedToken.email?.split('@')[0] || 'Investor',
-          role: 'investor',
+          full_name: decodedToken.name || decodedToken.email?.split('@')[0] || 'Buyer',
+          role: 'buyer',
         }
       }).catch(async () => prisma.profile.findUnique({ where: { id: userId } }));
     }

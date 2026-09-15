@@ -346,7 +346,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
   return (
     <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
       <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 100 }}>
-      {/* Header - Matching Investor Portal Theme & Layout */}
+      {/* Header - Matching Buyer Portal Theme & Layout */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           {/* Menu Drawer Hamburger Button */}
@@ -380,7 +380,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
           </View>
         )}
 
-        {/* Top KPI Cards - Matching Investor Theme */}
+        {/* Top KPI Cards - Matching Buyer Theme */}
         <View style={styles.kpiRow}>
           <View style={styles.kpiCard}>
             <Text style={styles.kpiLabel}>Total Projects</Text>
@@ -390,7 +390,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
           <View style={styles.kpiCard}>
             <Text style={styles.kpiLabel}>Capital Raised</Text>
             <Text style={styles.kpiValueGold}>₹{(totalCapitalRaised / 100000).toFixed(1)}L</Text>
-            <Text style={styles.kpiSubtext}>Via Fractional Investors</Text>
+            <Text style={styles.kpiSubtext}>Via Fractional Buyers</Text>
           </View>
         </View>
 
@@ -407,7 +407,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
               <Text style={styles.policyText}>
                 • Builders can post and edit property specifications & pricing.{'\n'}
                 • Once submitted, listings undergo title and RERA verification by Realshare Admin before going live.{'\n'}
-                • <Text style={{ fontWeight: '800', color: GoldSystem.primaryGold }}>No Delete Option:</Text> Deletion rights strictly reside with Admin for compliance & investor contract safety.
+                • <Text style={{ fontWeight: '800', color: GoldSystem.primaryGold }}>No Delete Option:</Text> Deletion rights strictly reside with Admin for compliance & buyer contract safety.
               </Text>
             </View>
 
@@ -522,7 +522,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         {activeTab === 'analytics' && (
           <View style={styles.analyticsSection}>
             <Text style={styles.sectionTitle}>Sales & Investment Demand Analytics</Text>
-            <Text style={styles.sectionSubtitle}>Track property performance and investor trends over time</Text>
+            <Text style={styles.sectionSubtitle}>Track property performance and buyer trends over time</Text>
 
             <View style={styles.chartCard}>
               <Text style={styles.chartTitle}>Monthly Fractional Capital Influx (2026)</Text>
@@ -547,7 +547,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
 
             <View style={styles.analyticsGrid}>
               <View style={styles.analyticsBox}>
-                <Text style={styles.analyticsBoxLabel}>Average Investor Demand</Text>
+                <Text style={styles.analyticsBoxLabel}>Average Buyer Demand</Text>
                 <Text style={styles.analyticsBoxVal}>High Demand 🔥</Text>
               </View>
               <View style={styles.analyticsBox}>

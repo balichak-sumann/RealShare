@@ -9,7 +9,7 @@ async function getUser(request: Request) {
     try {
       const decodedToken = await auth.verifyIdToken(token);
       const profile = await prisma.profile.findUnique({ where: { id: decodedToken.uid } });
-      return { uid: decodedToken.uid, role: profile?.role?.toLowerCase() || 'investor', isAdmin: profile?.role === 'admin' };
+      return { uid: decodedToken.uid, role: profile?.role?.toLowerCase() || 'buyer', isAdmin: profile?.role === 'admin' };
     } catch (e) {
       return null;
     }

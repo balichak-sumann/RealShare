@@ -9,7 +9,7 @@ interface NotificationLog {
   title: string;
   message: string;
   channel: "In-App Push" | "SMS" | "Email" | "Broadcast";
-  targetAudience: "All Users" | "Investors Only" | "Agents Only" | "Builders";
+  targetAudience: "All Users" | "Buyers Only" | "Agents Only" | "Builders";
   sentAt: string;
   deliveryCount: number;
   openRate: string;
@@ -37,7 +37,7 @@ function mapApiNotification(
 ): NotificationLog {
   const audienceMap: Record<string, NotificationLog["targetAudience"]> = {
     all: "All Users",
-    investors: "Investors Only",
+    buyers: "Buyers Only",
     agents: "Agents Only",
     builders: "Builders",
   };
@@ -65,7 +65,7 @@ function mapApiNotification(
 
 const audienceToApi: Record<string, string> = {
   "All Users": "all",
-  "Investors Only": "investors",
+  "Buyers Only": "buyers",
   "Agents Only": "agents",
   Builders: "builders",
 };
@@ -774,8 +774,8 @@ export default function NotificationsPage() {
                     onChange={(e) => setNewNotice({ ...newNotice, targetAudience: e.target.value as any })}
                     style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                   >
-                    <option value="All Users">All Users (Investors + Agents)</option>
-                    <option value="Investors Only">Investors Only</option>
+                    <option value="All Users">All Users (Buyers + Agents)</option>
+                    <option value="Buyers Only">Buyers Only</option>
                     <option value="Agents Only">Agents Only</option>
                     <option value="Builders">Builders Only</option>
                   </select>

@@ -7,7 +7,7 @@ function generateReferralCode(uid: string): string {
   return `RS-${base}`;
 }
 
-// GET: the authenticated user's own referral code, referred-investor count,
+// GET: the authenticated user's own referral code, referred-buyer count,
 // and total commission actually earned through referrals (real AgentCommission
 // rows only -- no fabricated "points" or loyalty catalog).
 export async function GET(request: Request) {

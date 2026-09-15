@@ -27,7 +27,7 @@ const FALLBACK_SLIDES: Banner[] = [
   {
     id: 'slide2',
     title: 'High-Yield Commercial Spaces',
-    subtitle: 'Institutional grade assets now accessible to retail investors.',
+    subtitle: 'Institutional grade assets now accessible to retail buyers.',
     image_url: '/banners/commercial.png',
     link_url: '/search',
   },
@@ -40,9 +40,9 @@ const FALLBACK_SLIDES: Banner[] = [
   },
   {
     id: 'slide4',
-    title: 'Investor Exclusives',
-    subtitle: 'Pre-launch and off-market deals for verified investors.',
-    image_url: '/banners/investor.png',
+    title: 'Buyer Exclusives',
+    subtitle: 'Pre-launch and off-market deals for verified buyers.',
+    image_url: '/banners/buyer.png',
     link_url: '/search',
   },
   {

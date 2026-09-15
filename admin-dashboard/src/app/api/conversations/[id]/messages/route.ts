@@ -16,7 +16,7 @@ async function getParticipant(conversationId: string, profileId: string) {
 // Support conversations are always open to staff oversight. Property
 // inquiries only become staff-open when the property was posted by an admin
 // -- in that case the conversation was created with a single participant
-// (the investor) rather than a specific agent/builder, so "fewer than 2
+// (the buyer) rather than a specific agent/builder, so "fewer than 2
 // participants" is how an admin-posted, still-unclaimed inquiry is detected.
 async function isStaffOversightEligible(
   conversation: { id: string; type: string },

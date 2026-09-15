@@ -63,7 +63,7 @@ export default function NotificationsScreen() {
 
   const getNotificationIcon = (audience: string) => {
     switch (audience) {
-      case 'investors': return { name: 'trending-up-outline' as const, color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' };
+      case 'buyers': return { name: 'trending-up-outline' as const, color: '#10B981', bg: 'rgba(16, 185, 129, 0.1)' };
       case 'agents': return { name: 'briefcase-outline' as const, color: '#3B82F6', bg: 'rgba(59, 130, 246, 0.1)' };
       case 'builders': return { name: 'business-outline' as const, color: '#F59E0B', bg: 'rgba(245, 158, 11, 0.1)' };
       default: return { name: 'notifications-outline' as const, color: GoldSystem.primaryGold, bg: GoldSystem.paleGold };

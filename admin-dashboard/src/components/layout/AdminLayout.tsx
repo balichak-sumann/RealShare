@@ -20,7 +20,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     { name: "Properties & Shares", path: "/properties", icon: "🏢" },
     { name: "Featured Properties", path: "/featured-properties", icon: "⭐" },
     { name: "Developers", path: "/developers", icon: "🏗️" },
-    { name: "Investors & KYC", path: "/investors", icon: "👥" },
+    { name: "Buyers & KYC", path: "/buyers", icon: "👥" },
     { name: "Account Approvals", path: "/approvals", icon: "✅" },
     { name: "Employees (RBAC)", path: "/employees", icon: "👔" },
     { name: "Agents & Commissions", path: "/agents", icon: "🤝" },
@@ -82,7 +82,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
           <div className={styles.headerActions}>
             <div className={styles.searchBar}>
               <span className={styles.searchIcon}>🔍</span>
-              <input type="text" placeholder="Search investor, property, transaction..." className={styles.searchInput} />
+              <input type="text" placeholder="Search buyer, property, transaction..." className={styles.searchInput} />
             </div>
             <Link href="/notifications" className={styles.notifBtn} title="Notifications">
               🔔<span className={styles.notifDot} />

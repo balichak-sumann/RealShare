@@ -41,7 +41,7 @@ async function handleCron(request: Request) {
       const recipientsCount = targetAudience === 'all'
         ? await prisma.profile.count()
         : await prisma.profile.count({
-            where: { role: targetAudience === 'investors' ? 'investor' : targetAudience === 'agents' ? 'agent' : 'builder' }
+            where: { role: targetAudience === 'buyers' ? 'buyer' : targetAudience === 'agents' ? 'agent' : 'builder' }
           });
 
       // 2. Find expo tokens for delivery
@@ -49,7 +49,7 @@ async function handleCron(request: Request) {
         where: {
           expo_push_token: { not: null },
           ...(targetAudience !== 'all'
-            ? { role: targetAudience === 'investors' ? 'investor' : targetAudience === 'agents' ? 'agent' : 'builder' }
+            ? { role: targetAudience === 'buyers' ? 'buyer' : targetAudience === 'agents' ? 'agent' : 'builder' }
             : {}),
         },
         select: { expo_push_token: true },

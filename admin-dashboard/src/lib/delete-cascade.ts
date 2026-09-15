@@ -156,7 +156,7 @@ export async function deleteDeveloperWithProperties(id: string) {
         await tx.chatMessage.deleteMany({ where: { agent_id: id } });
         await tx.agentClient.deleteMany({ where: { agent_id: id } });
         await tx.agentCommission.deleteMany({
-          where: { OR: [{ agent_id: id }, { investor_id: id }] },
+          where: { OR: [{ agent_id: id }, { buyer_id: id }] },
         });
 
         // Conversations & Messages

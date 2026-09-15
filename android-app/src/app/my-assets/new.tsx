@@ -15,7 +15,7 @@ export default function AddAssetScreen() {
     purchase_price: '',
   });
 
-  const propertyTypes = ['Commercial', 'Residential', 'Holiday', 'Investor', 'Fractional'];
+  const propertyTypes = ['Commercial', 'Residential', 'Holiday', 'Buyer', 'Fractional'];
 
   const handleSave = async () => {
     if (!formData.title || !formData.address) {

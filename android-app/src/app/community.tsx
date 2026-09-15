@@ -24,7 +24,7 @@ export default function CommunityScreen() {
           <Text style={styles.emptyIcon}>\ud83d\udcac</Text>
           <Text style={styles.emptyTitle}>Community is coming soon</Text>
           <Text style={styles.emptyDesc}>
-            We're building a place for investors and homeowners to share updates and ask
+            We're building a place for buyers and homeowners to share updates and ask
             questions. Check back soon.
           </Text>
         </View>

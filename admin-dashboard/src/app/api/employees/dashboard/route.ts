@@ -25,17 +25,17 @@ export async function GET(req: Request) {
 
     // Different data payloads based on department
     if (department === 'sales') {
-      // Return investors and their investments
-      const investors = await prisma.profile.findMany({
+      // Return buyers and their investments
+      const buyers = await prisma.profile.findMany({
         where: { 
-          role: 'investor',
+          role: 'buyer',
           assigned_sales_rep_id: employeeProfile.id
         },
         take: 10,
         orderBy: { created_at: 'desc' }
       });
       
-      const salesClients = await Promise.all(investors.map(async (inv) => {
+      const salesClients = await Promise.all(buyers.map(async (inv) => {
         const investments = await prisma.investment.findMany({
           where: { user_id: inv.id },
           include: { property: true }
@@ -57,7 +57,7 @@ export async function GET(req: Request) {
           property: latestProperty,
           fractions: fractions,
           value: `₹${value.toLocaleString('en-IN')}`,
-          status: investments.length > 0 ? 'Active Investor' : 'Lead'
+          status: investments.length > 0 ? 'Active Buyer' : 'Lead'
         };
       }));
       

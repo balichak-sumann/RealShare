@@ -27,7 +27,7 @@ export default function TermsOfServiceScreen() {
         {
           heading: '2. What Realshare offers',
           body: [
-            'Realshare operates a marketplace for fractional ownership of real estate: a group of investors jointly acquires an interest in a property, each holding a proportional share. Realshare, or its associated entities, may facilitate acquisition, property management, and eventual resale of these interests.',
+            'Realshare operates a marketplace for fractional ownership of real estate: a group of buyers jointly acquires an interest in a property, each holding a proportional share. Realshare, or its associated entities, may facilitate acquisition, property management, and eventual resale of these interests.',
             'Realshare is a technology and services platform. It is not a bank, a registered investment advisor, or a broker-dealer, and nothing on the platform constitutes personalized investment, legal, or tax advice.',
           ],
         },

@@ -4,12 +4,12 @@ import prisma from '@/lib/prisma';
 export async function GET() {
   try {
     const latestInvestor = await prisma.profile.findFirst({
-      where: { role: 'investor' },
+      where: { role: 'buyer' },
       orderBy: { created_at: 'desc' }
     });
 
     if (!latestInvestor) {
-      return NextResponse.json({ error: 'No investor profiles found to seed.' }, { status: 400 });
+      return NextResponse.json({ error: 'No buyer profiles found to seed.' }, { status: 400 });
     }
 
     await prisma.profile.update({

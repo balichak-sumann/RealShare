@@ -7,11 +7,11 @@ export async function GET(request: Request) {
     const auth = await requireAdmin(request);
     if (!auth.ok) return auth.response;
 
-    // Fetch all investor/client profiles (excluding admin/employee/builder internal roles)
-    const investors = await prisma.profile.findMany({
+    // Fetch all buyer/client profiles (excluding admin/employee/builder internal roles)
+    const buyers = await prisma.profile.findMany({
       where: {
         OR: [
-          { role: { in: ['investor', 'user', 'customer', 'client', 'member', ''] } },
+          { role: { in: ['buyer', 'user', 'customer', 'client', 'member', ''] } },
           {
             role: {
               notIn: ['admin', 'employee', 'sales', 'support', 'accounts', 'builder', 'developer'],
@@ -50,7 +50,7 @@ export async function GET(request: Request) {
       orderBy: { created_at: 'desc' },
     });
 
-    const shaped = investors.map((inv) => {
+    const shaped = buyers.map((inv) => {
       const totalInvested = inv.investments.reduce(
         (sum, i) => sum + Number(i.total_amount || 0),
         0
@@ -62,7 +62,7 @@ export async function GET(request: Request) {
 
       return {
         id: inv.id,
-        full_name: inv.full_name || inv.email?.split('@')[0] || 'Investor',
+        full_name: inv.full_name || inv.email?.split('@')[0] || 'Buyer',
         email: inv.email || '—',
         phone_number: inv.phone_number || '—',
         wallet_balance: Number(inv.wallet_balance || 0),
@@ -122,12 +122,12 @@ export async function GET(request: Request) {
 
     return NextResponse.json(shaped);
   } catch (error: any) {
-    console.error('Failed to fetch investors:', error);
-    return NextResponse.json({ error: error.message || 'Failed to fetch investors' }, { status: 500 });
+    console.error('Failed to fetch buyers:', error);
+    return NextResponse.json({ error: error.message || 'Failed to fetch buyers' }, { status: 500 });
   }
 }
 
-// POST: Admin creates a new investor directly
+// POST: Admin creates a new buyer directly
 export async function POST(request: Request) {
   try {
     const auth = await requireAdmin(request);
@@ -160,7 +160,7 @@ export async function POST(request: Request) {
 
     if (existing) {
       return NextResponse.json(
-        { error: 'An investor with this email already exists.' },
+        { error: 'An buyer with this email already exists.' },
         { status: 409 }
       );
     }
@@ -177,7 +177,7 @@ export async function POST(request: Request) {
         email: email.trim().toLowerCase(),
         phone_number: phone_number?.trim() || null,
         full_address: full_address?.trim() || null,
-        role: 'investor',
+        role: 'buyer',
         kyc_status: 'not_submitted',
         wallet_balance: Number(wallet_balance || 0),
         bank_account_name: bank_account_name?.trim() || null,
@@ -196,9 +196,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json(newInvestor, { status: 201 });
   } catch (error: any) {
-    console.error('Failed to create investor:', error);
+    console.error('Failed to create buyer:', error);
     return NextResponse.json(
-      { error: error.message || 'Failed to create investor' },
+      { error: error.message || 'Failed to create buyer' },
       { status: 500 }
     );
   }

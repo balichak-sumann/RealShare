@@ -29,7 +29,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'title and message are required' }, { status: 400 });
     }
 
-    const validAudiences = ['all', 'investors', 'agents', 'builders'];
+    const validAudiences = ['all', 'buyers', 'agents', 'builders'];
     const targetAudience = validAudiences.includes(audience) ? audience : 'all';
     const validRepeats = ['once', 'daily', 'weekly', 'monthly'];
     const repeatType = validRepeats.includes(repeat_type) ? repeat_type : 'once';

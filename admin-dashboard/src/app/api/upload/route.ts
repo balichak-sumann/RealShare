@@ -20,7 +20,7 @@ export async function POST(req: Request) {
     if (!auth.ok) return auth.response;
 
     const userRole = (auth.role || '').toLowerCase();
-    if (!['admin', 'agent', 'builder', 'investor'].includes(userRole)) {
+    if (!['admin', 'agent', 'builder', 'buyer'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Forbidden: You do not have permission to upload media.' },
         { status: 403 }

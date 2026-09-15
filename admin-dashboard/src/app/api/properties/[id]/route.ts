@@ -12,7 +12,7 @@ async function getUser(request: Request) {
     try {
       const decodedToken = await auth.verifyIdToken(token);
       const profile = await prisma.profile.findUnique({ where: { id: decodedToken.uid } });
-      return { uid: decodedToken.uid, role: profile?.role?.toLowerCase() || 'investor', isAdmin: profile?.role === 'admin' };
+      return { uid: decodedToken.uid, role: profile?.role?.toLowerCase() || 'buyer', isAdmin: profile?.role === 'admin' };
     } catch (e) {
       return null;
     }
@@ -97,7 +97,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const data = await request.json();
 
     if (data.property_type) {
-      const allowedCategories = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Investor'];
+      const allowedCategories = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Buyer'];
       const pType = allowedCategories.find(c => c.toLowerCase() === String(data.property_type).trim().toLowerCase());
       if (!pType) {
         console.error('INVALID PROPERTY TYPE RECEIVED:', data.property_type, typeof data.property_type);
@@ -252,7 +252,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         data.sold_fractions = 0;
         data.available_fractions = prop.total_fractions;
         
-        // Cancel investments so they are removed from investor profiles without deleting records
+        // Cancel investments so they are removed from buyer profiles without deleting records
         await prisma.investment.updateMany({
           where: { property_id: id, status: 'completed' },
           data: { status: 'cancelled' }

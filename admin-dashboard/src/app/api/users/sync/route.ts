@@ -29,8 +29,8 @@ export async function POST(req: Request) {
     // a server-known bootstrap secret (used once to create the very first admin
     // account). Every subsequent admin must be created via the protected,
     // admin-only /api/admin/employees route. Self-selectable roles for normal
-    // signup remain investor/agent/builder, matching the app's sign-up screen.
-    const SELF_SERVICE_ROLES = ['investor', 'agent', 'builder'];
+    // signup remain buyer/agent/builder, matching the app's sign-up screen.
+    const SELF_SERVICE_ROLES = ['buyer', 'agent', 'builder'];
     const bootstrapSecret = req.headers.get('x-admin-bootstrap-secret');
     const bootstrapAllowed =
       !!process.env.ADMIN_BOOTSTRAP_SECRET &&
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
       select: { role: true, phone_number: true },
     });
 
-    let requestedRole = 'investor';
+    let requestedRole = 'buyer';
     if (!existingProfile) {
       // First time this user has ever synced: role may be set once.
       if (body.role === 'admin' && bootstrapAllowed) {

@@ -14,7 +14,7 @@ async function getUser(request: Request) {
         where: { id: decodedToken.uid },
         select: { role: true },
       });
-      const role = profile?.role?.toLowerCase() || 'investor';
+      const role = profile?.role?.toLowerCase() || 'buyer';
       return { uid: decodedToken.uid, role, isAdmin: role === 'admin' };
     } catch {
       return null;

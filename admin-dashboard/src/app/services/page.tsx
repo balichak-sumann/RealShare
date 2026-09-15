@@ -716,7 +716,7 @@ export default function AdditionalServicesPage() {
                         <div style={{ fontSize: "28px", marginBottom: "8px" }}>🛎️</div>
                         <div style={{ fontWeight: "600", fontSize: "15px", color: "#111827" }}>No service inquiries found</div>
                         <p style={{ margin: "4px 0 16px 0", fontSize: "13px" }}>
-                          Requests submitted by investors via the mobile app or web concierge will appear here.
+                          Requests submitted by buyers via the mobile app or web concierge will appear here.
                         </p>
                         <button
                           onClick={() => setShowAddInquiryModal(true)}
@@ -878,7 +878,7 @@ export default function AdditionalServicesPage() {
           <>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
               <p style={{ margin: 0, color: "#4B5563", fontSize: "14px" }}>
-                Services displayed in the mobile app and investor portal home concierge strip.
+                Services displayed in the mobile app and buyer portal home concierge strip.
               </p>
               <button
                 onClick={openCreateService}
@@ -1272,7 +1272,7 @@ export default function AdditionalServicesPage() {
                       checked={serviceForm.is_active}
                       onChange={(e) => setServiceForm({ ...serviceForm, is_active: e.target.checked })}
                     />
-                    Active in Mobile & Investor App
+                    Active in Mobile & Buyer App
                   </label>
 
                   <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>

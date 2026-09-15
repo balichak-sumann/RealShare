@@ -153,7 +153,7 @@ export default function PropertyRequestsPage() {
     { id: 'Residential', label: 'Residential', icon: '🏠' },
     { id: 'Commercial', label: 'Commercial', icon: '🏢' },
     { id: 'Fractional', label: 'Fractional', icon: '🥧' },
-    { id: 'Investor', label: 'Investor', icon: '📈' },
+    { id: 'Buyer', label: 'Buyer', icon: '📈' },
     { id: 'Plots & Farms', label: 'Plots & Farms', icon: '🍃' },
     { id: 'Holiday', label: 'Holiday', icon: '✈️' },
   ];

@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
     const referralData = await Promise.all(
       referrers.map(async (referrer) => {
-        // 1. Fetch investors who signed up with referrer's code
+        // 1. Fetch buyers who signed up with referrer's code
         const codeReferred = referrer.referral_code
           ? await prisma.profile.findMany({
               where: { referred_by_code: referrer.referral_code },
@@ -54,7 +54,7 @@ export async function GET(request: Request) {
         const commissions = await prisma.agentCommission.findMany({
           where: { agent_id: referrer.id },
           include: {
-            investor: {
+            buyer: {
               include: {
                 investments: {
                   include: {
@@ -91,10 +91,10 @@ export async function GET(request: Request) {
           where: { agent_id: referrer.id },
         });
 
-        // Consolidate unique referred investors
+        // Consolidate unique referred buyers
         const investorMap = new Map<string, any>();
 
-        // Add code-referred investors
+        // Add code-referred buyers
         for (const inv of codeReferred) {
           const invSum = inv.investments.reduce(
             (sum, i) => sum + Number(i.total_amount || 0),
@@ -106,43 +106,43 @@ export async function GET(request: Request) {
           );
           investorMap.set(inv.id, {
             id: inv.id,
-            full_name: inv.full_name || 'Investor',
+            full_name: inv.full_name || 'Buyer',
             email: inv.email || '—',
             phone: inv.phone_number || '—',
             joined_at: inv.created_at,
             total_invested: invSum,
             fractions_bought: fractions,
-            status: inv.investments.length > 0 ? 'Converted Investor' : 'Registered Lead',
+            status: inv.investments.length > 0 ? 'Converted Buyer' : 'Registered Lead',
             properties: inv.investments.map((i) => i.property?.title).filter(Boolean),
           });
         }
 
-        // Add commission investors
+        // Add commission buyers
         for (const comm of commissions) {
-          if (comm.investor) {
-            const existing = investorMap.get(comm.investor.id);
+          if (comm.buyer) {
+            const existing = investorMap.get(comm.buyer.id);
             const invSum =
               Number(comm.investment?.total_amount || 0) ||
-              comm.investor.investments?.reduce(
+              comm.buyer.investments?.reduce(
                 (sum: number, i: any) => sum + Number(i.total_amount || 0),
                 0
               ) || 0;
             const fractions =
               comm.investment?.fractions_bought ||
-              comm.investor.investments?.reduce(
+              comm.buyer.investments?.reduce(
                 (sum: number, i: any) => sum + (i.fractions_bought || 0),
                 0
               ) || 1;
 
-            investorMap.set(comm.investor.id, {
-              id: comm.investor.id,
-              full_name: comm.investor.full_name || 'Investor',
-              email: comm.investor.email || '—',
-              phone: comm.investor.phone_number || '—',
-              joined_at: comm.investor.created_at || comm.created_at,
+            investorMap.set(comm.buyer.id, {
+              id: comm.buyer.id,
+              full_name: comm.buyer.full_name || 'Buyer',
+              email: comm.buyer.email || '—',
+              phone: comm.buyer.phone_number || '—',
+              joined_at: comm.buyer.created_at || comm.created_at,
               total_invested: existing ? Math.max(existing.total_invested, invSum) : invSum,
               fractions_bought: existing ? Math.max(existing.fractions_bought, fractions) : fractions,
-              status: 'Converted Investor',
+              status: 'Converted Buyer',
               properties: [
                 ...(existing?.properties || []),
                 comm.property?.title,
@@ -197,7 +197,7 @@ export async function GET(request: Request) {
         }
 
         const convertedCount = consolidatedInvestors.filter(
-          (inv) => inv.total_invested > 0 || inv.status === 'Converted Investor'
+          (inv) => inv.total_invested > 0 || inv.status === 'Converted Buyer'
         ).length;
 
         const totalReferredCount = Math.max(

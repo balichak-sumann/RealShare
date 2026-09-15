@@ -173,7 +173,7 @@ export default function AgentsPage() {
     try {
       const authHeader = await getAuthHeader();
       if (!authHeader) return;
-      const res = await fetch(`/api/investors/${id}`, {
+      const res = await fetch(`/api/buyers/${id}`, {
         method: "PATCH",
         headers: { ...authHeader, "Content-Type": "application/json" },
         body: JSON.stringify({ is_approved }),
@@ -666,7 +666,7 @@ export default function AgentsPage() {
                 "Phone",
                 "Referral Code",
                 "Commission Rate (%)",
-                "Investors Referred",
+                "Buyers Referred",
                 "Sales Volume (INR)",
                 "Commission Earned (INR)",
                 "Commission Pending (INR)",
@@ -1563,7 +1563,7 @@ export default function AgentsPage() {
                     <div style={{ fontSize: "2rem", marginBottom: "8px" }}>💰</div>
                     <strong style={{ color: "#0F172A" }}>No Commission Transactions Yet</strong>
                     <p style={{ fontSize: "0.85rem", marginTop: 4 }}>
-                      When referred investors purchase property fractions, commission records will be listed here.
+                      When referred buyers purchase property fractions, commission records will be listed here.
                     </p>
                   </div>
                 ) : (
@@ -1586,7 +1586,7 @@ export default function AgentsPage() {
                             {comm.property_title}
                           </strong>
                           <div style={{ fontSize: "0.8rem", color: "#64748B", marginTop: "2px" }}>
-                            Investor: <strong>{comm.investor_name}</strong> ({comm.investor_email}) • {comm.fractions_bought} Fractions (₹{comm.investment_amount.toLocaleString("en-IN")})
+                            Buyer: <strong>{comm.investor_name}</strong> ({comm.investor_email}) • {comm.fractions_bought} Fractions (₹{comm.investment_amount.toLocaleString("en-IN")})
                           </div>
                         </div>
 
@@ -1637,7 +1637,7 @@ export default function AgentsPage() {
                     <div style={{ fontSize: "2rem", marginBottom: "8px" }}>👥</div>
                     <strong style={{ color: "#0F172A" }}>No Clients Registered Under Partner Code Yet</strong>
                     <p style={{ fontSize: "0.85rem", marginTop: 4 }}>
-                      Investors who register with referral code <code>{selectedAgent.referralCode}</code> will appear here.
+                      Buyers who register with referral code <code>{selectedAgent.referralCode}</code> will appear here.
                     </p>
                   </div>
                 ) : (
@@ -1679,7 +1679,7 @@ export default function AgentsPage() {
                       </div>
                     ))}
 
-                    {/* Converted Registered Investors */}
+                    {/* Converted Registered Buyers */}
                     {selectedAgent.referredInvestors.map((inv) => (
                       <div
                         key={inv.id}

@@ -15,10 +15,10 @@ export async function GET(request: Request) {
       is_banned: false,
     };
 
-    if (roleFilter && ['investor', 'agent', 'builder'].includes(roleFilter)) {
+    if (roleFilter && ['buyer', 'agent', 'builder'].includes(roleFilter)) {
       whereClause.role = roleFilter;
     } else {
-      whereClause.role = { in: ['investor', 'agent', 'builder'] };
+      whereClause.role = { in: ['buyer', 'agent', 'builder'] };
     }
 
     const pendingUsers = await prisma.profile.findMany({

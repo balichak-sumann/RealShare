@@ -44,14 +44,14 @@ async function findOrCreateAdvisorConversation(callerId: string) {
     return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
   }
 
-  // Resolve the investor's advisor: a formally assigned sales rep, falling
+  // Resolve the buyer's advisor: a formally assigned sales rep, falling
   // back to whichever agent most recently earned a commission on this
-  // investor's behalf (e.g. right after their first investment, before a
+  // buyer's behalf (e.g. right after their first investment, before a
   // rep has been formally assigned).
   let advisorId = caller.assigned_sales_rep_id ?? null;
   if (!advisorId) {
     const recentCommission = await prisma.agentCommission.findFirst({
-      where: { investor_id: callerId },
+      where: { buyer_id: callerId },
       orderBy: { created_at: 'desc' },
       select: { agent_id: true },
     });
@@ -63,7 +63,7 @@ async function findOrCreateAdvisorConversation(callerId: string) {
   }
 
   // context_id is the *other* participant's profile id for advisor
-  // conversations, so re-calling this for the same investor+agent pair
+  // conversations, so re-calling this for the same buyer+agent pair
   // always resolves back to the same thread.
   const existing = await prisma.conversation.findFirst({
     where: {
@@ -159,7 +159,7 @@ async function findOrCreatePropertyInquiryConversation(callerId: string, propert
     return NextResponse.json({ error: "You can't inquire about your own listing." }, { status: 400 });
   }
 
-  // If the property was posted directly by an agent or builder, the investor
+  // If the property was posted directly by an agent or builder, the buyer
   // chats with that person one-to-one. If it was posted by an admin, there's
   // no single "right" person to route to -- the thread starts staff-only
   // (no second participant yet) and behaves like a support conversation:

@@ -22,7 +22,7 @@ export async function GET(request: Request) {
                 images: { where: { is_primary: true }, take: 1, select: { image_url: true } },
               },
             },
-            investor: {
+            buyer: {
               select: {
                 id: true,
                 full_name: true,
@@ -61,7 +61,7 @@ export async function GET(request: Request) {
       orderBy: { created_at: 'desc' },
     });
 
-    // Also fetch all investors who were referred by referral codes
+    // Also fetch all buyers who were referred by referral codes
     const referredInvestors = await prisma.profile.findMany({
       where: {
         referred_by_code: {
@@ -107,7 +107,7 @@ export async function GET(request: Request) {
         }
       });
 
-      // Add sales volume from directly referred investors if not already in commissions
+      // Add sales volume from directly referred buyers if not already in commissions
       codeReferred.forEach((inv) => {
         inv.investments.forEach((invItem) => {
           const invAmt = Number(invItem.total_amount || 0);
@@ -151,8 +151,8 @@ export async function GET(request: Request) {
           id: c.id,
           property_title: c.property?.title || 'Property Asset',
           locality: c.property?.locality || '—',
-          investor_name: c.investor?.full_name || 'Investor',
-          investor_email: c.investor?.email || '—',
+          investor_name: c.buyer?.full_name || 'Buyer',
+          investor_email: c.buyer?.email || '—',
           fractions_bought: c.investment?.fractions_bought || 1,
           investment_amount: Number(c.investment?.total_amount || 0),
           commission_percentage: Number(c.commission_percentage || 2.0),

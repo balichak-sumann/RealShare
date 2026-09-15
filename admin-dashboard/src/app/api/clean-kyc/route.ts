@@ -4,12 +4,12 @@ import prisma from '@/lib/prisma';
 export async function GET() {
   try {
     const latestInvestor = await prisma.profile.findFirst({
-      where: { role: 'investor' },
+      where: { role: 'buyer' },
       orderBy: { created_at: 'desc' }
     });
 
     if (!latestInvestor) {
-      return NextResponse.json({ error: 'No investor found.' });
+      return NextResponse.json({ error: 'No buyer found.' });
     }
 
     // Delete the injected documents

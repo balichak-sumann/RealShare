@@ -125,7 +125,7 @@ export async function POST(req: Request) {
       }
     });
 
-    // Check if investor was referred by an Agent
+    // Check if buyer was referred by an Agent
     const referralCode = transaction.profile?.referred_by_code;
     if (referralCode) {
       const agent = await prisma.profile.findFirst({
@@ -139,7 +139,7 @@ export async function POST(req: Request) {
         await prisma.agentCommission.create({
           data: {
             agent_id: agent.id,
-            investor_id: uid,
+            buyer_id: uid,
             property_id: property.id,
             investment_id: investment.id,
             commission_percentage: commPct,

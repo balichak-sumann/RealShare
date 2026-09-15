@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     if (!title || !message) {
       return NextResponse.json({ error: 'title and message are required' }, { status: 400 });
     }
-    const validAudiences = ['all', 'investors', 'agents', 'builders'];
+    const validAudiences = ['all', 'buyers', 'agents', 'builders'];
     const targetAudience = validAudiences.includes(audience) ? audience : 'all';
 
     // Recipient count reflects who this notification actually targets, based on
@@ -37,7 +37,7 @@ export async function POST(request: Request) {
     const recipientsCount = targetAudience === 'all'
       ? await prisma.profile.count()
       : await prisma.profile.count({
-          where: { role: targetAudience === 'investors' ? 'investor' : targetAudience === 'agents' ? 'agent' : 'builder' }
+          where: { role: targetAudience === 'buyers' ? 'buyer' : targetAudience === 'agents' ? 'agent' : 'builder' }
         });
 
     // Deliver to expo push tokens where we have them. A failed push send
@@ -48,7 +48,7 @@ export async function POST(request: Request) {
       where: {
         expo_push_token: { not: null },
         ...(targetAudience !== 'all'
-          ? { role: targetAudience === 'investors' ? 'investor' : targetAudience === 'agents' ? 'agent' : 'builder' }
+          ? { role: targetAudience === 'buyers' ? 'buyer' : targetAudience === 'agents' ? 'agent' : 'builder' }
           : {}),
       },
       select: { expo_push_token: true },

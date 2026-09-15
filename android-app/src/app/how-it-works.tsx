@@ -7,8 +7,8 @@ import { useResponsive } from '@/hooks/useResponsive';
 import { WebFooter } from '@/components/layout/WebFooter';
 
 const STEPS = [
-  { icon: 'people-outline', title: 'Investor Pool', desc: 'A group of investors joins to form a pool and invest in the project together.' },
-  { icon: 'document-text-outline', title: 'Acquire Investor Share', desc: 'Commercial property, flats or villas in the project are acquired as an investor share, typically at a discount to market price.' },
+  { icon: 'people-outline', title: 'Buyer Pool', desc: 'A group of buyers joins to form a pool and invest in the project together.' },
+  { icon: 'document-text-outline', title: 'Acquire Buyer Share', desc: 'Commercial property, flats or villas in the project are acquired as an buyer share, typically at a discount to market price.' },
   { icon: 'pie-chart-outline', title: 'Fractional Ownership', desc: 'Your investment is secured by fractional ownership of the property, recorded and tracked in your portfolio.' },
   { icon: 'camera-outline', title: 'Returns Distribution', desc: 'Rental and yield returns are credited to your bank account periodically, depending on project terms.' },
 ] as const;
@@ -49,7 +49,7 @@ export default function HowItWorksScreen() {
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
-          <Text style={styles.heroKicker}>ACQUIRE INVESTOR SHARE IN TOP PROJECTS</Text>
+          <Text style={styles.heroKicker}>ACQUIRE BUYER SHARE IN TOP PROJECTS</Text>
           <Text style={styles.heroTitle}>Fractionalizing big real estate investments</Text>
         </View>
 

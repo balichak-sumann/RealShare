@@ -20,7 +20,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
-const CATEGORIES = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Investor'] as const;
+const CATEGORIES = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Buyer'] as const;
 
 const MAJOR_CITIES = [
   { name: 'Hyderabad', state: 'Telangana' },
@@ -812,7 +812,7 @@ export default function PostPropertyScreen() {
             <View style={[styles.grid2, { marginBottom: 16 }]}>
               {((category === 'Residential' || category === 'Holiday') 
                 ? ["Apartment", "Villa", "Independent House", "Row House", "Studio", "Penthouse"]
-                : (category === 'Investor')
+                : (category === 'Buyer')
                 ? ["Open Plot", "Farm Land", "Agricultural Land"]
                 : ["Office Space", "Retail Shop", "Showroom", "Warehouse", "Co-working"]
               ).map(s => (
@@ -1041,7 +1041,7 @@ export default function PostPropertyScreen() {
               </>
             )}
 
-            {category === 'Investor' && (
+            {category === 'Buyer' && (
               <>
                 <Text style={styles.inputLabel}>Area Unit</Text>
                 <View style={[styles.grid2, { marginBottom: 16 }]}>

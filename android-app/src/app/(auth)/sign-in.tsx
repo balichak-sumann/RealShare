@@ -17,6 +17,7 @@ export default function SignInScreen() {
 
   const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,13 +50,7 @@ export default function SignInScreen() {
         }
         const userCredential = await signInWithEmailAndPassword(auth, identifier.trim(), password);
         
-        // Check if email is verified (skip for @realshare.test phone-based accounts)
-        if (!userCredential.user.emailVerified && !identifier.trim().endsWith('@realshare.test')) {
-          await signOut(auth);
-          setError('Please verify your email before signing in. Check your inbox for a verification link.');
-          setLoading(false);
-          return;
-        }
+        // Email verification requirement removed
         // onAuthStateChanged in _layout.tsx handles redirection
       } else {
         // Phone Number Validation
@@ -109,7 +104,7 @@ export default function SignInScreen() {
       // onAuthStateChanged in _layout.tsx handles redirection
     } catch (err: any) {
       if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        setError("Account not found. Please create an account first.");
+        setError("Account not found with this mobile number. If you created your account using Email & Password, please enter your Email address.");
       } else {
         setError(err.message || 'Invalid code.');
       }
@@ -165,25 +160,38 @@ export default function SignInScreen() {
               <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Password</Text>
               {isDesktopWeb ? (
                 <View style={styles.desktopInputWrapper}>
-                  <Ionicons name="lock-closed-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ paddingRight: 4 }}>
+                    <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} style={styles.desktopInputIcon} />
+                  </TouchableOpacity>
                   <TextInput
                     value={password}
                     placeholder="••••••••"
                     placeholderTextColor={Neutrals.gray400}
-                    secureTextEntry={true}
+                    secureTextEntry={!showPassword}
                     onChangeText={(password) => setPassword(password)}
                     style={styles.desktopInput}
                   />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4, cursor: 'pointer' }}>
+                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} />
+                  </TouchableOpacity>
                 </View>
               ) : (
-                <TextInput
-                  value={password}
-                  placeholder="••••••••"
-                  placeholderTextColor="#94A3B8"
-                  secureTextEntry={true}
-                  onChangeText={(password) => setPassword(password)}
-                  style={styles.mobileInput}
-                />
+                <View style={[styles.mobileInput, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }]}>
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} style={{ marginRight: 10 }} />
+                  </TouchableOpacity>
+                  <TextInput
+                    value={password}
+                    placeholder="••••••••"
+                    placeholderTextColor="#94A3B8"
+                    secureTextEntry={!showPassword}
+                    onChangeText={(password) => setPassword(password)}
+                    style={{ flex: 1, color: '#FFFFFF', fontSize: 16, paddingVertical: 0 }}
+                  />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} />
+                  </TouchableOpacity>
+                </View>
               )}
             </>
           )}

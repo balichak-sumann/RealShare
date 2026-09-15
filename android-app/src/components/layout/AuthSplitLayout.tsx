@@ -333,12 +333,15 @@ const styles = StyleSheet.create({
     flex: 0.9,
     backgroundColor: '#FAF8F5',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 40,
+    justifyContent: 'flex-start',
+    paddingTop: 80,
+    paddingHorizontal: 40,
+    paddingBottom: 40,
   },
   formContainerWrapper: {
     width: '100%',
     maxWidth: 480,
+    flex: 1,
   },
   // Mobile styles
   mobileContainer: {

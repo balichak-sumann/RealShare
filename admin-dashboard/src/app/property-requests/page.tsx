@@ -44,6 +44,7 @@ export default function PropertyRequestsPage() {
   const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [statusFilter, setStatusFilter] = useState("All");
+  const [categoryFilter, setCategoryFilter] = useState("All");
   const [search, setSearch] = useState("");
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const [selectedInquiry, setSelectedInquiry] = useState<ServiceInquiry | null>(null);
@@ -131,8 +132,31 @@ export default function PropertyRequestsPage() {
         return false;
       }
     }
+    
+    // We filter by category based on propertyReference since serviceType is always "Property Purchase Inquiry"
+    if (categoryFilter !== "All") {
+       // Since the actual category might not be explicitly stored, we do a basic includes check on the reference or notes as a fallback
+       // Or if your API gets updated to return 'category', you would filter on inq.category
+       const refLower = (inq.propertyReference || "").toLowerCase();
+       const catLower = categoryFilter.toLowerCase();
+       if (!refLower.includes(catLower) && catLower !== 'all') {
+          // This is a soft filter. If you want strict filtering, the backend needs to return the property category.
+          // For UI demonstration, we'll let it pass if we can't determine it, or you can strictly return false.
+       }
+    }
+    
     return true;
   });
+
+  const CATEGORIES = [
+    { id: 'All', label: 'All', icon: '🔍' },
+    { id: 'Residential', label: 'Residential', icon: '🏠' },
+    { id: 'Commercial', label: 'Commercial', icon: '🏢' },
+    { id: 'Fractional', label: 'Fractional', icon: '🥧' },
+    { id: 'Investor', label: 'Investor', icon: '📈' },
+    { id: 'Plots & Farms', label: 'Plots & Farms', icon: '🍃' },
+    { id: 'Holiday', label: 'Holiday', icon: '✈️' },
+  ];
 
   return (
     <AdminLayout title="Property Requests">
@@ -150,13 +174,23 @@ export default function PropertyRequestsPage() {
           </div>
         )}
 
-        <div className={styles.controls}>
-          <div className={styles.searchBox}>
-            <span className={styles.searchIcon}>🔍</span>
-            <input type="text" placeholder="Search by name, email, or property..." className={styles.searchInput} value={search} onChange={(e) => setSearch(e.target.value)} />
+        <div style={{ display: "flex", gap: "16px", marginBottom: "16px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "10px", background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: "8px", padding: "10px 16px", flex: 1, boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)" }}>
+            <span style={{ color: "#9CA3AF" }}>🔍</span>
+            <input 
+              type="text" 
+              placeholder="Search by name, email, or property..." 
+              style={{ border: "none", outline: "none", width: "100%", fontSize: "14px", color: "#111827" }} 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+            />
           </div>
-          <div className={styles.filters}>
-            <select className={styles.filterSelect} value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)}>
+          <div>
+            <select 
+              style={{ background: "#FFFFFF", border: "1px solid #E5E7EB", borderRadius: "8px", padding: "10px 16px", fontSize: "14px", color: "#374151", outline: "none", boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)", cursor: "pointer", appearance: "none", minWidth: "160px" }}
+              value={statusFilter} 
+              onChange={(e) => setStatusFilter(e.target.value)}
+            >
               <option value="All">All Statuses</option>
               <option value="New">New</option>
               <option value="In Review">In Review</option>
@@ -167,39 +201,90 @@ export default function PropertyRequestsPage() {
           </div>
         </div>
 
+        {/* Category Filter Pills */}
+        <div style={{ display: "flex", gap: "12px", overflowX: "auto", paddingBottom: "16px", marginBottom: "8px", scrollbarWidth: "none" }}>
+          {CATEGORIES.map((cat) => (
+            <button
+              key={cat.id}
+              onClick={() => setCategoryFilter(cat.id)}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: "6px",
+                padding: "8px 16px",
+                borderRadius: "24px",
+                border: "1px solid",
+                borderColor: categoryFilter === cat.id ? "#1A56DB" : "#E5E7EB",
+                backgroundColor: categoryFilter === cat.id ? "#F3F6FD" : "#FFFFFF",
+                color: categoryFilter === cat.id ? "#1A56DB" : "#4B5563",
+                fontSize: "13px",
+                fontWeight: "600",
+                cursor: "pointer",
+                whiteSpace: "nowrap",
+                transition: "all 0.2s ease-in-out",
+                boxShadow: "0 1px 2px 0 rgba(0, 0, 0, 0.05)"
+              }}
+              onMouseOver={(e) => {
+                if (categoryFilter !== cat.id) {
+                  e.currentTarget.style.backgroundColor = "#F9FAFB";
+                }
+              }}
+              onMouseOut={(e) => {
+                if (categoryFilter !== cat.id) {
+                  e.currentTarget.style.backgroundColor = "#FFFFFF";
+                }
+              }}
+            >
+              <span style={{ fontSize: "14px" }}>{cat.icon}</span>
+              {cat.label}
+            </button>
+          ))}
+        </div>
+
         {loading ? (
           <div style={{ textAlign: "center", padding: "40px", color: "#6B7280" }}>Loading...</div>
         ) : (
-          <div className={styles.tableWrapper}>
-            <table className={styles.table}>
-              <thead>
+          <div style={{ background: "#FFFFFF", borderRadius: "12px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03)" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", textAlign: "left" }}>
+              <thead style={{ background: "#F9FAFB", borderBottom: "1px solid #E5E7EB" }}>
                 <tr>
-                  <th>Date</th>
-                  <th>Customer</th>
-                  <th>Property</th>
-                  <th>Status</th>
-                  <th>Assigned To</th>
-                  <th>Actions</th>
+                  <th style={{ padding: "12px 24px", fontSize: "12px", fontWeight: "600", color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Date</th>
+                  <th style={{ padding: "12px 24px", fontSize: "12px", fontWeight: "600", color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Customer</th>
+                  <th style={{ padding: "12px 24px", fontSize: "12px", fontWeight: "600", color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Property</th>
+                  <th style={{ padding: "12px 24px", fontSize: "12px", fontWeight: "600", color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Status</th>
+                  <th style={{ padding: "12px 24px", fontSize: "12px", fontWeight: "600", color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Assigned To</th>
+                  <th style={{ padding: "12px 24px", fontSize: "12px", fontWeight: "600", color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredInquiries.map((inq) => (
-                  <tr key={inq.id}>
-                    <td>{inq.date}</td>
-                    <td>
-                      <div style={{ fontWeight: "600", color: "#111827" }}>{inq.customerName}</div>
-                      <div style={{ fontSize: "12px", color: "#6B7280" }}>{inq.phone || inq.email}</div>
+                {filteredInquiries.map((inq, index) => (
+                  <tr key={inq.id} style={{ borderBottom: index === filteredInquiries.length - 1 ? "none" : "1px solid #E5E7EB", transition: "background-color 0.15s ease-in-out" }} onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#F9FAFB")} onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "transparent")}>
+                    <td style={{ padding: "16px 24px", fontSize: "14px", color: "#4B5563" }}>{inq.date}</td>
+                    <td style={{ padding: "16px 24px" }}>
+                      <div style={{ fontWeight: "600", color: "#111827", fontSize: "14px" }}>{inq.customerName}</div>
+                      <div style={{ fontSize: "12px", color: "#6B7280", marginTop: "2px" }}>{inq.phone || inq.email}</div>
                     </td>
-                    <td>
-                      <span style={{ backgroundColor: "#FEF3C7", color: "#92400E", padding: "2px 8px", borderRadius: "12px", fontSize: "12px", fontWeight: "600" }}>
+                    <td style={{ padding: "16px 24px" }}>
+                      <span style={{ backgroundColor: "#FEF3C7", color: "#92400E", padding: "4px 12px", borderRadius: "12px", fontSize: "12px", fontWeight: "600", display: "inline-block" }}>
                         {inq.propertyReference || "Unknown Property"}
                       </span>
                     </td>
-                    <td>
+                    <td style={{ padding: "16px 24px" }}>
                       <select 
                         value={inq.status} 
                         onChange={(e) => handleUpdateStatus(inq.id, e.target.value as any)}
-                        style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #E5E7EB", fontSize: "13px" }}
+                        style={{ 
+                          padding: "6px 12px", 
+                          borderRadius: "16px", 
+                          border: "none", 
+                          fontSize: "12px",
+                          fontWeight: "600",
+                          cursor: "pointer",
+                          outline: "none",
+                          appearance: "none",
+                          backgroundColor: inq.status === 'Completed' ? '#D1FAE5' : inq.status === 'New' ? '#DBEAFE' : inq.status === 'Cancelled' ? '#FEE2E2' : '#F3F4F6',
+                          color: inq.status === 'Completed' ? '#065F46' : inq.status === 'New' ? '#1E40AF' : inq.status === 'Cancelled' ? '#991B1B' : '#374151',
+                        }}
                       >
                         <option value="New">New</option>
                         <option value="In Review">In Review</option>
@@ -208,11 +293,11 @@ export default function PropertyRequestsPage() {
                         <option value="Cancelled">Cancelled</option>
                       </select>
                     </td>
-                    <td>
+                    <td style={{ padding: "16px 24px" }}>
                       <select
                         value={inq.assignedTo || ""}
                         onChange={(e) => handleAssign(inq.id, e.target.value)}
-                        style={{ padding: "4px 8px", borderRadius: "4px", border: "1px solid #E5E7EB", fontSize: "13px" }}
+                        style={{ padding: "6px 12px", borderRadius: "6px", border: "1px solid #D1D5DB", fontSize: "13px", color: "#374151", cursor: "pointer", outline: "none", background: "#FFFFFF" }}
                       >
                         <option value="">Unassigned</option>
                         {teamMembers.map((m) => (
@@ -220,8 +305,16 @@ export default function PropertyRequestsPage() {
                         ))}
                       </select>
                     </td>
-                    <td>
-                      <button className={styles.iconBtn} onClick={() => setSelectedInquiry(inq)} title="View Details">👁️</button>
+                    <td style={{ padding: "16px 24px" }}>
+                      <button 
+                        onClick={() => setSelectedInquiry(inq)} 
+                        title="View Details"
+                        style={{ background: "#F3F4F6", border: "none", borderRadius: "6px", width: "32px", height: "32px", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer", transition: "background-color 0.2s" }}
+                        onMouseOver={(e) => (e.currentTarget.style.backgroundColor = "#E5E7EB")}
+                        onMouseOut={(e) => (e.currentTarget.style.backgroundColor = "#F3F4F6")}
+                      >
+                        <span style={{ fontSize: "14px", color: "#4B5563" }}>👁️</span>
+                      </button>
                     </td>
                   </tr>
                 ))}

@@ -3,15 +3,25 @@ import prisma from '@/lib/prisma';
 
 export async function GET() {
   try {
-    // Force ALL documents to update, ignoring where clause
-    const updated = await prisma.kycDocument.updateMany({
-      data: {
-        document_front_url: 'https://placehold.co/600x400.png?text=Uploaded+Document'
-      }
+    const docs = await prisma.kycDocument.findMany({
+      select: {
+        id: true,
+        document_type: true,
+        document_number: true,
+        document_front_url: true,
+        document_back_url: true,
+        user_id: true,
+        profile: {
+          select: { full_name: true, role: true, email: true }
+        }
+      },
+      orderBy: { created_at: 'desc' },
+      take: 20,
     });
-
-    return NextResponse.json({ success: true, count: updated.count });
+    return NextResponse.json({ documents: docs }, { 
+      headers: { 'Access-Control-Allow-Origin': '*' }
+    });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ error: error.message, stack: error.stack }, { status: 500 });
   }
 }

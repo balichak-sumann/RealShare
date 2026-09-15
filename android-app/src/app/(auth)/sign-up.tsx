@@ -7,6 +7,7 @@ import { AuthSplitLayout } from '@/components/layout/AuthSplitLayout';
 import { Neutrals, GoldSystem, Radius, Typography, Shadows } from '@/constants/design';
 import { Ionicons } from '@expo/vector-icons';
 import { useResponsive } from '@/hooks/useResponsive';
+import * as ImagePicker from 'expo-image-picker';
 
 import { useUser } from '@/contexts/UserContext';
 import { getApiUrl } from '@/lib/api';
@@ -21,7 +22,21 @@ export default function SignUpScreen() {
   const isDesktopWeb = isDesktop && Platform.OS === 'web';
 
   const [identifier, setIdentifier] = useState('');
+  
+  // Investor & Builder & Agent specific fields
+  const [fullName, setFullName] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [fullAddress, setFullAddress] = useState('');
+  
+  // Agent specific fields
+  const [aboutAgent, setAboutAgent] = useState('');
+  const [aadhaarDoc, setAadhaarDoc] = useState<any>(null);
+  const [panDoc, setPanDoc] = useState<any>(null);
+  const [passportDoc, setPassportDoc] = useState<any>(null);
+
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState('');
   const [referralCode, setReferralCode] = useState('');
@@ -32,79 +47,72 @@ export default function SignUpScreen() {
 
   const isEmail = identifier.includes('@');
 
-  const syncUserToBackend = async (user: any) => {
+  const syncUserToBackend = async (user: any): Promise<boolean> => {
     try {
-      if (user) {
-        const token = await user.getIdToken();
-        const apiUrl = getApiUrl();
-        const url = `${apiUrl}/api/users/sync`;
-        const body: any = { role };
-        if (referralCode) {
-          body.referred_by_code = referralCode;
-        }
-        const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 8000);
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          },
-          body: JSON.stringify(body),
-          signal: controller.signal,
-        });
-        clearTimeout(timeoutId);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.success && data.profile) {
-            if (role === 'builder') {
-              await signOut(auth).catch(() => {});
-              setProfile(null);
-              setShowSuccessModal(true);
-            } else {
-              setProfile(data.profile);
-              router.replace('/');
-            }
-          }
-        } else {
-          if (role === 'builder') {
-            await signOut(auth).catch(() => {});
-            setProfile(null);
-            setShowSuccessModal(true);
-          } else {
-            router.replace('/');
-          }
-        }
+      if (!user) return false;
+      const token = await user.getIdToken();
+      const apiUrl = getApiUrl();
+      const url = `${apiUrl}/api/users/sync`;
+      const body: any = { role };
+      
+      if (role === 'investor' || role === 'builder' || role === 'agent') {
+        body.full_name = fullName.trim();
+        body.phone_number = `+91 ${mobileNumber.replace(/\\D/g, '').slice(-10)}`;
+        body.full_address = fullAddress.trim();
+      } else {
+        body.full_name = fullName || '';
+        body.phone_number = isEmail ? '' : identifier.trim();
       }
+      
+      if (role === 'agent') {
+        body.bio = aboutAgent.trim();
+      }
+      if (referralCode) {
+        body.referred_by_code = referralCode;
+      }
+      
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+      
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(body),
+        signal: controller.signal
+      });
+      
+      clearTimeout(timeoutId);
+      if (res.ok) {
+        const data = await res.json();
+        return data.success === true;
+      }
+      return false;
     } catch (e: any) {
       console.error("Failed to sync role/referral", e?.message);
-      if (role === 'builder') {
-        await signOut(auth).catch(() => {});
-        setProfile(null);
-        setShowSuccessModal(true);
-      } else {
-        router.replace('/');
-      }
+      return false;
     }
   };
 
   const onSignUpPress = async () => {
-    if (!identifier) {
-      setError('Please enter your Email or Mobile Number.');
-      return;
-    }
-
     setLoading(true);
     setError('');
 
     try {
-      if (isEmail) {
-        if (!EMAIL_REGEX.test(identifier.trim())) {
+      if (role === 'investor' || role === 'builder' || role === 'agent') {
+        if (!fullName.trim() || !mobileNumber.trim() || !email.trim() || !fullAddress.trim() || !password) {
+          setError('Please fill in all required fields.');
+          setLoading(false); return;
+        }
+        if (!EMAIL_REGEX.test(email.trim())) {
           setError('Please enter a valid email address (e.g. john@gmail.com).');
           setLoading(false); return;
         }
-        if (!password) {
-          setError('Please enter a password.');
+        const cleanedPhone = mobileNumber.replace(/\\D/g, '').slice(-10);
+        if (cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
+          setError('Please enter a valid 10-digit mobile number.');
           setLoading(false); return;
         }
         if (password.length < MIN_PASSWORD_LENGTH) {
@@ -120,29 +128,117 @@ export default function SignUpScreen() {
           setLoading(false); return;
         }
 
-        const userCredential = await createUserWithEmailAndPassword(auth, identifier.trim(), password);
+        const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
         await syncUserToBackend(userCredential.user);
         
-        try { await sendEmailVerification(userCredential.user); } catch (e) {}
+        if (role === 'agent') {
+           const token = await userCredential.user.getIdToken();
+           // Use local admin server for uploads when developing locally on web
+           const uploadBaseUrl = (Platform.OS === 'web' && window.location.hostname === 'localhost')
+             ? 'http://localhost:3000'
+             : getApiUrl();
+           
+           const uploadDoc = async (docData: any, docType: string) => {
+             if (!docData) return;
+             try {
+               let base64Data = docData.base64;
+               if (!base64Data && docData.uri) {
+                 try {
+                   const res = await fetch(docData.uri);
+                   const blob = await res.blob();
+                   base64Data = await new Promise((resolve, reject) => {
+                     const reader = new FileReader();
+                     reader.onloadend = () => resolve(reader.result as string);
+                     reader.onerror = reject;
+                     reader.readAsDataURL(blob);
+                   });
+                 } catch (e) { console.error(e); }
+               }
+               if (!base64Data) return;
+               
+               const uploadRes = await fetch(`${uploadBaseUrl}/api/upload`, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                 body: JSON.stringify({ imageBase64: base64Data, fileName: `kyc_${docType}.jpg` })
+               });
+               const uploadData = await uploadRes.json();
+               if (!uploadData.success) return;
+               
+               await fetch(`${uploadBaseUrl}/api/kyc/submit`, {
+                 method: 'POST',
+                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                 body: JSON.stringify({
+                   document_type: docType,
+                   document_number: 'UPLOADED-VIA-APP',
+                   document_front_url: uploadData.url,
+                   document_back_url: null
+                 })
+               });
+             } catch (e) { console.error('KYC Upload failed', e); }
+           };
+           
+           await uploadDoc(aadhaarDoc, 'aadhaar');
+           await uploadDoc(panDoc, 'pan');
+           await uploadDoc(passportDoc, 'passport');
+        }
 
-        await signOut(auth);
+        // No email verification needed anymore
+        // try { await sendEmailVerification(userCredential.user); } catch (e) {}
+
+        await signOut(auth).catch(() => {});
         setProfile(null);
-        router.replace('/verify-email' as any);
+        setShowSuccessModal(true);
       } else {
-        const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
-        if (cleanedPhone.length !== 10) {
-          setError('Please enter a valid 10-digit mobile number.');
+        // Agent or Builder logic
+        if (!identifier) {
+          setError('Please enter your Email or Mobile Number.');
           setLoading(false); return;
         }
-        if (!/^[6-9]/.test(cleanedPhone)) {
-          setError('Mobile number must start with 7, 8, 9, or 6.');
-          setLoading(false); return;
+
+        if (isEmail) {
+          if (!EMAIL_REGEX.test(identifier.trim())) {
+            setError('Please enter a valid email address (e.g. john@gmail.com).');
+            setLoading(false); return;
+          }
+          if (!password) {
+            setError('Please enter a password.');
+            setLoading(false); return;
+          }
+          if (password.length < MIN_PASSWORD_LENGTH) {
+            setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
+            setLoading(false); return;
+          }
+          if (!/[A-Z]/.test(password)) {
+            setError('Password must contain at least one uppercase letter.');
+            setLoading(false); return;
+          }
+          if (!/[0-9]/.test(password)) {
+            setError('Password must contain at least one number.');
+            setLoading(false); return;
+          }
+
+          const userCredential = await createUserWithEmailAndPassword(auth, identifier.trim(), password);
+          await syncUserToBackend(userCredential.user);
+          
+          await signOut(auth);
+          setProfile(null);
+          setShowSuccessModal(true);
+        } else {
+          const cleanedPhone = identifier.replace(/\\D/g, '').slice(-10);
+          if (cleanedPhone.length !== 10) {
+            setError('Please enter a valid 10-digit mobile number.');
+            setLoading(false); return;
+          }
+          if (!/^[6-9]/.test(cleanedPhone)) {
+            setError('Mobile number must start with 7, 8, 9, or 6.');
+            setLoading(false); return;
+          }
+          
+          setTimeout(() => {
+            setPendingVerification(true);
+            setLoading(false);
+          }, 500);
         }
-        
-        setTimeout(() => {
-          setPendingVerification(true);
-          setLoading(false);
-        }, 500);
       }
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
@@ -154,6 +250,45 @@ export default function SignUpScreen() {
       }
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handlePickDocument = async (setter: any) => {
+    try {
+      if (Platform.OS === 'web') {
+        // On web, use a native file input for reliable base64 capture
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'image/*';
+        input.onchange = (event: any) => {
+          const file = event.target.files?.[0];
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64String = reader.result as string;
+            setter({
+              uri: URL.createObjectURL(file),
+              base64: base64String,
+              fileName: file.name,
+            });
+          };
+          reader.readAsDataURL(file);
+        };
+        input.click();
+      } else {
+        const result = await ImagePicker.launchImageLibraryAsync({
+          mediaTypes: ImagePicker.MediaTypeOptions.Images,
+          allowsEditing: true,
+          aspect: [4, 3],
+          quality: 0.8,
+          base64: true,
+        });
+        if (!result.canceled && result.assets.length > 0) {
+          setter(result.assets[0]);
+        }
+      }
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -172,6 +307,10 @@ export default function SignUpScreen() {
 
       const userCredential = await createUserWithEmailAndPassword(auth, dummyEmail, dummyPassword);
       await syncUserToBackend(userCredential.user);
+      
+      await signOut(auth);
+      setProfile(null);
+      setShowSuccessModal(true);
     } catch (err: any) {
       if (err.code === 'auth/email-already-in-use') {
         setError('This phone number is already registered. Please log in.');
@@ -219,40 +358,156 @@ export default function SignUpScreen() {
             })}
           </View>
 
-          <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email or Mobile Number</Text>
-          {isDesktopWeb ? (
-            <View style={styles.desktopInputWrapper}>
-              <Ionicons name="mail-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
-              <TextInput
-                autoCapitalize="none" keyboardType="email-address" value={identifier}
-                placeholder="john@example.com or 9988776655" placeholderTextColor={Neutrals.gray400}
-                onChangeText={setIdentifier} style={styles.desktopInput}
-              />
-            </View>
-          ) : (
-            <TextInput
-              autoCapitalize="none" keyboardType="email-address" value={identifier}
-              placeholder="john@example.com or 9988776655" placeholderTextColor="#94A3B8"
-              onChangeText={setIdentifier} style={styles.mobileInput}
-            />
-          )}
-
-          {isEmail && (
+          {role === 'investor' || role === 'builder' || role === 'agent' ? (
             <>
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Full Name</Text>
+              {isDesktopWeb ? (
+                <View style={styles.desktopInputWrapper}>
+                  <Ionicons name="person-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                  <TextInput value={fullName} placeholder="Jane Doe" placeholderTextColor={Neutrals.gray400} onChangeText={setFullName} style={styles.desktopInput} />
+                </View>
+              ) : (
+                <TextInput value={fullName} placeholder="Jane Doe" placeholderTextColor="#94A3B8" onChangeText={setFullName} style={styles.mobileInput} />
+              )}
+
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Mobile Number</Text>
+              {isDesktopWeb ? (
+                <View style={styles.desktopInputWrapper}>
+                  <Ionicons name="call-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                  <TextInput keyboardType="phone-pad" value={mobileNumber} placeholder="9988776655" placeholderTextColor={Neutrals.gray400} onChangeText={setMobileNumber} style={styles.desktopInput} />
+                </View>
+              ) : (
+                <TextInput keyboardType="phone-pad" value={mobileNumber} placeholder="9988776655" placeholderTextColor="#94A3B8" onChangeText={setMobileNumber} style={styles.mobileInput} />
+              )}
+
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email Address</Text>
+              {isDesktopWeb ? (
+                <View style={styles.desktopInputWrapper}>
+                  <Ionicons name="mail-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                  <TextInput autoCapitalize="none" keyboardType="email-address" value={email} placeholder="jane@example.com" placeholderTextColor={Neutrals.gray400} onChangeText={setEmail} style={styles.desktopInput} />
+                </View>
+              ) : (
+                <TextInput autoCapitalize="none" keyboardType="email-address" value={email} placeholder="jane@example.com" placeholderTextColor="#94A3B8" onChangeText={setEmail} style={styles.mobileInput} />
+              )}
+
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Full Address</Text>
+              {isDesktopWeb ? (
+                <View style={styles.desktopInputWrapper}>
+                  <Ionicons name="location-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                  <TextInput value={fullAddress} placeholder="Apt 123, Jubilee Hills, Hyderabad" placeholderTextColor={Neutrals.gray400} onChangeText={setFullAddress} style={styles.desktopInput} />
+                </View>
+              ) : (
+                <TextInput value={fullAddress} placeholder="Apt 123, Jubilee Hills, Hyderabad" placeholderTextColor="#94A3B8" onChangeText={setFullAddress} style={styles.mobileInput} />
+              )}
+
               <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Password</Text>
               {isDesktopWeb ? (
                 <View style={styles.desktopInputWrapper}>
-                  <Ionicons name="lock-closed-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ paddingRight: 4 }}>
+                    <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} style={styles.desktopInputIcon} />
+                  </TouchableOpacity>
+                  <TextInput value={password} placeholder="••••••••" placeholderTextColor={Neutrals.gray400} secureTextEntry={!showPassword} onChangeText={setPassword} style={styles.desktopInput} />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4, cursor: 'pointer' }}>
+                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} />
+                  </TouchableOpacity>
+                </View>
+              ) : (
+                <View style={[styles.mobileInput, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }]}>
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} style={{ marginRight: 10 }} />
+                  </TouchableOpacity>
+                  <TextInput value={password} placeholder="••••••••" placeholderTextColor="#94A3B8" secureTextEntry={!showPassword} onChangeText={setPassword} style={{ flex: 1, color: '#FFFFFF', fontSize: 16, paddingVertical: 0 }} />
+                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} />
+                  </TouchableOpacity>
+                </View>
+              )}
+
+              {role === 'agent' && (
+                <>
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>About Agent Partner</Text>
+                  {isDesktopWeb ? (
+                    <View style={[styles.desktopInputWrapper, { height: 100, alignItems: 'flex-start', paddingTop: 12 }]}>
+                      <Ionicons name="document-text-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                      <TextInput multiline value={aboutAgent} placeholder="Write something about your experience..." placeholderTextColor={Neutrals.gray400} onChangeText={setAboutAgent} style={[styles.desktopInput, { paddingVertical: 0, height: 80, textAlignVertical: 'top' }]} />
+                    </View>
+                  ) : (
+                    <TextInput multiline value={aboutAgent} placeholder="Write something about your experience..." placeholderTextColor="#94A3B8" onChangeText={setAboutAgent} style={[styles.mobileInput, { height: 100, textAlignVertical: 'top' }]} />
+                  )}
+
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>KYC Documents Upload</Text>
+                  <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                    {[
+                      { label: 'Aadhaar', state: aadhaarDoc, setter: setAadhaarDoc },
+                      { label: 'PAN Card', state: panDoc, setter: setPanDoc },
+                      { label: 'Passport', state: passportDoc, setter: setPassportDoc }
+                    ].map((doc) => (
+                      <TouchableOpacity key={doc.label} style={{ flex: 1, minWidth: 100, alignItems: 'center', backgroundColor: isDesktopWeb ? Neutrals.white : 'rgba(0,0,0,0.3)', borderWidth: 1, borderColor: isDesktopWeb ? Neutrals.gray200 : 'rgba(255,255,255,0.1)', borderRadius: Radius.md, padding: 12, ...(isDesktopWeb && Platform.OS === 'web' ? { boxShadow: '0 2px 4px rgba(0,0,0,0.02)' } as any : {}) }} onPress={() => handlePickDocument(doc.setter)}>
+                        {doc.state?.uri ? (
+                          <Image source={{ uri: doc.state.uri }} style={{ width: 40, height: 40, borderRadius: 4, marginBottom: 8 }} />
+                        ) : (
+                          <Ionicons name="cloud-upload-outline" size={24} color={isDesktopWeb ? Neutrals.gray500 : '#94A3B8'} style={{ marginBottom: 8 }} />
+                        )}
+                        <Text style={{ fontSize: 12, fontWeight: '600', color: isDesktopWeb ? Neutrals.obsidian : '#FFFFFF', textAlign: 'center' }}>
+                          {doc.state?.uri ? `${doc.label} (Done)` : `Upload ${doc.label}`}
+                        </Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email or Mobile Number</Text>
+              {isDesktopWeb ? (
+                <View style={styles.desktopInputWrapper}>
+                  <Ionicons name="mail-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
                   <TextInput
-                    value={password} placeholder="••••••••" placeholderTextColor={Neutrals.gray400}
-                    secureTextEntry={true} onChangeText={setPassword} style={styles.desktopInput}
+                    autoCapitalize="none" keyboardType="email-address" value={identifier}
+                    placeholder="john@example.com or 9988776655" placeholderTextColor={Neutrals.gray400}
+                    onChangeText={setIdentifier} style={styles.desktopInput}
                   />
                 </View>
               ) : (
                 <TextInput
-                  value={password} placeholder="••••••••" placeholderTextColor="#94A3B8"
-                  secureTextEntry={true} onChangeText={setPassword} style={styles.mobileInput}
+                  autoCapitalize="none" keyboardType="email-address" value={identifier}
+                  placeholder="john@example.com or 9988776655" placeholderTextColor="#94A3B8"
+                  onChangeText={setIdentifier} style={styles.mobileInput}
                 />
+              )}
+
+              {isEmail && (
+                <>
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Password</Text>
+                  {isDesktopWeb ? (
+                    <View style={styles.desktopInputWrapper}>
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ paddingRight: 4 }}>
+                        <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} style={styles.desktopInputIcon} />
+                      </TouchableOpacity>
+                      <TextInput
+                        value={password} placeholder="••••••••" placeholderTextColor={Neutrals.gray400}
+                        secureTextEntry={!showPassword} onChangeText={setPassword} style={styles.desktopInput}
+                      />
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4, cursor: 'pointer' }}>
+                        <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} />
+                      </TouchableOpacity>
+                    </View>
+                  ) : (
+                    <View style={[styles.mobileInput, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }]}>
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} style={{ marginRight: 10 }} />
+                      </TouchableOpacity>
+                      <TextInput
+                        value={password} placeholder="••••••••" placeholderTextColor="#94A3B8"
+                        secureTextEntry={!showPassword} onChangeText={setPassword} style={{ flex: 1, color: '#FFFFFF', fontSize: 16, paddingVertical: 0 }}
+                      />
+                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
+                        <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} />
+                      </TouchableOpacity>
+                    </View>
+                  )}
+                </>
               )}
             </>
           )}
@@ -275,7 +530,9 @@ export default function SignUpScreen() {
 
           <TouchableOpacity style={isDesktopWeb ? styles.desktopPrimaryButton : styles.mobilePrimaryButton} onPress={onSignUpPress} disabled={loading}>
             {loading ? <ActivityIndicator color={isDesktopWeb ? Neutrals.white : "#0F172A"} /> : (
-              <Text style={isDesktopWeb ? styles.desktopPrimaryButtonText : styles.mobilePrimaryButtonText}>{isEmail ? 'Create Account' : 'Send OTP'}</Text>
+              <Text style={isDesktopWeb ? styles.desktopPrimaryButtonText : styles.mobilePrimaryButtonText}>
+                {role === 'investor' || role === 'builder' || role === 'agent' || isEmail ? 'Create Account' : 'Send OTP'}
+              </Text>
             )}
           </TouchableOpacity>
 
@@ -412,7 +669,9 @@ export default function SignUpScreen() {
           <View style={styles.modalCard}>
             <View style={styles.modalIconContainer}><Text style={styles.modalIconText}>✓</Text></View>
             <Text style={styles.modalTitle}>Account Created Successfully</Text>
-            <Text style={styles.modalMessage}>Your Builder account has been created. Please log in with your credentials to access the Builder Portal.</Text>
+            <Text style={styles.modalMessage}>
+              Your {role.charAt(0).toUpperCase() + role.slice(1)} account has been created, but it requires Admin approval. Please wait for our team to review and approve your request before you can log in.
+            </Text>
             <TouchableOpacity style={styles.modalButton} onPress={() => { setShowSuccessModal(false); router.replace('/(auth)/sign-in'); }}>
               <Text style={styles.modalButtonText}>Go to Login</Text>
             </TouchableOpacity>
@@ -429,7 +688,8 @@ const styles = StyleSheet.create({
   roleRow: { flexDirection: 'row', gap: 12, marginBottom: 24 },
 
   // --- Desktop Styles ---
-  desktopScrollContainer: { flexGrow: 1, justifyContent: 'center', paddingVertical: 24 },
+  desktopScrollContainer: { flexGrow: 1, paddingVertical: 24 },
+  roleRow: { flexDirection: 'row', gap: 12, marginBottom: 24, flexWrap: 'wrap' },
   desktopCard: { backgroundColor: Neutrals.white, borderRadius: Radius.xl, padding: 40, width: '100%', ...(Platform.OS === 'web' ? { boxShadow: '0 8px 32px rgba(0,0,0,0.06)' } : Shadows.medium) },
   desktopHeader: { marginBottom: 32 },
   desktopTitle: { fontSize: 32, fontWeight: '800', color: Neutrals.obsidian, marginBottom: 8, fontFamily: 'serif' },

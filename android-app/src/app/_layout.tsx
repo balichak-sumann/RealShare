@@ -103,14 +103,7 @@ function RootLayoutNav() {
         return;
       }
 
-      // Check email verification gate
-      if (!user.emailVerified && !user.email?.endsWith('@realshare.test')) {
-        const currentRoute = segments[1] as string;
-        if (currentRoute !== 'verify-email' && currentRoute !== 'sign-up') {
-          router.replace('/verify-email');
-        }
-        return; // Halt further sync/routing until verified
-      }
+      // Email verification gate removed
 
       // Sync user to DB
       user.getIdToken().then(async token => {
@@ -120,7 +113,7 @@ function RootLayoutNav() {
         } catch(e) {
           console.log(e);
         }
-        fetch(`${getApiUrl()}/api/users/sync`, {
+        resilientFetch(`${getApiUrl()}/api/users/sync`, {
           method: 'POST',
           headers: {
             'Authorization': `Bearer ${token}`,
@@ -131,13 +124,28 @@ function RootLayoutNav() {
         .then(res => res.ok ? res.json() : null)
         .then(data => {
           if (data?.success && data?.profile) {
+            // Admin Approval Check
+            if (data.profile.is_approved === false && data.profile.role !== 'admin' && data.profile.role !== 'employee') {
+              import('firebase/auth').then(({ signOut }) => signOut(auth));
+              setProfile(null);
+              if (Platform.OS === 'web') {
+                window.alert("Your account is pending admin approval. Please try again later.");
+              } else {
+                import('react-native').then(({ Alert }) => {
+                  Alert.alert("Pending Approval", "Your account is pending admin approval. Please try again later.");
+                });
+              }
+              if (inAuthGroup && (segments[1] as string) !== 'sign-up') router.replace('/sign-in');
+              return;
+            }
+
             setProfile(data.profile);
             const isSignUp = (segments[1] as string) === 'sign-up';
             if (inAuthGroup && !isSignUp) {
               if (data.profile.role === 'builder') {
                 router.replace('/builder-portal');
               } else if (data.profile.role === 'agent') {
-                router.replace('/');
+                router.replace('/agent-portal');
               } else if (data.profile.role === 'employee') {
                 router.replace('/employee-portal');
               } else {
@@ -150,13 +158,10 @@ function RootLayoutNav() {
                 // Let it stay on / (which renders tabs/index which embeds agent portal)
               }
             }
-          } else if (inAuthGroup && (segments[1] as string) !== 'sign-up') {
-            router.replace('/');
           }
         })
         .catch(err => {
           console.warn('Failed to sync user:', err.message);
-          if (inAuthGroup && (segments[1] as string) !== 'sign-up') router.replace('/');
         });
       });
     }

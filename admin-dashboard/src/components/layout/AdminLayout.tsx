@@ -21,6 +21,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     { name: "Featured Properties", path: "/featured-properties", icon: "⭐" },
     { name: "Developers", path: "/developers", icon: "🏗️" },
     { name: "Investors & KYC", path: "/investors", icon: "👥" },
+    { name: "Account Approvals", path: "/approvals", icon: "✅" },
     { name: "Employees (RBAC)", path: "/employees", icon: "👔" },
     { name: "Agents & Commissions", path: "/agents", icon: "🤝" },
     { name: "Referral Tracking", path: "/referrals", icon: "🔗" },

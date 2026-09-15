@@ -8,7 +8,12 @@ const PRODUCTION_API_URL = 'https://realshare-admin.onrender.com';
  * On all other platforms (Android/iOS/Production Web), always uses the production URL.
  */
 export function getApiUrl(): string {
-  // Always use production DB for local development to sync with RealShare properties
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    if (hostname === 'localhost' || hostname === '127.0.0.1') {
+      return 'http://localhost:3000';
+    }
+  }
   return PRODUCTION_API_URL;
 }
 

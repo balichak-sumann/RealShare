@@ -29,6 +29,8 @@ export default function ContactScreen() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
+  const isFormValid = fullName.trim() !== '' && email.trim() !== '' && phone.trim() !== '' && location.trim() !== '' && pincode.trim() !== '' && consent;
+
   if (Platform.OS !== 'web') {
     return <Redirect href="/" />;
   }
@@ -123,22 +125,22 @@ export default function ContactScreen() {
 
                 <View style={[styles.row2, isDesktop && styles.row2Desktop]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.formLabel}>Email</Text>
+                    <Text style={styles.formLabel}>Email *</Text>
                     <TextInput style={styles.input} value={email} onChangeText={setEmail} placeholder="you@example.com" keyboardType="email-address" autoCapitalize="none" placeholderTextColor={Neutrals.gray400} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.formLabel}>Phone</Text>
+                    <Text style={styles.formLabel}>Phone *</Text>
                     <TextInput style={styles.input} value={phone} onChangeText={setPhone} placeholder="+91 98765 43210" keyboardType="phone-pad" placeholderTextColor={Neutrals.gray400} />
                   </View>
                 </View>
 
                 <View style={[styles.row2, isDesktop && styles.row2Desktop]}>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.formLabel}>Where would you like to own?</Text>
+                    <Text style={styles.formLabel}>Where would you like to own? *</Text>
                     <TextInput style={styles.input} value={location} onChangeText={setLocation} placeholder="e.g. Hyderabad" placeholderTextColor={Neutrals.gray400} />
                   </View>
                   <View style={{ flex: 1 }}>
-                    <Text style={styles.formLabel}>Pincode</Text>
+                    <Text style={styles.formLabel}>Pincode *</Text>
                     <TextInput style={styles.input} value={pincode} onChangeText={setPincode} placeholder="500090" keyboardType="number-pad" placeholderTextColor={Neutrals.gray400} />
                   </View>
                 </View>
@@ -158,11 +160,11 @@ export default function ContactScreen() {
                   <View style={[styles.checkbox, consent && styles.checkboxChecked]} />
                   <Text style={styles.consentText}>
                     I authorize RealShare and its representatives to call, email, or WhatsApp me
-                    about products and services.
+                    about products and services. *
                   </Text>
                 </TouchableOpacity>
 
-                <TouchableOpacity style={styles.submitBtn} onPress={handleSubmit} disabled={submitting}>
+                <TouchableOpacity style={[styles.submitBtn, (!isFormValid || submitting) && { opacity: 0.5 }]} onPress={handleSubmit} disabled={!isFormValid || submitting}>
                   {submitting ? <ActivityIndicator color={Neutrals.obsidian} /> : <Text style={styles.submitBtnText}>Submit</Text>}
                 </TouchableOpacity>
               </View>

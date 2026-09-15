@@ -18,8 +18,6 @@ export default function TabLayout() {
         <Tabs.Screen name="portfolio" options={{ title: 'Portfolio' }} />
         <Tabs.Screen name="shortlist" options={{ title: 'Shortlist' }} />
         <Tabs.Screen name="profile" options={{ title: 'Profile', href: null }} />
-        
-        {/* Accessible via drawer */}
         <Tabs.Screen name="explore" options={{ title: 'Explore' }} />
         <Tabs.Screen name="clients" options={{ title: 'Clients', href: null }} />
       </Tabs>

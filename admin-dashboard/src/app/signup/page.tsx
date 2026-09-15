@@ -89,7 +89,7 @@ export default function Signup() {
       <div style={{ background: '#FFF', padding: '40px', borderRadius: '12px', boxShadow: '0 10px 25px rgba(0,0,0,0.05)', width: '100%', maxWidth: '400px' }}>
         <div style={{ textAlign: 'center', marginBottom: '30px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px' }}>
-            <img src="/logo.png" alt="RealShare Logo" style={{ height: '48px', objectFit: 'contain' }} />
+            <img src="/logo.png" alt="Realshare Logo" style={{ height: '48px', objectFit: 'contain' }} />
           </div>
           <h2 style={{ fontSize: '18px', color: '#475569', margin: 0 }}>Create Admin Account</h2>
         </div>
@@ -133,7 +133,7 @@ export default function Signup() {
               value={bootstrapSecret}
               onChange={(e) => setBootstrapSecret(e.target.value)}
               style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
-              placeholder="Provided out-of-band by RealShare"
+              placeholder="Provided out-of-band by Realshare"
             />
             <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '6px' }}>
               This page only creates the first admin account. It matches against the server's ADMIN_BOOTSTRAP_SECRET env var — without it, no admin role is granted.

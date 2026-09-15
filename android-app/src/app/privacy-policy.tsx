@@ -16,7 +16,7 @@ export default function PrivacyPolicyScreen() {
     <LegalPageLayout
       title="Privacy Policy"
       lastUpdated="September 2026"
-      intro="RealShare Properties Pvt. Ltd. ('RealShare', 'we', 'us') respects your privacy. This policy explains what personal information we collect through our app and website, how we use it, and the choices you have."
+      intro="Realshare Properties Pvt. Ltd. ('Realshare', 'we', 'us') respects your privacy. This policy explains what personal information we collect through our app and website, how we use it, and the choices you have."
       sections={[
         {
           heading: '1. Information we collect',
@@ -70,7 +70,7 @@ export default function PrivacyPolicyScreen() {
         {
           heading: '7. Children',
           body: [
-            'RealShare is intended for adults capable of entering into binding financial agreements. We do not knowingly collect personal information from anyone under 18.',
+            'Realshare is intended for adults capable of entering into binding financial agreements. We do not knowingly collect personal information from anyone under 18.',
           ],
         },
         {
@@ -82,7 +82,7 @@ export default function PrivacyPolicyScreen() {
         {
           heading: '9. Contact us',
           body: [
-            'RealShare Properties Pvt. Ltd.\n206, Panchsheel Complex, Nizampet\nHyderabad – 500090, Telangana, India\n+91 40 4010 1212\n+91 95 8172 8172',
+            'Realshare Properties Pvt. Ltd.\n206, Panchsheel Complex, Nizampet\nHyderabad – 500090, Telangana, India\n+91 40 4010 1212\n+91 95 8172 8172',
           ],
         },
       ]}

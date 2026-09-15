@@ -172,7 +172,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
         setPostTitle('');
         setPostLocality('');
         setPostImageUrl('');
-        alert('Property submitted to RealShare Admin for approval.');
+        alert('Property submitted to Realshare Admin for approval.');
         fetchMyListings();
       } else {
         alert('Could not submit property. Please try again.');
@@ -242,7 +242,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
       }
     } catch (err: any) {
       console.error('Agent dashboard fetch error:', err);
-      setError(err.message || 'An error occurred while loading RealShare - Partner Hub');
+      setError(err.message || 'An error occurred while loading Realshare - Partner Hub');
     } finally {
       setLoading(false);
     }
@@ -315,7 +315,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
           <TouchableOpacity style={styles.iconBtn} onPress={openDrawer}>
             <Ionicons name="menu-outline" size={24} color="#FFFFFF" />
           </TouchableOpacity>
-          <Text style={styles.headerTitle}>RealShare - Partner Hub</Text>
+          <Text style={styles.headerTitle}>Realshare - Partner Hub</Text>
           <TouchableOpacity style={styles.iconBtn} onPress={() => router.push('/notifications')}>
             <Ionicons name="notifications-outline" size={22} color="#FFFFFF" />
           </TouchableOpacity>
@@ -335,7 +335,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
           </View>
           <View style={styles.profileDetails}>
             <Text style={styles.agentName}>{dashboardData?.agentName || 'Agent Partner'}</Text>
-            <Text style={styles.agencyName}>{dashboardData?.agencyName || 'RealShare Enterprise'}</Text>
+            <Text style={styles.agencyName}>{dashboardData?.agencyName || 'Realshare Enterprise'}</Text>
             <View style={styles.tierBadge}>
               <Text style={styles.tierText}>★ {dashboardData?.commissionRate || 'Platinum Tier (2.5%)'}</Text>
             </View>
@@ -406,7 +406,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
             <View style={styles.emptyListingsBox}>
               <Ionicons name="business-outline" size={40} color="#9CA3AF" style={{ marginBottom: 12 }} />
               <Text style={styles.emptyListingsTitle}>No properties posted yet.</Text>
-              <Text style={styles.emptyListingsSub}>Submit a property to RealShare Admin for approval to get it listed on the marketplace.</Text>
+              <Text style={styles.emptyListingsSub}>Submit a property to Realshare Admin for approval to get it listed on the marketplace.</Text>
             </View>
           ) : (
             myListings.map((p) => {
@@ -497,7 +497,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
           <ScrollView style={styles.modalSheet}>
             <View style={styles.modalHandle} />
             <Text style={styles.modalTitle}>Post a Property</Text>
-            <Text style={styles.modalSubtitle}>Submit a listing for RealShare Admin approval.</Text>
+            <Text style={styles.modalSubtitle}>Submit a listing for Realshare Admin approval.</Text>
 
             <Text style={styles.inputLabel}>Listing Type</Text>
             <View style={{ flexDirection: 'row', gap: 8, marginBottom: 16 }}>

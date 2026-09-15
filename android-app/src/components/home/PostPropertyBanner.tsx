@@ -35,7 +35,7 @@ export function PostPropertyBanner() {
               <Text style={styles.headlineGold}>for Free</Text>
             </Text>
             <Text style={styles.description}>
-              Reach thousands of genuine buyers and tenants on RealShare.{'\n'}
+              Reach thousands of genuine buyers and tenants on Realshare.{'\n'}
               Quick. Easy. No hidden charges.
             </Text>
 
@@ -74,7 +74,7 @@ export function PostPropertyBanner() {
                 </View>
                 <View>
                   <Text style={styles.socialProofBold}>Join 50,000+ property owners</Text>
-                  <Text style={styles.socialProofSub}>who trust RealShare</Text>
+                  <Text style={styles.socialProofSub}>who trust Realshare</Text>
                 </View>
               </View>
             </View>

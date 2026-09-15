@@ -23,7 +23,7 @@ const TRUST_BADGES = [
 const HOLIDAY_FEATURES = [
   { title: 'Turnkey Design', desc: 'Holiday properties are outfitted with premium furnishings, essentials and high-end décor.' },
   { title: 'Support', desc: 'A dedicated property management team provides service before, during and after your stay.' },
-  { title: 'Simple Scheduling', desc: 'Book stays easily in the RealShare owner app and enjoy your home for allotted days each year.' },
+  { title: 'Simple Scheduling', desc: 'Book stays easily in the Realshare owner app and enjoy your home for allotted days each year.' },
   { title: 'Resale', desc: 'Sell your property share at a time and price of your choosing.' },
   { title: 'Property Management', desc: "We fully manage every aspect of the property — from maintenance to billing." },
   { title: 'Rental Income', desc: 'Earn a fixed monthly rental income on your property when you are not using it.' },
@@ -87,9 +87,9 @@ export default function HowItWorksScreen() {
         <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
           <Text style={styles.sectionTitle}>Own a grade-A commercial property and earn rental income</Text>
           <Text style={styles.bodyText}>
-            Co-owning with RealShare is the smart choice for a commercial property. Co-own the
+            Co-owning with Realshare is the smart choice for a commercial property. Co-own the
             property with a fractional investment and earn regular income. Purchase a share of
-            your dream property, let RealShare take care of the hassles of renting — you earn a
+            your dream property, let Realshare take care of the hassles of renting — you earn a
             fixed monthly rental income and get exclusive access on the app.
           </Text>
         </View>
@@ -98,8 +98,8 @@ export default function HowItWorksScreen() {
           <View style={isDesktop ? styles.sectionDesktop : undefined}>
             <Text style={styles.sectionTitle}>Own a luxury vacation property and earn rental income</Text>
             <Text style={styles.bodyText}>
-              Co-owning with RealShare is the smart choice for a holiday property you'll enjoy
-              throughout the year. Purchase a share of your dream property, let RealShare take
+              Co-owning with Realshare is the smart choice for a holiday property you'll enjoy
+              throughout the year. Purchase a share of your dream property, let Realshare take
               care of the hassles of renting, and get exclusive access for you and your loved
               ones every year.
             </Text>
@@ -122,8 +122,8 @@ export default function HowItWorksScreen() {
               </View>
               <Text style={styles.resaleTitle}>Effortless resale, with gains</Text>
               <Text style={styles.resaleDesc}>
-                Part of owning a RealShare property is the flexibility to resell your share.
-                RealShare has historically seen an average appreciation that is about twice the appreciation of a traditional luxury vacation home or commercial property purchased outright.
+                Part of owning a Realshare property is the flexibility to resell your share.
+                Realshare has historically seen an average appreciation that is about twice the appreciation of a traditional luxury vacation home or commercial property purchased outright.
               </Text>
             </View>
             <View style={[styles.resaleStatBlock, isDesktop && styles.resaleStatBlockDesktop]}>

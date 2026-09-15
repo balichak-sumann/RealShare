@@ -49,7 +49,7 @@ export default function RewardsScreen() {
     if (!referralCode) return;
     try {
       await Share.share({
-        message: `Join me on RealShare and start investing in fractional real estate! Use my referral code ${referralCode} when you sign up.`,
+        message: `Join me on Realshare and start investing in fractional real estate! Use my referral code ${referralCode} when you sign up.`,
       });
     } catch (e) {
       // user cancelled or share failed silently

@@ -103,7 +103,7 @@ export default function SignInScreen() {
     try {
       // Create the dummy email used for backend authentication
       const dummyEmail = `${identifier.trim()}@realshare.test`;
-      const dummyPassword = `RealShare!123456`;
+      const dummyPassword = `Realshare!123456`;
 
       await signInWithEmailAndPassword(auth, dummyEmail, dummyPassword);
       // onAuthStateChanged in _layout.tsx handles redirection
@@ -232,7 +232,7 @@ export default function SignInScreen() {
           </TouchableOpacity>
 
           <View style={isDesktopWeb ? styles.desktopFooter : styles.mobileFooter}>
-            <Text style={isDesktopWeb ? styles.desktopFooterText : styles.mobileFooterText}>New to RealShare? </Text>
+            <Text style={isDesktopWeb ? styles.desktopFooterText : styles.mobileFooterText}>New to Realshare? </Text>
             <TouchableOpacity onPress={() => router.replace('/sign-up')}>
               <Text style={styles.linkText}>Create an Account</Text>
             </TouchableOpacity>

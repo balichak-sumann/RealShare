@@ -168,7 +168,7 @@ export default function SignUpScreen() {
 
     try {
       const dummyEmail = `${identifier.trim()}@realshare.test`;
-      const dummyPassword = `RealShare!123456`;
+      const dummyPassword = `Realshare!123456`;
 
       const userCredential = await createUserWithEmailAndPassword(auth, dummyEmail, dummyPassword);
       await syncUserToBackend(userCredential.user);

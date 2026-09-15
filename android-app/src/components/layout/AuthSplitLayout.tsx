@@ -34,7 +34,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
   const { isDesktop, isTablet } = useResponsive();
 
   const [displayText, setDisplayText] = React.useState('');
-  const fullText = 'RealShare';
+  const fullText = 'Realshare';
 
   React.useEffect(() => {
     let i = 0;

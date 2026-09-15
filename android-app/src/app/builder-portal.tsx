@@ -121,7 +121,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         mapped = [
           {
             id: 'mock-b1',
-            title: 'RealShare Horizon Tech Park',
+            title: 'Realshare Horizon Tech Park',
             location: 'Nizampet, Hyderabad',
             locality: 'Nizampet',
             type: 'COMMERCIAL',
@@ -255,7 +255,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         setDescription('');
         setImageUri(null);
         setActiveTab('my_properties');
-        setSuccessNotice(`Property "${title}" successfully submitted to RealShare Admin for approval.`);
+        setSuccessNotice(`Property "${title}" successfully submitted to Realshare Admin for approval.`);
         setTimeout(() => setSuccessNotice(null), 5000);
         fetchProperties();
       } else {
@@ -281,7 +281,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         setDescription('');
         setImageUri(null);
         setActiveTab('my_properties');
-        setSuccessNotice(`Property "${title}" submitted to RealShare Admin for verification.`);
+        setSuccessNotice(`Property "${title}" submitted to Realshare Admin for verification.`);
         setTimeout(() => setSuccessNotice(null), 5000);
       }
     } catch(e) {
@@ -402,11 +402,11 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
             <View style={styles.policyNotice}>
               <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
                 <Ionicons name="shield-checkmark-outline" size={16} color="#B45309" style={{ marginRight: 6 }} />
-                <Text style={styles.policyTitle}>RealShare Builder Posting Policy</Text>
+                <Text style={styles.policyTitle}>Realshare Builder Posting Policy</Text>
               </View>
               <Text style={styles.policyText}>
                 • Builders can post and edit property specifications & pricing.{'\n'}
-                • Once submitted, listings undergo title and RERA verification by RealShare Admin before going live.{'\n'}
+                • Once submitted, listings undergo title and RERA verification by Realshare Admin before going live.{'\n'}
                 • <Text style={{ fontWeight: '800', color: GoldSystem.primaryGold }}>No Delete Option:</Text> Deletion rights strictly reside with Admin for compliance & investor contract safety.
               </Text>
             </View>
@@ -563,7 +563,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
           <View style={styles.formCard}>
             <Text style={styles.formTitle}>Post New Property for Fractional Listing</Text>
             <Text style={styles.formSubtitle}>
-              Fill in project details. Submitted properties undergo RERA and title verification by RealShare Admin before going live.
+              Fill in project details. Submitted properties undergo RERA and title verification by Realshare Admin before going live.
             </Text>
 
             <Text style={styles.label}>Property Title / Project Name *</Text>
@@ -719,7 +719,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         <View style={styles.modalOverlay}>
           <View style={styles.modalContent}>
             <Text style={styles.modalTitle}>Edit Property Details</Text>
-            <Text style={styles.modalSubtitle}>Update pricing or fractions. RealShare Admin will be notified.</Text>
+            <Text style={styles.modalSubtitle}>Update pricing or fractions. Realshare Admin will be notified.</Text>
 
             <Text style={styles.label}>Property Title</Text>
             <TextInput

@@ -6,7 +6,7 @@ import { useLocation } from '@/contexts/LocationContext';
 
 import { getApiUrl } from '@/lib/api';
 
-// RealShare is currently live (has real listings) only in Hyderabad. The rest
+// Realshare is currently live (has real listings) only in Hyderabad. The rest
 // of the cities are shown honestly as upcoming markets rather than hidden or
 // silently faked with Hyderabad data under a different city's name.
 const LIVE_CITIES = ['Hyderabad', 'Bengaluru', 'Mumbai'];
@@ -52,7 +52,7 @@ export function LocationPickerModal({ visible, onClose }: LocationPickerModalPro
             </TouchableOpacity>
           </View>
           <Text style={styles.headerSubtitle}>
-            RealShare listings are currently live in Hyderabad. Other cities are launching soon.
+            Realshare listings are currently live in Hyderabad. Other cities are launching soon.
           </Text>
 
           <View style={styles.list}>

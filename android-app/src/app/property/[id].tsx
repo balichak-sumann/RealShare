@@ -195,7 +195,7 @@ export default function PropertyDetailsScreen() {
           key: orderData.keyId || process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TSKXy2WO8gcwyH', 
           amount: orderData.amount,
           currency: orderData.currency,
-          name: 'RealShare',
+          name: 'Realshare',
           description: `Booking for ${property.title}`,
           order_id: orderData.orderId,
           handler: async function (response: any) {
@@ -461,7 +461,7 @@ export default function PropertyDetailsScreen() {
                         PROPERTY POSTED BY {property.profile?.role === 'admin' ? 'REALSHARE(ADMIN)' : property.profile?.role ? property.profile.role.toUpperCase() : 'USER'}
                       </Text>
                       <Text style={{ fontSize: 15, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>
-                        {property.profile?.role === 'admin' ? 'RealShare Official' : property.profile?.full_name || property.developer?.name || 'Unknown User'}
+                        {property.profile?.role === 'admin' ? 'Realshare Official' : property.profile?.full_name || property.developer?.name || 'Unknown User'}
                       </Text>
                     </View>
                     <Ionicons name="checkmark-circle" size={20} color="#059669" />
@@ -801,7 +801,7 @@ export default function PropertyDetailsScreen() {
 
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 }}>
                   <Ionicons name="shield-checkmark-outline" size={14} color="#64748B" />
-                  <Text style={{ fontSize: 12, color: '#64748B' }}>Your information is secure with RealShare</Text>
+                  <Text style={{ fontSize: 12, color: '#64748B' }}>Your information is secure with Realshare</Text>
                 </View>
               </View>
 
@@ -1001,7 +1001,7 @@ export default function PropertyDetailsScreen() {
           <View style={[styles.modalContent, { alignItems: 'center', paddingVertical: 40 }]}>
             <Text style={{ fontSize: 60, marginBottom: 16 }}>🎉</Text>
             <Text style={styles.successTitle}>Investment Successful!</Text>
-            <Text style={styles.successSubtitle}>Welcome to RealShare Premium.</Text>
+            <Text style={styles.successSubtitle}>Welcome to Realshare Premium.</Text>
             <View style={styles.certBox}>
               <Text style={styles.certLabel}>Certificate ID</Text>
               <Text style={styles.certValue}>{certificateId}</Text>

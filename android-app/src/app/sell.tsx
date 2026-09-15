@@ -216,7 +216,7 @@ export default function SellScreen() {
             </View>
             <Text style={styles.authGateTitle}>Sign In Required</Text>
             <Text style={styles.authGateSubtitle}>
-              You need to create an account or sign in before you can list a property on RealShare.
+              You need to create an account or sign in before you can list a property on Realshare.
             </Text>
             <TouchableOpacity
               onPress={() => router.push('/sign-in' as any)}

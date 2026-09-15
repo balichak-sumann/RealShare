@@ -139,6 +139,6 @@ app.prepare().then(() => {
       process.exit(1);
     })
     .listen(port, () => {
-      console.log(`> RealShare server (with real-time chat) ready on http://${hostname}:${port}`);
+      console.log(`> Realshare server (with real-time chat) ready on http://${hostname}:${port}`);
     });
 });

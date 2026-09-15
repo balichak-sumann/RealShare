@@ -40,7 +40,7 @@ export default function AboutScreen() {
             <View style={{ flex: 1 }}>
               <Text style={styles.sectionTitle}>Our story</Text>
               <Text style={styles.bodyText}>
-                RealShare started on the belief in ethics and transparency in real estate
+                Realshare started on the belief in ethics and transparency in real estate
                 transactions, with a vision to change the way real estate investments are
                 offered to customers. Our tech-enabled marketplace streamlines the
                 purchasing, co-owning, and reselling process.
@@ -63,14 +63,14 @@ export default function AboutScreen() {
           <View style={[styles.founderCard, isDesktop && styles.founderCardDesktop]}>
             <View style={styles.founderInfo}>
               <Text style={styles.founderName}>Raj Kumar Chinthireddy</Text>
-              <Text style={styles.founderRole}>Chairman & MD, RealShare</Text>
+              <Text style={styles.founderRole}>Chairman & MD, Realshare</Text>
               <Text style={styles.bodyText}>
                 Raj Kumar, a seasoned leader and serial entrepreneur, began his career 20
                 years ago with a startup distributing computers and providing networking
                 solutions. He rose to become the founder-director of Skytel, an internet and
                 VoIP services company, and went on to establish Zye Telecom Pvt Ltd in 2013.
                 He also started Zyetek Network Pvt Ltd in 2022 before rebranding the company
-                as RealShare Properties Pvt. Ltd., which is selling commercial, residential
+                as Realshare Properties Pvt. Ltd., which is selling commercial, residential
                 and vacation properties in India and abroad. Raj Kumar has investments in
                 Telecom, Agri, real estate, software development and consulting services.
               </Text>
@@ -81,7 +81,7 @@ export default function AboutScreen() {
         <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
           <Text style={styles.sectionTitle}>Registered office</Text>
           <Text style={styles.bodyText}>
-            RealShare Properties Pvt. Ltd.{'\n'}
+            Realshare Properties Pvt. Ltd.{'\n'}
             206, Panchsheel Complex, Nizampet{'\n'}
             Hyderabad – 500090, Telangana, India{'\n'}
             +91 40 4010 1212{'\n'}

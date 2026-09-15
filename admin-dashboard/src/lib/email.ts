@@ -25,13 +25,13 @@ export async function sendServiceInquiryEmail(details: ServiceInquiryDetails) {
   }
 
   const mailOptions = {
-    from: `"RealShare Concierge" <${process.env.SMTP_EMAIL}>`,
+    from: `"Realshare Concierge" <${process.env.SMTP_EMAIL}>`,
     to: process.env.SMTP_EMAIL, // Sending to the admin themselves
     subject: `New Service Request: ${details.service_type}`,
     html: `
       <div style="font-family: 'Inter', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
         <div style="text-align: center; margin-bottom: 20px;">
-          <h1 style="color: #cda858; margin: 0; font-size: 24px;">RealShare Concierge</h1>
+          <h1 style="color: #cda858; margin: 0; font-size: 24px;">Realshare Concierge</h1>
           <p style="color: #666; font-size: 14px; margin-top: 5px;">New Home Service Request</p>
         </div>
         
@@ -65,7 +65,7 @@ export async function sendServiceInquiryEmail(details: ServiceInquiryDetails) {
         </div>
         
         <p style="text-align: center; color: #999; font-size: 12px; margin-top: 24px;">
-          This is an automated message from your RealShare platform.
+          This is an automated message from your Realshare platform.
         </p>
       </div>
     `,

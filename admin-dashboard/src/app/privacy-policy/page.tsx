@@ -1,8 +1,8 @@
 import React from 'react';
 
 export const metadata = {
-  title: 'Privacy Policy | RealShare',
-  description: 'Privacy Policy for RealShare mobile application and web platform.',
+  title: 'Privacy Policy | Realshare',
+  description: 'Privacy Policy for Realshare mobile application and web platform.',
 };
 
 export default function PrivacyPolicyPage() {
@@ -12,7 +12,7 @@ export default function PrivacyPolicyPage() {
       <p style={{ color: '#64748B', marginBottom: '24px' }}>Last updated: September 7, 2026</p>
 
       <p>
-        RealShare Properties Pvt. Ltd. (&quot;RealShare&quot;, &quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) respects your privacy and is committed to protecting the personal data of users who use our mobile application and web services.
+        Realshare Properties Pvt. Ltd. (&quot;Realshare&quot;, &quot;we&quot;, &quot;our&quot;, or &quot;us&quot;) respects your privacy and is committed to protecting the personal data of users who use our mobile application and web services.
       </p>
 
       <h2 style={{ fontSize: '20px', fontWeight: '700', marginTop: '32px', marginBottom: '12px' }}>1. Information We Collect</h2>

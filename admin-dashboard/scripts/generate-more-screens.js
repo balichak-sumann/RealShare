@@ -144,8 +144,8 @@ async function addMoreScreens() {
         <!-- Guarantee Banner -->
         <g transform="translate(50, 970)">
           <rect width="780" height="280" rx="24" fill="rgba(245, 158, 11, 0.1)" stroke="#F59E0B" stroke-width="2"/>
-          <text x="390" y="80" font-family="sans-serif" font-size="28" font-weight="800" fill="#FBBF24" text-anchor="middle">RealShare Trust Guarantee</text>
-          <text x="390" y="140" font-family="sans-serif" font-size="22" fill="#E2E8F0" text-anchor="middle">Every project on RealShare undergoes</text>
+          <text x="390" y="80" font-family="sans-serif" font-size="28" font-weight="800" fill="#FBBF24" text-anchor="middle">Realshare Trust Guarantee</text>
+          <text x="390" y="140" font-family="sans-serif" font-size="22" fill="#E2E8F0" text-anchor="middle">Every project on Realshare undergoes</text>
           <text x="390" y="180" font-family="sans-serif" font-size="22" fill="#E2E8F0" text-anchor="middle">stringent 30-point legal &amp; title clearance.</text>
         </g>
 

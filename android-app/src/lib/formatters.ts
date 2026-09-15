@@ -15,7 +15,7 @@ export const formatArea = (sqft: number): string => {
   return `${sqft.toLocaleString('en-IN')}`;
 };
 
-// Adapts a raw Property record from the RealShare API (Prisma shape) into
+// Adapts a raw Property record from the Realshare API (Prisma shape) into
 // the props PropertyCard expects. Used anywhere we render real listings
 // instead of the old MOCK_PROPERTIES-shaped data.
 export const propertyToCardProps = (p: any) => {

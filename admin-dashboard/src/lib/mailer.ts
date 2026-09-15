@@ -29,9 +29,9 @@ export async function sendWelcomeEmail({
   const transporter = getTransporter();
 
   const mailOptions = {
-    from: `"RealShare Team" <${process.env.SMTP_EMAIL}>`,
+    from: `"Realshare Team" <${process.env.SMTP_EMAIL}>`,
     to,
-    subject: `🎉 Welcome to RealShare, ${employeeName}! Your Account is Ready`,
+    subject: `🎉 Welcome to Realshare, ${employeeName}! Your Account is Ready`,
     html,
   };
 
@@ -66,7 +66,7 @@ export async function sendInvestmentSuccessEmail({
   const transporter = getTransporter();
 
   const mailOptions = {
-    from: `"RealShare Team" <${process.env.SMTP_EMAIL}>`,
+    from: `"Realshare Team" <${process.env.SMTP_EMAIL}>`,
     to,
     subject: `Investment Confirmed: ${propertyName}`,
     html: `
@@ -83,9 +83,9 @@ export async function sendInvestmentSuccessEmail({
           <p><strong>Certificate ID:</strong> ${certificateId}</p>
         </div>
         
-        <p>You can view your digital share certificate and track your portfolio performance anytime in the RealShare app.</p>
+        <p>You can view your digital share certificate and track your portfolio performance anytime in the Realshare app.</p>
         <p>Thank you for investing with us!</p>
-        <p>Best regards,<br/>The RealShare Team</p>
+        <p>Best regards,<br/>The Realshare Team</p>
       </div>
     `,
   };

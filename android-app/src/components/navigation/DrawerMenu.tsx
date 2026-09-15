@@ -285,7 +285,7 @@ export function DrawerWrapper({ children }: DrawerWrapperProps) {
             </TouchableOpacity>
           )}
 
-          <Text style={styles.drawerVersion}>RealShare v2.0</Text>
+          <Text style={styles.drawerVersion}>Realshare v2.0</Text>
         </View>
       </Animated.View>
 

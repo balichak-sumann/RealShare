@@ -51,7 +51,7 @@ export function WebFooter() {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Image source={require('../../../assets/logo.png')} style={{ width: 16, height: 16, marginRight: 6 }} resizeMode="contain" />
-            <Text style={{ color: Neutrals.surface, fontSize: 13, fontWeight: '700' }}>RealShare</Text>
+            <Text style={{ color: Neutrals.surface, fontSize: 13, fontWeight: '700' }}>Realshare</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
             <TouchableOpacity onPress={() => router.push('/privacy-policy' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Privacy</Text></TouchableOpacity>
@@ -59,8 +59,8 @@ export function WebFooter() {
             <TouchableOpacity onPress={() => router.push('/disclaimer' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Disclaimer</Text></TouchableOpacity>
           </View>
         </View>
-        <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>{"RealShare Properties Pvt. Ltd.\nNizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212\n+91 95 8172 8172"}</Text>
-        <Text style={{ color: Neutrals.gray600, fontSize: 8, marginTop: 6 }}>© {new Date().getFullYear()} RealShare. All rights reserved.</Text>
+        <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>{"Realshare Properties Pvt. Ltd.\nNizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212\n+91 95 8172 8172"}</Text>
+        <Text style={{ color: Neutrals.gray600, fontSize: 8, marginTop: 6 }}>© {new Date().getFullYear()} Realshare. All rights reserved.</Text>
       </View>
     );
   }
@@ -72,7 +72,7 @@ export function WebFooter() {
           <View style={[styles.brandCol, { marginRight: 16 }]}>
             <View style={styles.brandRow}>
               <Image source={require('../../../assets/logo.png')} style={styles.logo} />
-              <Text style={styles.brandName}>RealShare</Text>
+              <Text style={styles.brandName}>Realshare</Text>
             </View>
             <Text style={styles.brandBlurb}>
               A new age Intelligent platform bringing Homes that Inspire Life. Earn rental income with commercial and Holiday properties. Invest in premium Realestate with fractional ownership and exit with ease.
@@ -102,7 +102,7 @@ export function WebFooter() {
           <View style={[styles.col, { flexBasis: 240 }]}>
             <Text style={styles.colTitle}>Registered Office</Text>
             <Text style={styles.addressText}>
-              <Text numberOfLines={1} adjustsFontSizeToFit style={Platform.OS === 'web' ? { whiteSpace: 'nowrap' } as any : {}}>RealShare Properties Pvt. Ltd.</Text>{'\n'}
+              <Text numberOfLines={1} adjustsFontSizeToFit style={Platform.OS === 'web' ? { whiteSpace: 'nowrap' } as any : {}}>Realshare Properties Pvt. Ltd.</Text>{'\n'}
               206, Panchsheel Complex, Nizampet{'\n'}
               Hyderabad – 500090, Telangana, India
             </Text>
@@ -111,7 +111,7 @@ export function WebFooter() {
         </View>
 
         <View style={[styles.bottomBar, { marginTop: 32, paddingTop: 20 }]}>
-          <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © Copyright {new Date().getFullYear()} RealShare Properties Pvt Ltd</Text>
+          <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © Copyright {new Date().getFullYear()} Realshare Properties Pvt Ltd</Text>
         </View>
       </View>
     </View>

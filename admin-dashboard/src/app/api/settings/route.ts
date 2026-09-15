@@ -3,7 +3,7 @@ import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
 
 const DEFAULT_SETTINGS = {
-  platformName: 'RealShare',
+  platformName: 'Realshare',
   supportEmail: 'support@realshare.in',
   supportPhone: '+91 1800 123 4567',
   defaultCurrency: 'INR',

@@ -63,7 +63,7 @@ export default function AdminDashboardScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.sidebar}>
-        <Text style={styles.logo}>RealShare <Text style={{ color: GoldSystem.primaryGold }}>Admin</Text></Text>
+        <Text style={styles.logo}>Realshare <Text style={{ color: GoldSystem.primaryGold }}>Admin</Text></Text>
         <TouchableOpacity style={[styles.sidebarTab, { marginTop: 'auto' }]} onPress={() => router.replace('/')}>
           <Text style={styles.sidebarTabText}>\u2190 Back to App</Text>
         </TouchableOpacity>
@@ -99,7 +99,7 @@ export default function AdminDashboardScreen() {
                 <Text style={styles.webAdminTitle}>Full admin tools</Text>
                 <Text style={styles.webAdminDesc}>
                   User approvals, property moderation, agent management, transactions and service
-                  settings are managed from the RealShare web admin dashboard.
+                  settings are managed from the Realshare web admin dashboard.
                 </Text>
                 <TouchableOpacity style={styles.webAdminBtn} onPress={openWebAdmin}>
                   <Text style={styles.webAdminBtnText}>Open Web Admin Dashboard</Text>

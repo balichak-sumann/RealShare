@@ -1,11 +1,11 @@
 import sharp from 'sharp';
 import path from 'path';
 
-const logoPath = '/Users/indusinnovate/Desktop/RealShare/android-app/assets/images/realshare-logo.png';
-const outPath = '/Users/indusinnovate/Desktop/RealShare/android-app/assets/images/splash-icon.png';
+const logoPath = '/Users/indusinnovate/Desktop/Realshare/android-app/assets/images/realshare-logo.png';
+const outPath = '/Users/indusinnovate/Desktop/Realshare/android-app/assets/images/splash-icon.png';
 
 async function main() {
-  // Create a proper 288x288 splash icon with the RealShare logo on a white background.
+  // Create a proper 288x288 splash icon with the Realshare logo on a white background.
   // Android 12+ SplashScreen API requires a real, visible, reasonably-sized image.
   const logo = await sharp(logoPath)
     .resize({ width: 220, height: 220, fit: 'inside' })

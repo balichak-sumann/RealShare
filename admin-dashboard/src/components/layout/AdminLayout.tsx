@@ -39,7 +39,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       {/* Sidebar */}
       <aside className={styles.sidebar}>
         <div className={styles.logo}>
-          <img src="/logo.png" alt="RealShare Logo" style={{ height: '64px' }} />
+          <img src="/logo.png" alt="Realshare Logo" style={{ height: '64px' }} />
         </div>
         <div className={styles.navLabel}>MANAGEMENT CONSOLE</div>
         <nav className={styles.nav}>
@@ -76,7 +76,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         <header className={styles.header}>
           <div>
             <h1 className={styles.headerTitle}>{title}</h1>
-            <p className={styles.headerSubtitle}>RealShare Management Portal</p>
+            <p className={styles.headerSubtitle}>Realshare Management Portal</p>
           </div>
           <div className={styles.headerActions}>
             <div className={styles.searchBar}>

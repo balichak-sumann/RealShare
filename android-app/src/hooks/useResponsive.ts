@@ -1,7 +1,7 @@
 import { Platform, useWindowDimensions } from 'react-native';
 
 /**
- * Responsive system for RealShare.
+ * Responsive system for Realshare.
  *
  * IMPORTANT: On native (iOS/Android) this ALWAYS reports mobile.
  * Every consumer therefore renders exactly the phone layout it always has.

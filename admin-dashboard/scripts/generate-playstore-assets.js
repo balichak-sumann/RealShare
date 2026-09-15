@@ -12,7 +12,7 @@ async function run() {
 
   // 1. App Icon: 512 x 512 px PNG (max 1MB)
   // Google Play app icon specifications: 512x512, fully opaque (white background recommended for clean display)
-  const logoPath = '/Users/indusinnovate/Desktop/RealShare/android-app/assets/images/realshare-logo.png';
+  const logoPath = '/Users/indusinnovate/Desktop/Realshare/android-app/assets/images/realshare-logo.png';
   
   // Resize logo nicely to fit within ~360x360 box
   const logoResized = await sharp(logoPath)
@@ -32,7 +32,7 @@ async function run() {
   console.log('Created app-icon-512x512.png');
 
   // 2. Feature Graphic: 1024 x 500 px PNG (no alpha, max 15MB)
-  // Modern, sleek gradient with RealShare branding, gold accents, and property tagline
+  // Modern, sleek gradient with Realshare branding, gold accents, and property tagline
   const featureLogo = await sharp(logoPath)
     .resize({ width: 280, height: 160, fit: 'inside' })
     .toBuffer();
@@ -63,8 +63,8 @@ async function run() {
       <circle cx="850" cy="250" r="320" fill="#3B82F6" opacity="0.08" filter="blur(60px)" />
       <circle cx="200" cy="400" r="280" fill="#F59E0B" opacity="0.06" filter="blur(80px)" />
 
-      <!-- RealShare Typography / Badge -->
-      <text x="80" y="240" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="44" font-weight="800" fill="#FFFFFF" letter-spacing="1">RealShare</text>
+      <!-- Realshare Typography / Badge -->
+      <text x="80" y="240" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="44" font-weight="800" fill="#FFFFFF" letter-spacing="1">Realshare</text>
       
       <text x="80" y="285" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="url(#goldGrad)">Prime Real Estate &amp; Fractional Investments</text>
       

@@ -1,5 +1,5 @@
 /**
- * Generates a premium HTML welcome email for new RealShare employees.
+ * Generates a premium HTML welcome email for new Realshare employees.
  */
 export function getWelcomeEmailHTML({
   employeeName,
@@ -35,7 +35,7 @@ export function getWelcomeEmailHTML({
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Welcome to RealShare</title>
+  <title>Welcome to Realshare</title>
 </head>
 <body style="margin: 0; padding: 0; background-color: #F1F5F9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
   <table width="100%" cellspacing="0" cellpadding="0" style="background-color: #F1F5F9; padding: 40px 0;">
@@ -52,7 +52,7 @@ export function getWelcomeEmailHTML({
                     <table cellspacing="0" cellpadding="0">
                       <tr>
                         <td style="width: 36px; height: 36px; background: linear-gradient(135deg, #2563EB, #3B82F6); border-radius: 10px; text-align: center; vertical-align: middle; color: #FFFFFF; font-weight: 700; font-size: 18px;">◆</td>
-                        <td style="padding-left: 12px; color: #FFFFFF; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">RealShare</td>
+                        <td style="padding-left: 12px; color: #FFFFFF; font-size: 24px; font-weight: 800; letter-spacing: -0.5px;">Realshare</td>
                       </tr>
                     </table>
                   </td>
@@ -79,7 +79,7 @@ export function getWelcomeEmailHTML({
                 Dear <strong style="color: #0F172A;">${employeeName}</strong>,
               </p>
               <p style="margin: 0; font-size: 15px; color: #475569; line-height: 1.7;">
-                We're thrilled to have you join the <strong>RealShare</strong> family! Your employee account has been created and you're all set to get started. Below are your login credentials to access the Employee Portal.
+                We're thrilled to have you join the <strong>Realshare</strong> family! Your employee account has been created and you're all set to get started. Below are your login credentials to access the Employee Portal.
               </p>
             </td>
           </tr>
@@ -196,7 +196,7 @@ export function getWelcomeEmailHTML({
           <tr>
             <td style="background: #0F172A; padding: 28px 40px; text-align: center;">
               <p style="margin: 0 0 8px; font-size: 13px; color: #64748B;">
-                © ${new Date().getFullYear()} RealShare | IndusInnovate Technologies Pvt. Ltd.
+                © ${new Date().getFullYear()} Realshare | IndusInnovate Technologies Pvt. Ltd.
               </p>
               <p style="margin: 0; font-size: 12px; color: #475569;">
                 This is an automated email. Please do not reply to this message.

@@ -8,7 +8,7 @@
     "start": "NODE_ENV=production node server.js",
     "start:cpanel": "NODE_ENV=production node server.js",
     "lint": "eslint",
-    "zip": "npm run build && cd .. && zip -q -r admin-dashboard-deploy.zip admin-dashboard -x \"admin-dashboard/node_modules/*\" -x \"admin-dashboard/.git/*\" -x \"admin-dashboard/.vscode/*\" && echo '✅ Deployment ZIP created at Desktop/RealShare/admin-dashboard-deploy.zip'"
+    "zip": "npm run build && cd .. && zip -q -r admin-dashboard-deploy.zip admin-dashboard -x \"admin-dashboard/node_modules/*\" -x \"admin-dashboard/.git/*\" -x \"admin-dashboard/.vscode/*\" && echo '✅ Deployment ZIP created at Desktop/Realshare/admin-dashboard-deploy.zip'"
   },
   "dependencies": {
     "@prisma/adapter-mariadb": "^7.10.0",

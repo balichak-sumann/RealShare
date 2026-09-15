@@ -2,7 +2,7 @@ import sharp from 'sharp';
 import path from 'path';
 
 const bgPath = '/Users/indusinnovate/.gemini/antigravity-ide/brain/a692d308-a76f-4621-aa2b-aed0a51807e0/realshare_luxury_banner_1788777544399.jpg';
-const logoPath = '/Users/indusinnovate/Desktop/RealShare/android-app/assets/images/realshare-logo.png';
+const logoPath = '/Users/indusinnovate/Desktop/Realshare/android-app/assets/images/realshare-logo.png';
 const outDir = '/Users/indusinnovate/Desktop/playstore-assets';
 
 async function createBanners() {
@@ -15,7 +15,7 @@ async function createBanners() {
     .toFile(path.join(outDir, 'feature-graphic-luxury-pure.png'));
   console.log('Created feature-graphic-luxury-pure.png');
 
-  // 2. Branded Luxury Banner (1024 x 500 with sleek dark gradient vignette + gold RealShare branding)
+  // 2. Branded Luxury Banner (1024 x 500 with sleek dark gradient vignette + gold Realshare branding)
   const resizedBg = await sharp(bgPath)
     .resize(1024, 500, { fit: 'cover', position: 'center' })
     .toBuffer();
@@ -44,7 +44,7 @@ async function createBanners() {
       <rect width="1024" height="500" fill="url(#scrim)"/>
 
       <!-- Text Branding -->
-      <text x="70" y="240" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="48" font-weight="800" fill="#FFFFFF" letter-spacing="1.5">RealShare</text>
+      <text x="70" y="240" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="48" font-weight="800" fill="#FFFFFF" letter-spacing="1.5">Realshare</text>
       <text x="70" y="285" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="22" font-weight="600" fill="url(#gold)">Prime Real Estate Investments</text>
       <text x="70" y="325" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="16" font-weight="400" fill="#CBD5E1">Curated High-Yield Commercial &amp; Residential Assets</text>
 

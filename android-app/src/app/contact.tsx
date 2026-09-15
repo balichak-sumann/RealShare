@@ -85,7 +85,7 @@ export default function ContactScreen() {
             <Text style={styles.introTitle}>Own the joy</Text>
             <Text style={styles.introSubtitle}>Your dream property is waiting</Text>
             <Text style={styles.bodyText}>
-              Take the next step in buying, selling, or listing your property with RealShare.
+              Take the next step in buying, selling, or listing your property with Realshare.
               Tell us a bit about what you're looking for, and our team will reach out.
             </Text>
             <Text style={styles.bodyText}>Give us a call at +91 40 4010 1212 / +91 95 8172 8172</Text>
@@ -157,7 +157,7 @@ export default function ContactScreen() {
                 <TouchableOpacity style={styles.consentRow} onPress={() => setConsent(!consent)} activeOpacity={0.7}>
                   <View style={[styles.checkbox, consent && styles.checkboxChecked]} />
                   <Text style={styles.consentText}>
-                    I authorize RealShare and its representatives to call, email, or WhatsApp me
+                    I authorize Realshare and its representatives to call, email, or WhatsApp me
                     about products and services.
                   </Text>
                 </TouchableOpacity>

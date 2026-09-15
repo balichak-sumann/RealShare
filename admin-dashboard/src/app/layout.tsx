@@ -16,7 +16,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "RealShare — Institutional Fractional Real Estate Admin Console",
+  title: "Realshare — Institutional Fractional Real Estate Admin Console",
   description: "Ultra-luxury fractional asset administration, share pool analytics & KYC hub.",
 };
 

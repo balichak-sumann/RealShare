@@ -8,9 +8,9 @@ import { WebFooter } from '@/components/layout/WebFooter';
 import { getApiUrl } from '@/lib/api';
 
 const VALUE_PROPS = [
-  { icon: 'earth-outline', title: 'Refer anywhere', desc: 'No matter where you are based, refer clients to properties across RealShare markets.' },
+  { icon: 'earth-outline', title: 'Refer anywhere', desc: 'No matter where you are based, refer clients to properties across Realshare markets.' },
   { icon: 'shield-checkmark-outline', title: 'Connect with confidence', desc: 'Your client relationships are yours to keep — we partner with you and your client every step of the way.' },
-  { icon: 'cash-outline', title: 'Earn a competitive commission', desc: 'Get paid a full referral commission on every RealShare property your client buys.' },
+  { icon: 'cash-outline', title: 'Earn a competitive commission', desc: 'Get paid a full referral commission on every Realshare property your client buys.' },
   { icon: 'link-outline', title: 'Refer with ease', desc: 'Once approved, use your partner dashboard to track leads, commissions and referral links.' },
 ] as const;
 
@@ -83,9 +83,9 @@ export default function PartnersScreen() {
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
-          <Text style={styles.heroTitle}>Broaden your business with RealShare</Text>
+          <Text style={styles.heroTitle}>Broaden your business with Realshare</Text>
           <Text style={styles.heroSubtitle}>
-            Refer your clients to RealShare and earn a competitive referral commission when
+            Refer your clients to Realshare and earn a competitive referral commission when
             they co-own a property. We do the legwork — inspections and legal — and keep you
             in the loop every step of the way.
           </Text>
@@ -104,9 +104,9 @@ export default function PartnersScreen() {
         </View>
 
         <View style={[styles.section, styles.formSection, isDesktop && styles.sectionDesktop]}>
-          <Text style={styles.sectionTitle}>Become a RealShare Preferred Partner</Text>
+          <Text style={styles.sectionTitle}>Become a Realshare Preferred Partner</Text>
           <Text style={styles.bodyText}>
-            As a RealShare Preferred Partner, you get priority on property referrals and earn a
+            As a Realshare Preferred Partner, you get priority on property referrals and earn a
             competitive commission for every contact who closes on a property. It's easy — apply
             below to create your partner account.
           </Text>
@@ -148,7 +148,7 @@ export default function PartnersScreen() {
               <TouchableOpacity style={styles.consentRow} onPress={() => setConsent(!consent)} activeOpacity={0.7}>
                 <View style={[styles.checkbox, consent && styles.checkboxChecked]} />
                 <Text style={styles.consentText}>
-                  I authorize RealShare and its representatives to call, email, or WhatsApp me
+                  I authorize Realshare and its representatives to call, email, or WhatsApp me
                   about the partner program.
                 </Text>
               </TouchableOpacity>

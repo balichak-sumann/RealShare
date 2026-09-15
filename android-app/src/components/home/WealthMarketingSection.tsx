@@ -31,7 +31,7 @@ export function WealthMarketingSection() {
           <Text style={[styles.description, isDesktop && styles.descriptionDesktop]}>
             Smart investing means diversifying your portfolio. Access institutional-grade 
             assets that were previously out of reach, earn steady passive income, and 
-            build a legacy with RealShare.
+            build a legacy with Realshare.
           </Text>
           
           <View style={styles.statsRow}>

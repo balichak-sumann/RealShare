@@ -33,7 +33,7 @@ export default function DeveloperDetailsScreen() {
             hasRera: data.rera_registered,
             established: data.established_year,
             cities,
-            about: data.bio || `${data.name} is a real estate developer partnered with RealShare.`,
+            about: data.bio || `${data.name} is a real estate developer partnered with Realshare.`,
           });
           setProjects(properties.map((p: any) => propertyToProjectCardProps({ ...p, developer: data })));
         }

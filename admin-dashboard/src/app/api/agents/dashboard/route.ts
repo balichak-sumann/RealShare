@@ -123,7 +123,7 @@ export async function GET(req: Request) {
 
     return NextResponse.json({
       agentName: profile.full_name,
-      agencyName: profile.full_address || 'RealShare Channel Partner',
+      agencyName: profile.full_address || 'Realshare Channel Partner',
       commissionRate: `${Number(profile.commission_rate_pct || 2.5)}% per Sale`,
       referralCode: profile.referral_code,
       totalEarned: `₹${totalEarned.toLocaleString('en-IN')}`,

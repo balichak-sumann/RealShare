@@ -16,32 +16,32 @@ export default function TermsOfServiceScreen() {
     <LegalPageLayout
       title="Terms of Service"
       lastUpdated="September 2026"
-      intro="These Terms of Service ('Terms') govern your access to and use of the RealShare app and website, operated by RealShare Properties Pvt. Ltd. ('RealShare', 'we', 'us'). By creating an account or using RealShare, you agree to these Terms."
+      intro="These Terms of Service ('Terms') govern your access to and use of the Realshare app and website, operated by Realshare Properties Pvt. Ltd. ('Realshare', 'we', 'us'). By creating an account or using Realshare, you agree to these Terms."
       sections={[
         {
           heading: '1. Eligibility',
           body: [
-            'You must be at least 18 years old and legally capable of entering into binding financial agreements to use RealShare. You must complete identity verification (KYC), including PAN and, where applicable, DigiLocker-based Aadhaar verification, before making an investment.',
+            'You must be at least 18 years old and legally capable of entering into binding financial agreements to use Realshare. You must complete identity verification (KYC), including PAN and, where applicable, DigiLocker-based Aadhaar verification, before making an investment.',
           ],
         },
         {
-          heading: '2. What RealShare offers',
+          heading: '2. What Realshare offers',
           body: [
-            'RealShare operates a marketplace for fractional ownership of real estate: a group of investors jointly acquires an interest in a property, each holding a proportional share. RealShare, or its associated entities, may facilitate acquisition, property management, and eventual resale of these interests.',
-            'RealShare is a technology and services platform. It is not a bank, a registered investment advisor, or a broker-dealer, and nothing on the platform constitutes personalized investment, legal, or tax advice.',
+            'Realshare operates a marketplace for fractional ownership of real estate: a group of investors jointly acquires an interest in a property, each holding a proportional share. Realshare, or its associated entities, may facilitate acquisition, property management, and eventual resale of these interests.',
+            'Realshare is a technology and services platform. It is not a bank, a registered investment advisor, or a broker-dealer, and nothing on the platform constitutes personalized investment, legal, or tax advice.',
           ],
         },
         {
           heading: '3. Investment risk',
           body: [
             'Real estate investments carry risk, including the risk of loss of principal, illiquidity, and fluctuations in property value and rental income. Historical performance figures shown on the platform (including any stated appreciation ranges) are illustrative and not a guarantee of future results. You should independently assess whether an investment is suitable for you, and consult independent financial or legal advice if needed.',
-            'Fractional ownership positions may be less liquid than publicly traded securities. While RealShare aims to support resale of your share, we do not guarantee a buyer will be found within any particular timeframe or at any particular price.',
+            'Fractional ownership positions may be less liquid than publicly traded securities. While Realshare aims to support resale of your share, we do not guarantee a buyer will be found within any particular timeframe or at any particular price.',
           ],
         },
         {
           heading: '4. Payments',
           body: [
-            'Payments on RealShare are processed through our payment partner, Razorpay. By making a payment, you agree to Razorpay’s applicable terms in addition to these Terms. All fees, minimum investment amounts, and payout schedules will be disclosed to you before you commit to a transaction.',
+            'Payments on Realshare are processed through our payment partner, Razorpay. By making a payment, you agree to Razorpay’s applicable terms in addition to these Terms. All fees, minimum investment amounts, and payout schedules will be disclosed to you before you commit to a transaction.',
           ],
         },
         {
@@ -59,19 +59,19 @@ export default function TermsOfServiceScreen() {
         {
           heading: '7. Referral and partner programs',
           body: [
-            'If you participate in the RealShare Partner or referral program, commissions are earned and paid according to the program terms communicated to you at the time of enrollment, and are subject to change with notice.',
+            'If you participate in the Realshare Partner or referral program, commissions are earned and paid according to the program terms communicated to you at the time of enrollment, and are subject to change with notice.',
           ],
         },
         {
           heading: '8. Intellectual property',
           body: [
-            'The RealShare name, logo, app, and website content are the property of RealShare Properties Pvt. Ltd. and may not be used without our written permission.',
+            'The Realshare name, logo, app, and website content are the property of Realshare Properties Pvt. Ltd. and may not be used without our written permission.',
           ],
         },
         {
           heading: '9. Limitation of liability',
           body: [
-            'To the maximum extent permitted by law, RealShare is not liable for indirect, incidental, or consequential damages arising from your use of the platform, including losses related to the performance of any investment.',
+            'To the maximum extent permitted by law, Realshare is not liable for indirect, incidental, or consequential damages arising from your use of the platform, including losses related to the performance of any investment.',
           ],
         },
         {
@@ -95,7 +95,7 @@ export default function TermsOfServiceScreen() {
         {
           heading: '13. Contact us',
           body: [
-            'RealShare Properties Pvt. Ltd.\n206, Panchsheel Complex, Nizampet\nHyderabad – 500090, Telangana, India\n+91 40 4010 1212\n+91 95 8172 8172',
+            'Realshare Properties Pvt. Ltd.\n206, Panchsheel Complex, Nizampet\nHyderabad – 500090, Telangana, India\n+91 40 4010 1212\n+91 95 8172 8172',
           ],
         },
       ]}

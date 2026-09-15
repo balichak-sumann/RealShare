@@ -1376,7 +1376,7 @@ export default function InvestorsPage() {
                       No Fractional Properties Owned Yet
                     </strong>
                     <p style={{ fontSize: "0.85rem", marginTop: "6px" }}>
-                      When this investor purchases fractions from the RealShare mobile app or website, their portfolio assets will show here.
+                      When this investor purchases fractions from the Realshare mobile app or website, their portfolio assets will show here.
                     </p>
                   </div>
                 ) : (

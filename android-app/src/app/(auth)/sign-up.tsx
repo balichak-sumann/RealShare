@@ -14,6 +14,9 @@ import { getApiUrl } from '@/lib/api';
 
 // Email regex — must have valid format (user@domain.tld)
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+const AADHAAR_REGEX = /^\d{12}$/;
+const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+const GST_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
 const MIN_PASSWORD_LENGTH = 8;
 export default function SignUpScreen() {
   const router = useRouter();
@@ -34,6 +37,25 @@ export default function SignUpScreen() {
   const [aadhaarDoc, setAadhaarDoc] = useState<any>(null);
   const [panDoc, setPanDoc] = useState<any>(null);
   const [passportDoc, setPassportDoc] = useState<any>(null);
+  const [aadhaarNumber, setAadhaarNumber] = useState('');
+  const [panNumber, setPanNumber] = useState('');
+  const [passportNumber, setPassportNumber] = useState('');
+
+  // Builder specific fields
+  const [companyName, setCompanyName] = useState('');
+  const [officeAddress, setOfficeAddress] = useState('');
+  const [website, setWebsite] = useState('');
+  const [reraNumber, setReraNumber] = useState('');
+  const [credaiMember, setCredaiMember] = useState<boolean | null>(null);
+  const [companyPan, setCompanyPan] = useState('');
+  const [companyGst, setCompanyGst] = useState('');
+  // Builder KYC (Owner/Director documents)
+  const [builderAadhaarDoc, setBuilderAadhaarDoc] = useState<any>(null);
+  const [builderPanDoc, setBuilderPanDoc] = useState<any>(null);
+  const [builderPassportDoc, setBuilderPassportDoc] = useState<any>(null);
+  const [builderAadhaarNumber, setBuilderAadhaarNumber] = useState('');
+  const [builderPanNumber, setBuilderPanNumber] = useState('');
+  const [builderPassportNumber, setBuilderPassportNumber] = useState('');
 
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -67,15 +89,15 @@ export default function SignUpScreen() {
       if (role === 'agent') {
         body.bio = aboutAgent.trim();
       }
-      
       if (role === 'builder') {
-         body.developer_data = {
-           company_name: fullName.trim(), // We use fullName as company name for builder
-           office_address: fullAddress.trim(),
-           company_pan: panDoc?.fileName ? 'uploaded' : null,
-         };
+        body.company_name = companyName.trim();
+        body.office_address = officeAddress.trim();
+        body.website = website.trim();
+        body.rera_number = reraNumber.trim();
+        body.credai_member = credaiMember === true;
+        body.company_pan = companyPan.trim();
+        body.company_gst = companyGst.trim();
       }
-      
       if (referralCode) {
         body.referred_by_code = referralCode;
       }
@@ -115,13 +137,55 @@ export default function SignUpScreen() {
           setError('Please fill in all required fields.');
           setLoading(false); return;
         }
+
+        if (role === 'agent') {
+          if (!aadhaarNumber.trim() || !panNumber.trim() || !aadhaarDoc || !panDoc) {
+            setError('Please provide all mandatory KYC documents and numbers (Aadhaar, PAN).');
+            setLoading(false); return;
+          }
+          if (!AADHAAR_REGEX.test(aadhaarNumber.trim())) {
+            setError('Please enter a valid 12-digit Aadhaar Number.');
+            setLoading(false); return;
+          }
+          if (!PAN_REGEX.test(panNumber.trim().toUpperCase())) {
+            setError('Please enter a valid 10-character PAN Number (e.g. ABCDE1234F).');
+            setLoading(false); return;
+          }
+        }
+
+        if (role === 'builder') {
+          if (!companyName.trim() || !officeAddress.trim() || !reraNumber.trim() || credaiMember === null || !companyPan.trim() || !companyGst.trim()) {
+            setError('Please fill in all mandatory Company Details.');
+            setLoading(false); return;
+          }
+          if (!PAN_REGEX.test(companyPan.trim().toUpperCase())) {
+            setError('Please enter a valid 10-character Company PAN Number (e.g. ABCDE1234F).');
+            setLoading(false); return;
+          }
+          if (!GST_REGEX.test(companyGst.trim().toUpperCase())) {
+            setError('Please enter a valid 15-character Company GST Number.');
+            setLoading(false); return;
+          }
+          if (!builderAadhaarNumber.trim() || !builderPanNumber.trim() || !builderAadhaarDoc || !builderPanDoc) {
+            setError('Please provide all mandatory Owner/Director KYC documents and numbers (Aadhaar, PAN).');
+            setLoading(false); return;
+          }
+          if (!AADHAAR_REGEX.test(builderAadhaarNumber.trim())) {
+            setError('Please enter a valid 12-digit Owner/Director Aadhaar Number.');
+            setLoading(false); return;
+          }
+          if (!PAN_REGEX.test(builderPanNumber.trim().toUpperCase())) {
+            setError('Please enter a valid 10-character Owner/Director PAN Number (e.g. ABCDE1234F).');
+            setLoading(false); return;
+          }
+        }
         if (!EMAIL_REGEX.test(email.trim())) {
           setError('Please enter a valid email address (e.g. john@gmail.com).');
           setLoading(false); return;
         }
-        const cleanedPhone = mobileNumber.replace(/\\D/g, '').slice(-10);
-        if (cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
-          setError('Please enter a valid 10-digit mobile number.');
+        const cleanedPhone = mobileNumber.replace(/\D/g, '');
+        if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
+          setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
           setLoading(false); return;
         }
         if (password.length < MIN_PASSWORD_LENGTH) {
@@ -147,7 +211,7 @@ export default function SignUpScreen() {
              ? 'http://localhost:3000'
              : getApiUrl();
            
-           const uploadDoc = async (docData: any, docType: string) => {
+           const uploadDoc = async (docData: any, docType: string, docNumber: string) => {
              if (!docData) return;
              try {
                let base64Data = docData.base64;
@@ -178,7 +242,7 @@ export default function SignUpScreen() {
                  headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                  body: JSON.stringify({
                    document_type: docType,
-                   document_number: 'UPLOADED-VIA-APP',
+                   document_number: docNumber ? docNumber.trim() : 'UPLOADED-VIA-APP',
                    document_front_url: uploadData.url,
                    document_back_url: null
                  })
@@ -186,9 +250,16 @@ export default function SignUpScreen() {
              } catch (e) { console.error('KYC Upload failed', e); }
            };
            
-           await uploadDoc(aadhaarDoc, 'aadhaar');
-           await uploadDoc(panDoc, 'pan');
-           await uploadDoc(passportDoc, 'passport');
+           if (role === 'agent') {
+             await uploadDoc(aadhaarDoc, 'aadhaar', aadhaarNumber);
+             await uploadDoc(panDoc, 'pan', panNumber);
+             await uploadDoc(passportDoc, 'passport', passportNumber);
+           } else {
+             // Builder: Owner/Director KYC documents
+             await uploadDoc(builderAadhaarDoc, 'aadhaar', builderAadhaarNumber);
+             await uploadDoc(builderPanDoc, 'pan', builderPanNumber);
+             await uploadDoc(builderPassportDoc, 'passport', builderPassportNumber);
+           }
         }
 
         // No email verification needed anymore
@@ -233,13 +304,9 @@ export default function SignUpScreen() {
           setProfile(null);
           setShowSuccessModal(true);
         } else {
-          const cleanedPhone = identifier.replace(/\\D/g, '').slice(-10);
-          if (cleanedPhone.length !== 10) {
-            setError('Please enter a valid 10-digit mobile number.');
-            setLoading(false); return;
-          }
-          if (!/^[6-9]/.test(cleanedPhone)) {
-            setError('Mobile number must start with 7, 8, 9, or 6.');
+          const cleanedPhone = identifier.replace(/\D/g, '');
+          if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
+            setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
             setLoading(false); return;
           }
           
@@ -386,7 +453,7 @@ export default function SignUpScreen() {
 
           {role === 'buyer' || role === 'builder' || role === 'agent' || role === 'investor' ? (
             <>
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>{role === 'builder' ? 'Company / Builder Name' : 'Full Name'}</Text>
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Full Name <Text style={{color: '#EF4444'}}>*</Text></Text>
               {isDesktopWeb ? (
                 <View style={styles.desktopInputWrapper}>
                   <Ionicons name="person-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
@@ -396,7 +463,7 @@ export default function SignUpScreen() {
                 <TextInput value={fullName} placeholder="Jane Doe" placeholderTextColor="#94A3B8" onChangeText={setFullName} style={styles.mobileInput} />
               )}
 
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Mobile Number</Text>
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Mobile Number <Text style={{color: '#EF4444'}}>*</Text></Text>
               {isDesktopWeb ? (
                 <View style={styles.desktopInputWrapper}>
                   <Ionicons name="call-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
@@ -406,7 +473,7 @@ export default function SignUpScreen() {
                 <TextInput keyboardType="phone-pad" value={mobileNumber} placeholder="9988776655" placeholderTextColor="#94A3B8" onChangeText={setMobileNumber} style={styles.mobileInput} />
               )}
 
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email Address</Text>
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email Address <Text style={{color: '#EF4444'}}>*</Text></Text>
               {isDesktopWeb ? (
                 <View style={styles.desktopInputWrapper}>
                   <Ionicons name="mail-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
@@ -416,7 +483,7 @@ export default function SignUpScreen() {
                 <TextInput autoCapitalize="none" keyboardType="email-address" value={email} placeholder="jane@example.com" placeholderTextColor="#94A3B8" onChangeText={setEmail} style={styles.mobileInput} />
               )}
 
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Full Address</Text>
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Full Address <Text style={{color: '#EF4444'}}>*</Text></Text>
               {isDesktopWeb ? (
                 <View style={styles.desktopInputWrapper}>
                   <Ionicons name="location-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
@@ -426,7 +493,7 @@ export default function SignUpScreen() {
                 <TextInput value={fullAddress} placeholder="Apt 123, Jubilee Hills, Hyderabad" placeholderTextColor="#94A3B8" onChangeText={setFullAddress} style={styles.mobileInput} />
               )}
 
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Password</Text>
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Password <Text style={{color: '#EF4444'}}>*</Text></Text>
               {isDesktopWeb ? (
                 <View style={styles.desktopInputWrapper}>
                   <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ paddingRight: 4 }}>
@@ -451,7 +518,7 @@ export default function SignUpScreen() {
 
               {role === 'agent' && (
                 <>
-                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>About Agent Partner</Text>
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>About Agent Partner <Text style={{fontSize: 11, fontWeight: 'normal', color: Neutrals.gray500}}>(Optional)</Text></Text>
                   {isDesktopWeb ? (
                     <View style={[styles.desktopInputWrapper, { height: 100, alignItems: 'flex-start', paddingTop: 12 }]}>
                       <Ionicons name="document-text-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
@@ -463,25 +530,219 @@ export default function SignUpScreen() {
                 </>
               )}
               
-              {(role === 'agent' || role === 'investor' || role === 'builder') && (
+              {(role === 'agent' || role === 'investor') && (
                 <>
-                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>KYC Documents Upload</Text>
-                  <View style={{ flexDirection: 'row', gap: 12, marginBottom: 20, flexWrap: 'wrap' }}>
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>KYC Documents & Verification</Text>
+                  <View style={{ gap: 16, marginBottom: 24 }}>
                     {[
-                      { label: 'Aadhaar', state: aadhaarDoc, setter: setAadhaarDoc },
-                      { label: 'PAN Card', state: panDoc, setter: setPanDoc },
-                      { label: 'Passport', state: passportDoc, setter: setPassportDoc }
+                      { label: 'Aadhaar', required: true, numberVal: aadhaarNumber, setNumberVal: setAadhaarNumber, placeholder: 'Enter 12-digit Aadhaar Number', docState: aadhaarDoc, docSetter: setAadhaarDoc },
+                      { label: 'PAN Card', required: true, numberVal: panNumber, setNumberVal: setPanNumber, placeholder: 'Enter 10-character PAN Number', docState: panDoc, docSetter: setPanDoc },
+                      { label: 'Passport', required: false, numberVal: passportNumber, setNumberVal: setPassportNumber, placeholder: 'Enter Passport Number (Optional)', docState: passportDoc, docSetter: setPassportDoc }
                     ].map((doc) => (
-                      <TouchableOpacity key={doc.label} style={{ flex: 1, minWidth: 100, alignItems: 'center', backgroundColor: isDesktopWeb ? Neutrals.white : 'rgba(0,0,0,0.3)', borderWidth: 1, borderColor: isDesktopWeb ? Neutrals.gray200 : 'rgba(255,255,255,0.1)', borderRadius: Radius.md, padding: 12, ...(isDesktopWeb && Platform.OS === 'web' ? { boxShadow: '0 2px 4px rgba(0,0,0,0.02)' } as any : {}) }} onPress={() => handlePickDocument(doc.setter)}>
-                        {doc.state?.uri ? (
-                          <Image source={{ uri: doc.state.uri }} style={{ width: 40, height: 40, borderRadius: 4, marginBottom: 8 }} />
-                        ) : (
-                          <Ionicons name="cloud-upload-outline" size={24} color={isDesktopWeb ? Neutrals.gray500 : '#94A3B8'} style={{ marginBottom: 8 }} />
-                        )}
-                        <Text style={{ fontSize: 12, fontWeight: '600', color: isDesktopWeb ? Neutrals.obsidian : '#FFFFFF', textAlign: 'center' }}>
-                          {doc.state?.uri ? `${doc.label} (Done)` : `Upload ${doc.label}`}
+                      <View key={doc.label} style={{ gap: 6 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: isDesktopWeb ? Neutrals.obsidian : '#E2E8F0' }}>
+                          {doc.label} Number & Document {doc.required ? <Text style={{color: '#EF4444'}}>*</Text> : <Text style={{fontSize: 11, fontWeight: 'normal', color: Neutrals.gray500}}>(Optional)</Text>}
                         </Text>
-                      </TouchableOpacity>
+                        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                          {isDesktopWeb ? (
+                            <View style={[styles.desktopInputWrapper, { flex: 1, marginBottom: 0 }]}>
+                              <Ionicons name="card-outline" size={18} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                              <TextInput
+                                value={doc.numberVal}
+                                placeholder={doc.placeholder}
+                                placeholderTextColor={Neutrals.gray400}
+                                onChangeText={doc.setNumberVal}
+                                style={styles.desktopInput}
+                                autoCapitalize={doc.label === 'PAN Card' ? 'characters' : 'none'}
+                              />
+                            </View>
+                          ) : (
+                            <TextInput
+                              value={doc.numberVal}
+                              placeholder={doc.placeholder}
+                              placeholderTextColor="#94A3B8"
+                              onChangeText={doc.setNumberVal}
+                              style={[styles.mobileInput, { flex: 1, marginBottom: 0 }]}
+                              autoCapitalize={doc.label === 'PAN Card' ? 'characters' : 'none'}
+                            />
+                          )}
+
+                          <TouchableOpacity
+                            style={{
+                              paddingHorizontal: 16,
+                              paddingVertical: isDesktopWeb ? 13 : 13,
+                              backgroundColor: doc.docState?.uri ? 'rgba(16, 185, 129, 0.15)' : (isDesktopWeb ? Neutrals.white : 'rgba(0,0,0,0.3)'),
+                              borderWidth: 1,
+                              borderColor: doc.docState?.uri ? '#10B981' : (isDesktopWeb ? Neutrals.gray200 : 'rgba(255,255,255,0.1)'),
+                              borderRadius: Radius.md,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                            onPress={() => handlePickDocument(doc.docSetter)}
+                          >
+                            {doc.docState?.uri ? (
+                              <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+                            ) : (
+                              <Ionicons name="cloud-upload-outline" size={18} color={isDesktopWeb ? Neutrals.gray500 : '#94A3B8'} />
+                            )}
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: doc.docState?.uri ? '#10B981' : (isDesktopWeb ? Neutrals.obsidian : '#FFFFFF') }}>
+                              {doc.docState?.uri ? 'Uploaded' : 'Upload Image'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    ))}
+                  </View>
+                </>
+              )}
+
+              {role === 'builder' && (
+                <>
+                  {/* --- Company Details Section --- */}
+                  <Text style={[isDesktopWeb ? styles.desktopLabel : styles.mobileLabel, { marginTop: 4, marginBottom: 12, fontSize: 15, color: isDesktopWeb ? GoldSystem.primaryGold : '#D4AF37' }]}>Company Details</Text>
+
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Company Name <Text style={{color: '#EF4444'}}>*</Text></Text>
+                  {isDesktopWeb ? (
+                    <View style={styles.desktopInputWrapper}>
+                      <Ionicons name="business-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                      <TextInput value={companyName} placeholder="e.g. ABC Constructions Pvt Ltd" placeholderTextColor={Neutrals.gray400} onChangeText={setCompanyName} style={styles.desktopInput} />
+                    </View>
+                  ) : (
+                    <TextInput value={companyName} placeholder="e.g. ABC Constructions Pvt Ltd" placeholderTextColor="#94A3B8" onChangeText={setCompanyName} style={styles.mobileInput} />
+                  )}
+
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Office Address <Text style={{color: '#EF4444'}}>*</Text></Text>
+                  {isDesktopWeb ? (
+                    <View style={[styles.desktopInputWrapper, { height: 80, alignItems: 'flex-start', paddingTop: 12 }]}>
+                      <Ionicons name="location-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                      <TextInput multiline value={officeAddress} placeholder="Office / Registered address" placeholderTextColor={Neutrals.gray400} onChangeText={setOfficeAddress} style={[styles.desktopInput, { paddingVertical: 0, height: 60, textAlignVertical: 'top' }]} />
+                    </View>
+                  ) : (
+                    <TextInput multiline value={officeAddress} placeholder="Office / Registered address" placeholderTextColor="#94A3B8" onChangeText={setOfficeAddress} style={[styles.mobileInput, { height: 80, textAlignVertical: 'top' }]} />
+                  )}
+
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Website <Text style={{fontSize: 11, fontWeight: 'normal', color: Neutrals.gray500}}>(Optional)</Text></Text>
+                  {isDesktopWeb ? (
+                    <View style={styles.desktopInputWrapper}>
+                      <Ionicons name="globe-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                      <TextInput autoCapitalize="none" value={website} placeholder="https://www.example.com" placeholderTextColor={Neutrals.gray400} onChangeText={setWebsite} style={styles.desktopInput} />
+                    </View>
+                  ) : (
+                    <TextInput autoCapitalize="none" value={website} placeholder="https://www.example.com" placeholderTextColor="#94A3B8" onChangeText={setWebsite} style={styles.mobileInput} />
+                  )}
+
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>RERA Registration Number <Text style={{color: '#EF4444'}}>*</Text></Text>
+                  {isDesktopWeb ? (
+                    <View style={styles.desktopInputWrapper}>
+                      <Ionicons name="shield-checkmark-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                      <TextInput autoCapitalize="characters" value={reraNumber} placeholder="e.g. P02400003214" placeholderTextColor={Neutrals.gray400} onChangeText={setReraNumber} style={styles.desktopInput} />
+                    </View>
+                  ) : (
+                    <TextInput autoCapitalize="characters" value={reraNumber} placeholder="e.g. P02400003214" placeholderTextColor="#94A3B8" onChangeText={setReraNumber} style={styles.mobileInput} />
+                  )}
+
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>CREDAI Member <Text style={{color: '#EF4444'}}>*</Text></Text>
+                  <View style={[styles.roleRow, { marginBottom: 20 }]}>
+                    {[{ label: 'Yes', value: true }, { label: 'No', value: false }].map((opt) => {
+                      const isActive = credaiMember === opt.value;
+                      let pillStyle, textStyle;
+                      if (isDesktopWeb) {
+                        pillStyle = [styles.desktopRolePill, isActive && styles.desktopRolePillActive, { flex: 0, paddingHorizontal: 32 }];
+                        textStyle = [styles.desktopRoleText, isActive && styles.desktopRoleTextActive];
+                      } else {
+                        pillStyle = [styles.mobileRolePill, isActive && styles.mobileRolePillActive, { flex: 0, paddingHorizontal: 32 }];
+                        textStyle = [styles.mobileRoleText, isActive && styles.mobileRoleTextActive];
+                      }
+                      return (
+                        <TouchableOpacity key={opt.label} style={pillStyle} onPress={() => setCredaiMember(opt.value)}>
+                          <Text style={textStyle}>{opt.label}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Company PAN <Text style={{color: '#EF4444'}}>*</Text></Text>
+                  {isDesktopWeb ? (
+                    <View style={styles.desktopInputWrapper}>
+                      <Ionicons name="card-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                      <TextInput autoCapitalize="characters" value={companyPan} placeholder="e.g. ABCDE1234F" placeholderTextColor={Neutrals.gray400} onChangeText={setCompanyPan} style={styles.desktopInput} />
+                    </View>
+                  ) : (
+                    <TextInput autoCapitalize="characters" value={companyPan} placeholder="e.g. ABCDE1234F" placeholderTextColor="#94A3B8" onChangeText={setCompanyPan} style={styles.mobileInput} />
+                  )}
+
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Company GST <Text style={{color: '#EF4444'}}>*</Text></Text>
+                  {isDesktopWeb ? (
+                    <View style={styles.desktopInputWrapper}>
+                      <Ionicons name="receipt-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                      <TextInput autoCapitalize="characters" value={companyGst} placeholder="e.g. 36ABCDE1234F1Z5" placeholderTextColor={Neutrals.gray400} onChangeText={setCompanyGst} style={styles.desktopInput} />
+                    </View>
+                  ) : (
+                    <TextInput autoCapitalize="characters" value={companyGst} placeholder="e.g. 36ABCDE1234F1Z5" placeholderTextColor="#94A3B8" onChangeText={setCompanyGst} style={styles.mobileInput} />
+                  )}
+
+                  {/* --- Owner / Director KYC Section --- */}
+                  <Text style={[isDesktopWeb ? styles.desktopLabel : styles.mobileLabel, { marginTop: 8, marginBottom: 12, fontSize: 15, color: isDesktopWeb ? GoldSystem.primaryGold : '#D4AF37' }]}>Owner / Director KYC</Text>
+                  <View style={{ gap: 16, marginBottom: 24 }}>
+                    {[
+                      { label: 'Aadhaar', required: true, numberVal: builderAadhaarNumber, setNumberVal: setBuilderAadhaarNumber, placeholder: 'Enter 12-digit Aadhaar Number', docState: builderAadhaarDoc, docSetter: setBuilderAadhaarDoc },
+                      { label: 'PAN Card', required: true, numberVal: builderPanNumber, setNumberVal: setBuilderPanNumber, placeholder: 'Enter 10-character PAN Number', docState: builderPanDoc, docSetter: setBuilderPanDoc },
+                      { label: 'Passport', required: false, numberVal: builderPassportNumber, setNumberVal: setBuilderPassportNumber, placeholder: 'Enter Passport Number (Optional)', docState: builderPassportDoc, docSetter: setBuilderPassportDoc }
+                    ].map((doc) => (
+                      <View key={doc.label} style={{ gap: 6 }}>
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: isDesktopWeb ? Neutrals.obsidian : '#E2E8F0' }}>
+                          {doc.label} Number & Document {doc.required ? <Text style={{color: '#EF4444'}}>*</Text> : <Text style={{fontSize: 11, fontWeight: 'normal', color: Neutrals.gray500}}>(Optional)</Text>}
+                        </Text>
+                        <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
+                          {isDesktopWeb ? (
+                            <View style={[styles.desktopInputWrapper, { flex: 1, marginBottom: 0 }]}>
+                              <Ionicons name="card-outline" size={18} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                              <TextInput
+                                value={doc.numberVal}
+                                placeholder={doc.placeholder}
+                                placeholderTextColor={Neutrals.gray400}
+                                onChangeText={doc.setNumberVal}
+                                style={styles.desktopInput}
+                                autoCapitalize={doc.label === 'PAN Card' ? 'characters' : 'none'}
+                              />
+                            </View>
+                          ) : (
+                            <TextInput
+                              value={doc.numberVal}
+                              placeholder={doc.placeholder}
+                              placeholderTextColor="#94A3B8"
+                              onChangeText={doc.setNumberVal}
+                              style={[styles.mobileInput, { flex: 1, marginBottom: 0 }]}
+                              autoCapitalize={doc.label === 'PAN Card' ? 'characters' : 'none'}
+                            />
+                          )}
+
+                          <TouchableOpacity
+                            style={{
+                              paddingHorizontal: 16,
+                              paddingVertical: isDesktopWeb ? 13 : 13,
+                              backgroundColor: doc.docState?.uri ? 'rgba(16, 185, 129, 0.15)' : (isDesktopWeb ? Neutrals.white : 'rgba(0,0,0,0.3)'),
+                              borderWidth: 1,
+                              borderColor: doc.docState?.uri ? '#10B981' : (isDesktopWeb ? Neutrals.gray200 : 'rgba(255,255,255,0.1)'),
+                              borderRadius: Radius.md,
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              gap: 6,
+                            }}
+                            onPress={() => handlePickDocument(doc.docSetter)}
+                          >
+                            {doc.docState?.uri ? (
+                              <Ionicons name="checkmark-circle" size={18} color="#10B981" />
+                            ) : (
+                              <Ionicons name="cloud-upload-outline" size={18} color={isDesktopWeb ? Neutrals.gray500 : '#94A3B8'} />
+                            )}
+                            <Text style={{ fontSize: 13, fontWeight: '600', color: doc.docState?.uri ? '#10B981' : (isDesktopWeb ? Neutrals.obsidian : '#FFFFFF') }}>
+                              {doc.docState?.uri ? 'Uploaded' : 'Upload Image'}
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
                     ))}
                   </View>
                 </>
@@ -489,7 +750,7 @@ export default function SignUpScreen() {
             </>
           ) : (
             <>
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email or Mobile Number</Text>
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email or Mobile Number <Text style={{color: '#EF4444'}}>*</Text></Text>
               {isDesktopWeb ? (
                 <View style={styles.desktopInputWrapper}>
                   <Ionicons name="mail-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
@@ -509,7 +770,7 @@ export default function SignUpScreen() {
 
               {isEmail && (
                 <>
-                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Password</Text>
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Password <Text style={{color: '#EF4444'}}>*</Text></Text>
                   {isDesktopWeb ? (
                     <View style={styles.desktopInputWrapper}>
                       <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ paddingRight: 4 }}>

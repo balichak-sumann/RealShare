@@ -20,6 +20,13 @@ interface PendingUser {
   role: string;
   created_at: string;
   bio: string | null;
+  company_name: string | null;
+  office_address: string | null;
+  website: string | null;
+  rera_number: string | null;
+  credai_member: boolean | null;
+  company_pan: string | null;
+  company_gst: string | null;
   kyc_documents: KycDoc[];
   _actionStatus?: 'approve' | 'reject' | 'delete' | 'deleted';
 }
@@ -192,56 +199,73 @@ export default function ApprovalsPage() {
                   </td>
                   {filterRole !== "buyer" && filterRole !== "builder" && (
                     <td className={styles.td}>
-                      {user.role === 'agent' ? (
-                        user.kyc_documents && user.kyc_documents.length > 0 ? (
-                          <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
-                            {user.kyc_documents.map((doc, idx) => {
-                              const proxyUrl = getProxiedUrl(doc.document_front_url);
-                              const isPlaceholder = !proxyUrl;
-                              
-                              return (
-                                <div key={doc.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
-                                  {isPlaceholder ? (
-                                    <div style={{ width: '72px', height: '52px', background: '#FEF3C7', border: '1px dashed #F59E0B', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: '#92400E', textAlign: 'center', padding: '4px' }}>
-                                      Not uploaded
-                                    </div>
-                                  ) : (
-                                    <div
-                                      onClick={() => openDocViewer(user.kyc_documents, user.full_name, idx)}
-                                      style={{ cursor: 'pointer', position: 'relative' }}
-                                    >
-                                      <img
-                                        src={proxyUrl}
-                                        alt={doc.document_type}
-                                        style={{ width: '72px', height: '52px', objectFit: 'cover', borderRadius: '6px', border: '2px solid #E2E8F0', transition: 'border-color 0.2s' }}
-                                        onError={(e) => {
-                                          const el = e.target as HTMLImageElement;
-                                          el.style.display = 'none';
-                                        }}
-                                        onMouseOver={(e) => { (e.target as HTMLImageElement).style.borderColor = '#D4AF37'; }}
-                                        onMouseOut={(e) => { (e.target as HTMLImageElement).style.borderColor = '#E2E8F0'; }}
-                                      />
-                                      <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.15)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }}
-                                        onMouseOver={(e) => { (e.target as HTMLElement).style.opacity = '1'; }}
-                                        onMouseOut={(e) => { (e.target as HTMLElement).style.opacity = '0'; }}
-                                      >
-                                        <span style={{ color: '#fff', fontSize: '16px' }}>🔍</span>
+                      {(user.role === 'agent' || user.role === 'builder') ? (
+                        <>
+                          {/* Builder company info summary */}
+                          {user.role === 'builder' && user.company_name && (
+                            <div style={{ marginBottom: '8px', padding: '6px 10px', background: '#F0F9FF', borderRadius: '6px', fontSize: '0.75rem', lineHeight: '1.5' }}>
+                              <div><strong>Company:</strong> {user.company_name}</div>
+                              {user.rera_number && <div><strong>RERA:</strong> {user.rera_number}</div>}
+                              {user.company_pan && <div><strong>PAN:</strong> {user.company_pan}</div>}
+                              {user.company_gst && <div><strong>GST:</strong> {user.company_gst}</div>}
+                              {user.credai_member !== null && <div><strong>CREDAI:</strong> {user.credai_member ? 'Yes' : 'No'}</div>}
+                            </div>
+                          )}
+                          {user.kyc_documents && user.kyc_documents.length > 0 ? (
+                            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap" }}>
+                              {user.kyc_documents.map((doc, idx) => {
+                                const proxyUrl = getProxiedUrl(doc.document_front_url);
+                                const isPlaceholder = !proxyUrl;
+                                
+                                return (
+                                  <div key={doc.id} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                                    {isPlaceholder ? (
+                                      <div style={{ width: '72px', height: '52px', background: '#FEF3C7', border: '1px dashed #F59E0B', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: '#92400E', textAlign: 'center', padding: '4px' }}>
+                                        Not uploaded
                                       </div>
-                                    </div>
-                                  )}
-                                  <span
-                                    onClick={() => !isPlaceholder && openDocViewer(user.kyc_documents, user.full_name, idx)}
-                                    style={{ fontSize: "0.65rem", color: "#2563EB", fontWeight: 600, cursor: isPlaceholder ? 'default' : 'pointer', textDecoration: isPlaceholder ? 'none' : 'underline' }}
-                                  >
-                                    {doc.document_type.toUpperCase()}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        ) : (
-                          <span style={{ fontSize: "0.8rem", color: "#64748B" }}>None uploaded</span>
-                        )
+                                    ) : (
+                                      <div
+                                        onClick={() => openDocViewer(user.kyc_documents, user.full_name, idx)}
+                                        style={{ cursor: 'pointer', position: 'relative' }}
+                                      >
+                                        <img
+                                          src={proxyUrl}
+                                          alt={doc.document_type}
+                                          style={{ width: '72px', height: '52px', objectFit: 'cover', borderRadius: '6px', border: '2px solid #E2E8F0', transition: 'border-color 0.2s' }}
+                                          onError={(e) => {
+                                            const el = e.target as HTMLImageElement;
+                                            el.style.display = 'none';
+                                          }}
+                                          onMouseOver={(e) => { (e.target as HTMLImageElement).style.borderColor = '#D4AF37'; }}
+                                          onMouseOut={(e) => { (e.target as HTMLImageElement).style.borderColor = '#E2E8F0'; }}
+                                        />
+                                        <div style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.15)', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', opacity: 0, transition: 'opacity 0.2s' }}
+                                          onMouseOver={(e) => { (e.target as HTMLElement).style.opacity = '1'; }}
+                                          onMouseOut={(e) => { (e.target as HTMLElement).style.opacity = '0'; }}
+                                        >
+                                          <span style={{ color: '#fff', fontSize: '16px' }}>🔍</span>
+                                        </div>
+                                      </div>
+                                    )}
+                                    <span
+                                      onClick={() => !isPlaceholder && openDocViewer(user.kyc_documents, user.full_name, idx)}
+                                      style={{ fontSize: "0.65rem", color: "#2563EB", fontWeight: 600, cursor: isPlaceholder ? 'default' : 'pointer', textDecoration: isPlaceholder ? 'none' : 'underline' }}
+                                    >
+                                      {doc.document_type.toUpperCase()}
+                                    </span>
+                                    {doc.document_number && doc.document_number !== 'UPLOADED-VIA-APP' && (
+                                      <span style={{ fontSize: "0.65rem", color: "#0F172A", fontWeight: 700, backgroundColor: "#F1F5F9", padding: "1px 4px", borderRadius: "3px", maxWidth: "84px", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }} title={doc.document_number}>
+                                        {doc.document_number}
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          ) : (
+                            <span style={{ fontSize: "0.8rem", color: "#64748B" }}>None uploaded</span>
+                          )}
+                        </>
                       ) : (
                         <span style={{ fontSize: "0.8rem", color: "#64748B" }}>N/A</span>
                       )}

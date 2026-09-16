@@ -1,6 +1,8 @@
+// Asset refresh trigger
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/contexts/UserContext';
@@ -10,13 +12,13 @@ import { useResponsive } from '@/hooks/useResponsive';
 const HERO_IMAGE = require('../../../assets/images/indian_home_loan.png');
 
 const BANK_PARTNERS = [
-  { name: 'Axis Bank', short: 'AXIS', color: '#97144D', bg: '#FDF2F7' },
-  { name: 'Kotak Bank', short: 'KOTAK', color: '#ED1C24', bg: '#FFF1F1' },
-  { name: 'HDFC Bank', short: 'HDFC', color: '#004B87', bg: '#EDF4FA' },
-  { name: 'ICICI Bank', short: 'ICICI', color: '#F58220', bg: '#FFF5EB' },
-  { name: 'SBI', short: 'SBI', color: '#22409A', bg: '#EEF1FA' },
-  { name: 'Union Bank', short: 'UBI', color: '#E3342F', bg: '#FDECEC' },
-  { name: 'IndusInd Bank', short: 'INDUS', color: '#8B1A4A', bg: '#F9EFF3' },
+  { name: 'Axis Bank', source: require('../../../assets/images/banks/axis.png') },
+  { name: 'Kotak Bank', source: require('../../../assets/images/banks/kotak.png') },
+  { name: 'HDFC Bank', source: require('../../../assets/images/banks/hdfc.png') },
+  { name: 'ICICI Bank', source: require('../../../assets/images/banks/icici.png') },
+  { name: 'SBI', source: require('../../../assets/images/banks/sbi.png') },
+  { name: 'Union Bank', source: require('../../../assets/images/banks/union.png') },
+  { name: 'IndusInd Bank', source: require('../../../assets/images/banks/indusind.png') },
 ];
 export default function HomeLoansScreen() {
   const router = useRouter();
@@ -87,14 +89,16 @@ export default function HomeLoansScreen() {
           <View style={[styles.detailsContainer, isDesktop && { flex: 1 }]}>
             <Text style={styles.promoHeader}>Get Home Loans at the Lowest rate from our partner Bank.</Text>
             
-            <View style={styles.partnersGrid}>
-              {BANK_PARTNERS.map((bank, index) => (
-                <View key={index} style={[styles.partnerLogoContainer, { backgroundColor: bank.bg }]}>
-                  <Text style={[styles.partnerShort, { color: bank.color }]}>{bank.short}</Text>
-                  <Text style={styles.partnerName}>{bank.name}</Text>
-                </View>
-              ))}
-            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+              <View style={styles.partnersGrid}>
+                {BANK_PARTNERS.map((bank, index) => (
+                  <View key={index} style={styles.partnerLogoContainer}>
+                    <Image source={bank.source} style={styles.partnerLogo} contentFit="contain" />
+                    <Text style={styles.partnerName}>{bank.name}</Text>
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
 
             <Text style={styles.sectionTitle}>Why choose RealShare Finance?</Text>
             
@@ -346,35 +350,34 @@ const styles = StyleSheet.create({
   },
   partnersGrid: {
     flexDirection: 'row',
-    flexWrap: 'wrap',
     gap: 16,
-    marginBottom: 16,
+    paddingBottom: 8,
   },
   partnerLogoContainer: {
-    width: 100,
-    height: 80,
+    width: 130,
+    height: 120,
     backgroundColor: Neutrals.white,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     borderWidth: 1,
     borderColor: Neutrals.gray200,
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 8,
     ...Platform.select({
       ios: Shadows.sm,
       android: { elevation: 2 },
       web: Shadows.sm,
     }),
   },
-  partnerShort: {
-    fontSize: 18,
-    fontWeight: '800',
-    letterSpacing: 1,
-    marginBottom: 4,
+  partnerLogo: {
+    width: 100,
+    height: 70,
+    marginBottom: 8,
   },
   partnerName: {
     ...Typography.labelSmall,
-    color: Neutrals.gray500,
+    color: Neutrals.gray600,
     fontSize: 9,
     textAlign: 'center',
   }

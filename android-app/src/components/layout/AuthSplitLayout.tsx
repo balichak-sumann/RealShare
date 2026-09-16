@@ -63,7 +63,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
               end={{ x: 1, y: 0 }}
               style={styles.gradientOverlay}
             >
-              <ScrollView contentContainerStyle={styles.leftContent} showsVerticalScrollIndicator={false}>
+              <View style={styles.leftContent}>
                 <View style={styles.leftContentInner}>
                   <View style={styles.eyebrowContainer}>
                   <View style={styles.eyebrowLine} />
@@ -121,7 +121,7 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
                   </View>
                 </View>
                 </View>
-              </ScrollView>
+              </View>
             </LinearGradient>
           </ImageBackground>
         </View>
@@ -209,9 +209,8 @@ const styles = StyleSheet.create({
   },
   leftContent: {
     paddingHorizontal: 40,
-    paddingTop: 40,
-    paddingBottom: 40,
-    flexGrow: 1,
+    paddingVertical: 20,
+    flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -219,12 +218,14 @@ const styles = StyleSheet.create({
     width: '100%',
     maxWidth: 480,
     alignItems: 'center',
+    justifyContent: 'center',
+    flex: 1,
   },
   eyebrowContainer: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
+    marginBottom: 8,
   },
   eyebrowLine: {
     width: 20,
@@ -240,24 +241,24 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
   headline: {
-    fontSize: 52,
+    fontSize: 42,
     fontWeight: '800',
     color: Neutrals.obsidian,
-    lineHeight: 56,
-    marginBottom: 12,
+    lineHeight: 46,
+    marginBottom: 8,
     fontFamily: 'serif',
     textAlign: 'center',
   },
   subtitle: {
-    fontSize: 16,
+    fontSize: 15,
     color: Neutrals.gray600,
-    lineHeight: 24,
-    marginBottom: 32,
+    lineHeight: 22,
+    marginBottom: 20,
     textAlign: 'center',
   },
   featuresList: {
-    gap: 16,
-    marginBottom: 32,
+    gap: 12,
+    marginBottom: 24,
   },
   featureItem: {
     flexDirection: 'row',
@@ -283,7 +284,7 @@ const styles = StyleSheet.create({
     color: Neutrals.gray500,
   },
   quoteBox: {
-    marginBottom: 32,
+    marginBottom: 24,
   },
   quoteText: {
     fontSize: 20,

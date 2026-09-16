@@ -89,7 +89,7 @@ export default function PropertyManagementScreen() {
             <View style={styles.featureItem}>
               <View style={styles.featureIcon}><Text style={styles.iconText}>🏦</Text></View>
               <View style={styles.featureTextContainer}>
-                <Text style={styles.featureTitle}>Guaranteed Rent Collection</Text>
+                <Text style={styles.featureTitle}>Rent Collection</Text>
                 <Text style={styles.featureDesc}>On-time digital rent payments collected securely and deposited directly into your bank account.</Text>
               </View>
             </View>
@@ -110,7 +110,7 @@ export default function PropertyManagementScreen() {
               </View>
             </View>
 
-            <Text style={styles.disclaimerText}>*Property management services are executed in collaboration with our certified real estate partners.</Text>
+
           </View>
 
           <View style={[styles.formContainer, isDesktop && { width: 400 }]}>

@@ -69,6 +69,7 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
   const [postYield, setPostYield] = useState('9.0');
   const [postImageUrl, setPostImageUrl] = useState('');
   const [postSubmitting, setPostSubmitting] = useState(false);
+  const [postFormErrors, setPostFormErrors] = useState<string[]>([]);
 
   useEffect(() => {
     if (profile && profile.role !== 'agent' && profile.role !== 'admin') {
@@ -122,10 +123,14 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
   };
 
   const handlePostProperty = async () => {
-    if (!postTitle || !postLocality) {
-      alert('Please enter a title and locality.');
+    const errors: string[] = [];
+    if (!postTitle || !postTitle.trim()) errors.push('Property Title is required.');
+    if (!postLocality || !postLocality.trim()) errors.push('Locality is required.');
+    if (errors.length > 0) {
+      setPostFormErrors(errors);
       return;
     }
+    setPostFormErrors([]);
     setPostSubmitting(true);
     try {
       const user = auth.currentUser;
@@ -580,10 +585,29 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
               )}
             </TouchableOpacity>
 
+            {/* Validation Error Banner */}
+            {postFormErrors.length > 0 && (
+              <View style={{
+                backgroundColor: '#FEF2F2',
+                borderWidth: 1,
+                borderColor: '#FECACA',
+                borderRadius: 10,
+                padding: 12,
+                marginBottom: 14,
+              }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#DC2626', marginBottom: 5 }}>
+                  ⚠️ Please fill in all required fields:
+                </Text>
+                {postFormErrors.map((err, i) => (
+                  <Text key={i} style={{ fontSize: 12, color: '#B91C1C', marginBottom: 2 }}>• {err}</Text>
+                ))}
+              </View>
+            )}
+
             <TouchableOpacity style={styles.saveBankBtn} onPress={handlePostProperty} disabled={postSubmitting}>
-              {postSubmitting ? <ActivityIndicator color="#D4AF37" /> : <Text style={styles.saveBankText}>Submit for Approval</Text>}
+              {postSubmitting ? <ActivityIndicator color="#D4AF37" /> : <Text style={styles.saveBankText}>👁️ Preview &amp; Submit for Approval</Text>}
             </TouchableOpacity>
-            <TouchableOpacity style={styles.cancelBankBtn} onPress={() => setShowPostModal(false)} disabled={postSubmitting}>
+            <TouchableOpacity style={styles.cancelBankBtn} onPress={() => { setShowPostModal(false); setPostFormErrors([]); }} disabled={postSubmitting}>
               <Text style={styles.cancelBankText}>Cancel</Text>
             </TouchableOpacity>
           </ScrollView>

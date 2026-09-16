@@ -8,12 +8,12 @@ import { getApiUrl } from '@/lib/api';
 
 import { useResponsive } from '@/hooks/useResponsive';
 
-const HERO_IMAGE = 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?ixlib=rb-4.0.3&auto=format&fit=crop&w=1600&q=80';
+const HERO_IMAGE = 'https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?q=80&w=1600&auto=format&fit=crop';
 
 const DEFAULT_SERVICES = [
-  { id: '1', title: 'Interior Design', image: 'https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Premium design consultations and execution for your dream home.', price: 'Free Consultation' },
-  { id: '2', title: 'Property Management', image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Full lifecycle tenant & property management for complete peace of mind.', price: 'Starts ₹800/mo' },
-  { id: '3', title: 'Home Loans', image: 'https://images.unsplash.com/photo-1579621970563-ebec7560ff3e?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&q=80', desc: 'Instant approvals with lowest interest rates from top banks.', price: 'Coming Soon' },
+  { id: '3', title: 'Home Loans & Finance', image: require('../../assets/images/indian_home_loan.png'), desc: 'Instant approvals with lowest interest rates from top banks.', price: 'Free Consultation' },
+  { id: '1', title: 'Interior Design', image: require('../../assets/images/indian_interior_design.png'), desc: 'Premium design consultations and execution for your dream home.', price: 'Free Consultation' },
+  { id: '2', title: 'Property Management', image: require('../../assets/images/indian_property_management.png'), desc: 'Full lifecycle tenant & property management for complete peace of mind.', price: 'Free Consultation' },
 ];
 
 export default function ServicesScreen() {
@@ -29,12 +29,12 @@ export default function ServicesScreen() {
         if (res.ok) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setServices(data.map(s => ({
+            setServices(data.map((s: any) => ({
               id: s.id,
               title: s.title,
-              image: s.image_url,
+              image: DEFAULT_SERVICES.find(ds => ds.title === s.title)?.image || s.image_url,
               desc: s.description || s.category,
-              price: s.pricing || 'Free Consultation'
+              price: DEFAULT_SERVICES.find(ds => ds.title === s.title)?.price || s.pricing || 'Free Consultation'
             })));
           }
         }
@@ -52,6 +52,11 @@ export default function ServicesScreen() {
       // Fallback for custom or general services (route to contact or show a general form)
       router.push('/contact');
     }
+  };
+
+  const getImageSource = (img: any) => {
+    if (typeof img === 'string') return { uri: img };
+    return img;
   };
 
   return (
@@ -89,7 +94,7 @@ export default function ServicesScreen() {
           {services.map(service => (
             <TouchableOpacity key={service.id} style={[styles.serviceCard, isDesktop && styles.serviceCardDesktop]} activeOpacity={0.9} onPress={() => openInquiry(service.title)}>
               <ImageBackground 
-                source={{ uri: service.image }} 
+                source={getImageSource(service.image)} 
                 style={styles.serviceImage}
               >
                 <LinearGradient

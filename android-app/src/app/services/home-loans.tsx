@@ -1,6 +1,8 @@
+// Asset refresh trigger
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Image } from 'expo-image';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/contexts/UserContext';
@@ -9,6 +11,15 @@ import { useResponsive } from '@/hooks/useResponsive';
 
 const HERO_IMAGE = require('../../../assets/images/indian_home_loan.jpg');
 
+const BANK_PARTNERS = [
+  { name: 'Axis Bank', source: require('../../../assets/images/banks/axis.png') },
+  { name: 'Kotak Bank', source: require('../../../assets/images/banks/kotak.png') },
+  { name: 'HDFC Bank', source: require('../../../assets/images/banks/hdfc.png') },
+  { name: 'ICICI Bank', source: require('../../../assets/images/banks/icici.png') },
+  { name: 'SBI', source: require('../../../assets/images/banks/sbi.png') },
+  { name: 'Union Bank', source: require('../../../assets/images/banks/union.png') },
+  { name: 'IndusInd Bank', source: require('../../../assets/images/banks/indusind.png') },
+];
 export default function HomeLoansScreen() {
   const router = useRouter();
   const { profile } = useUser();
@@ -76,8 +87,19 @@ export default function HomeLoansScreen() {
 
         <View style={[styles.mainSection, isDesktop && styles.mainSectionDesktop]}>
           <View style={[styles.detailsContainer, isDesktop && { flex: 1 }]}>
-            <Text style={styles.promoHeader}>Get Home Loans at the Lowest rate.</Text>
+            <Text style={styles.promoHeader}>Get Home Loans at the Lowest rate from our partner Bank.</Text>
             
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
+              <View style={styles.partnersGrid}>
+                {BANK_PARTNERS.map((bank, index) => (
+                  <View key={index} style={styles.partnerLogoContainer}>
+                    <Image source={bank.source} style={styles.partnerLogo} contentFit="contain" />
+                    <Text style={styles.partnerName}>{bank.name}</Text>
+                  </View>
+                ))}
+              </View>
+            </ScrollView>
+
             <Text style={styles.sectionTitle}>Why choose RealShare Finance?</Text>
             
             <View style={styles.featureItem}>
@@ -322,5 +344,41 @@ const styles = StyleSheet.create({
   submitText: {
     ...Typography.labelLarge,
     color: Neutrals.obsidian,
+  },
+  partnersSection: {
+    marginTop: 40,
+  },
+  partnersGrid: {
+    flexDirection: 'row',
+    gap: 16,
+    paddingBottom: 8,
+  },
+  partnerLogoContainer: {
+    width: 130,
+    height: 120,
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Neutrals.gray200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingVertical: 10,
+    paddingHorizontal: 8,
+    ...Platform.select({
+      ios: Shadows.sm,
+      android: { elevation: 2 },
+      web: Shadows.sm,
+    }),
+  },
+  partnerLogo: {
+    width: 100,
+    height: 70,
+    marginBottom: 8,
+  },
+  partnerName: {
+    ...Typography.labelSmall,
+    color: Neutrals.gray600,
+    fontSize: 9,
+    textAlign: 'center',
   }
 });

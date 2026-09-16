@@ -8,6 +8,16 @@ import * as Device from 'expo-device';
 
 import { getApiUrl, resilientFetch } from '@/lib/api';
 
+if (Platform.OS === 'web' && typeof document !== 'undefined') {
+  const style = document.createElement('style');
+  style.textContent = `
+    [role="button"], a, [role="link"], [role="menuitem"], [tabindex="0"] {
+      cursor: pointer !important;
+    }
+  `;
+  document.head.appendChild(style);
+}
+
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
     shouldShowAlert: true,

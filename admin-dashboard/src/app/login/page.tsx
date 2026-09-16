@@ -1,67 +1,108 @@
 "use client";
 
 import React, { Suspense, useState } from 'react';
-import { signInWithEmailAndPassword, sendPasswordResetEmail, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { signInWithCustomToken } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 function LoginForm() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [phone, setPhone] = useState('');
+  const [otp, setOtp] = useState('');
+  const [step, setStep] = useState<1 | 2>(1);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
-  const [resetLoading, setResetLoading] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
   const unauthorized = searchParams.get('unauthorized') === '1';
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!phone || phone.length !== 10) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-      // AuthContext will handle redirect
+      const res = await fetch('/api/otp/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
+      const data = await res.json();
+      
+      if (!data.success) {
+        throw new Error(data.error || 'Failed to send OTP.');
+      }
+      
+      setSuccess('OTP sent successfully!');
+      setStep(2);
     } catch (err: any) {
-      setError(err.message || 'Failed to login');
+      setError(err.message || 'Failed to send OTP');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleForgotPassword = async () => {
-    if (!email) {
-      setError('Please enter your email address first to reset your password.');
+  const handleVerifyOtp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp || otp.length !== 6) {
+      setError('Please enter a valid 6-digit OTP.');
       return;
     }
     
-    setResetLoading(true);
-    setError('');
-    setSuccess('');
-    
-    try {
-      await sendPasswordResetEmail(auth, email);
-      setSuccess(`Password reset link sent to ${email}`);
-    } catch (err: any) {
-      setError(err.message || 'Failed to send password reset email');
-    } finally {
-      setResetLoading(false);
-    }
-  };
-
-  const handleGoogleLogin = async () => {
     setLoading(true);
     setError('');
     setSuccess('');
 
     try {
-      await signInWithPopup(auth, googleProvider);
+      // 1. Verify OTP with our backend
+      const res = await fetch('/api/otp/verify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: phone, otp }),
+      });
+      const data = await res.json();
+      
+      if (!data.success || !data.firebaseToken) {
+        throw new Error(data.error || 'Failed to verify OTP.');
+      }
+
+      // 2. Sign in with the returned custom token
+      const userCredential = await signInWithCustomToken(auth, data.firebaseToken);
+      const token = await userCredential.user.getIdToken();
+      
+      // 3. Verify Admin Role
+      const roleRes = await fetch('/api/users/sync', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({})
+      });
+      const roleData = await roleRes.json();
+      
+      if (roleData.success && roleData.profile) {
+        if (roleData.profile.role === 'admin') {
+          // Successfully authenticated as admin
+          setSuccess('Login successful! Redirecting...');
+          router.push('/');
+        } else {
+          await auth.signOut();
+          setError('Access Denied. You do not have administrator privileges.');
+        }
+      } else {
+        await auth.signOut();
+        setError('Failed to verify user profile.');
+      }
     } catch (err: any) {
-      setError(err.message || 'Failed to sign in with Google');
+      setError(err.message || 'Invalid OTP or authentication failed.');
     } finally {
       setLoading(false);
     }
@@ -95,71 +136,68 @@ function LoginForm() {
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Email Address</label>
-            <input 
-              type="email" 
-              required 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
-              placeholder="admin@realshare.com"
-            />
-          </div>
-          
-          <div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <label style={{ fontSize: '14px', fontWeight: 600, color: '#334155' }}>Password</label>
-              <button 
-                type="button" 
-                onClick={handleForgotPassword}
-                disabled={resetLoading}
-                style={{ background: 'none', border: 'none', color: '#2563EB', fontSize: '13px', fontWeight: 600, cursor: resetLoading ? 'not-allowed' : 'pointer', padding: 0 }}
-              >
-                {resetLoading ? 'Sending...' : 'Forgot Password?'}
-              </button>
+        {step === 1 ? (
+          <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Mobile Number</label>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '8px', overflow: 'hidden' }}>
+                <div style={{ padding: '12px', background: '#F1F5F9', color: '#64748B', fontWeight: 600, fontSize: '15px', borderRight: '1px solid #CBD5E1' }}>
+                  +91
+                </div>
+                <input 
+                  type="tel" 
+                  required 
+                  maxLength={10}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                  style={{ width: '100%', padding: '12px 16px', border: 'none', outline: 'none', fontSize: '15px' }}
+                  placeholder="9876543210"
+                />
+              </div>
             </div>
-            <input 
-              type="password" 
-              required 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
-              placeholder="••••••••"
-            />
-          </div>
+            
+            <button 
+              type="submit" 
+              disabled={loading || phone.length !== 10}
+              style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#1E40AF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: loading || phone.length !== 10 ? 'not-allowed' : 'pointer', opacity: loading || phone.length !== 10 ? 0.7 : 1 }}
+            >
+              {loading ? 'Sending OTP...' : 'Send OTP'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Enter 6-digit OTP</label>
+              <input 
+                type="text" 
+                required 
+                maxLength={6}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px', letterSpacing: '2px', textAlign: 'center', fontWeight: 'bold' }}
+                placeholder="000000"
+              />
+            </div>
+            
+            <button 
+              type="submit" 
+              disabled={loading || otp.length !== 6}
+              style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#1E40AF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: loading || otp.length !== 6 ? 'not-allowed' : 'pointer', opacity: loading || otp.length !== 6 ? 0.7 : 1 }}
+            >
+              {loading ? 'Verifying...' : 'Sign In'}
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => { setStep(1); setOtp(''); setError(''); setSuccess(''); }}
+              style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '14px', cursor: 'pointer', marginTop: '8px' }}
+            >
+              Change Mobile Number
+            </button>
+          </form>
+        )}
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#1E40AF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}
-          >
-            {loading ? 'Authenticating...' : 'Sign In'}
-          </button>
-        </form>
-
-        <div style={{ display: 'flex', alignItems: 'center', margin: '24px 0' }}>
-          <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }}></div>
-          <span style={{ padding: '0 12px', color: '#64748B', fontSize: '14px', fontWeight: 500 }}>OR</span>
-          <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }}></div>
-        </div>
-
-        <button 
-          onClick={handleGoogleLogin}
-          disabled={loading}
-          style={{ width: '100%', padding: '14px', background: '#FFF', color: '#334155', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: loading ? 'not-allowed' : 'pointer' }}
-        >
-          <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          </svg>
-          Sign in with Google
-        </button>
-
-        <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '14px', color: '#64748B' }}>
+        <div style={{ marginTop: '32px', textAlign: 'center', fontSize: '14px', color: '#64748B' }}>
           Need to set up the first admin? <Link href="/signup" style={{ color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}>Create Account</Link>
         </div>
 

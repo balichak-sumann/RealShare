@@ -365,9 +365,9 @@ const styles = StyleSheet.create({
     paddingVertical: 10,
     paddingHorizontal: 8,
     ...Platform.select({
-      ios: Shadows.sm,
-      android: { elevation: 2 },
-      web: Shadows.sm,
+      ios: Shadows.soft,
+      android: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
+      web: Shadows.soft,
     }),
   },
   partnerLogo: {

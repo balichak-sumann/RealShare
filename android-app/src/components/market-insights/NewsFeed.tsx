@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, FlatList, ActivityIndicator, Image, Linking, TouchableOpacity, Platform } from 'react-native';
-import { Neutrals, Typography, Radius, Shadows } from '@/constants/design';
+import { Neutrals, Typography, Radius, Shadows, GoldSystem } from '@/constants/design';
 
 type Article = {
   title: string;
@@ -58,7 +58,7 @@ export default function NewsFeed() {
   if (loading) {
     return (
       <View style={styles.centerContainer}>
-        <ActivityIndicator size="large" color={Neutrals.gold} />
+        <ActivityIndicator size="large" color={GoldSystem.primaryGold} />
         <Text style={styles.loadingText}>Fetching real-time market updates...</Text>
       </View>
     );
@@ -145,9 +145,9 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     overflow: 'hidden',
     ...Platform.select({
-      ios: Shadows.md,
-      android: { elevation: 3 },
-      web: Shadows.md,
+      ios: Shadows.soft,
+      android: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 3 },
+      web: Shadows.soft,
     }),
   },
   image: {
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   source: {
     ...Typography.labelMedium,
-    color: Neutrals.gold,
+    color: GoldSystem.primaryGold,
     fontWeight: '600',
   },
   date: {

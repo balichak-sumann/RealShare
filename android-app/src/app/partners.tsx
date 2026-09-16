@@ -34,9 +34,6 @@ export default function PartnersScreen() {
 
   const isFormValid = fullName.trim() !== '' && email.trim() !== '' && phone.trim() !== '' && primaryMarket.trim() !== '' && consent;
 
-  if (Platform.OS !== 'web') {
-    return <Redirect href="/" />;
-  }
 
   const handleSubmit = async () => {
     if (!fullName.trim() || (!email.trim() && !phone.trim())) {

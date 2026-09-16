@@ -193,7 +193,7 @@ export default function HomeScreen() {
   if (profile?.role === 'employee' || profile?.role === 'admin') {
     return <EmployeePortalScreen isEmbedded={true} />;
   }
-  if (profile?.role === 'investor') {
+  if (profile?.role === 'buyer') {
     return <InvestorDashboard />;
   }
 
@@ -261,7 +261,7 @@ export default function HomeScreen() {
         <CategoryGrid activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
         
         {/* Search Bar with Location Picker */}
-        {isDesktop && (
+        {isDesktop && Platform.OS === 'web' && (
           <View style={styles.homeSearchContainer}>
             <View style={styles.homeSearchBox}>
               <TouchableOpacity style={styles.homeLocationDropdown} activeOpacity={0.7} onPress={() => setShowLocationPicker(true)}>
@@ -270,31 +270,26 @@ export default function HomeScreen() {
                 <Ionicons name="chevron-down" size={14} color={Neutrals.gray400} />
               </TouchableOpacity>
 
-              {Platform.OS === 'web' ? (
-                <View style={styles.homeSearchInputWrapper}>
-                  <Ionicons name="search-outline" size={18} color={Neutrals.gray500} />
-                  <TextInput
-                    value={query}
-                    onChangeText={setQuery}
-                    onSubmitEditing={submitSearch}
-                    placeholder="Search properties, localities…"
-                    placeholderTextColor={Neutrals.gray500}
-                    style={styles.homeSearchInput as any}
-                    returnKeyType="search"
-                  />
-                </View>
-              ) : (
-                <TouchableOpacity style={styles.homeSearchInputWrapper} onPress={() => router.push('/search')} activeOpacity={0.7}>
-                  <Ionicons name="search-outline" size={18} color={Neutrals.gray500} />
-                  <Text style={styles.homeSearchPlaceholder}>Search properties, localities…</Text>
-                </TouchableOpacity>
-              )}
+              <View style={styles.homeSearchInputWrapper}>
+                <Ionicons name="search-outline" size={18} color={Neutrals.gray500} />
+                <TextInput
+                  value={query}
+                  onChangeText={setQuery}
+                  onSubmitEditing={submitSearch}
+                  placeholder="Search properties, localities…"
+                  placeholderTextColor={Neutrals.gray500}
+                  style={styles.homeSearchInput as any}
+                  returnKeyType="search"
+                />
+              </View>
+              
               <TouchableOpacity style={styles.homeSearchBtn} onPress={submitSearch}>
                 <Text style={styles.homeSearchBtnText}>Search</Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
+        
 
         {auth.currentUser && (
           <View style={styles.welcomeSection}>

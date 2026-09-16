@@ -12,9 +12,6 @@ export default function AboutScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
 
-  if (Platform.OS !== 'web') {
-    return <Redirect href="/" />;
-  }
 
   return (
     <View style={styles.container}>

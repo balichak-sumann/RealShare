@@ -4,9 +4,6 @@ import { Redirect } from 'expo-router';
 import { LegalPageLayout } from '@/components/legal/LegalPageLayout';
 
 export default function DisclaimerScreen() {
-  if (Platform.OS !== 'web') {
-    return <Redirect href="/" />;
-  }
 
   return (
     <LegalPageLayout

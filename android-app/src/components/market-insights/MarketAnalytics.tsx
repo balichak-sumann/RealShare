@@ -116,9 +116,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     width: '48%',
     ...Platform.select({
-      ios: Shadows.sm,
-      android: { elevation: 2 },
-      web: Shadows.sm,
+      ios: Shadows.soft,
+      android: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 4 },
+      web: Shadows.soft,
     }),
   },
   summaryTitle: {
@@ -146,9 +146,9 @@ const styles = StyleSheet.create({
     padding: 16,
     marginBottom: 24,
     ...Platform.select({
-      ios: Shadows.md,
-      android: { elevation: 4 },
-      web: Shadows.md,
+      ios: Shadows.soft,
+      android: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 4 },
+      web: Shadows.soft,
     }),
   },
   chartHeader: {

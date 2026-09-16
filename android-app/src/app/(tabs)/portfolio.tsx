@@ -25,7 +25,7 @@ export default function PortfolioScreen() {
   if (profile?.role === 'agent') {
     return <AgentClientsScreen />;
   }
-  if (profile?.role === 'investor') {
+  if (profile?.role === 'buyer') {
     return <InvestorDashboard />;
   }
 
@@ -289,7 +289,9 @@ export default function PortfolioScreen() {
           )}
           {filteredPortfolio.map((item) => {
             const propertyROI = Number(item.property?.assured_yield || 12);
-            const currentValuation = Number(item.total_amount) * 1.05; // 5% mock appreciation
+            const currentValuation = (item.property?.price_per_fraction && item.fractions) 
+              ? Number(item.property.price_per_fraction) * Number(item.fractions)
+              : Number(item.total_amount);
 
             return (
               <View key={item.id} style={styles.assetCard}>

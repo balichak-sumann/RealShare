@@ -33,9 +33,6 @@ export default function HowItWorksScreen() {
   const router = useRouter();
   const { isDesktop } = useResponsive();
 
-  if (Platform.OS !== 'web') {
-    return <Redirect href="/" />;
-  }
 
   return (
     <View style={styles.container}>

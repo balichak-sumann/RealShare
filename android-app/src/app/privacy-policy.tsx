@@ -8,9 +8,6 @@ import { LegalPageLayout } from '@/components/legal/LegalPageLayout';
 // not filler text. Still a draft: have counsel review before treating it as
 // final or legally binding.
 export default function PrivacyPolicyScreen() {
-  if (Platform.OS !== 'web') {
-    return <Redirect href="/" />;
-  }
 
   return (
     <LegalPageLayout

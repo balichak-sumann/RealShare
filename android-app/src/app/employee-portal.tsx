@@ -79,41 +79,54 @@ export default function EmployeePortalScreen({ isEmbedded = false }: { isEmbedde
     }
   };
 
-  const handleAddLead = () => {
+  const handleAddLead = async () => {
     const cleanedPhone = newLeadPhone.replace(/\D/g, '').slice(-10);
     if (!newLeadName.trim() || cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
       Alert.alert('Invalid Input', 'Please enter a valid name and a 10-digit mobile number starting with 7, 8, 9, or 6.');
       return;
     }
     setIsSaving(true);
-    setTimeout(() => {
-      const newLead = {
-        name: newLeadName,
-        phone: newLeadPhone,
-        property: newLeadProperty || 'Not assigned yet',
-        fractions: 0,
-        value: '₹0',
-        status: 'Lead',
-      };
-      setSalesClients(prev => [newLead, ...prev]);
-      setNewLeadName(''); setNewLeadPhone(''); setNewLeadProperty('');
-      setShowNewLeadModal(false);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+
+      const res = await fetch(`${getApiUrl()}/api/employees/leads`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          name: newLeadName,
+          phone: newLeadPhone,
+          property: newLeadProperty
+        })
+      });
+
+      if (res.ok) {
+        setNewLeadName(''); setNewLeadPhone(''); setNewLeadProperty('');
+        setShowNewLeadModal(false);
+        fetchData(); // Refresh the list from the server
+      } else {
+        const errorData = await res.json();
+        Alert.alert('Error', errorData.error || 'Failed to create lead');
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert('Error', 'An unexpected error occurred');
+    } finally {
       setIsSaving(false);
-    }, 600);
+    }
   };
 
   const handleUpdateStatus = (newStatus: string) => {
-    setSalesClients(prev =>
-      prev.map(c => c.name === selectedClient?.name ? { ...c, status: newStatus } : c)
-    );
+    Alert.alert('Feature Pending', 'Status updates will be supported in the upcoming CRM release.');
     setShowStatusModal(false);
     setSelectedClient(null);
   };
 
   const handleUpdateTicket = (newStatus: string) => {
-    setSupportTickets(prev =>
-      prev.map(t => t.ticketId === selectedTicket?.ticketId ? { ...t, status: newStatus } : t)
-    );
+    Alert.alert('Feature Pending', 'Support ticket updates require backend service release.');
     setShowTicketModal(false);
     setSelectedTicket(null);
   };

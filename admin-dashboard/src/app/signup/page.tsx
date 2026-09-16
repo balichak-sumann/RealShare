@@ -1,67 +1,108 @@
 "use client";
 
 import React, { useState } from 'react';
-import { createUserWithEmailAndPassword, signInWithPopup } from 'firebase/auth';
-import { auth, googleProvider } from '@/lib/firebase';
+import { signInWithCustomToken } from 'firebase/auth';
+import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Signup() {
+  const [phone, setPhone] = useState('');
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [bootstrapSecret, setBootstrapSecret] = useState('');
+  
+  const [phoneOtp, setPhoneOtp] = useState('');
+  const [emailOtp, setEmailOtp] = useState('');
+  
+  const [step, setStep] = useState<1 | 2>(1);
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
-  const handleSignup = async (e: React.FormEvent) => {
+  const handleSendOtps = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!phone || phone.length !== 10) {
+      setError('Please enter a valid 10-digit mobile number.');
+      return;
+    }
+    if (!email || !email.includes('@')) {
+      setError('Please enter a valid email address.');
+      return;
+    }
+    if (!bootstrapSecret) {
+      setError('Bootstrap Secret is required.');
+      return;
+    }
+    
     setLoading(true);
     setError('');
+    setSuccess('');
 
     try {
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-      const token = await userCredential.user.getIdToken();
-
-      // Register this user as an ADMIN in the database. The server only grants
-      // the admin role here if the bootstrap secret matches — this page is for
-      // setting up the very first admin account only. Every admin after that
-      // must be created from inside the dashboard by an existing admin.
-      const res = await fetch('/api/users/sync', {
+      // Send Phone OTP
+      const phoneRes = await fetch('/api/otp/send', {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-          'x-admin-bootstrap-secret': bootstrapSecret,
-        },
-        body: JSON.stringify({ role: 'admin' })
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
       });
-      const data = await res.json().catch(() => null);
-      if (data?.profile?.role !== 'admin') {
-        setError('Bootstrap secret was incorrect, so an admin account was not created. Ask an existing admin to add you from Employees instead.');
-        setLoading(false);
-        return;
-      }
+      const phoneData = await phoneRes.json();
+      if (!phoneData.success) throw new Error(phoneData.error || 'Failed to send Phone OTP.');
 
-      // AuthContext will not redirect us away immediately, so we explicitly
-      // redirect to the dashboard upon successful DB setup.
-      router.push('/');
+      // Send Email OTP
+      const emailRes = await fetch('/api/otp/send-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const emailData = await emailRes.json();
+      if (!emailData.success) throw new Error(emailData.error || 'Failed to send Email OTP.');
+
+      setSuccess('OTPs sent successfully to your mobile and email!');
+      setStep(2);
     } catch (err: any) {
-      setError(err.message || 'Failed to create account');
+      setError(err.message || 'Failed to send OTPs');
     } finally {
       setLoading(false);
     }
   };
 
-  const handleGoogleSignup = async () => {
+  const handleVerifySignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!phoneOtp || phoneOtp.length !== 6 || !emailOtp || emailOtp.length !== 6) {
+      setError('Please enter both 6-digit OTPs.');
+      return;
+    }
+    
     setLoading(true);
     setError('');
 
     try {
-      const userCredential = await signInWithPopup(auth, googleProvider);
+      // Verify both OTPs and create Firebase User
+      const res = await fetch('/api/auth/signup-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phone,
+          phoneOtp,
+          email,
+          emailOtp,
+          role: 'admin',
+          fullName: 'Admin User'
+        }),
+      });
+      const data = await res.json();
+      
+      if (!data.success || !data.firebaseToken) {
+        throw new Error(data.error || 'Failed to verify OTPs or create account.');
+      }
+
+      // Sign in with the returned custom token
+      const userCredential = await signInWithCustomToken(auth, data.firebaseToken);
       const token = await userCredential.user.getIdToken();
 
-      const res = await fetch('/api/users/sync', {
+      // Register this user as an ADMIN in the database.
+      const syncRes = await fetch('/api/users/sync', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -70,15 +111,18 @@ export default function Signup() {
         },
         body: JSON.stringify({ role: 'admin' })
       });
-      const data = await res.json().catch(() => null);
-      if (data?.profile?.role !== 'admin') {
+      
+      const syncData = await syncRes.json().catch(() => null);
+      if (syncData?.profile?.role !== 'admin') {
         setError('Bootstrap secret was incorrect, so an admin account was not created. Ask an existing admin to add you from Employees instead.');
+        await auth.signOut();
         return;
       }
-      
+
+      // AuthContext will not redirect us away immediately, so we explicitly redirect
       router.push('/');
     } catch (err: any) {
-      setError(err.message || 'Failed to sign up with Google');
+      setError(err.message || 'Failed to create account');
     } finally {
       setLoading(false);
     }
@@ -99,75 +143,119 @@ export default function Signup() {
             {error}
           </div>
         )}
-
-        <form onSubmit={handleSignup} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Admin Email Address</label>
-            <input 
-              type="email" 
-              required 
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
-              placeholder="admin@realshare.com"
-            />
+        
+        {success && (
+          <div style={{ background: '#ECFDF5', color: '#059669', padding: '12px', borderRadius: '8px', fontSize: '14px', marginBottom: '20px', border: '1px solid #6EE7B7' }}>
+            {success}
           </div>
-          
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Secure Password</label>
-            <input 
-              type="password" 
-              required 
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
-              placeholder="••••••••"
-            />
-          </div>
+        )}
 
-          <div>
-            <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Bootstrap Secret</label>
-            <input
-              type="password"
-              required
-              value={bootstrapSecret}
-              onChange={(e) => setBootstrapSecret(e.target.value)}
-              style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
-              placeholder="Provided out-of-band by Realshare"
-            />
-            <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '6px' }}>
-              This page only creates the first admin account. It matches against the server's ADMIN_BOOTSTRAP_SECRET env var — without it, no admin role is granted.
-            </p>
-          </div>
+        {step === 1 ? (
+          <form onSubmit={handleSendOtps} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Mobile Number</label>
+              <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '8px', overflow: 'hidden' }}>
+                <div style={{ padding: '12px', background: '#F1F5F9', color: '#64748B', fontWeight: 600, fontSize: '15px', borderRight: '1px solid #CBD5E1' }}>
+                  +91
+                </div>
+                <input 
+                  type="tel" 
+                  required 
+                  maxLength={10}
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                  style={{ width: '100%', padding: '12px 16px', border: 'none', outline: 'none', fontSize: '15px' }}
+                  placeholder="9876543210"
+                />
+              </div>
+            </div>
 
-          <button 
-            type="submit" 
-            disabled={loading}
-            style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#1E40AF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer' }}
-          >
-            {loading ? 'Creating Account...' : 'Create Admin Account'}
-          </button>
-        </form>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Admin Email Address</label>
+              <input 
+                type="email" 
+                required 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
+                placeholder="admin@realshare.com"
+              />
+            </div>
+            
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Bootstrap Secret</label>
+              <input
+                type="password"
+                required
+                value={bootstrapSecret}
+                onChange={(e) => setBootstrapSecret(e.target.value)}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
+                placeholder="Provided out-of-band by Realshare"
+              />
+              <p style={{ fontSize: '12px', color: '#94A3B8', marginTop: '6px' }}>
+                This page only creates the first admin account. It matches against the server's ADMIN_BOOTSTRAP_SECRET env var — without it, no admin role is granted.
+              </p>
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading || phone.length !== 10 || !email}
+              style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#1E40AF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+            >
+              {loading ? 'Sending OTPs...' : 'Continue'}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleVerifySignup} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Mobile OTP (Sent to {phone})</label>
+              <input 
+                type="text" 
+                required 
+                maxLength={6}
+                value={phoneOtp}
+                onChange={(e) => setPhoneOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px', letterSpacing: '2px', textAlign: 'center', fontWeight: 'bold' }}
+                placeholder="000000"
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Email OTP (Sent to {email})</label>
+              <input 
+                type="text" 
+                required 
+                maxLength={6}
+                value={emailOtp}
+                onChange={(e) => setEmailOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px', letterSpacing: '2px', textAlign: 'center', fontWeight: 'bold' }}
+                placeholder="000000"
+              />
+            </div>
+            
+            <button 
+              type="submit" 
+              disabled={loading || phoneOtp.length !== 6 || emailOtp.length !== 6}
+              style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#1E40AF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
+            >
+              {loading ? 'Creating Account...' : 'Verify & Create Admin'}
+            </button>
+            
+            <button
+              type="button"
+              onClick={() => { setStep(1); setPhoneOtp(''); setEmailOtp(''); setError(''); setSuccess(''); }}
+              style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '14px', cursor: 'pointer', marginTop: '8px' }}
+            >
+              Go Back
+            </button>
+          </form>
+        )}
 
         <div style={{ display: 'flex', alignItems: 'center', margin: '24px 0' }}>
           <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }}></div>
           <span style={{ padding: '0 12px', color: '#64748B', fontSize: '14px', fontWeight: 500 }}>OR</span>
           <div style={{ flex: 1, height: '1px', backgroundColor: '#E2E8F0' }}></div>
         </div>
-
-        <button 
-          onClick={handleGoogleSignup}
-          disabled={loading}
-          style={{ width: '100%', padding: '14px', background: '#FFF', color: '#334155', border: '1px solid #CBD5E1', borderRadius: '8px', fontSize: '15px', fontWeight: 600, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px', cursor: loading ? 'not-allowed' : 'pointer' }}
-        >
-          <svg width="18" height="18" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48">
-            <path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/>
-            <path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/>
-            <path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/>
-            <path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.15 1.45-4.92 2.3-8.16 2.3-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/>
-          </svg>
-          Sign up with Google
-        </button>
 
         <div style={{ marginTop: '24px', textAlign: 'center', fontSize: '14px', color: '#64748B' }}>
           Already have an admin account? <Link href="/login" style={{ color: '#2563EB', fontWeight: 600, textDecoration: 'none' }}>Sign In</Link>

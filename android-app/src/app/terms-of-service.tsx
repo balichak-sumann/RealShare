@@ -8,9 +8,6 @@ import { LegalPageLayout } from '@/components/legal/LegalPageLayout';
 // KYC) — not filler text. Still a draft: have counsel review before
 // treating it as final or legally binding.
 export default function TermsOfServiceScreen() {
-  if (Platform.OS !== 'web') {
-    return <Redirect href="/" />;
-  }
 
   return (
     <LegalPageLayout

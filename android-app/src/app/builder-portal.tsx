@@ -117,61 +117,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         }
       }
       
-      if (mapped.length === 0) {
-        mapped = [
-          {
-            id: 'mock-b1',
-            title: 'Realshare Horizon Tech Park',
-            location: 'Nizampet, Hyderabad',
-            locality: 'Nizampet',
-            type: 'COMMERCIAL',
-            totalFractions: 200,
-            availableFractions: 45,
-            pricePerFraction: '₹10,00,000',
-            rawPrice: 1000000,
-            yield: '9.8%',
-            rawYield: 9.8,
-            status: 'Live & Listed',
-            image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?q=80&w=2070&auto=format&fit=crop',
-            reraNumber: 'P02400009988',
-            description: 'Grade-A commercial office space in Hyderabad tech corridor.',
-          },
-          {
-            id: 'mock-b2',
-            title: 'Panchsheel Commercial Arcade',
-            location: 'Kukatpally, Hyderabad',
-            locality: 'Kukatpally',
-            type: 'RETAIL',
-            totalFractions: 100,
-            availableFractions: 100,
-            pricePerFraction: '₹5,00,000',
-            rawPrice: 500000,
-            yield: '8.9%',
-            rawYield: 8.9,
-            status: 'Pending Admin Approval',
-            image: 'https://images.unsplash.com/photo-1519419691348-3b3433c4c20e?q=80&w=2070&auto=format&fit=crop',
-            reraNumber: 'P02400007742',
-            description: 'Prime retail arcade complex for long-term rental income.',
-          },
-          {
-            id: 'mock-b3',
-            title: 'Pearl Valley Luxury Villas',
-            location: 'Gachibowli, Hyderabad',
-            locality: 'Gachibowli',
-            type: 'RESIDENTIAL',
-            totalFractions: 50,
-            availableFractions: 50,
-            pricePerFraction: '₹25,00,000',
-            rawPrice: 2500000,
-            yield: '10.5%',
-            rawYield: 10.5,
-            status: 'Live & Listed',
-            image: 'https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?q=80&w=2000&auto=format&fit=crop',
-            reraNumber: 'P02400005511',
-            description: 'Fractional luxury villa development with high rental demand.',
-          }
-        ];
-      }
+
       
       setProperties(mapped);
     } catch(e) {
@@ -259,33 +205,10 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
         setTimeout(() => setSuccessNotice(null), 5000);
         fetchProperties();
       } else {
-        const newMockProp: BuilderProperty = {
-          id: `mock-${Date.now()}`,
-          title,
-          location: `${locality}, ${district}`,
-          locality,
-          type: type.toUpperCase(),
-          totalFractions: Number(fractions),
-          availableFractions: Number(fractions),
-          pricePerFraction: `₹${Number(price).toLocaleString('en-IN')}`,
-          rawPrice: Number(price),
-          yield: `${yieldVal}%`,
-          rawYield: Number(yieldVal),
-          status: 'Pending Admin Approval',
-          image: finalImageUrl,
-          description,
-        };
-        setProperties([newMockProp, ...properties]);
-        setTitle('');
-        setLocality('');
-        setDescription('');
-        setImageUri(null);
-        setActiveTab('my_properties');
-        setSuccessNotice(`Property "${title}" submitted to Realshare Admin for verification.`);
-        setTimeout(() => setSuccessNotice(null), 5000);
+        alert('Failed to submit property. Please try again.');
       }
     } catch(e) {
-      alert("Submitted property locally for verification.");
+      alert("Error submitting property details.");
     } finally {
       setIsUploading(false);
     }
@@ -524,26 +447,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
             <Text style={styles.sectionTitle}>Sales & Investment Demand Analytics</Text>
             <Text style={styles.sectionSubtitle}>Track property performance and buyer trends over time</Text>
 
-            <View style={styles.chartCard}>
-              <Text style={styles.chartTitle}>Monthly Fractional Capital Influx (2026)</Text>
-              
-              <View style={styles.barChartContainer}>
-                {[
-                  { month: 'Jan', val: 65, amount: '₹1.3Cr' },
-                  { month: 'Feb', val: 85, amount: '₹1.7Cr' },
-                  { month: 'Mar', val: 45, amount: '₹90L' },
-                  { month: 'Apr', val: 95, amount: '₹1.9Cr' },
-                  { month: 'May', val: 70, amount: '₹1.4Cr' },
-                  { month: 'Jun', val: 90, amount: '₹1.8Cr' },
-                ].map((item, idx) => (
-                  <View key={idx} style={styles.barGroup}>
-                    <Text style={styles.barAmount}>{item.amount}</Text>
-                    <View style={[styles.barFill, { height: item.val }]} />
-                    <Text style={styles.barLabel}>{item.month}</Text>
-                  </View>
-                ))}
-              </View>
-            </View>
+
 
             <View style={styles.analyticsGrid}>
               <View style={styles.analyticsBox}>

@@ -31,9 +31,6 @@ export default function ContactScreen() {
 
   const isFormValid = fullName.trim() !== '' && email.trim() !== '' && phone.trim() !== '' && location.trim() !== '' && pincode.trim() !== '' && consent;
 
-  if (Platform.OS !== 'web') {
-    return <Redirect href="/" />;
-  }
 
   const handleSubmit = async () => {
     if (!fullName.trim() || (!email.trim() && !phone.trim())) {

@@ -1,15 +1,48 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { Ionicons } from '@expo/vector-icons';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { useUser } from '@/contexts/UserContext';
+import { auth } from '@/lib/firebase';
+import { getApiUrl } from '@/lib/api';
 
 export function InvestorDashboard() {
   const router = useRouter();
   const { profile } = useUser();
   const [activeTab, setActiveTab] = useState<'Assets' | 'Ledger' | 'Investments' | 'Support'>('Assets');
+  const [loading, setLoading] = useState(true);
+  const [portfolio, setPortfolio] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetchPortfolio();
+  }, []);
+
+  const fetchPortfolio = async () => {
+    try {
+      const user = auth.currentUser;
+      if (!user) return;
+      const token = await user.getIdToken();
+      const res = await fetch(`${getApiUrl()}/api/portfolio`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setPortfolio(data.investments || []);
+      }
+    } catch (e) {
+      console.log('Failed to fetch portfolio', e);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const totalAssets = portfolio.length;
+  const totalInvested = portfolio.reduce((sum, inv) => sum + Number(inv.total_amount || 0), 0);
+  const formattedInvested = totalInvested >= 10000000 
+    ? `₹ ${(totalInvested / 10000000).toFixed(1)} Cr` 
+    : `₹ ${(totalInvested / 100000).toFixed(1)} L`;
 
   const handleAddAsset = () => {
     // Navigate to add asset flow (to be built)
@@ -37,11 +70,11 @@ export function InvestorDashboard() {
           <View style={styles.statsRow}>
             <View style={styles.statCard}>
               <Text style={styles.statLabel}>My Assets</Text>
-              <Text style={styles.statValue}>4</Text>
+              <Text style={styles.statValue}>{totalAssets}</Text>
             </View>
             <View style={styles.statCard}>
               <Text style={styles.statLabel}>Total Investments</Text>
-              <Text style={styles.statValue}>₹ 12.5 Cr</Text>
+              <Text style={styles.statValue}>{totalInvested > 0 ? formattedInvested : '₹ 0'}</Text>
             </View>
           </View>
 
@@ -77,32 +110,33 @@ export function InvestorDashboard() {
                 <View style={styles.sectionHeader}>
                   <Text style={styles.sectionTitle}>My Assets</Text>
                 </View>
-                {/* Mock Asset Card */}
-                <View style={styles.assetCard}>
-                  <View style={styles.assetCardHeader}>
-                    <Text style={styles.assetTypeBadge}>RENTAL</Text>
-                    <Text style={styles.assetPrice}>₹ 4.5 Cr</Text>
+                {loading ? (
+                  <ActivityIndicator size="large" color={GoldSystem.primaryGold} style={{ marginTop: 20 }} />
+                ) : portfolio.length === 0 ? (
+                  <View style={styles.emptyState}>
+                    <Ionicons name="home-outline" size={48} color={Neutrals.gray300} />
+                    <Text style={styles.emptyStateTitle}>No Assets Yet</Text>
+                    <Text style={styles.emptyStateDesc}>Start investing to see your properties here.</Text>
                   </View>
-                  <Text style={styles.assetTitle}>The Zenith Tower, Office 402</Text>
-                  <Text style={styles.assetAddress}>Bandra Kurla Complex, Mumbai</Text>
-                  <View style={styles.divider} />
-                  <View style={styles.leaseDetails}>
-                    <Text style={styles.leaseText}><Text style={styles.leaseLabel}>Lease Name:</Text> TechCorp India Pvt Ltd</Text>
-                    <Text style={styles.leaseText}><Text style={styles.leaseLabel}>Period:</Text> 36 Months</Text>
-                    <Text style={styles.leaseText}><Text style={styles.leaseLabel}>Monthly Rental:</Text> ₹ 2.5 Lakhs</Text>
-                    <Text style={styles.leaseText}><Text style={styles.leaseLabel}>Managed By:</Text> Company</Text>
-                  </View>
-                </View>
-
-                {/* Mock Asset Card */}
-                <View style={styles.assetCard}>
-                  <View style={styles.assetCardHeader}>
-                    <Text style={styles.assetTypeBadge}>OWN</Text>
-                    <Text style={styles.assetPrice}>₹ 8.0 Cr</Text>
-                  </View>
-                  <Text style={styles.assetTitle}>Luxury Villa #12</Text>
-                  <Text style={styles.assetAddress}>Palm Jumeirah, Dubai</Text>
-                </View>
+                ) : (
+                  portfolio.map((inv) => (
+                    <View key={inv.id} style={styles.assetCard}>
+                      <View style={styles.assetCardHeader}>
+                        <Text style={styles.assetTypeBadge}>
+                          {inv.property?.listing_type?.toUpperCase() || 'ASSET'}
+                        </Text>
+                        <Text style={styles.assetPrice}>₹ {Number(inv.total_amount).toLocaleString('en-IN')}</Text>
+                      </View>
+                      <Text style={styles.assetTitle}>{inv.property?.title}</Text>
+                      <Text style={styles.assetAddress}>{inv.property?.locality}, {inv.property?.district}</Text>
+                      <View style={styles.divider} />
+                      <View style={styles.leaseDetails}>
+                        <Text style={styles.leaseText}><Text style={styles.leaseLabel}>Fractions Owned:</Text> {inv.fractions_bought}</Text>
+                        <Text style={styles.leaseText}><Text style={styles.leaseLabel}>Yield:</Text> {inv.property?.assured_yield}%</Text>
+                      </View>
+                    </View>
+                  ))
+                )}
               </View>
             )}
 

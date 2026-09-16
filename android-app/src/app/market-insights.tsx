@@ -1,48 +1,76 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Platform, SafeAreaView } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
+import { Neutrals, Typography, Radius } from '@/constants/design';
+import NewsFeed from '@/components/market-insights/NewsFeed';
+import MarketAnalytics from '@/components/market-insights/MarketAnalytics';
 
 export default function MarketInsightsScreen() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'news' | 'analytics'>('analytics');
+
+  const handleBack = () => {
+    if (router.canGoBack()) {
+      router.back();
+    } else {
+      router.replace('/');
+    }
+  };
 
   return (
-    <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Market Insights</Text>
-        <View style={{ width: 24 }} />
-      </View>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity onPress={handleBack} style={styles.backBtn}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Market Insights</Text>
+          <View style={{ width: 24 }} />
+        </View>
 
-      <View style={styles.centerContainer}>
-        <Text style={styles.comingSoonIcon}>📊</Text>
-        <Text style={styles.comingSoonTitle}>Market Insights — Coming Soon</Text>
-        <Text style={styles.comingSoonDesc}>
-          We're building real market analytics based on actual property data — aggregated
-          listing prices, rental yields, and demand trends per locality.
-        </Text>
-        <Text style={styles.comingSoonNote}>
-          No fabricated numbers here. When this launches, every metric will be derived from
-          real platform data.
-        </Text>
+        <View style={styles.tabsContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'analytics' && styles.activeTab]}
+            onPress={() => setActiveTab('analytics')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.tabText, activeTab === 'analytics' && styles.activeTabText]}>
+              Analytics
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'news' && styles.activeTab]}
+            onPress={() => setActiveTab('news')}
+            activeOpacity={0.8}
+          >
+            <Text style={[styles.tabText, activeTab === 'news' && styles.activeTabText]}>
+              Live Updates
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.contentContainer}>
+          {activeTab === 'analytics' ? <MarketAnalytics /> : <NewsFeed />}
+        </View>
       </View>
-    </View>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: Neutrals.background,
+  },
+  container: {
+    flex: 1,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     padding: 16,
-    paddingTop: Platform.OS === 'web' ? 18 : 50,
+    paddingTop: Platform.OS === 'web' ? 18 : 8,
     backgroundColor: Neutrals.surface,
     borderBottomWidth: 1,
     borderBottomColor: Neutrals.border,
@@ -59,33 +87,30 @@ const styles = StyleSheet.create({
     ...Typography.headlineMedium,
     color: Neutrals.obsidian,
   },
-  centerContainer: {
+  tabsContainer: {
+    flexDirection: 'row',
+    padding: 16,
+    backgroundColor: Neutrals.surface,
+    gap: 12,
+  },
+  tab: {
     flex: 1,
+    paddingVertical: 12,
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: 32,
+    borderRadius: Radius.full,
+    backgroundColor: Neutrals.gray100,
   },
-  comingSoonIcon: {
-    fontSize: 64,
-    marginBottom: 24,
+  activeTab: {
+    backgroundColor: Neutrals.obsidian,
   },
-  comingSoonTitle: {
-    ...Typography.headlineMedium,
-    color: Neutrals.obsidian,
-    textAlign: 'center',
-    marginBottom: 16,
-  },
-  comingSoonDesc: {
-    ...Typography.bodyLarge,
+  tabText: {
+    ...Typography.labelLarge,
     color: Neutrals.gray600,
-    textAlign: 'center',
-    marginBottom: 16,
-    lineHeight: 22,
   },
-  comingSoonNote: {
-    ...Typography.bodyMedium,
-    color: Neutrals.gray500,
-    textAlign: 'center',
-    fontStyle: 'italic',
+  activeTabText: {
+    color: Neutrals.surface,
+  },
+  contentContainer: {
+    flex: 1,
   },
 });

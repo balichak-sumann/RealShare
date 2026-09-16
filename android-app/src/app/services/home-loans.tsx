@@ -9,6 +9,15 @@ import { useResponsive } from '@/hooks/useResponsive';
 
 const HERO_IMAGE = require('../../../assets/images/indian_home_loan.png');
 
+const BANK_PARTNERS = [
+  { name: 'Axis Bank', short: 'AXIS', color: '#97144D', bg: '#FDF2F7' },
+  { name: 'Kotak Bank', short: 'KOTAK', color: '#ED1C24', bg: '#FFF1F1' },
+  { name: 'HDFC Bank', short: 'HDFC', color: '#004B87', bg: '#EDF4FA' },
+  { name: 'ICICI Bank', short: 'ICICI', color: '#F58220', bg: '#FFF5EB' },
+  { name: 'SBI', short: 'SBI', color: '#22409A', bg: '#EEF1FA' },
+  { name: 'Union Bank', short: 'UBI', color: '#E3342F', bg: '#FDECEC' },
+  { name: 'IndusInd Bank', short: 'INDUS', color: '#8B1A4A', bg: '#F9EFF3' },
+];
 export default function HomeLoansScreen() {
   const router = useRouter();
   const { profile } = useUser();
@@ -76,8 +85,17 @@ export default function HomeLoansScreen() {
 
         <View style={[styles.mainSection, isDesktop && styles.mainSectionDesktop]}>
           <View style={[styles.detailsContainer, isDesktop && { flex: 1 }]}>
-            <Text style={styles.promoHeader}>Get Home Loans at the Lowest rate.</Text>
+            <Text style={styles.promoHeader}>Get Home Loans at the Lowest rate from our partner Bank.</Text>
             
+            <View style={styles.partnersGrid}>
+              {BANK_PARTNERS.map((bank, index) => (
+                <View key={index} style={[styles.partnerLogoContainer, { backgroundColor: bank.bg }]}>
+                  <Text style={[styles.partnerShort, { color: bank.color }]}>{bank.short}</Text>
+                  <Text style={styles.partnerName}>{bank.name}</Text>
+                </View>
+              ))}
+            </View>
+
             <Text style={styles.sectionTitle}>Why choose RealShare Finance?</Text>
             
             <View style={styles.featureItem}>
@@ -322,5 +340,42 @@ const styles = StyleSheet.create({
   submitText: {
     ...Typography.labelLarge,
     color: Neutrals.obsidian,
+  },
+  partnersSection: {
+    marginTop: 40,
+  },
+  partnersGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 16,
+    marginBottom: 16,
+  },
+  partnerLogoContainer: {
+    width: 100,
+    height: 80,
+    backgroundColor: Neutrals.white,
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    borderColor: Neutrals.gray200,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 10,
+    ...Platform.select({
+      ios: Shadows.sm,
+      android: { elevation: 2 },
+      web: Shadows.sm,
+    }),
+  },
+  partnerShort: {
+    fontSize: 18,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: 4,
+  },
+  partnerName: {
+    ...Typography.labelSmall,
+    color: Neutrals.gray500,
+    fontSize: 9,
+    textAlign: 'center',
   }
 });

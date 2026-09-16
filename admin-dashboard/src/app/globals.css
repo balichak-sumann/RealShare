@@ -94,3 +94,8 @@ button {
   background-color: #10B981;
   animation: pulseGlow 2s infinite ease-in-out;
 }
+
+/* Spinner for upload loading state */
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

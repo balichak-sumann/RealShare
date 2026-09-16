@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Platform,
   Alert,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
@@ -124,6 +125,8 @@ export default function PostPropertyScreen() {
   const [videoUrl, setVideoUrl] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [formErrors, setFormErrors] = useState<string[]>([]);
 
   const handlePickImages = async () => {
     try {
@@ -260,6 +263,23 @@ export default function PostPropertyScreen() {
 
     const data = await res.json();
     return data.url;
+  };
+
+  // ── Validate all required fields ──
+  const validateAndPreview = () => {
+    const errors: string[] = [];
+    if (!title.trim()) errors.push('Property Title is required.');
+    if (!description.trim() || description.trim().length < 5) errors.push('Description must be at least 5 characters.');
+    if (!areaSqft || Number(areaSqft) <= 0) errors.push('A valid built-up area is required.');
+    const finalDistrict = district === 'Other' ? customDistrict.trim() : district;
+    if (!locality.trim() || !finalDistrict) errors.push('Locality and District are required.');
+    if (!price || Number(price) < 0) errors.push('A valid price is required.');
+    if (errors.length > 0) {
+      setFormErrors(errors);
+      return;
+    }
+    setFormErrors([]);
+    setShowPreviewModal(true);
   };
 
   const handleSubmit = async () => {
@@ -1306,6 +1326,25 @@ export default function PostPropertyScreen() {
               </Text>
             </View>
 
+        {/* Inline Validation Error Banner */}
+            {formErrors.length > 0 && (
+              <View style={{
+                backgroundColor: '#FEF2F2',
+                borderWidth: 1,
+                borderColor: '#FECACA',
+                borderRadius: 10,
+                padding: 14,
+                marginTop: 16,
+              }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#DC2626', marginBottom: 6 }}>
+                  ⚠️ Please fill in all required fields:
+                </Text>
+                {formErrors.map((err, i) => (
+                  <Text key={i} style={{ fontSize: 12, color: '#B91C1C', marginBottom: 3 }}>• {err}</Text>
+                ))}
+              </View>
+            )}
+
             {isSubmitting && (
               <View style={styles.submittingStatus}>
                 <ActivityIndicator size="small" color={GoldSystem.primaryGold} />
@@ -1319,17 +1358,157 @@ export default function PostPropertyScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={[styles.primaryButton, { flex: 2 }, isSubmitting && { opacity: 0.6 }]}
-                onPress={handleSubmit}
+                onPress={validateAndPreview}
                 disabled={isSubmitting}
               >
                 <Text style={styles.primaryButtonText}>
-                  {isSubmitting ? 'Publishing...' : 'Publish Listing 🚀'}
+                  👁️ Preview &amp; Publish
                 </Text>
               </TouchableOpacity>
             </View>
           </View>
         )}
       </ScrollView>
+
+      {/* ── Property Preview Modal ── */}
+      <Modal visible={showPreviewModal} animationType="slide" transparent={false}>
+        <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+          {/* Header */}
+          <View style={{
+            backgroundColor: '#1E3A5F',
+            paddingTop: Platform.OS === 'ios' ? 52 : 36,
+            paddingBottom: 16,
+            paddingHorizontal: 20,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+          }}>
+            <View>
+              <Text style={{ color: '#93C5FD', fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>Home Page Preview</Text>
+              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800' }}>How this listing will appear</Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setShowPreviewModal(false)}
+              style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
+            {/* Cover Image */}
+            <View style={{ borderRadius: 14, overflow: 'hidden', height: 200, backgroundColor: '#E2E8F0', marginBottom: 16, position: 'relative' }}>
+              {localImageUris.length > 0 ? (
+                <Image source={{ uri: localImageUris[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+              ) : (
+                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                  <Ionicons name="home-outline" size={48} color="#94A3B8" />
+                  <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 8 }}>No image selected — placeholder will be used</Text>
+                </View>
+              )}
+              {/* Badges */}
+              <View style={{ position: 'absolute', top: 10, left: 10, flexDirection: 'row', gap: 6 }}>
+                <View style={{ backgroundColor: 'rgba(37,99,235,0.9)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+                  <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>{listingType}</Text>
+                </View>
+                <View style={{ backgroundColor: 'rgba(15,23,42,0.75)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+                  <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>{category}</Text>
+                </View>
+              </View>
+              <View style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(245,158,11,0.9)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 3 }}>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>🕐 Draft — Pending Review</Text>
+              </View>
+              {localImageUris.length > 1 && (
+                <View style={{ position: 'absolute', bottom: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
+                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>+{localImageUris.length - 1} more</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Title & Location */}
+            <Text style={{ fontSize: 20, fontWeight: '800', color: '#0F172A', marginBottom: 4 }}>{title || '(No title)'}</Text>
+            <Text style={{ fontSize: 14, color: '#64748B', marginBottom: 18 }}>📍 {[locality, district === 'Other' ? customDistrict : district, stateName].filter(Boolean).join(', ')}</Text>
+
+            {/* Stats Row */}
+            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 18 }}>
+              <View style={{ flex: 1, backgroundColor: '#F0F9FF', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                <Text style={{ fontSize: 10, color: '#0369A1', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>
+                  {listingType === 'rental' ? 'Rent/Month' : listingType === 'fractional' ? 'Per Fraction' : 'Price'}
+                </Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: '#0F172A' }}>₹{Number(price).toLocaleString('en-IN')}</Text>
+              </View>
+              <View style={{ flex: 1, backgroundColor: '#F0FDF4', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                <Text style={{ fontSize: 10, color: '#15803D', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Area</Text>
+                <Text style={{ fontSize: 15, fontWeight: '800', color: '#0F172A' }}>{areaSqft} {newProp.areaUnit}</Text>
+              </View>
+              {listingType === 'fractional' ? (
+                <View style={{ flex: 1, backgroundColor: '#FFF7ED', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 10, color: '#C2410C', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Yield</Text>
+                  <Text style={{ fontSize: 15, fontWeight: '800', color: '#0F172A' }}>{assuredYield}%</Text>
+                </View>
+              ) : (
+                <View style={{ flex: 1, backgroundColor: '#FAF5FF', borderRadius: 10, padding: 12, alignItems: 'center' }}>
+                  <Text style={{ fontSize: 10, color: '#7C3AED', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Mode</Text>
+                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#0F172A', textTransform: 'capitalize' }}>{listingType}</Text>
+                </View>
+              )}
+            </View>
+
+            {/* Description */}
+            {description.trim().length > 0 && (
+              <View style={{ backgroundColor: '#F8FAFC', borderRadius: 10, padding: 14, marginBottom: 16 }}>
+                <Text style={{ fontSize: 12, fontWeight: '700', color: '#334155', marginBottom: 6 }}>Description</Text>
+                <Text style={{ fontSize: 13, color: '#475569', lineHeight: 20 }} numberOfLines={4}>{description}</Text>
+              </View>
+            )}
+
+            {/* Fractional pool */}
+            {listingType === 'fractional' && (
+              <View style={{ backgroundColor: '#EFF6FF', borderRadius: 10, padding: 12, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between' }}>
+                <Text style={{ fontSize: 12, color: '#1E40AF' }}>🔢 <Text style={{ fontWeight: '700' }}>{totalFractions}</Text> fractions</Text>
+                <Text style={{ fontSize: 12, color: '#1E40AF' }}>💰 Booking: <Text style={{ fontWeight: '700' }}>₹{Number(bookingAmount).toLocaleString('en-IN')}</Text></Text>
+                <Text style={{ fontSize: 12, color: '#1E40AF' }}>📈 IRR: <Text style={{ fontWeight: '700' }}>{targetIrr}%</Text></Text>
+              </View>
+            )}
+
+            {/* Info note */}
+            <View style={{ backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FDE68A', borderRadius: 10, padding: 12, marginBottom: 24 }}>
+              <Text style={{ fontSize: 12, color: '#92400E' }}>ℹ️ This preview shows how your listing will appear. After posting, it will be reviewed by Admin before going live.</Text>
+            </View>
+          </ScrollView>
+
+          {/* Fixed Action Buttons */}
+          <View style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            flexDirection: 'row', gap: 12, padding: 20,
+            backgroundColor: '#fff',
+            borderTopWidth: 1, borderTopColor: '#E2E8F0',
+            paddingBottom: Platform.OS === 'ios' ? 36 : 20,
+          }}>
+            <TouchableOpacity
+              style={{ flex: 1, backgroundColor: '#F1F5F9', paddingVertical: 14, borderRadius: 12, alignItems: 'center' }}
+              onPress={() => setShowPreviewModal(false)}
+              disabled={isSubmitting}
+            >
+              <Text style={{ fontWeight: '700', color: '#334155', fontSize: 15 }}>← Back to Edit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[{ flex: 2, backgroundColor: '#059669', paddingVertical: 14, borderRadius: 12, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 8 }, isSubmitting && { opacity: 0.7 }]}
+              onPress={async () => {
+                setShowPreviewModal(false);
+                await handleSubmit();
+              }}
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Text style={{ fontWeight: '700', color: '#fff', fontSize: 15 }}>🚀 Post Property</Text>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }

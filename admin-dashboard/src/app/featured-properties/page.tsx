@@ -292,6 +292,11 @@ export default function FeaturedPropertiesPage() {
   const [mapLat, setMapLat] = useState(17.385);
   const [mapLng, setMapLng] = useState(78.4867);
 
+  // Preview & Publish state
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [previewBlobUrls, setPreviewBlobUrls] = useState<string[]>([]);
+
   const handleExtractMapLocation = async () => {
     if (!newProp.googleMapsUrl || !newProp.googleMapsUrl.trim()) {
       alert("Please paste a Google Maps link first.");
@@ -521,21 +526,33 @@ export default function FeaturedPropertiesPage() {
     }
   };
 
-  const handleCreateProperty = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newProp.title || !newProp.locality) {
-      alert("Please fill in the property title and locality.");
+  // ── Validate required fields; returns array of error messages ──
+  const validateForm = (): string[] => {
+    const errors: string[] = [];
+    if (!newProp.title || !newProp.title.trim()) errors.push("Property Title is required.");
+    if (!newProp.locality || !newProp.locality.trim()) errors.push("Locality is required.");
+    if (!newProp.description || newProp.description.trim().length < 5)
+      errors.push("Description must be at least 5 characters.");
+    if (!newProp.areaSqft || Number(newProp.areaSqft) <= 0)
+      errors.push("A valid property area (sq.ft / acres) is required.");
+    return errors;
+  };
+
+  // ── Called by 'Preview & Publish' button ──
+  const handlePreviewAndPublish = () => {
+    const errors = validateForm();
+    if (errors.length > 0) {
+      setFormErrors(errors);
       return;
     }
-    if (!newProp.description || newProp.description.trim().length < 5) {
-      alert("Please provide a property description (at least 5 characters).");
-      return;
-    }
-    if (!newProp.areaSqft || Number(newProp.areaSqft) <= 0) {
-      alert("Please enter a valid property area in sq.ft.");
-      return;
-    }
-    
+    setFormErrors([]);
+    const blobs = selectedFiles.map((f) => URL.createObjectURL(f));
+    setPreviewBlobUrls(blobs);
+    setShowPreviewModal(true);
+  };
+
+  const handleCreateProperty = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
     setIsUploading(true);
     const uploadedImageUrls: string[] = [];
     let videoUrl = "";
@@ -1855,23 +1872,239 @@ export default function FeaturedPropertiesPage() {
                 )}
               </div>
 
-              <div style={{ display: "flex", justifyContent: "flex-end", gap: "12px", marginTop: "8px", paddingTop: "12px", borderTop: "1px solid #E2E8F0" }}>
+              {/* Inline validation error banner */}
+              {formErrors.length > 0 && (
+                <div style={{
+                  background: "#FEF2F2",
+                  border: "1px solid #FECACA",
+                  borderRadius: "10px",
+                  padding: "12px 16px",
+                  marginTop: "8px",
+                  marginBottom: "4px",
+                }}>
+                  <div style={{ fontWeight: 700, color: "#DC2626", fontSize: "0.85rem", marginBottom: "6px", display: "flex", alignItems: "center", gap: "6px" }}>
+                    ⚠️ Please fill in all required fields before previewing:
+                  </div>
+                  <ul style={{ margin: 0, paddingLeft: "20px" }}>
+                    {formErrors.map((err, i) => (
+                      <li key={i} style={{ color: "#B91C1C", fontSize: "0.8rem", marginBottom: "2px" }}>{err}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "12px", marginTop: "8px", paddingTop: "12px", borderTop: "1px solid #E2E8F0" }}>
                 <button
                   type="button"
-                  onClick={() => setShowAddModal(false)}
+                  onClick={() => { setShowAddModal(false); setFormErrors([]); }}
                   style={{ padding: "10px 18px", borderRadius: "8px", border: "1px solid #CBD5E1", background: "#fff", cursor: "pointer", fontWeight: 600 }}
                 >
                   Cancel
                 </button>
                 <button
-                  type="submit"
+                  type="button"
+                  onClick={handlePreviewAndPublish}
                   disabled={isUploading}
-                  style={{ padding: "10px 24px", borderRadius: "8px", background: "#2563EB", color: "#fff", border: "none", cursor: isUploading ? "not-allowed" : "pointer", fontWeight: 700 }}
+                  style={{
+                    padding: "10px 28px",
+                    borderRadius: "8px",
+                    background: isUploading ? "#93C5FD" : "linear-gradient(135deg, #1D4ED8, #2563EB)",
+                    color: "#fff",
+                    border: "none",
+                    cursor: isUploading ? "not-allowed" : "pointer",
+                    fontWeight: 700,
+                    fontSize: "0.95rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    boxShadow: "0 4px 12px rgba(37,99,235,0.3)",
+                  }}
                 >
-                  {isUploading ? `Uploading media...` : "Publish Property Listing"}
+                  {isUploading ? (
+                    <><span style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Uploading...</>
+                  ) : (
+                    <>👁️ Preview &amp; Publish</>
+                  )}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ── Property Preview Modal ── */}
+      {showPreviewModal && (
+        <div
+          style={{
+            position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: "rgba(15,23,42,0.82)",
+            backdropFilter: "blur(6px)",
+            zIndex: 300,
+            display: "flex", justifyContent: "center", alignItems: "center",
+            padding: "20px",
+          }}
+        >
+          <div
+            style={{
+              backgroundColor: "#fff",
+              borderRadius: "20px",
+              width: "100%",
+              maxWidth: "640px",
+              maxHeight: "92vh",
+              overflowY: "auto",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.35)",
+            }}
+          >
+            {/* Header */}
+            <div style={{
+              background: "linear-gradient(135deg, #1E3A5F, #2563EB)",
+              borderRadius: "20px 20px 0 0",
+              padding: "20px 24px",
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}>
+              <div>
+                <div style={{ color: "#93C5FD", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Home Page Preview</div>
+                <div style={{ color: "#fff", fontSize: "1.15rem", fontWeight: 800 }}>How this listing will appear</div>
+              </div>
+              <button
+                onClick={() => { setShowPreviewModal(false); previewBlobUrls.forEach(u => URL.revokeObjectURL(u)); setPreviewBlobUrls([]); }}
+                style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "8px", padding: "6px 12px", cursor: "pointer", color: "#fff", fontWeight: 700, fontSize: "1.1rem" }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Property Card Preview */}
+            <div style={{ padding: "24px" }}>
+              {/* Cover Image */}
+              <div style={{ position: "relative", borderRadius: "14px", overflow: "hidden", height: "220px", background: "#E2E8F0", marginBottom: "16px" }}>
+                {previewBlobUrls.length > 0 ? (
+                  <img src={previewBlobUrls[0]} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94A3B8" }}>
+                    <span style={{ fontSize: "2.5rem", marginBottom: "8px" }}>🏠</span>
+                    <span style={{ fontSize: "0.85rem" }}>No image selected — a placeholder will be used</span>
+                  </div>
+                )}
+                <div style={{ position: "absolute", top: "10px", left: "10px", display: "flex", gap: "6px" }}>
+                  <span style={{ background: "rgba(37,99,235,0.9)", color: "#fff", fontSize: "0.68rem", fontWeight: 700, padding: "3px 8px", borderRadius: "6px", textTransform: "uppercase", backdropFilter: "blur(4px)" }}>
+                    {newProp.listingType === "fractional" ? "Fractional" : newProp.listingType === "rental" ? "Rental" : newProp.listingType === "resale" ? "Resale" : "Outright"}
+                  </span>
+                  <span style={{ background: "rgba(15,23,42,0.75)", color: "#fff", fontSize: "0.68rem", fontWeight: 700, padding: "3px 8px", borderRadius: "6px", textTransform: "uppercase", backdropFilter: "blur(4px)" }}>
+                    {newProp.type}
+                  </span>
+                </div>
+                <div style={{ position: "absolute", top: "10px", right: "10px", background: "rgba(245,158,11,0.9)", color: "#fff", fontSize: "0.68rem", fontWeight: 700, padding: "3px 10px", borderRadius: "6px", backdropFilter: "blur(4px)" }}>
+                  🕐 Draft — Pending Review
+                </div>
+                {previewBlobUrls.length > 1 && (
+                  <div style={{ position: "absolute", bottom: "10px", right: "10px", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: "0.72rem", fontWeight: 700, padding: "3px 8px", borderRadius: "6px" }}>
+                    +{previewBlobUrls.length - 1} more photos
+                  </div>
+                )}
+              </div>
+
+              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0F172A", margin: "0 0 6px 0", lineHeight: 1.3 }}>
+                {newProp.title || "(No title entered)"}
+              </h2>
+              <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#64748B", fontSize: "0.85rem", marginBottom: "18px" }}>
+                <span>📍</span>
+                <span>{[newProp.locality, newProp.district, newProp.state].filter(Boolean).join(", ")}</span>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "18px" }}>
+                <div style={{ background: "#F0F9FF", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.68rem", color: "#0369A1", fontWeight: 700, textTransform: "uppercase", marginBottom: "4px" }}>
+                    {newProp.listingType === "fractional" ? "Price / Fraction" : "Price"}
+                  </div>
+                  <div style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+                    ₹{Number(newProp.price).toLocaleString("en-IN")}
+                  </div>
+                </div>
+                <div style={{ background: "#F0FDF4", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
+                  <div style={{ fontSize: "0.68rem", color: "#15803D", fontWeight: 700, textTransform: "uppercase", marginBottom: "4px" }}>Area</div>
+                  <div style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
+                    {Number(newProp.areaSqft).toLocaleString("en-IN")} {newProp.areaUnit}
+                  </div>
+                </div>
+                {newProp.listingType === "fractional" ? (
+                  <div style={{ background: "#FFF7ED", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
+                    <div style={{ fontSize: "0.68rem", color: "#C2410C", fontWeight: 700, textTransform: "uppercase", marginBottom: "4px" }}>Assured Yield</div>
+                    <div style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>{newProp.yield}%</div>
+                  </div>
+                ) : (
+                  <div style={{ background: "#FAF5FF", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
+                    <div style={{ fontSize: "0.68rem", color: "#7C3AED", fontWeight: 700, textTransform: "uppercase", marginBottom: "4px" }}>Listing Type</div>
+                    <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", textTransform: "capitalize" }}>{newProp.listingType}</div>
+                  </div>
+                )}
+              </div>
+
+              {newProp.description && (
+                <div style={{ background: "#F8FAFC", borderRadius: "10px", padding: "14px", marginBottom: "18px" }}>
+                  <div style={{ fontWeight: 700, fontSize: "0.8rem", color: "#334155", marginBottom: "6px" }}>Description</div>
+                  <div style={{ fontSize: "0.85rem", color: "#475569", lineHeight: 1.6, maxHeight: "80px", overflow: "hidden", WebkitLineClamp: 3, display: "-webkit-box", WebkitBoxOrient: "vertical" as any }}>
+                    {newProp.description}
+                  </div>
+                </div>
+              )}
+
+              {newProp.listingType === "fractional" && (
+                <div style={{ background: "#EFF6FF", borderRadius: "10px", padding: "12px 14px", marginBottom: "18px", display: "flex", justifyContent: "space-between", fontSize: "0.82rem" }}>
+                  <span>🔢 <strong>{newProp.totalFractions}</strong> total fractions</span>
+                  <span>📈 Yield: <strong>{newProp.yield}%</strong></span>
+                  <span>📈 IRR: <strong>{newProp.irr}%</strong></span>
+                </div>
+              )}
+
+              <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: "10px", padding: "12px 14px", fontSize: "0.8rem", color: "#92400E", marginBottom: "20px" }}>
+                ℹ️ This is a <strong>live preview</strong> of how the listing will appear in the app. The property will be submitted for review after you click Post.
+              </div>
+
+              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
+                <button
+                  type="button"
+                  onClick={() => { setShowPreviewModal(false); previewBlobUrls.forEach(u => URL.revokeObjectURL(u)); setPreviewBlobUrls([]); }}
+                  style={{ padding: "11px 22px", borderRadius: "10px", border: "1px solid #CBD5E1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: "0.9rem", color: "#334155" }}
+                >
+                  ← Back to Edit
+                </button>
+                <button
+                  type="button"
+                  disabled={isUploading}
+                  onClick={async () => {
+                    setShowPreviewModal(false);
+                    previewBlobUrls.forEach(u => URL.revokeObjectURL(u));
+                    setPreviewBlobUrls([]);
+                    await handleCreateProperty();
+                  }}
+                  style={{
+                    padding: "11px 28px",
+                    borderRadius: "10px",
+                    background: isUploading ? "#93C5FD" : "linear-gradient(135deg, #059669, #10B981)",
+                    color: "#fff",
+                    border: "none",
+                    cursor: isUploading ? "not-allowed" : "pointer",
+                    fontWeight: 700,
+                    fontSize: "0.9rem",
+                    display: "flex",
+                    alignItems: "center",
+                    gap: "8px",
+                    boxShadow: "0 4px 12px rgba(16,185,129,0.35)",
+                  }}
+                >
+                  {isUploading ? (
+                    <><span style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Uploading...</>
+                  ) : editingPropertyId ? (
+                    <>✅ Update Property</>
+                  ) : (
+                    <>🚀 Post Property</>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

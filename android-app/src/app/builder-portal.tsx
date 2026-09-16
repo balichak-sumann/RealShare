@@ -69,6 +69,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
+  const [postFormErrors, setPostFormErrors] = useState<string[]>([]);
 
   useEffect(() => {
     if (profile && profile.role !== 'builder' && profile.role !== 'admin') {
@@ -141,11 +142,14 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
   };
 
   const handlePostProperty = async () => {
-    if (!title || !locality) {
-      alert('Please enter Property Title and Locality.');
+    const errors: string[] = [];
+    if (!title || !title.trim()) errors.push('Property Title is required.');
+    if (!locality || !locality.trim()) errors.push('Locality is required.');
+    if (errors.length > 0) {
+      setPostFormErrors(errors);
       return;
     }
-    
+    setPostFormErrors([]);
     setIsUploading(true);
     
     try {
@@ -603,6 +607,25 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
               )}
             </TouchableOpacity>
 
+            {/* Validation Error Banner */}
+            {postFormErrors.length > 0 && (
+              <View style={{
+                backgroundColor: '#FEF2F2',
+                borderWidth: 1,
+                borderColor: '#FECACA',
+                borderRadius: 10,
+                padding: 14,
+                marginBottom: 12,
+              }}>
+                <Text style={{ fontSize: 13, fontWeight: '700', color: '#DC2626', marginBottom: 6 }}>
+                  ⚠️ Please fill in all required fields:
+                </Text>
+                {postFormErrors.map((err, i) => (
+                  <Text key={i} style={{ fontSize: 12, color: '#B91C1C', marginBottom: 3 }}>• {err}</Text>
+                ))}
+              </View>
+            )}
+
             <TouchableOpacity
               style={[styles.submitBtn, isUploading && { opacity: 0.7 }]}
               onPress={handlePostProperty}
@@ -611,7 +634,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
               {isUploading ? (
                 <ActivityIndicator color={Neutrals.white} />
               ) : (
-                <Text style={styles.submitBtnText}>Submit Property for Admin Verification</Text>
+                <Text style={styles.submitBtnText}>👁️ Preview &amp; Submit for Verification</Text>
               )}
             </TouchableOpacity>
           </View>

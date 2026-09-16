@@ -70,7 +70,7 @@ export default function MarketAnalytics() {
           chartConfig={chartConfig}
           verticalLabelRotation={30}
           style={styles.chartStyle}
-          showValuesOnTopOfBars={true}
+          showValuesOnTopOfBars={Platform.OS !== 'web'}
         />
       </View>
 

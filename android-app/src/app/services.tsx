@@ -11,9 +11,9 @@ import { useResponsive } from '@/hooks/useResponsive';
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?q=80&w=1600&auto=format&fit=crop';
 
 const DEFAULT_SERVICES = [
-  { id: '3', title: 'Home Loans & Finance', image: require('../../assets/images/indian_home_loan.png'), desc: 'Instant approvals with lowest interest rates from top banks.', price: 'Free Consultation' },
-  { id: '1', title: 'Interior Design', image: require('../../assets/images/indian_interior_design.png'), desc: 'Premium design consultations and execution for your dream home.', price: 'Free Consultation' },
-  { id: '2', title: 'Property Management', image: require('../../assets/images/indian_property_management.png'), desc: 'Full lifecycle tenant & property management for complete peace of mind.', price: 'Free Consultation' },
+  { id: '3', title: 'Home Loans & Finance', image: require('../../assets/images/indian_home_loan.jpg'), desc: 'Instant approvals with lowest interest rates from top banks.', price: 'Free Consultation' },
+  { id: '1', title: 'Interior Design', image: require('../../assets/images/indian_interior_design.jpg'), desc: 'Premium design consultations and execution for your dream home.', price: 'Free Consultation' },
+  { id: '2', title: 'Property Management', image: require('../../assets/images/indian_property_management.jpg'), desc: 'Full lifecycle tenant & property management for complete peace of mind.', price: 'Free Consultation' },
 ];
 
 export default function ServicesScreen() {

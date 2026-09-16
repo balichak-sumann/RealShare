@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Linking, Animated } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { useResponsive } from '@/hooks/useResponsive';
@@ -128,9 +128,15 @@ export function WebFooter() {
             <Text style={{ color: Neutrals.surface, fontSize: 13, fontWeight: '700' }}>Realshare</Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 12 }}>
-            <TouchableOpacity onPress={() => router.push('/privacy-policy' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Privacy</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/terms-of-service' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Terms</Text></TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/disclaimer' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Disclaimer</Text></TouchableOpacity>
+            <Link href="/privacy-policy" asChild>
+              <TouchableOpacity><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Privacy</Text></TouchableOpacity>
+            </Link>
+            <Link href="/terms-of-service" asChild>
+              <TouchableOpacity><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Terms</Text></TouchableOpacity>
+            </Link>
+            <Link href="/disclaimer" asChild>
+              <TouchableOpacity><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Disclaimer</Text></TouchableOpacity>
+            </Link>
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 16, marginTop: 8, marginBottom: 8 }}>

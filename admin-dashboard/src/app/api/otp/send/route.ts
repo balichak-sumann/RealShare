@@ -56,6 +56,20 @@ export async function POST(request: Request) {
       );
     }
 
+    if (body?.checkExists) {
+      try {
+        const { auth } = await import('@/lib/firebase-admin');
+        await auth.getUserByPhoneNumber(`+91${phone}`);
+      } catch (err: any) {
+        if (err.code === 'auth/user-not-found') {
+          return NextResponse.json(
+            { success: false, error: 'Account not found. Please sign up first.' },
+            { status: 404 }
+          );
+        }
+      }
+    }
+
     const now = Date.now();
     const otpStore = getOtpStore();
     const existing = otpStore.get(phone);

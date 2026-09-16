@@ -7,7 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 import { getApiUrl } from '@/lib/api';
 import { useResponsive } from '@/hooks/useResponsive';
 
-const HERO_IMAGE = require('../../../assets/images/indian_home_loan.png');
+const HERO_IMAGE = require('../../../assets/images/indian_home_loan.jpg');
 
 export default function HomeLoansScreen() {
   const router = useRouter();

@@ -7,7 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 import { getApiUrl } from '@/lib/api';
 import { useResponsive } from '@/hooks/useResponsive';
 
-const HERO_IMAGE = require('../../../assets/images/indian_property_management.png');
+const HERO_IMAGE = require('../../../assets/images/indian_property_management.jpg');
 
 export default function PropertyManagementScreen() {
   const router = useRouter();

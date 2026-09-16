@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView, Image, ImageBackground, Linking } from 'react-native';
-import { signInWithEmailAndPassword, signOut, signInWithCustomToken } from 'firebase/auth';
+import { signOut, signInWithCustomToken } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { getApiUrl } from '@/lib/api';
 import { useRouter } from 'expo-router';
@@ -17,8 +17,7 @@ export default function SignInScreen() {
   const isDesktopWeb = isDesktop && Platform.OS === 'web';
 
   const [identifier, setIdentifier] = useState('');
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
@@ -38,21 +37,28 @@ export default function SignInScreen() {
 
     try {
       if (isEmail) {
-        // Validate email format
         if (!EMAIL_REGEX.test(identifier.trim())) {
           setError('Please enter a valid email address (e.g. john@gmail.com).');
           setLoading(false);
           return;
         }
-        if (!password) {
-          setError('Please enter your password.');
-          setLoading(false);
-          return;
-        }
-        const userCredential = await signInWithEmailAndPassword(auth, identifier.trim(), password);
         
-        // Email verification requirement removed
-        // onAuthStateChanged in _layout.tsx handles redirection
+        try {
+          const res = await fetch(`${getApiUrl()}/api/otp/send-email`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: identifier.trim(), checkExists: true }),
+          });
+          const data = await res.json();
+          if (data.success) {
+            setPendingVerification(true);
+          } else {
+            setError(data.error || 'Failed to send OTP.');
+          }
+        } catch (e: any) {
+          setError('Failed to connect to the server.');
+        }
+        setLoading(false);
       } else {
         // Phone Number Validation
         const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
@@ -71,7 +77,7 @@ export default function SignInScreen() {
           const res = await fetch(`${getApiUrl()}/api/otp/send`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ phone: cleanedPhone }),
+            body: JSON.stringify({ phone: cleanedPhone, checkExists: true }),
           });
           const data = await res.json();
           if (data.success) {
@@ -85,15 +91,7 @@ export default function SignInScreen() {
         setLoading(false);
       }
     } catch (err: any) {
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/invalid-credential') {
-        setError('Invalid email or password. Please check your credentials or create an account.');
-      } else if (err.code === 'auth/wrong-password') {
-        setError('Incorrect password. Please try again.');
-      } else if (err.code === 'auth/too-many-requests') {
-        setError('Too many failed attempts. Please try again later.');
-      } else {
-        setError(err.message || 'Failed to sign in.');
-      }
+      setError(err.message || 'Failed to request OTP.');
       setLoading(false);
     }
   };
@@ -108,11 +106,11 @@ export default function SignInScreen() {
     setError('');
 
     try {
-      const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
+      const payloadId = isEmail ? identifier.trim() : identifier.replace(/\D/g, '').slice(-10);
       const res = await fetch(`${getApiUrl()}/api/otp/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanedPhone, otp: code }),
+        body: JSON.stringify({ identifier: payloadId, otp: code }),
       });
       const data = await res.json();
       
@@ -175,50 +173,11 @@ export default function SignInScreen() {
             />
           )}
 
-          {isEmail && (
-            <>
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Password</Text>
-              {isDesktopWeb ? (
-                <View style={styles.desktopInputWrapper}>
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ paddingRight: 4 }}>
-                    <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} style={styles.desktopInputIcon} />
-                  </TouchableOpacity>
-                  <TextInput
-                    value={password}
-                    placeholder="••••••••"
-                    placeholderTextColor={Neutrals.gray400}
-                    secureTextEntry={!showPassword}
-                    onChangeText={(password) => setPassword(password)}
-                    style={styles.desktopInput}
-                  />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4, cursor: 'pointer' }}>
-                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <View style={[styles.mobileInput, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }]}>
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} style={{ marginRight: 10 }} />
-                  </TouchableOpacity>
-                  <TextInput
-                    value={password}
-                    placeholder="••••••••"
-                    placeholderTextColor="#94A3B8"
-                    secureTextEntry={!showPassword}
-                    onChangeText={(password) => setPassword(password)}
-                    style={{ flex: 1, color: '#FFFFFF', fontSize: 16, paddingVertical: 0 }}
-                  />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} />
-                  </TouchableOpacity>
-                </View>
-              )}
-            </>
-          )}
+
 
           <TouchableOpacity style={isDesktopWeb ? styles.desktopPrimaryButton : styles.mobilePrimaryButton} onPress={onSignInPress} disabled={loading}>
             {loading ? <ActivityIndicator color={isDesktopWeb ? Neutrals.white : "#0F172A"} /> : (
-              <Text style={isDesktopWeb ? styles.desktopPrimaryButtonText : styles.mobilePrimaryButtonText}>{isEmail ? 'Sign In' : 'Send OTP'}</Text>
+              <Text style={isDesktopWeb ? styles.desktopPrimaryButtonText : styles.mobilePrimaryButtonText}>Send OTP</Text>
             )}
           </TouchableOpacity>
 

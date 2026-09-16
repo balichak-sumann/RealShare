@@ -14,14 +14,14 @@ export async function sendOtpSms(phone: string, otp: string): Promise<{ success:
   const entityId = process.env.SMSGATEWAYHUB_ENTITY_ID;
   const templateId = process.env.SMSGATEWAYHUB_DLT_TEMPLATE_ID;
 
-  if (!apiKey || !senderId || !entityId || !templateId) {
-    console.error('[SMS] Missing SMSGatewayHub credentials in environment variables');
-    return { success: false, error: 'SMS service not configured' };
+  if (!apiKey || apiKey === 'your_smsgatewayhub_api_key' || !senderId || !entityId || entityId === 'your_dlt_entity_id' || !templateId || templateId === 'your_dlt_template_id') {
+    console.warn(`\n[SMS MOCK] Missing SMS credentials. Mocking SMS delivery.\n[SMS MOCK] Sent to: ${phone}\n[SMS MOCK] OTP IS: ${otp}\n`);
+    return { success: true };
   }
 
   // The message text MUST match the DLT-approved template exactly.
-  // Update this string to match your registered template.
-  const message = `Your Realshare OTP is ${otp}. Valid for 5 minutes. Do not share this code with anyone.`;
+  // Approved Jio DLT Template ID: 1207175454269228947
+  const message = `Your Realshare Properties OTP to register your account is: ${otp}. Please do not share with anyone.`;
 
   const url = new URL(SMSGATEWAYHUB_ENDPOINT);
   url.searchParams.set('APIKey', apiKey);

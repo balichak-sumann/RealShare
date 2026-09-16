@@ -13,19 +13,19 @@ const DEFAULT_SERVICES = [
     id: '3', 
     title: 'Home Loans & Finance', 
     video: require('../../../assets/videos/home_loan.mp4'),
-    image: require('../../../assets/images/indian_home_loan.png')
+    image: require('../../../assets/images/indian_home_loan.jpg')
   },
   { 
     id: '1', 
     title: 'Interior Design', 
     video: require('../../../assets/videos/interior_design.mp4'),
-    image: require('../../../assets/images/indian_interior_design.png')
+    image: require('../../../assets/images/indian_interior_design.jpg')
   },
   { 
     id: '2', 
     title: 'Property Management', 
     video: require('../../../assets/videos/property_mgnt.mp4'),
-    image: require('../../../assets/images/indian_property_management.png')
+    image: require('../../../assets/images/indian_property_management.jpg')
   },
 ];
 

@@ -84,7 +84,7 @@ export function PostPropertyBanner() {
           {isDesktop && Platform.OS === 'web' && (
             <View style={styles.rightImage}>
               <Image
-                source={require('../../../assets/images/post-property-bg.jpg')}
+                source={require('../../../assets/images/grid.png')}
                 style={styles.propertyImage}
                 contentFit="cover"
                 transition={300}

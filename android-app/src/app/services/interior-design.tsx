@@ -7,7 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 import { getApiUrl } from '@/lib/api';
 import { useResponsive } from '@/hooks/useResponsive';
 
-const HERO_IMAGE = require('../../../assets/images/indian_interior_design.png');
+const HERO_IMAGE = require('../../../assets/images/indian_interior_design.jpg');
 
 export default function InteriorDesignScreen() {
   const router = useRouter();

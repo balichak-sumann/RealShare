@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView, Image, Modal, ImageBackground, Linking } from 'react-native';
-import { createUserWithEmailAndPassword, sendEmailVerification, signOut, signInWithCustomToken } from 'firebase/auth';
+import { signOut, signInWithCustomToken } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'expo-router';
 import { AuthSplitLayout } from '@/components/layout/AuthSplitLayout';
@@ -17,7 +17,6 @@ const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 const AADHAAR_REGEX = /^\d{12}$/;
 const PAN_REGEX = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
 const GST_REGEX = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[1-9A-Z]{1}Z[0-9A-Z]{1}$/;
-const MIN_PASSWORD_LENGTH = 8;
 export default function SignUpScreen() {
   const router = useRouter();
   const { setProfile } = useUser();
@@ -57,10 +56,9 @@ export default function SignUpScreen() {
   const [builderPanNumber, setBuilderPanNumber] = useState('');
   const [builderPassportNumber, setBuilderPassportNumber] = useState('');
 
-  const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState('');
+  const [emailCode, setEmailCode] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [role, setRole] = useState<'buyer' | 'investor' | 'agent' | 'builder'>('buyer');
   const [loading, setLoading] = useState(false);
@@ -80,7 +78,9 @@ export default function SignUpScreen() {
       if (role === 'buyer' || role === 'builder' || role === 'agent' || role === 'investor') {
         body.full_name = fullName.trim();
         body.phone_number = `+91 ${mobileNumber.replace(/\D/g, '').slice(-10)}`;
-        body.full_address = fullAddress.trim();
+        if (role !== 'buyer') {
+          body.full_address = fullAddress.trim();
+        }
       } else {
         body.full_name = fullName || '';
         body.phone_number = isEmail ? '' : identifier.trim();
@@ -132,210 +132,94 @@ export default function SignUpScreen() {
     setError('');
 
     try {
-      if (role === 'buyer' || role === 'builder' || role === 'agent' || role === 'investor') {
-        if (!fullName.trim() || !mobileNumber.trim() || !email.trim() || !fullAddress.trim() || !password) {
+      if (!fullName.trim() || !mobileNumber.trim()) {
+        setError('Please fill in all required fields.');
+        setLoading(false); return;
+      }
+      
+      if (role !== 'buyer') {
+        if (!email.trim() || !fullAddress.trim()) {
           setError('Please fill in all required fields.');
           setLoading(false); return;
         }
+      }
 
-        if (role === 'agent') {
-          if (!aadhaarNumber.trim() || !panNumber.trim() || !aadhaarDoc || !panDoc) {
-            setError('Please provide all mandatory KYC documents and numbers (Aadhaar, PAN).');
-            setLoading(false); return;
-          }
-          if (!AADHAAR_REGEX.test(aadhaarNumber.trim())) {
-            setError('Please enter a valid 12-digit Aadhaar Number.');
-            setLoading(false); return;
-          }
-          if (!PAN_REGEX.test(panNumber.trim().toUpperCase())) {
-            setError('Please enter a valid 10-character PAN Number (e.g. ABCDE1234F).');
-            setLoading(false); return;
-          }
-        }
-
-        if (role === 'builder') {
-          if (!companyName.trim() || !officeAddress.trim() || !reraNumber.trim() || credaiMember === null || !companyPan.trim() || !companyGst.trim()) {
-            setError('Please fill in all mandatory Company Details.');
-            setLoading(false); return;
-          }
-          if (!PAN_REGEX.test(companyPan.trim().toUpperCase())) {
-            setError('Please enter a valid 10-character Company PAN Number (e.g. ABCDE1234F).');
-            setLoading(false); return;
-          }
-          if (!GST_REGEX.test(companyGst.trim().toUpperCase())) {
-            setError('Please enter a valid 15-character Company GST Number.');
-            setLoading(false); return;
-          }
-          if (!builderAadhaarNumber.trim() || !builderPanNumber.trim() || !builderAadhaarDoc || !builderPanDoc) {
-            setError('Please provide all mandatory Owner/Director KYC documents and numbers (Aadhaar, PAN).');
-            setLoading(false); return;
-          }
-          if (!AADHAAR_REGEX.test(builderAadhaarNumber.trim())) {
-            setError('Please enter a valid 12-digit Owner/Director Aadhaar Number.');
-            setLoading(false); return;
-          }
-          if (!PAN_REGEX.test(builderPanNumber.trim().toUpperCase())) {
-            setError('Please enter a valid 10-character Owner/Director PAN Number (e.g. ABCDE1234F).');
-            setLoading(false); return;
-          }
-        }
-        if (!EMAIL_REGEX.test(email.trim())) {
-          setError('Please enter a valid email address (e.g. john@gmail.com).');
+      if (role === 'agent') {
+        if (!aadhaarNumber.trim() || !panNumber.trim() || !aadhaarDoc || !panDoc) {
+          setError('Please provide all mandatory KYC documents and numbers (Aadhaar, PAN).');
           setLoading(false); return;
         }
-        const cleanedPhone = mobileNumber.replace(/\D/g, '');
-        if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
-          setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
+        if (!AADHAAR_REGEX.test(aadhaarNumber.trim())) {
+          setError('Please enter a valid 12-digit Aadhaar Number.');
           setLoading(false); return;
         }
-        if (password.length < MIN_PASSWORD_LENGTH) {
-          setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
+        if (!PAN_REGEX.test(panNumber.trim().toUpperCase())) {
+          setError('Please enter a valid 10-character PAN Number (e.g. ABCDE1234F).');
           setLoading(false); return;
         }
-        if (!/[A-Z]/.test(password)) {
-          setError('Password must contain at least one uppercase letter.');
-          setLoading(false); return;
-        }
-        if (!/[0-9]/.test(password)) {
-          setError('Password must contain at least one number.');
-          setLoading(false); return;
-        }
+      }
 
-        const userCredential = await createUserWithEmailAndPassword(auth, email.trim(), password);
-        await syncUserToBackend(userCredential.user);
-        
-        if (role === 'agent' || role === 'investor' || role === 'builder') {
-           const token = await userCredential.user.getIdToken();
-           // Use local admin server for uploads when developing locally on web
-           const uploadBaseUrl = (Platform.OS === 'web' && window.location.hostname === 'localhost')
-             ? 'http://localhost:3000'
-             : getApiUrl();
-           
-           const uploadDoc = async (docData: any, docType: string, docNumber: string) => {
-             if (!docData) return;
-             try {
-               let base64Data = docData.base64;
-               if (!base64Data && docData.uri) {
-                 try {
-                   const res = await fetch(docData.uri);
-                   const blob = await res.blob();
-                   base64Data = await new Promise((resolve, reject) => {
-                     const reader = new FileReader();
-                     reader.onloadend = () => resolve(reader.result as string);
-                     reader.onerror = reject;
-                     reader.readAsDataURL(blob);
-                   });
-                 } catch (e) { console.error(e); }
-               }
-               if (!base64Data) return;
-               
-               const uploadRes = await fetch(`${uploadBaseUrl}/api/upload`, {
-                 method: 'POST',
-                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                 body: JSON.stringify({ imageBase64: base64Data, fileName: `kyc_${docType}.jpg` })
-               });
-               const uploadData = await uploadRes.json();
-               if (!uploadData.success) return;
-               
-               await fetch(`${uploadBaseUrl}/api/kyc/submit`, {
-                 method: 'POST',
-                 headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-                 body: JSON.stringify({
-                   document_type: docType,
-                   document_number: docNumber ? docNumber.trim() : 'UPLOADED-VIA-APP',
-                   document_front_url: uploadData.url,
-                   document_back_url: null
-                 })
-               });
-             } catch (e) { console.error('KYC Upload failed', e); }
-           };
-           
-           if (role === 'agent') {
-             await uploadDoc(aadhaarDoc, 'aadhaar', aadhaarNumber);
-             await uploadDoc(panDoc, 'pan', panNumber);
-             await uploadDoc(passportDoc, 'passport', passportNumber);
-           } else {
-             // Builder: Owner/Director KYC documents
-             await uploadDoc(builderAadhaarDoc, 'aadhaar', builderAadhaarNumber);
-             await uploadDoc(builderPanDoc, 'pan', builderPanNumber);
-             await uploadDoc(builderPassportDoc, 'passport', builderPassportNumber);
-           }
+      if (role === 'builder') {
+        if (!companyName.trim() || !officeAddress.trim() || !reraNumber.trim() || credaiMember === null || !companyPan.trim() || !companyGst.trim()) {
+          setError('Please fill in all mandatory Company Details.');
+          setLoading(false); return;
         }
+        if (!PAN_REGEX.test(companyPan.trim().toUpperCase())) {
+          setError('Please enter a valid 10-character Company PAN Number (e.g. ABCDE1234F).');
+          setLoading(false); return;
+        }
+        if (!GST_REGEX.test(companyGst.trim().toUpperCase())) {
+          setError('Please enter a valid 15-character Company GST Number.');
+          setLoading(false); return;
+        }
+        if (!builderAadhaarNumber.trim() || !builderPanNumber.trim() || !builderAadhaarDoc || !builderPanDoc) {
+          setError('Please provide all mandatory Owner/Director KYC documents and numbers (Aadhaar, PAN).');
+          setLoading(false); return;
+        }
+        if (!AADHAAR_REGEX.test(builderAadhaarNumber.trim())) {
+          setError('Please enter a valid 12-digit Owner/Director Aadhaar Number.');
+          setLoading(false); return;
+        }
+        if (!PAN_REGEX.test(builderPanNumber.trim().toUpperCase())) {
+          setError('Please enter a valid 10-character Owner/Director PAN Number (e.g. ABCDE1234F).');
+          setLoading(false); return;
+        }
+      }
+      if (role !== 'buyer' && !EMAIL_REGEX.test(email.trim())) {
+        setError('Please enter a valid email address (e.g. john@gmail.com).');
+        setLoading(false); return;
+      }
+      const cleanedPhone = mobileNumber.replace(/\D/g, '');
+      if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
+        setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
+        setLoading(false); return;
+      }
 
-        // No email verification needed anymore
-        // try { await sendEmailVerification(userCredential.user); } catch (e) {}
+      // Call APIs to send OTPs
+      const phoneRes = await fetch(`${getApiUrl()}/api/otp/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleanedPhone }),
+      });
+      const phoneData = await phoneRes.json();
 
-        await signOut(auth).catch(() => {});
-        setProfile(null);
-        setShowSuccessModal(true);
+      let emailData = { success: true, error: '' };
+      if (role !== 'buyer') {
+        const emailRes = await fetch(`${getApiUrl()}/api/otp/send-email`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim() }),
+        });
+        emailData = await emailRes.json();
+      }
+
+      if (phoneData.success && emailData.success) {
+        setPendingVerification(true);
       } else {
-        // Agent or Builder logic
-        if (!identifier) {
-          setError('Please enter your Email or Mobile Number.');
-          setLoading(false); return;
-        }
-
-        if (isEmail) {
-          if (!EMAIL_REGEX.test(identifier.trim())) {
-            setError('Please enter a valid email address (e.g. john@gmail.com).');
-            setLoading(false); return;
-          }
-          if (!password) {
-            setError('Please enter a password.');
-            setLoading(false); return;
-          }
-          if (password.length < MIN_PASSWORD_LENGTH) {
-            setError(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
-            setLoading(false); return;
-          }
-          if (!/[A-Z]/.test(password)) {
-            setError('Password must contain at least one uppercase letter.');
-            setLoading(false); return;
-          }
-          if (!/[0-9]/.test(password)) {
-            setError('Password must contain at least one number.');
-            setLoading(false); return;
-          }
-
-          const userCredential = await createUserWithEmailAndPassword(auth, identifier.trim(), password);
-          await syncUserToBackend(userCredential.user);
-          
-          await signOut(auth);
-          setProfile(null);
-          setShowSuccessModal(true);
-        } else {
-          const cleanedPhone = identifier.replace(/\D/g, '');
-          if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
-            setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
-            setLoading(false); return;
-          }
-          
-          try {
-            const res = await fetch(`${getApiUrl()}/api/otp/send`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ phone: cleanedPhone }),
-            });
-            const data = await res.json();
-            if (data.success) {
-              setPendingVerification(true);
-            } else {
-              setError(data.error || 'Failed to send OTP.');
-            }
-          } catch (e: any) {
-            setError('Failed to connect to the server.');
-          }
-          setLoading(false);
-        }
+        setError(phoneData.error || emailData.error || 'Failed to send OTPs.');
       }
     } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') {
-        setError('This email is already registered. Please sign in instead.');
-      } else if (err.code === 'auth/weak-password') {
-        setError('Password is too weak. Please use at least 8 characters with uppercase and numbers.');
-      } else {
-        setError(err.message || 'Failed to sign up.');
-      }
+      setError('Failed to connect to the server.');
     } finally {
       setLoading(false);
     }
@@ -381,35 +265,99 @@ export default function SignUpScreen() {
   };
 
   const onVerifyOtpPress = async () => {
-    if (!code || code.length !== 6) {
-      setError('Please enter a valid 6-digit OTP.');
-      return;
+    if (role === 'buyer') {
+      if (!code || code.length !== 6) {
+        setError('Please enter a valid 6-digit OTP for Phone.');
+        return;
+      }
+    } else {
+      if (!code || code.length !== 6 || !emailCode || emailCode.length !== 6) {
+        setError('Please enter valid 6-digit OTPs for both Phone and Email.');
+        return;
+      }
     }
     
     setLoading(true);
     setError('');
 
     try {
-      const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
-      const res = await fetch(`${getApiUrl()}/api/otp/verify`, {
+      const cleanedPhone = mobileNumber.replace(/\D/g, '').slice(-10);
+      const res = await fetch(`${getApiUrl()}/api/auth/signup-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanedPhone, otp: code }),
+        body: JSON.stringify({ 
+          phone: cleanedPhone, 
+          phoneOtp: code,
+          email: email.trim(),
+          emailOtp: emailCode,
+          fullName: fullName.trim(),
+          role: role
+        }),
       });
       const data = await res.json();
       
       if (data.success && data.firebaseToken) {
         const userCredential = await signInWithCustomToken(auth, data.firebaseToken);
+        
+        // Sync to backend first to create Profile
         await syncUserToBackend(userCredential.user);
         
-        await signOut(auth);
+        // Upload KYC Docs
+        if (role === 'agent' || role === 'builder' || role === 'investor') {
+          const token = await userCredential.user.getIdToken();
+          const uploadBaseUrl = (Platform.OS === 'web' && window.location.hostname === 'localhost') ? 'http://localhost:3000' : getApiUrl();
+          
+          const uploadDoc = async (docData: any, docType: string, docNumber: string) => {
+            if (!docData) return;
+            try {
+              let base64Data = docData.base64;
+              if (!base64Data && docData.uri) {
+                try {
+                  const docRes = await fetch(docData.uri);
+                  const blob = await docRes.blob();
+                  base64Data = await new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result as string);
+                    reader.onerror = reject;
+                    reader.readAsDataURL(blob);
+                  });
+                } catch (e) {}
+              }
+              if (!base64Data) return;
+              const uploadRes = await fetch(`${uploadBaseUrl}/api/upload`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ imageBase64: base64Data, fileName: `kyc_${docType}.jpg` })
+              });
+              const uploadData = await uploadRes.json();
+              if (!uploadData.success) return;
+              await fetch(`${uploadBaseUrl}/api/kyc/submit`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ document_type: docType, document_number: docNumber ? docNumber.trim() : 'UPLOADED', document_front_url: uploadData.url })
+              });
+            } catch (e) { console.error('KYC Upload failed', e); }
+          };
+          
+          if (role === 'agent') {
+            await uploadDoc(aadhaarDoc, 'aadhaar', aadhaarNumber);
+            await uploadDoc(panDoc, 'pan', panNumber);
+            await uploadDoc(passportDoc, 'passport', passportNumber);
+          } else if (role === 'builder') {
+            await uploadDoc(builderAadhaarDoc, 'aadhaar', builderAadhaarNumber);
+            await uploadDoc(builderPanDoc, 'pan', builderPanNumber);
+            await uploadDoc(builderPassportDoc, 'passport', builderPassportNumber);
+          }
+        }
+
+        await signOut(auth).catch(() => {});
         setProfile(null);
         setShowSuccessModal(true);
       } else {
-        setError(data.error || 'Invalid OTP.');
+        setError(data.error || 'Failed to verify OTPs.');
       }
     } catch (err: any) {
-      setError('Failed to verify OTP. Please try again.');
+      setError('Failed to verify OTPs. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -473,48 +421,31 @@ export default function SignUpScreen() {
                 <TextInput keyboardType="phone-pad" value={mobileNumber} placeholder="9988776655" placeholderTextColor="#94A3B8" onChangeText={setMobileNumber} style={styles.mobileInput} />
               )}
 
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email Address <Text style={{color: '#EF4444'}}>*</Text></Text>
-              {isDesktopWeb ? (
-                <View style={styles.desktopInputWrapper}>
-                  <Ionicons name="mail-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
-                  <TextInput autoCapitalize="none" keyboardType="email-address" value={email} placeholder="jane@example.com" placeholderTextColor={Neutrals.gray400} onChangeText={setEmail} style={styles.desktopInput} />
-                </View>
-              ) : (
-                <TextInput autoCapitalize="none" keyboardType="email-address" value={email} placeholder="jane@example.com" placeholderTextColor="#94A3B8" onChangeText={setEmail} style={styles.mobileInput} />
+              {role !== 'buyer' && (
+                <>
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email Address <Text style={{color: '#EF4444'}}>*</Text></Text>
+                  {isDesktopWeb ? (
+                    <View style={styles.desktopInputWrapper}>
+                      <Ionicons name="mail-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                      <TextInput autoCapitalize="none" keyboardType="email-address" value={email} placeholder="jane@example.com" placeholderTextColor={Neutrals.gray400} onChangeText={setEmail} style={styles.desktopInput} />
+                    </View>
+                  ) : (
+                    <TextInput autoCapitalize="none" keyboardType="email-address" value={email} placeholder="jane@example.com" placeholderTextColor="#94A3B8" onChangeText={setEmail} style={styles.mobileInput} />
+                  )}
+
+                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Full Address <Text style={{color: '#EF4444'}}>*</Text></Text>
+                  {isDesktopWeb ? (
+                    <View style={styles.desktopInputWrapper}>
+                      <Ionicons name="location-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                      <TextInput value={fullAddress} placeholder="Apt 123, Jubilee Hills, Hyderabad" placeholderTextColor={Neutrals.gray400} onChangeText={setFullAddress} style={styles.desktopInput} />
+                    </View>
+                  ) : (
+                    <TextInput value={fullAddress} placeholder="Apt 123, Jubilee Hills, Hyderabad" placeholderTextColor="#94A3B8" onChangeText={setFullAddress} style={styles.mobileInput} />
+                  )}
+                </>
               )}
 
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Full Address <Text style={{color: '#EF4444'}}>*</Text></Text>
-              {isDesktopWeb ? (
-                <View style={styles.desktopInputWrapper}>
-                  <Ionicons name="location-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
-                  <TextInput value={fullAddress} placeholder="Apt 123, Jubilee Hills, Hyderabad" placeholderTextColor={Neutrals.gray400} onChangeText={setFullAddress} style={styles.desktopInput} />
-                </View>
-              ) : (
-                <TextInput value={fullAddress} placeholder="Apt 123, Jubilee Hills, Hyderabad" placeholderTextColor="#94A3B8" onChangeText={setFullAddress} style={styles.mobileInput} />
-              )}
 
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Password <Text style={{color: '#EF4444'}}>*</Text></Text>
-              {isDesktopWeb ? (
-                <View style={styles.desktopInputWrapper}>
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ paddingRight: 4 }}>
-                    <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} style={styles.desktopInputIcon} />
-                  </TouchableOpacity>
-                  <TextInput value={password} placeholder="••••••••" placeholderTextColor={Neutrals.gray400} secureTextEntry={!showPassword} onChangeText={setPassword} style={styles.desktopInput} />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4, cursor: 'pointer' }}>
-                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} />
-                  </TouchableOpacity>
-                </View>
-              ) : (
-                <View style={[styles.mobileInput, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }]}>
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} style={{ marginRight: 10 }} />
-                  </TouchableOpacity>
-                  <TextInput value={password} placeholder="••••••••" placeholderTextColor="#94A3B8" secureTextEntry={!showPassword} onChangeText={setPassword} style={{ flex: 1, color: '#FFFFFF', fontSize: 16, paddingVertical: 0 }} />
-                  <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                    <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} />
-                  </TouchableOpacity>
-                </View>
-              )}
 
               {role === 'agent' && (
                 <>
@@ -768,38 +699,7 @@ export default function SignUpScreen() {
                 />
               )}
 
-              {isEmail && (
-                <>
-                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Password <Text style={{color: '#EF4444'}}>*</Text></Text>
-                  {isDesktopWeb ? (
-                    <View style={styles.desktopInputWrapper}>
-                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ paddingRight: 4 }}>
-                        <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} style={styles.desktopInputIcon} />
-                      </TouchableOpacity>
-                      <TextInput
-                        value={password} placeholder="••••••••" placeholderTextColor={Neutrals.gray400}
-                        secureTextEntry={!showPassword} onChangeText={setPassword} style={styles.desktopInput}
-                      />
-                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)} style={{ padding: 4, cursor: 'pointer' }}>
-                        <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? GoldSystem.primaryGold : Neutrals.gray500} />
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <View style={[styles.mobileInput, { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }]}>
-                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        <Ionicons name={showPassword ? "lock-open-outline" : "lock-closed-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} style={{ marginRight: 10 }} />
-                      </TouchableOpacity>
-                      <TextInput
-                        value={password} placeholder="••••••••" placeholderTextColor="#94A3B8"
-                        secureTextEntry={!showPassword} onChangeText={setPassword} style={{ flex: 1, color: '#FFFFFF', fontSize: 16, paddingVertical: 0 }}
-                      />
-                      <TouchableOpacity onPress={() => setShowPassword(!showPassword)}>
-                        <Ionicons name={showPassword ? "eye-outline" : "eye-off-outline"} size={20} color={showPassword ? '#D4AF37' : '#94A3B8'} />
-                      </TouchableOpacity>
-                    </View>
-                  )}
-                </>
-              )}
+
             </>
           )}
 
@@ -822,7 +722,7 @@ export default function SignUpScreen() {
           <TouchableOpacity style={isDesktopWeb ? styles.desktopPrimaryButton : styles.mobilePrimaryButton} onPress={onSignUpPress} disabled={loading}>
             {loading ? <ActivityIndicator color={isDesktopWeb ? Neutrals.white : "#0F172A"} /> : (
               <Text style={isDesktopWeb ? styles.desktopPrimaryButtonText : styles.mobilePrimaryButtonText}>
-                {role === 'buyer' || role === 'builder' || role === 'agent' || role === 'investor' || isEmail ? 'Create Account' : 'Send OTP'}
+                {'Send Verification OTPs'}
               </Text>
             )}
           </TouchableOpacity>
@@ -878,9 +778,9 @@ export default function SignUpScreen() {
 
       {pendingVerification && (
         <View style={styles.form}>
-          <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Verification Code</Text>
+          <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Mobile Verification Code</Text>
           <Text style={{ color: isDesktopWeb ? Neutrals.gray500 : '#94A3B8', marginBottom: 16 }}>
-            We've sent a 6-digit code to +91 {identifier}
+            Sent to +91 {mobileNumber}
           </Text>
           {isDesktopWeb ? (
             <View style={[styles.desktopInputWrapper, { paddingHorizontal: 0 }]}>
@@ -900,12 +800,38 @@ export default function SignUpScreen() {
             />
           )}
 
+          {role !== 'buyer' && (
+            <>
+              <Text style={[isDesktopWeb ? styles.desktopLabel : styles.mobileLabel, { marginTop: 16 }]}>Email Verification Code</Text>
+              <Text style={{ color: isDesktopWeb ? Neutrals.gray500 : '#94A3B8', marginBottom: 16 }}>
+                Sent to {email}
+              </Text>
+              {isDesktopWeb ? (
+                <View style={[styles.desktopInputWrapper, { paddingHorizontal: 0 }]}>
+                  <TextInput
+                    value={emailCode} placeholder="------" placeholderTextColor={Neutrals.gray300}
+                    onChangeText={(c) => setEmailCode(c.replace(/[^0-9]/g, ''))}
+                    style={[styles.desktopInput, { textAlign: 'center', letterSpacing: 8, fontSize: 24, paddingVertical: 16 }]}
+                    keyboardType="number-pad" maxLength={6}
+                  />
+                </View>
+              ) : (
+                <TextInput
+                  value={emailCode} placeholder="------" placeholderTextColor="#94A3B8"
+                  onChangeText={(c) => setEmailCode(c.replace(/[^0-9]/g, ''))}
+                  style={[styles.mobileInput, { textAlign: 'center', letterSpacing: 8, fontSize: 24 }]}
+                  keyboardType="number-pad" maxLength={6}
+                />
+              )}
+            </>
+          )}
+
           <TouchableOpacity style={isDesktopWeb ? styles.desktopPrimaryButton : styles.mobilePrimaryButton} onPress={onVerifyOtpPress} disabled={loading}>
             {loading ? <ActivityIndicator color={isDesktopWeb ? Neutrals.white : "#0F172A"} /> : <Text style={isDesktopWeb ? styles.desktopPrimaryButtonText : styles.mobilePrimaryButtonText}>Verify & Create Account</Text>}
           </TouchableOpacity>
           
           <TouchableOpacity style={{ marginTop: 20, alignItems: 'center' }} onPress={() => setPendingVerification(false)}>
-            <Text style={styles.linkText}>Change Phone Number</Text>
+            <Text style={styles.linkText}>Change Details</Text>
           </TouchableOpacity>
         </View>
       )}

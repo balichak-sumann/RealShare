@@ -87,7 +87,7 @@ export async function POST(req: Request) {
         full_address: body.full_address || null,
         avatar_url: decodedToken.picture || null,
         role: requestedRole,
-        is_approved: requestedRole === 'admin',
+        is_approved: requestedRole === 'admin' || requestedRole === 'buyer',
         referred_by_code: referredByCode || null,
         expo_push_token: expoPushToken || null,
         ...builderFields,

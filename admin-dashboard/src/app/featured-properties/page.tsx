@@ -704,7 +704,7 @@ export default function FeaturedPropertiesPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(4, 1fr)",
+          gridTemplateColumns: "repeat(3, 1fr)",
           gap: "18px",
           marginBottom: "24px",
         }}
@@ -718,13 +718,13 @@ export default function FeaturedPropertiesPage() {
           }}
         >
           <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontWeight: 600, textTransform: "uppercase" }}>
-            Total Share Pool
+            Total Properties
           </div>
           <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "var(--text-primary)" }}>
-            {totalFractionsPool} Fractions
+            {properties.length}
           </div>
           <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: 4 }}>
-            Across {properties.length} Properties
+            Across all categories
           </div>
         </div>
 
@@ -737,13 +737,13 @@ export default function FeaturedPropertiesPage() {
           }}
         >
           <div style={{ fontSize: "0.75rem", color: "#16A34A", fontWeight: 600, textTransform: "uppercase" }}>
-            Sold Fractions
+            Live Properties
           </div>
           <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "#16A34A" }}>
-            {totalSoldFractions} Fractions
+            {activeListingsCount}
           </div>
           <div style={{ fontSize: "0.75rem", color: "#16A34A", marginTop: 4 }}>
-            {totalFractionsPool > 0 ? ((totalSoldFractions / totalFractionsPool) * 100).toFixed(1) : "0.0"}% Fractional Capital Raised
+            Currently active & available
           </div>
         </div>
 
@@ -755,33 +755,14 @@ export default function FeaturedPropertiesPage() {
             padding: "18px",
           }}
         >
-          <div style={{ fontSize: "0.75rem", color: "#2563EB", fontWeight: 600, textTransform: "uppercase" }}>
-            Available Fractions
+          <div style={{ fontSize: "0.75rem", color: "#EF4444", fontWeight: 600, textTransform: "uppercase" }}>
+            Sold Out Properties
           </div>
-          <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "#2563EB" }}>
-            {totalAvailableFractions} Fractions
+          <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "#EF4444" }}>
+            {soldOutCount}
           </div>
-          <div style={{ fontSize: "0.75rem", color: "#2563EB", marginTop: 4 }}>
-            Open for Buyer Bookings
-          </div>
-        </div>
-
-        <div
-          style={{
-            background: "var(--bg-secondary)",
-            border: "1px solid var(--border-color)",
-            borderRadius: "12px",
-            padding: "18px",
-          }}
-        >
-          <div style={{ fontSize: "0.75rem", color: "#D97706", fontWeight: 600, textTransform: "uppercase" }}>
-            Builder Postings Queue
-          </div>
-          <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "#D97706" }}>
-            {pendingSubmissionsCount} Pending
-          </div>
-          <div style={{ fontSize: "0.75rem", color: "#D97706", marginTop: 4 }}>
-            Awaiting Admin Review & Approval
+          <div style={{ fontSize: "0.75rem", color: "#EF4444", marginTop: 4 }}>
+            Fully funded / sold out
           </div>
         </div>
       </div>

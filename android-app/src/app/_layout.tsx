@@ -36,8 +36,10 @@ async function registerForPushNotificationsAsync() {
       }
       if (finalStatus !== 'granted') return undefined;
       try {
+        const vapidKey = process.env.EXPO_PUBLIC_FIREBASE_VAPID_KEY || undefined;
         token = (await Notifications.getExpoPushTokenAsync({
           projectId: 'a786e55d-d4ef-40bd-8d1c-844f5dff4a81',
+          ...(Platform.OS === 'web' && vapidKey ? { vapidKey } : {}),
         })).data;
       } catch (e) {
         console.log('Push token error (non-fatal):', e);

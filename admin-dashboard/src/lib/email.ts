@@ -79,3 +79,38 @@ export async function sendServiceInquiryEmail(details: ServiceInquiryDetails) {
     // We don't throw here so it doesn't crash the API route
   }
 }
+
+export async function sendOtpEmail(email: string, otp: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    if (!process.env.SMTP_EMAIL || !process.env.SMTP_PASSWORD) {
+      console.warn('SMTP credentials not found. Email not sent.');
+      return { success: false, error: 'Email service not configured' };
+    }
+
+    const mailOptions = {
+      from: `"Realshare" <${process.env.SMTP_EMAIL}>`,
+      to: email,
+      subject: `${otp} is your Realshare Verification Code`,
+      html: `
+        <div style="font-family: 'Inter', Helvetica, sans-serif; max-width: 600px; margin: 0 auto; background-color: #f9f9f9; padding: 20px; border-radius: 8px;">
+          <div style="text-align: center; margin-bottom: 20px;">
+            <h1 style="color: #cda858; margin: 0; font-size: 24px;">Realshare</h1>
+          </div>
+          <div style="background-color: #ffffff; padding: 24px; border-radius: 8px; border-top: 4px solid #cda858; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+            <p style="color: #666; font-size: 16px;">Your verification code is:</p>
+            <h1 style="font-size: 36px; letter-spacing: 4px; color: #1a1a1a; margin: 16px 0;">${otp}</h1>
+            <p style="color: #666; font-size: 14px;">This code is valid for 5 minutes.</p>
+            <p style="color: #999; font-size: 12px; margin-top: 24px;">Please do not share this code with anyone.</p>
+          </div>
+        </div>
+      `,
+    };
+
+    const info = await transporter.sendMail(mailOptions);
+    console.log('[Email] OTP sent: %s', info.messageId);
+    return { success: true };
+  } catch (err: any) {
+    console.error('[Email] Failed to send OTP:', err?.message);
+    return { success: false, error: 'Failed to send email' };
+  }
+}

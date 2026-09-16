@@ -1,6 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { useResponsive } from '@/hooks/useResponsive';
 
@@ -59,6 +60,14 @@ export function WebFooter() {
             <TouchableOpacity onPress={() => router.push('/disclaimer' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Disclaimer</Text></TouchableOpacity>
           </View>
         </View>
+        <View style={{ flexDirection: 'row', gap: 16, marginTop: 8, marginBottom: 12 }}>
+          <TouchableOpacity onPress={() => Linking.openURL('https://www.facebook.com/RealshareProperties/')}><Ionicons name="logo-facebook" size={16} color={Neutrals.gray400} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://www.instagram.com/realshare_properties/')}><Ionicons name="logo-instagram" size={16} color={Neutrals.gray400} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://www.linkedin.com/in/realshare-properties-7a96a1344/')}><Ionicons name="logo-linkedin" size={16} color={Neutrals.gray400} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://x.com/Realshare_Prop')}><Ionicons name="logo-twitter" size={16} color={Neutrals.gray400} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://in.pinterest.com/Realshare_Properties')}><Ionicons name="logo-pinterest" size={16} color={Neutrals.gray400} /></TouchableOpacity>
+          <TouchableOpacity onPress={() => Linking.openURL('https://www.youtube.com/@RealshareProperties')}><Ionicons name="logo-youtube" size={16} color={Neutrals.gray400} /></TouchableOpacity>
+        </View>
         <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>{"Realshare Properties Pvt. Ltd.\nNizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212\n+91 95 8172 8172"}</Text>
         <Text style={{ color: Neutrals.gray600, fontSize: 8, marginTop: 6 }}>© {new Date().getFullYear()} Realshare. All rights reserved.</Text>
       </View>
@@ -77,6 +86,14 @@ export function WebFooter() {
             <Text style={styles.brandBlurb}>
               A new age Intelligent platform bringing Homes that Inspire Life. Earn rental income with commercial and Holiday properties. Invest in premium Realestate with fractional ownership and exit with ease.
             </Text>
+            <View style={{ flexDirection: 'row', gap: 16, marginTop: 24 }}>
+              <TouchableOpacity onPress={() => Linking.openURL('https://www.facebook.com/RealshareProperties/')}><Ionicons name="logo-facebook" size={20} color={Neutrals.gray400} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => Linking.openURL('https://www.instagram.com/realshare_properties/')}><Ionicons name="logo-instagram" size={20} color={Neutrals.gray400} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => Linking.openURL('https://www.linkedin.com/in/realshare-properties-7a96a1344/')}><Ionicons name="logo-linkedin" size={20} color={Neutrals.gray400} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => Linking.openURL('https://x.com/Realshare_Prop')}><Ionicons name="logo-twitter" size={20} color={Neutrals.gray400} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => Linking.openURL('https://in.pinterest.com/Realshare_Properties')}><Ionicons name="logo-pinterest" size={20} color={Neutrals.gray400} /></TouchableOpacity>
+              <TouchableOpacity onPress={() => Linking.openURL('https://www.youtube.com/@RealshareProperties')}><Ionicons name="logo-youtube" size={20} color={Neutrals.gray400} /></TouchableOpacity>
+            </View>
           </View>
 
           <View style={styles.col}>

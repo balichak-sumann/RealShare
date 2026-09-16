@@ -61,9 +61,13 @@ export default function AboutScreen() {
         <View style={[styles.section, styles.founderSection, isDesktop && styles.sectionDesktop]}>
           <Text style={styles.sectionTitle}>Founder & Promoter</Text>
           <View style={[styles.founderCard, isDesktop && styles.founderCardDesktop]}>
+            <Image 
+              source={require('../../assets/images/founder.png')} 
+              style={[styles.founderImage, isDesktop && styles.founderImageDesktop]} 
+            />
             <View style={styles.founderInfo}>
               <Text style={styles.founderName}>Raj Kumar Chinthireddy</Text>
-              <Text style={styles.founderRole}>Chairman & MD, Realshare</Text>
+              <Text style={styles.founderRole}>Founder, Realshare</Text>
               <Text style={styles.bodyText}>
                 Raj Kumar, a seasoned leader and serial entrepreneur, began his career 20
                 years ago with a startup distributing computers and providing networking
@@ -136,7 +140,9 @@ const styles = StyleSheet.create({
     borderColor: Neutrals.border,
     ...Shadows.soft,
   },
-  founderCardDesktop: { flexDirection: 'row', gap: 24 },
+  founderCardDesktop: { flexDirection: 'row', gap: 32, alignItems: 'center' },
+  founderImage: { width: 120, height: 120, borderRadius: 60, marginBottom: 24, alignSelf: 'center' },
+  founderImageDesktop: { width: 160, height: 160, borderRadius: 80, marginBottom: 0, alignSelf: 'flex-start' },
   founderInfo: { flex: 1 },
   founderName: { ...Typography.headlineMedium, color: Neutrals.obsidian },
   founderRole: { ...Typography.labelLarge, color: GoldSystem.darkGold, marginBottom: 12 },

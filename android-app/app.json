@@ -10,7 +10,10 @@
     "ios": {
       "bundleIdentifier": "com.realshare.app",
       "icon": "./assets/images/realshare-logo.png",
-      "googleServicesFile": "./GoogleService-Info.plist"
+      "googleServicesFile": "./GoogleService-Info.plist",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.realshare.app",

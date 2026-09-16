@@ -1,15 +1,6 @@
 import { NextResponse } from 'next/server';
 import { auth } from '@/lib/firebase-admin';
-import { createUserWithEmailAndPassword } from 'firebase/auth';
 
-/**
- * Import the OTP store from the send route.
- * Since Next.js API routes run in the same process, we share the store
- * via a module-level import pattern. However, Next.js isolates route
- * modules, so we use a global variable approach instead.
- */
-
-// Access the same global OTP store
 interface OtpEntry {
   otp: string;
   expiresAt: number;
@@ -18,8 +9,6 @@ interface OtpEntry {
   firstSentAt: number;
 }
 
-// We need a shared store between send and verify routes.
-// Use globalThis to share across Next.js route module boundaries.
 declare global {
   var __otpStore: Map<string, OtpEntry> | undefined;
 }
@@ -34,12 +23,12 @@ function getOtpStore(): Map<string, OtpEntry> {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const phone = body?.phone?.replace(/\D/g, '').slice(-10);
+    const identifier = body?.identifier?.toLowerCase().trim() || body?.phone?.replace(/\D/g, '').slice(-10);
     const otp = body?.otp;
 
-    if (!phone || phone.length !== 10) {
+    if (!identifier) {
       return NextResponse.json(
-        { success: false, error: 'Invalid phone number.' },
+        { success: false, error: 'Identifier (email or phone) is required.' },
         { status: 400 }
       );
     }
@@ -52,27 +41,27 @@ export async function POST(request: Request) {
     }
 
     const otpStore = getOtpStore();
-    const entry = otpStore.get(phone);
+    const entry = otpStore.get(identifier);
 
     if (!entry) {
       return NextResponse.json(
-        { success: false, error: 'No OTP was sent to this number. Please request a new OTP.' },
+        { success: false, error: 'No OTP was sent to this address/number.' },
         { status: 400 }
       );
     }
 
     // Check expiry
     if (Date.now() > entry.expiresAt) {
-      otpStore.delete(phone);
+      otpStore.delete(identifier);
       return NextResponse.json(
         { success: false, error: 'OTP has expired. Please request a new one.' },
         { status: 400 }
       );
     }
 
-    // Check max wrong attempts (3)
+    // Check max wrong attempts
     if (entry.attempts >= 3) {
-      otpStore.delete(phone);
+      otpStore.delete(identifier);
       return NextResponse.json(
         { success: false, error: 'Too many incorrect attempts. Please request a new OTP.' },
         { status: 400 }
@@ -89,41 +78,36 @@ export async function POST(request: Request) {
       );
     }
 
-    // OTP is correct — clean up
-    otpStore.delete(phone);
+    // OTP is correct
+    otpStore.delete(identifier);
 
-    // Create a Firebase custom token for this phone user.
-    // We use the same UID pattern as the existing phone auth flow
-    // (phone_XXXXXXXXXX) to maintain consistency.
-    const uid = `phone_${phone}`;
-
+    // Sign in logic - Find Firebase user by email or phone
+    const isEmail = identifier.includes('@');
+    
     try {
-      // Ensure the Firebase user exists. If not, create it.
-      try {
-        await auth.getUser(uid);
-      } catch (getUserErr: any) {
-        if (getUserErr?.code === 'auth/user-not-found') {
-          // Create a new Firebase user for this phone number
-          await auth.createUser({
-            uid,
-            email: `${phone}@realshare.test`,
-            emailVerified: true, // Phone-verified users skip email verification
-            displayName: phone,
-          });
-        } else {
-          throw getUserErr;
-        }
+      let userRecord;
+      if (isEmail) {
+        userRecord = await auth.getUserByEmail(identifier);
+      } else {
+        // Firebase phone numbers are stored with +91
+        userRecord = await auth.getUserByPhoneNumber(`+91${identifier}`);
       }
 
-      // Generate a custom token the frontend can use with signInWithCustomToken()
-      const customToken = await auth.createCustomToken(uid);
+      // Generate a custom token
+      const customToken = await auth.createCustomToken(userRecord.uid);
 
       return NextResponse.json({
         success: true,
         firebaseToken: customToken,
       });
     } catch (firebaseErr: any) {
-      console.error('[OTP] Firebase token creation failed:', firebaseErr?.message);
+      console.error('[OTP Verify] Firebase lookup failed:', firebaseErr?.message);
+      if (firebaseErr?.code === 'auth/user-not-found') {
+         return NextResponse.json(
+           { success: false, error: 'Account not found. Please sign up first.' },
+           { status: 404 }
+         );
+      }
       return NextResponse.json(
         { success: false, error: 'Authentication failed. Please try again.' },
         { status: 500 }

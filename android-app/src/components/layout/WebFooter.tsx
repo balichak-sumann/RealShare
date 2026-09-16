@@ -1,9 +1,82 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Linking } from 'react-native';
+import React, { useEffect, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Linking, Animated } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
 import { useResponsive } from '@/hooks/useResponsive';
+
+// ---- Placeholder URLs — swap these once published ----
+const PLAY_STORE_URL = 'https://play.google.com/store/apps/details?id=com.realshare.app';
+const APP_STORE_URL  = 'https://apps.apple.com/app/realshare/id0000000000'; // update id later
+
+/** Compact store badge with brand colors and hover scale (web). */
+function StoreBadge({ icon, label, url, size = 'normal' }: { icon: 'logo-google-playstore' | 'logo-apple'; label: string; url: string; size?: 'small' | 'normal' }) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const isSmall = size === 'small';
+  const isPlayStore = icon === 'logo-google-playstore';
+
+  const onHoverIn = () => {
+    Animated.spring(scaleAnim, { toValue: 1.08, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
+  };
+  const onHoverOut = () => {
+    Animated.spring(scaleAnim, { toValue: 1, useNativeDriver: true, speed: 20, bounciness: 12 }).start();
+  };
+
+  return (
+    <TouchableOpacity
+      activeOpacity={0.8}
+      onPress={() => Linking.openURL(url)}
+      {...(Platform.OS === 'web' ? { onMouseEnter: onHoverIn, onMouseLeave: onHoverOut } as any : {})}
+    >
+      <Animated.View
+        style={[
+          storeBadgeStyles.pill,
+          isSmall && storeBadgeStyles.pillSmall,
+          { transform: [{ scale: scaleAnim }] },
+        ]}
+      >
+        {isPlayStore ? (
+          <Image 
+            source={{ uri: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg' }} 
+            style={{ width: isSmall ? 14 : 16, height: isSmall ? 14 : 16 }} 
+            resizeMode="contain" 
+          />
+        ) : (
+          <Ionicons name={icon} size={isSmall ? 14 : 16} color="#FFFFFF" />
+        )}
+        <Text style={[storeBadgeStyles.text, isSmall && storeBadgeStyles.textSmall, { color: '#FFFFFF' }]}>{label}</Text>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+const storeBadgeStyles = StyleSheet.create({
+  pill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
+    borderRadius: Radius.full,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+    backgroundColor: 'rgba(255,255,255,0.04)',
+  },
+  pillSmall: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    gap: 5,
+  },
+  text: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: Neutrals.gray300,
+    letterSpacing: 0.2,
+  },
+  textSmall: {
+    fontSize: 9,
+  },
+});
 
 /**
  * Web-only informational footer (About, How It Works, Contact, Partner
@@ -60,7 +133,7 @@ export function WebFooter() {
             <TouchableOpacity onPress={() => router.push('/disclaimer' as any)}><Text style={{ color: Neutrals.gray400, fontSize: 10 }}>Disclaimer</Text></TouchableOpacity>
           </View>
         </View>
-        <View style={{ flexDirection: 'row', gap: 16, marginTop: 8, marginBottom: 12 }}>
+        <View style={{ flexDirection: 'row', gap: 16, marginTop: 8, marginBottom: 8 }}>
           <TouchableOpacity onPress={() => Linking.openURL('https://www.facebook.com/RealshareProperties/')}><Ionicons name="logo-facebook" size={16} color={Neutrals.gray400} /></TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://www.instagram.com/realshare_properties/')}><Ionicons name="logo-instagram" size={16} color={Neutrals.gray400} /></TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://www.linkedin.com/in/realshare-properties-7a96a1344/')}><Ionicons name="logo-linkedin" size={16} color={Neutrals.gray400} /></TouchableOpacity>
@@ -68,6 +141,12 @@ export function WebFooter() {
           <TouchableOpacity onPress={() => Linking.openURL('https://in.pinterest.com/Realshare_Properties')}><Ionicons name="logo-pinterest" size={16} color={Neutrals.gray400} /></TouchableOpacity>
           <TouchableOpacity onPress={() => Linking.openURL('https://www.youtube.com/@RealshareProperties')}><Ionicons name="logo-youtube" size={16} color={Neutrals.gray400} /></TouchableOpacity>
         </View>
+        {Platform.OS === 'web' && (
+          <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
+            <StoreBadge icon="logo-google-playstore" label="Play Store" url={PLAY_STORE_URL} size="small" />
+            <StoreBadge icon="logo-apple" label="App Store" url={APP_STORE_URL} size="small" />
+          </View>
+        )}
         <Text style={{ color: Neutrals.gray500, fontSize: 9, lineHeight: 13 }}>{"Realshare Properties Pvt. Ltd.\nNizampet, Hyderabad – 500090, TS  ·  +91 40 4010 1212\n+91 95 8172 8172"}</Text>
         <Text style={{ color: Neutrals.gray600, fontSize: 8, marginTop: 6 }}>© {new Date().getFullYear()} Realshare. All rights reserved.</Text>
       </View>
@@ -93,6 +172,10 @@ export function WebFooter() {
               <TouchableOpacity onPress={() => Linking.openURL('https://x.com/Realshare_Prop')}><Ionicons name="logo-twitter" size={20} color={Neutrals.gray400} /></TouchableOpacity>
               <TouchableOpacity onPress={() => Linking.openURL('https://in.pinterest.com/Realshare_Properties')}><Ionicons name="logo-pinterest" size={20} color={Neutrals.gray400} /></TouchableOpacity>
               <TouchableOpacity onPress={() => Linking.openURL('https://www.youtube.com/@RealshareProperties')}><Ionicons name="logo-youtube" size={20} color={Neutrals.gray400} /></TouchableOpacity>
+            </View>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
+              <StoreBadge icon="logo-google-playstore" label="Play Store" url={PLAY_STORE_URL} />
+              <StoreBadge icon="logo-apple" label="App Store" url={APP_STORE_URL} />
             </View>
           </View>
 

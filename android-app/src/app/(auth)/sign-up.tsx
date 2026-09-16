@@ -350,9 +350,13 @@ export default function SignUpScreen() {
           }
         }
 
-        await signOut(auth).catch(() => {});
-        setProfile(null);
-        setShowSuccessModal(true);
+        if (role === 'buyer') {
+          router.replace('/');
+        } else {
+          await signOut(auth).catch(() => {});
+          setProfile(null);
+          setShowSuccessModal(true);
+        }
       } else {
         setError(data.error || 'Failed to verify OTPs.');
       }

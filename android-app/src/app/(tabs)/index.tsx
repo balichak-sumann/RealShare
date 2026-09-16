@@ -193,9 +193,6 @@ export default function HomeScreen() {
   if (profile?.role === 'employee' || profile?.role === 'admin') {
     return <EmployeePortalScreen isEmbedded={true} />;
   }
-  if (profile?.role === 'buyer') {
-    return <InvestorDashboard />;
-  }
 
   return (
     <TabAnimationWrapper>

@@ -8,15 +8,7 @@ import * as Device from 'expo-device';
 
 import { getApiUrl, resilientFetch } from '@/lib/api';
 
-if (Platform.OS === 'web' && typeof document !== 'undefined') {
-  const style = document.createElement('style');
-  style.textContent = `
-    [role="button"], a, [role="link"], [role="menuitem"], [tabindex="0"] {
-      cursor: pointer !important;
-    }
-  `;
-  document.head.appendChild(style);
-}
+// Cursor pointer style injection moved into TabLayout useEffect to avoid hydration mismatch
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -194,6 +186,23 @@ import { WebShell } from '@/components/layout/WebShell';
 
 export default function TabLayout() {
   const colorScheme = useColorScheme();
+
+  // Inject cursor:pointer styles after hydration (client-side only) to avoid #418
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const id = '__realshare_cursor_style';
+      if (!document.getElementById(id)) {
+        const style = document.createElement('style');
+        style.id = id;
+        style.textContent = `
+          [role="button"], a, [role="link"], [role="menuitem"], [tabindex="0"] {
+            cursor: pointer !important;
+          }
+        `;
+        document.head.appendChild(style);
+      }
+    }
+  }, []);
 
   return (
     <SafeAreaProvider>

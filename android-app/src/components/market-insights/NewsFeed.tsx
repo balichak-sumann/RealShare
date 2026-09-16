@@ -15,6 +15,8 @@ type Article = {
   };
 };
 
+import { getApiUrl, resilientFetch } from '@/lib/api';
+
 export default function NewsFeed() {
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,18 +25,11 @@ export default function NewsFeed() {
   useEffect(() => {
     const fetchNews = async () => {
       try {
-        const apiKey = process.env.EXPO_PUBLIC_GNEWS_API_KEY;
-        if (!apiKey) {
-          setError('API Key is missing. Please add EXPO_PUBLIC_GNEWS_API_KEY to your .env file.');
-          setLoading(false);
-          return;
-        }
+        // Use the backend proxy to avoid CORS issues on web
+        const query = 'India real estate OR property market OR housing';
+        const url = `${getApiUrl()}/api/news?q=${encodeURIComponent(query)}&max=10`;
 
-        // Search for India real estate, property, housing
-        const query = encodeURIComponent('India real estate OR property market OR housing');
-        const url = `https://gnews.io/api/v4/search?q=${query}&lang=en&country=in&max=10&apikey=${apiKey}`;
-
-        const response = await fetch(url);
+        const response = await resilientFetch(url);
         if (!response.ok) {
           throw new Error('Failed to fetch news data');
         }

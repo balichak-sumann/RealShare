@@ -188,7 +188,7 @@ export function HeroCarousel() {
   );
 }
 
-const HERO_H = 350;
+const HERO_H = 260;
 const HERO_H_DESKTOP = 480;
 
 const styles = StyleSheet.create({
@@ -220,7 +220,7 @@ const styles = StyleSheet.create({
     bottom: 0,
     left: 0,
     right: 0,
-    height: 350,
+    height: '100%',
   },
   content: {
     position: 'absolute',

@@ -20,7 +20,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     { name: "Properties & Shares", path: "/properties", icon: "🏢" },
     { name: "Featured Properties", path: "/featured-properties", icon: "⭐" },
     { name: "Developers", path: "/developers", icon: "🏗️" },
-    { name: "Buyers & KYC", path: "/buyers", icon: "👥" },
+    { name: "Users & KYC", path: "/buyers", icon: "👥" },
     { name: "Account Approvals", path: "/approvals", icon: "✅" },
     { name: "Employees (RBAC)", path: "/employees", icon: "👔" },
     { name: "Agents & Commissions", path: "/agents", icon: "🤝" },

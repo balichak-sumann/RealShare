@@ -911,7 +911,7 @@ export default function PropertiesPage() {
 
         <div className={styles.headerRight}>
           <div className={styles.filterGroup}>
-            {["All", "Commercial", "Fractional", "Residential", "Holiday", "Buyer"].map((t) => (
+            {["All", "Residential", "Commercial", "Fractional", "Investor", "Plots & Farms", "Holiday Homes"].map((t) => (
               <button
                 key={t}
                 className={`${styles.filterPill} ${typeFilter === t ? styles.filterActive : ""}`}
@@ -964,13 +964,22 @@ export default function PropertiesPage() {
               if (statusTab === "Sold Out" && !isSoldOut(p)) return false;
 
               if (typeFilter !== "All") {
-                const filterLower = typeFilter.toLowerCase();
+                const filterMap: Record<string, string[]> = {
+                  "Residential": ["residential"],
+                  "Commercial": ["commercial"],
+                  "Fractional": ["fractional"],
+                  "Investor": ["buyer", "investor"],
+                  "Plots & Farms": ["buyer", "plot", "plots & farms"],
+                  "Holiday Homes": ["holiday", "holiday homes"],
+                };
+                const allowedTypes = filterMap[typeFilter] || [];
                 const propTypeLower = (p.property_type || "").toLowerCase();
                 const listingTypeLower = (p.listing_type || "").toLowerCase();
-                if (filterLower === "fractional") {
+
+                if (typeFilter === "Fractional") {
                   if (propTypeLower !== "fractional" && listingTypeLower !== "fractional") return false;
                 } else {
-                  if (propTypeLower !== filterLower) return false;
+                  if (!allowedTypes.includes(propTypeLower)) return false;
                 }
               }
 

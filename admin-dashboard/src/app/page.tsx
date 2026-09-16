@@ -187,7 +187,7 @@ export default function Home() {
             <span>🏢</span> Manage Properties
           </Link>
           <Link href="/buyers" className={styles.quickActionBtn}>
-            <span>👥</span> Buyers & KYC
+            <span>👥</span> Users & KYC
           </Link>
           <Link href="/ledger" className={styles.quickActionBtn}>
             <span>💰</span> Financial Ledger
@@ -239,10 +239,10 @@ export default function Home() {
             </div>
           </div>
 
-          {/* Card 3: Buyers (Buyers) */}
+          {/* Card 3: Investors */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <span className={styles.cardTitle}>Buyers (Buyers)</span>
+              <span className={styles.cardTitle}>Investors</span>
               <div className={styles.cardIcon} style={{ background: "rgba(124, 58, 237, 0.1)", color: "#7C3AED" }}>
                 👥
               </div>
@@ -276,7 +276,7 @@ export default function Home() {
           {/* Card 5: Agents */}
           <div className={styles.card}>
             <div className={styles.cardHeader}>
-              <span className={styles.cardTitle}>Sales Agents</span>
+              <span className={styles.cardTitle}>Agents</span>
               <div className={styles.cardIcon} style={{ background: "rgba(236, 72, 153, 0.1)", color: "#EC4899" }}>
                 🤝
               </div>
@@ -292,14 +292,6 @@ export default function Home() {
 
         {/* Secondary Operational Stats Bar */}
         <div className={styles.secondaryStats}>
-          <Link href="/agents" className={styles.statChip}>
-            <div className={styles.statChipLeft}>
-              <span className={styles.statChipIcon}>🤝</span>
-              <span className={styles.statChipLabel}>Active Sales Agents</span>
-            </div>
-            <span className={styles.statChipValue}>{loading ? "…" : kpis?.activeAgents ?? 0}</span>
-          </Link>
-
           <Link href="/tickets" className={styles.statChip}>
             <div className={styles.statChipLeft}>
               <span className={styles.statChipIcon}>🎫</span>

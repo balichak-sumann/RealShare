@@ -28,18 +28,34 @@ const emptyEditForm = {
   rera_registered: true,
 };
 
+const emptyNewDevForm = {
+  name: "", // Usually the developer/firm name
+  bio: "",
+  rating: 4.5,
+  established_year: new Date().getFullYear(),
+  rera_registered: true,
+  // New fields for Firebase real-time creation
+  full_name: "",
+  phone_number: "",
+  email: "",
+  company_name: "",
+  office_address: "",
+  website: "",
+  rera_number: "",
+  credai_member: false,
+  company_pan: "",
+  company_gst: "",
+  aadhaar_number: "",
+  pan_number: "",
+  passport_number: "",
+};
+
 export default function DevelopersPage() {
   const [developers, setDevelopers] = useState<Developer[]>([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [newDev, setNewDev] = useState({
-    name: "",
-    bio: "",
-    rating: 4.5,
-    established_year: new Date().getFullYear(),
-    rera_registered: true,
-  });
+  const [newDev, setNewDev] = useState({ ...emptyNewDevForm });
 
   const [editingDev, setEditingDev] = useState<Developer | null>(null);
   const [editForm, setEditForm] = useState(emptyEditForm);
@@ -91,7 +107,7 @@ export default function DevelopersPage() {
       const created = await res.json();
       setDevelopers([{ ...created, _count: { properties: 0 } }, ...developers]);
       setShowAddModal(false);
-      setNewDev({ name: "", bio: "", rating: 4.5, established_year: new Date().getFullYear(), rera_registered: true });
+      setNewDev({ ...emptyNewDevForm });
       showToast(`Developer "${created.name}" added.`);
     } catch (err) {
       console.error(err);
@@ -388,14 +404,129 @@ export default function DevelopersPage() {
                 </div>
               </div>
 
-              <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem", color: "#475569" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Mobile Number</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="+91..."
+                    value={newDev.phone_number}
+                    onChange={(e) => setNewDev({ ...newDev, phone_number: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Email Address</label>
+                  <input
+                    type="email"
+                    value={newDev.email}
+                    onChange={(e) => setNewDev({ ...newDev, email: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Office Address</label>
                 <input
-                  type="checkbox"
-                  checked={newDev.rera_registered}
-                  onChange={(e) => setNewDev({ ...newDev, rera_registered: e.target.checked })}
+                  type="text"
+                  value={newDev.office_address}
+                  onChange={(e) => setNewDev({ ...newDev, office_address: e.target.value })}
+                  style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
                 />
-                RERA Registered
-              </label>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Website</label>
+                  <input
+                    type="text"
+                    value={newDev.website}
+                    onChange={(e) => setNewDev({ ...newDev, website: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>RERA Number</label>
+                  <input
+                    type="text"
+                    value={newDev.rera_number}
+                    onChange={(e) => setNewDev({ ...newDev, rera_number: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Company PAN</label>
+                  <input
+                    type="text"
+                    value={newDev.company_pan}
+                    onChange={(e) => setNewDev({ ...newDev, company_pan: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Company GST</label>
+                  <input
+                    type="text"
+                    value={newDev.company_gst}
+                    onChange={(e) => setNewDev({ ...newDev, company_gst: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Director Aadhaar</label>
+                  <input
+                    type="text"
+                    value={newDev.aadhaar_number}
+                    onChange={(e) => setNewDev({ ...newDev, aadhaar_number: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Director PAN</label>
+                  <input
+                    type="text"
+                    value={newDev.pan_number}
+                    onChange={(e) => setNewDev({ ...newDev, pan_number: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Passport (Opt)</label>
+                  <input
+                    type="text"
+                    value={newDev.passport_number}
+                    onChange={(e) => setNewDev({ ...newDev, passport_number: e.target.value })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  />
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', gap: '16px', marginTop: '8px' }}>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem", color: "#475569" }}>
+                  <input
+                    type="checkbox"
+                    checked={newDev.rera_registered}
+                    onChange={(e) => setNewDev({ ...newDev, rera_registered: e.target.checked })}
+                  />
+                  RERA Registered
+                </label>
+                <label style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "0.85rem", color: "#475569" }}>
+                  <input
+                    type="checkbox"
+                    checked={newDev.credai_member}
+                    onChange={(e) => setNewDev({ ...newDev, credai_member: e.target.checked })}
+                  />
+                  CREDAI Member
+                </label>
+              </div>
 
               <button
                 type="submit"

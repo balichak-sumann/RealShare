@@ -79,32 +79,142 @@ export async function POST(request: Request) {
 
     let isAdmin = false;
     const decodedToken = await auth.verifyIdToken(token);
-    const profile = await prisma.profile.findUnique({ where: { id: decodedToken.uid } });
-    isAdmin = profile?.role === 'admin';
+    const adminProfile = await prisma.profile.findUnique({ where: { id: decodedToken.uid } });
+    isAdmin = adminProfile?.role === 'admin';
 
     if (!isAdmin) {
       return NextResponse.json({ error: 'Only admins can add developers' }, { status: 403 });
     }
 
     const data = await request.json();
-    if (!data.name) {
-      return NextResponse.json({ error: 'Developer name is required' }, { status: 400 });
+    if (!data.name || !data.phone_number) {
+      return NextResponse.json({ error: 'Developer name and mobile number are required' }, { status: 400 });
     }
 
-    const developer = await prisma.developer.create({
-      data: {
+    let formattedPhone = data.phone_number.trim();
+    if (!formattedPhone.startsWith('+')) {
+      formattedPhone = `+91${formattedPhone}`; // Default to India
+    }
+
+    let uid = "";
+    try {
+      // Check if user already exists
+      const userRecord = await auth.getUserByPhoneNumber(formattedPhone);
+      uid = userRecord.uid;
+    } catch (e: any) {
+      if (e.code === 'auth/user-not-found') {
+        // Create new user
+        const newUser = await auth.createUser({
+          phoneNumber: formattedPhone,
+          displayName: data.name,
+          email: data.email || undefined,
+        });
+        uid = newUser.uid;
+      } else {
+        throw e;
+      }
+    }
+
+    // Create or update Profile in Postgres
+    const profile = await prisma.profile.upsert({
+      where: { id: uid },
+      update: {
+        role: 'builder',
+        full_name: data.name,
+        email: data.email || null,
+        phone_number: formattedPhone,
+        company_name: data.company_name || data.name,
+        office_address: data.office_address || null,
+        website: data.website || null,
+        rera_number: data.rera_number || null,
+        credai_member: data.credai_member || false,
+        company_pan: data.company_pan || null,
+        company_gst: data.company_gst || null,
+        bio: data.bio || `Registered Builder Account • ${formattedPhone}`,
+        is_approved: true,
+      },
+      create: {
+        id: uid,
+        role: 'builder',
+        full_name: data.name,
+        email: data.email || null,
+        phone_number: formattedPhone,
+        company_name: data.company_name || data.name,
+        office_address: data.office_address || null,
+        website: data.website || null,
+        rera_number: data.rera_number || null,
+        credai_member: data.credai_member || false,
+        company_pan: data.company_pan || null,
+        company_gst: data.company_gst || null,
+        bio: data.bio || `Registered Builder Account • ${formattedPhone}`,
+        is_approved: true,
+      }
+    });
+
+    // Store KYC documents if provided
+    const kycDocs = [];
+    if (data.aadhaar_number) {
+      kycDocs.push({ user_id: uid, document_type: 'aadhaar', document_number: data.aadhaar_number, document_front_url: 'PENDING_UPLOAD', verification_status: 'pending' });
+    }
+    if (data.pan_number) {
+      kycDocs.push({ user_id: uid, document_type: 'pan', document_number: data.pan_number, document_front_url: 'PENDING_UPLOAD', verification_status: 'pending' });
+    }
+    if (data.passport_number) {
+      kycDocs.push({ user_id: uid, document_type: 'passport', document_number: data.passport_number, document_front_url: 'PENDING_UPLOAD', verification_status: 'pending' });
+    }
+    
+    for (const doc of kycDocs) {
+      await prisma.kycDocument.upsert({
+        where: { user_id_document_type: { user_id: doc.user_id, document_type: doc.document_type } },
+        update: { document_number: doc.document_number },
+        create: doc,
+      });
+    }
+
+    // Also create the Developer record for backwards compatibility and properties count
+    const developer = await prisma.developer.upsert({
+      where: { name: data.name },
+      update: {
+        logo_url: data.logo_url || null,
+        bio: data.bio || null,
+        rating: data.rating ?? 4.5,
+        established_year: data.established_year ? Number(data.established_year) : null,
+        rera_registered: data.rera_registered ?? true,
+        company_pan: data.company_pan || null,
+        company_gst: data.company_gst || null,
+        website: data.website || null,
+        office_address: data.office_address || null,
+      },
+      create: {
         name: data.name,
         logo_url: data.logo_url || null,
         bio: data.bio || null,
         rating: data.rating ?? 4.5,
         established_year: data.established_year ? Number(data.established_year) : null,
         rera_registered: data.rera_registered ?? true,
-      },
+        company_pan: data.company_pan || null,
+        company_gst: data.company_gst || null,
+        website: data.website || null,
+        office_address: data.office_address || null,
+      }
     });
 
-    return NextResponse.json(developer, { status: 201 });
-  } catch (error) {
+    // Return combined representation
+    const result = {
+      id: profile.id,
+      name: profile.full_name,
+      email: profile.email,
+      phone_number: profile.phone_number,
+      type: 'account',
+      is_approved: true,
+      _count: { properties: 0 },
+      properties: [],
+      created_at: profile.created_at,
+    };
+
+    return NextResponse.json(result, { status: 201 });
+  } catch (error: any) {
     console.error('Failed to create developer:', error);
-    return NextResponse.json({ error: 'Failed to create developer' }, { status: 500 });
+    return NextResponse.json({ error: error.message || 'Failed to create developer' }, { status: 500 });
   }
 }

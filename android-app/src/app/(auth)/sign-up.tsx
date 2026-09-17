@@ -64,6 +64,23 @@ export default function SignUpScreen() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [requireKycOnSignup, setRequireKycOnSignup] = useState(true);
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${getApiUrl()}/api/config`);
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.requireKycOnSignup === 'boolean') {
+            setRequireKycOnSignup(data.requireKycOnSignup);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load global config', e);
+      }
+    })();
+  }, []);
 
   const isEmail = identifier.includes('@');
 
@@ -144,7 +161,7 @@ export default function SignUpScreen() {
         }
       }
 
-      if (role === 'agent') {
+      if (role === 'agent' && requireKycOnSignup) {
         if (!aadhaarNumber.trim() || !panNumber.trim() || !aadhaarDoc || !panDoc) {
           setError('Please provide all mandatory KYC documents and numbers (Aadhaar, PAN).');
           setLoading(false); return;
@@ -172,17 +189,20 @@ export default function SignUpScreen() {
           setError('Please enter a valid 15-character Company GST Number.');
           setLoading(false); return;
         }
-        if (!builderAadhaarNumber.trim() || !builderPanNumber.trim() || !builderAadhaarDoc || !builderPanDoc) {
-          setError('Please provide all mandatory Owner/Director KYC documents and numbers (Aadhaar, PAN).');
-          setLoading(false); return;
-        }
-        if (!AADHAAR_REGEX.test(builderAadhaarNumber.trim())) {
-          setError('Please enter a valid 12-digit Owner/Director Aadhaar Number.');
-          setLoading(false); return;
-        }
-        if (!PAN_REGEX.test(builderPanNumber.trim().toUpperCase())) {
-          setError('Please enter a valid 10-character Owner/Director PAN Number (e.g. ABCDE1234F).');
-          setLoading(false); return;
+        
+        if (requireKycOnSignup) {
+          if (!builderAadhaarNumber.trim() || !builderPanNumber.trim() || !builderAadhaarDoc || !builderPanDoc) {
+            setError('Please provide all mandatory Owner/Director KYC documents and numbers (Aadhaar, PAN).');
+            setLoading(false); return;
+          }
+          if (!AADHAAR_REGEX.test(builderAadhaarNumber.trim())) {
+            setError('Please enter a valid 12-digit Owner/Director Aadhaar Number.');
+            setLoading(false); return;
+          }
+          if (!PAN_REGEX.test(builderPanNumber.trim().toUpperCase())) {
+            setError('Please enter a valid 10-character Owner/Director PAN Number (e.g. ABCDE1234F).');
+            setLoading(false); return;
+          }
         }
       }
       if (role !== 'buyer' && !EMAIL_REGEX.test(email.trim())) {
@@ -375,7 +395,7 @@ export default function SignUpScreen() {
         )}
         <Text style={isDesktopWeb ? styles.desktopTitle : styles.mobileTitle}>Create Account</Text>
         <Text style={isDesktopWeb ? styles.desktopSubtitle : styles.mobileSubtitle}>
-          {isDesktopWeb ? "Join the premium fractional real estate network" : "Join the premium real estate network"}
+          {"Join the Premium Real Estate Platform"}
         </Text>
       </View>
 
@@ -465,7 +485,7 @@ export default function SignUpScreen() {
                 </>
               )}
               
-              {(role === 'agent' || role === 'investor') && (
+              {(role === 'agent' || role === 'investor') && requireKycOnSignup && (
                 <>
                   <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>KYC Documents & Verification</Text>
                   <View style={{ gap: 16, marginBottom: 24 }}>
@@ -618,7 +638,9 @@ export default function SignUpScreen() {
                   )}
 
                   {/* --- Owner / Director KYC Section --- */}
-                  <Text style={[isDesktopWeb ? styles.desktopLabel : styles.mobileLabel, { marginTop: 8, marginBottom: 12, fontSize: 15, color: isDesktopWeb ? GoldSystem.primaryGold : '#D4AF37' }]}>Owner / Director KYC</Text>
+                  {requireKycOnSignup && (
+                    <>
+                      <Text style={[isDesktopWeb ? styles.desktopLabel : styles.mobileLabel, { marginTop: 8, marginBottom: 12, fontSize: 15, color: isDesktopWeb ? GoldSystem.primaryGold : '#D4AF37' }]}>Owner / Director KYC</Text>
                   <View style={{ gap: 16, marginBottom: 24 }}>
                     {[
                       { label: 'Aadhaar', required: true, numberVal: builderAadhaarNumber, setNumberVal: setBuilderAadhaarNumber, placeholder: 'Enter 12-digit Aadhaar Number', docState: builderAadhaarDoc, docSetter: setBuilderAadhaarDoc },
@@ -680,6 +702,8 @@ export default function SignUpScreen() {
                       </View>
                     ))}
                   </View>
+                  </>
+                  )}
                 </>
               )}
             </>

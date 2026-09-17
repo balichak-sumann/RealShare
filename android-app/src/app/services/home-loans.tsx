@@ -1,4 +1,4 @@
-// Asset refresh trigger
+// Asset refresh trigger 2
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ImageBackground, TextInput, Alert, ActivityIndicator, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
@@ -38,7 +38,7 @@ export default function HomeLoansScreen() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch(`${getApiUrl()}/api/services`, {
+      const res = await fetch(`${getApiUrl()}/api/forms/services`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -51,13 +51,21 @@ export default function HomeLoansScreen() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        Alert.alert('Error', err.error || 'Failed to submit your request. Please try again.');
+        const errMsg = err.error || 'Failed to submit your request. Please try again.';
+        if (Platform.OS === 'web') window.alert('Error: ' + errMsg);
+        else Alert.alert('Error', errMsg);
         return;
       }
-      Alert.alert('Request Received 🎉', `Thank you! Our home loan specialists will reach out to you shortly.`);
+      const successTitle = 'Successfully submitted';
+      const successMsg = 'Your request has been successfully submitted and one of our team members will contact you.';
+      if (Platform.OS === 'web') window.alert(`${successTitle}\n\n${successMsg}`);
+      else Alert.alert(successTitle, successMsg);
       setLoanAmount('');
+      setName('');
+      setPhone('');
     } catch (e) {
-      Alert.alert('Error', 'Failed to submit your request. Please try again.');
+      if (Platform.OS === 'web') window.alert('Error: Failed to submit your request. Please try again.');
+      else Alert.alert('Error', 'Failed to submit your request. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -106,7 +114,7 @@ export default function HomeLoansScreen() {
               <View style={styles.featureIcon}><Text style={styles.iconText}>%</Text></View>
               <View style={styles.featureTextContainer}>
                 <Text style={styles.featureTitle}>Lowest rate</Text>
-                <Text style={styles.featureDesc}>We negotiate with top banks to get you exclusive interest rates starting at 8.35%* p.a.</Text>
+                <Text style={styles.featureDesc}>We negotiate with top banks to get you exclusive interest rates starting at 7.25%* p.a.</Text>
               </View>
             </View>
             
@@ -163,13 +171,22 @@ export default function HomeLoansScreen() {
               placeholderTextColor={Neutrals.gray400}
             />
             
-            <TouchableOpacity style={styles.submitBtn} onPress={submitInquiry} disabled={submitting}>
-              {submitting ? (
-                <ActivityIndicator color={Neutrals.obsidian} />
-              ) : (
-                <Text style={styles.submitText}>Get Free Consultation</Text>
-              )}
-            </TouchableOpacity>
+            {(() => {
+              const isFormValid = name.trim() !== '' && phone.trim() !== '' && loanAmount.trim() !== '';
+              return (
+                <TouchableOpacity 
+                  style={[styles.submitBtn, (!isFormValid || submitting) && { opacity: 0.5 }]} 
+                  onPress={submitInquiry} 
+                  disabled={!isFormValid || submitting}
+                >
+                  {submitting ? (
+                    <ActivityIndicator color={Neutrals.obsidian} />
+                  ) : (
+                    <Text style={styles.submitText}>Get Free Consultation</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })()}
           </View>
         </View>
       </ScrollView>

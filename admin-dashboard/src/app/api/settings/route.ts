@@ -16,6 +16,7 @@ const DEFAULT_SETTINGS = {
   emailAlertsForInvestments: true,
   smsAlertsForKyc: false,
   weeklySummaryReport: true,
+  requireKycOnSignup: true,
 };
 
 export async function GET(request: Request) {

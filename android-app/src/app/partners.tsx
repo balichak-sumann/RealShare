@@ -49,22 +49,33 @@ export default function PartnersScreen() {
       const notesParts = ['Partner program application'];
       if (company.trim()) notesParts.push(`Company: ${company.trim()}`);
 
-      const res = await fetch(`${getApiUrl()}/api/services`, {
+      const res = await fetch(`${getApiUrl()}/api/forms/partners`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_name: fullName.trim(),
-          email: email.trim() || undefined,
-          phone: phone.trim() || undefined,
-          service_type: 'Partner Application',
-          property_reference: primaryMarket.trim() || undefined,
-          notes: notesParts.join(' | '),
+          full_name: fullName.trim(),
+          email: email.trim(),
+          phone: phone.trim(),
+          primary_market: primaryMarket.trim(),
+          company: company.trim() || undefined,
         }),
       });
       if (!res.ok) throw new Error('Request failed');
+      
+      // Success Alert
+      const successTitle = 'Successfully submitted';
+      const successMsg = 'Your request has been successfully submitted and one of our team members will contact you.';
+      if (Platform.OS === 'web') {
+        window.alert(`${successTitle}\n\n${successMsg}`);
+      } else {
+        Alert.alert(successTitle, successMsg);
+      }
+
       setSubmitted(true);
     } catch (e) {
-      Alert.alert('Something went wrong', 'Please try again in a moment, or call us at +91 40 4010 1212 / +91 95 8172 8172.');
+      const msg = 'Please try again in a moment, or call us at +91 40 4010 1212 / +91 95 8172 8172.';
+      if (Platform.OS === 'web') window.alert('Something went wrong: ' + msg);
+      else Alert.alert('Something went wrong', msg);
     } finally {
       setSubmitting(false);
     }

@@ -27,7 +27,7 @@ export default function PropertyManagementScreen() {
     }
     setSubmitting(true);
     try {
-      const res = await fetch(`${getApiUrl()}/api/services`, {
+      const res = await fetch(`${getApiUrl()}/api/forms/services`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -40,13 +40,21 @@ export default function PropertyManagementScreen() {
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        Alert.alert('Error', err.error || 'Failed to submit your request. Please try again.');
+        const errMsg = err.error || 'Failed to submit your request. Please try again.';
+        if (Platform.OS === 'web') window.alert('Error: ' + errMsg);
+        else Alert.alert('Error', errMsg);
         return;
       }
-      Alert.alert('Request Received 🎉', `Thank you! Our property management team will reach out to you shortly.`);
+      const successTitle = 'Successfully submitted';
+      const successMsg = 'Your request has been successfully submitted and one of our team members will contact you.';
+      if (Platform.OS === 'web') window.alert(`${successTitle}\n\n${successMsg}`);
+      else Alert.alert(successTitle, successMsg);
+      setPhone('');
+      setName('');
       setPropertyLocation('');
     } catch (e) {
-      Alert.alert('Error', 'Failed to submit your request. Please try again.');
+      if (Platform.OS === 'web') window.alert('Error: Failed to submit your request. Please try again.');
+      else Alert.alert('Error', 'Failed to submit your request. Please try again.');
     } finally {
       setSubmitting(false);
     }
@@ -140,13 +148,22 @@ export default function PropertyManagementScreen() {
               placeholderTextColor={Neutrals.gray400}
             />
             
-            <TouchableOpacity style={styles.submitBtn} onPress={submitInquiry} disabled={submitting}>
-              {submitting ? (
-                <ActivityIndicator color={Neutrals.obsidian} />
-              ) : (
-                <Text style={styles.submitText}>Submit Inquiry</Text>
-              )}
-            </TouchableOpacity>
+            {(() => {
+              const isFormValid = name.trim() !== '' && phone.trim() !== '' && propertyLocation.trim() !== '';
+              return (
+                <TouchableOpacity 
+                  style={[styles.submitBtn, (!isFormValid || submitting) && { opacity: 0.5 }]} 
+                  onPress={submitInquiry} 
+                  disabled={!isFormValid || submitting}
+                >
+                  {submitting ? (
+                    <ActivityIndicator color={Neutrals.obsidian} />
+                  ) : (
+                    <Text style={styles.submitText}>Submit Inquiry</Text>
+                  )}
+                </TouchableOpacity>
+              );
+            })()}
           </View>
         </View>
       </ScrollView>

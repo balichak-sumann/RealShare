@@ -47,22 +47,34 @@ export default function ContactScreen() {
       if (pincode.trim()) notesParts.push(`Pincode: ${pincode.trim()}`);
       if (message.trim()) notesParts.push(`Message: ${message.trim()}`);
 
-      const res = await fetch(`${getApiUrl()}/api/services`, {
+      const res = await fetch(`${getApiUrl()}/api/forms/contact`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_name: fullName.trim(),
+          contact_type: intent,
+          full_name: fullName.trim(),
           email: email.trim() || undefined,
           phone: phone.trim() || undefined,
-          service_type: 'Website Contact',
-          property_reference: location.trim() || undefined,
-          notes: notesParts.join(' | '),
+          location: location.trim() || undefined,
+          message: notesParts.join(' | '),
         }),
       });
       if (!res.ok) throw new Error('Request failed');
+      
+      // Success Alert
+      const successTitle = 'Successfully submitted';
+      const successMsg = 'Your request has been successfully submitted and one of our team members will contact you.';
+      if (Platform.OS === 'web') {
+        window.alert(`${successTitle}\n\n${successMsg}`);
+      } else {
+        Alert.alert(successTitle, successMsg);
+      }
+
       setSubmitted(true);
     } catch (e) {
-      Alert.alert('Something went wrong', 'Please try again in a moment, or call us at +91 40 4010 1212 / +91 95 8172 8172.');
+      const msg = 'Please try again in a moment, or call us at +91 40 4010 1212 / +91 95 8172 8172.';
+      if (Platform.OS === 'web') window.alert('Something went wrong: ' + msg);
+      else Alert.alert('Something went wrong', msg);
     } finally {
       setSubmitting(false);
     }

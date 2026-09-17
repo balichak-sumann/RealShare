@@ -105,21 +105,6 @@ export function AuthSplitLayout({ children }: AuthSplitLayoutProps) {
                     <Text style={styles.quoteAuthor}>REALSHARE</Text>
                   </View>
                 </View>
-
-                <View style={styles.statsRow}>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>50K+</Text>
-                    <Text style={styles.statLabel}>Happy Users</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>1M+</Text>
-                    <Text style={styles.statLabel}>Properties Listed</Text>
-                  </View>
-                  <View style={styles.statItem}>
-                    <Text style={styles.statNumber}>4.8 ★</Text>
-                    <Text style={styles.statLabel}>User Rating</Text>
-                  </View>
-                </View>
                 </View>
               </View>
             </LinearGradient>

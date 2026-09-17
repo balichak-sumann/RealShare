@@ -17,6 +17,7 @@ interface Settings {
   emailAlertsForInvestments: boolean;
   smsAlertsForKyc: boolean;
   weeklySummaryReport: boolean;
+  requireKycOnSignup: boolean;
 }
 
 export default function SettingsPage() {
@@ -186,6 +187,13 @@ export default function SettingsPage() {
                 value={settings.adminSessionTimeoutMinutes}
                 onChange={(e) => set("adminSessionTimeoutMinutes", Number(e.target.value))}
               />
+            </div>
+            <div style={{ ...toggleRow, borderBottom: "none" }}>
+              <div>
+                <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Require KYC on Signup</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 2 }}>Require Agents & Builders to upload KYC docs to create an account</div>
+              </div>
+              <input type="checkbox" checked={settings.requireKycOnSignup} onChange={(e) => set("requireKycOnSignup", e.target.checked)} style={{ width: 20, height: 20, accentColor: "#2563EB" }} />
             </div>
           </div>
         </div>

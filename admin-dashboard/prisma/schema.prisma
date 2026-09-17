@@ -10,7 +10,7 @@ model Profile {
   id                   String        @id @db.VarChar(128)
   full_name            String        @db.VarChar(255)
   email                String?       @unique @db.VarChar(255)
-  phone_number         String?       @db.VarChar(20)
+  phone_number         String?       @unique @db.VarChar(20)
   full_address         String?       @db.Text
   role                 String        @default("buyer") @db.VarChar(50)
   employee_department  String?       @db.VarChar(50) // "sales", "support", or "accounts"
@@ -26,6 +26,7 @@ model Profile {
   is_approved          Boolean       @default(true)
   about_me             String?       @db.Text
   developer_id         String?       @db.VarChar(36)
+  bank_name            String?       @db.VarChar(255)
   bank_account_name    String?       @db.VarChar(255)
   bank_account_number  String?       @db.VarChar(50)
   bank_ifsc            String?       @db.VarChar(20)

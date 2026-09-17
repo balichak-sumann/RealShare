@@ -75,6 +75,7 @@ export async function PATCH(
       phone_number,
       full_address,
       referral_code,
+      bank_name,
       bank_account_name,
       bank_account_number,
       bank_ifsc,
@@ -167,7 +168,8 @@ export async function PATCH(
     if (phone_number !== undefined) updateData.phone_number = phone_number.trim() || null;
     if (full_address !== undefined) updateData.full_address = full_address.trim() || null;
     if (referral_code !== undefined) updateData.referral_code = referral_code.trim() || null;
-    if (bank_account_name !== undefined) updateData.bank_account_name = bank_account_name.trim() || null;
+    if (bank_name !== undefined) updateData.bank_name = bank_name?.trim() || null;
+    if (bank_account_name !== undefined) updateData.bank_account_name = bank_account_name?.trim() || null;
     if (bank_account_number !== undefined) updateData.bank_account_number = bank_account_number.trim() || null;
     if (bank_ifsc !== undefined) updateData.bank_ifsc = bank_ifsc.trim() || null;
     if (typeof is_active === 'boolean') updateData.is_active = is_active;

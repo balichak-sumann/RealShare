@@ -15,6 +15,7 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
       phone_number,
       full_address,
       referral_code,
+      bank_name,
       bank_account_name,
       bank_account_number,
       bank_ifsc,
@@ -28,7 +29,8 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     if (phone_number !== undefined) data.phone_number = phone_number.trim() || null;
     if (full_address !== undefined) data.full_address = full_address.trim() || null;
     if (referral_code !== undefined) data.referral_code = referral_code.trim() || null;
-    if (bank_account_name !== undefined) data.bank_account_name = bank_account_name.trim() || null;
+    if (bank_name !== undefined) data.bank_name = bank_name?.trim() || null;
+    if (bank_account_name !== undefined) data.bank_account_name = bank_account_name?.trim() || null;
     if (bank_account_number !== undefined) data.bank_account_number = bank_account_number.trim() || null;
     if (bank_ifsc !== undefined) data.bank_ifsc = bank_ifsc.trim() || null;
     if (typeof is_active === 'boolean') data.is_active = is_active;

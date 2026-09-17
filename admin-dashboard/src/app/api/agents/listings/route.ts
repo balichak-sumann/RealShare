@@ -58,7 +58,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    const allowedCategories = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Buyer'];
+    const allowedCategories = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Plots & Farms'];
     if (!allowedCategories.includes(data.property_type)) {
       return NextResponse.json({ error: `Invalid property_type. Allowed: ${allowedCategories.join(', ')}` }, { status: 400 });
     }

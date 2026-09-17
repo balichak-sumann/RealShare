@@ -58,6 +58,40 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Transaction record not found.' }, { status: 404 });
     }
 
+    // Handle Wallet Deposit
+    if (transaction.transaction_type === 'wallet_deposit') {
+      if (transaction.payment_status === 'completed') {
+        return NextResponse.json({ success: true, message: 'Wallet deposit already processed.' });
+      }
+
+      await prisma.profile.update({
+        where: { id: transaction.user_id },
+        data: { wallet_balance: { increment: Number(transaction.amount) } }
+      });
+
+      await prisma.transaction.update({
+        where: { id: transaction.id },
+        data: {
+          payment_status: 'completed',
+          payment_method: 'razorpay',
+          gateway_txn_id: razorpay_payment_id || transaction.gateway_txn_id,
+          metadata: {
+            ...((transaction.metadata as any) || {}),
+            razorpay_order_id,
+            razorpay_payment_id,
+            verified_at: new Date().toISOString(),
+          }
+        }
+      });
+
+      return NextResponse.json({
+        success: true,
+        message: 'Wallet balance updated successfully!',
+        transactionId: transaction.id
+      });
+    }
+
+    // Handle Fraction Purchase
     // If already verified, return existing certificate
     if (transaction.investment) {
       return NextResponse.json({

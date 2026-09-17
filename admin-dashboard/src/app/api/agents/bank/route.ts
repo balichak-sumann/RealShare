@@ -14,16 +14,17 @@ export async function POST(req: Request) {
     const uid = decodedToken.uid;
 
     const body = await req.json();
-    const { bank_account_name, bank_account_number, bank_ifsc } = body;
+    const { bank_name, bank_account_name, bank_account_number, bank_ifsc } = body;
 
     // Optional validation
-    if (!bank_account_name || !bank_account_number || !bank_ifsc) {
+    if (!bank_name || !bank_account_name || !bank_account_number || !bank_ifsc) {
       return NextResponse.json({ error: 'Missing required bank details' }, { status: 400 });
     }
 
     const updatedProfile = await prisma.profile.update({
       where: { id: uid },
       data: {
+        bank_name,
         bank_account_name,
         bank_account_number,
         bank_ifsc,

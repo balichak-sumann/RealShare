@@ -7,7 +7,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
 function LoginForm() {
-  const [phone, setPhone] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [otp, setOtp] = useState('');
   const [step, setStep] = useState<1 | 2>(1);
   const [error, setError] = useState('');
@@ -19,9 +19,19 @@ function LoginForm() {
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || phone.length !== 10) {
-      setError('Please enter a valid 10-digit mobile number.');
-      return;
+    const isEmail = identifier.includes('@');
+    
+    if (isEmail) {
+      if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(identifier)) {
+        setError('Please enter a valid email address.');
+        return;
+      }
+    } else {
+      const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
+      if (cleanedPhone.length !== 10 || !/^[6-9]/.test(cleanedPhone)) {
+        setError('Please enter a valid 10-digit mobile number.');
+        return;
+      }
     }
     
     setLoading(true);
@@ -29,10 +39,13 @@ function LoginForm() {
     setSuccess('');
 
     try {
-      const res = await fetch('/api/otp/send', {
+      const endpoint = isEmail ? '/api/otp/send-email' : '/api/otp/send';
+      const payload = isEmail ? { email: identifier.trim() } : { phone: identifier.replace(/\D/g, '').slice(-10) };
+      
+      const res = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       
@@ -62,10 +75,11 @@ function LoginForm() {
 
     try {
       // 1. Verify OTP with our backend
+      const payloadId = identifier.includes('@') ? identifier.trim() : identifier.replace(/\D/g, '').slice(-10);
       const res = await fetch('/api/otp/verify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: phone, otp }),
+        body: JSON.stringify({ identifier: payloadId, otp }),
       });
       const data = await res.json();
       
@@ -139,27 +153,28 @@ function LoginForm() {
         {step === 1 ? (
           <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Mobile Number</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Email or Mobile Number</label>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ padding: '12px', background: '#F1F5F9', color: '#64748B', fontWeight: 600, fontSize: '15px', borderRight: '1px solid #CBD5E1' }}>
-                  +91
-                </div>
+                {!identifier.includes('@') && identifier.length > 0 && /^[0-9]+$/.test(identifier) && (
+                  <div style={{ padding: '12px', background: '#F1F5F9', color: '#64748B', fontWeight: 600, fontSize: '15px', borderRight: '1px solid #CBD5E1' }}>
+                    +91
+                  </div>
+                )}
                 <input 
-                  type="tel" 
+                  type="text" 
                   required 
-                  maxLength={10}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   style={{ width: '100%', padding: '12px 16px', border: 'none', outline: 'none', fontSize: '15px' }}
-                  placeholder="9876543210"
+                  placeholder="email@example.com or 9876543210"
                 />
               </div>
             </div>
             
             <button 
               type="submit" 
-              disabled={loading || phone.length !== 10}
-              style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#1E40AF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: loading || phone.length !== 10 ? 'not-allowed' : 'pointer', opacity: loading || phone.length !== 10 ? 0.7 : 1 }}
+              disabled={loading || !identifier}
+              style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#1E40AF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: loading || !identifier ? 'not-allowed' : 'pointer', opacity: loading || !identifier ? 0.7 : 1 }}
             >
               {loading ? 'Sending OTP...' : 'Send OTP'}
             </button>

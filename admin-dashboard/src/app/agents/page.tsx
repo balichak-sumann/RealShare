@@ -59,6 +59,7 @@ interface Agent {
   commissionEarned: string;
   rawCommissionPending: number;
   commissionPending: string;
+  bankInstitution: string | null;
   bankName: string | null;
   bankAcc: string | null;
   bankIfsc: string | null;
@@ -86,6 +87,7 @@ export default function AgentsPage() {
   const [editPhone, setEditPhone] = useState("");
   const [editRefCode, setEditRefCode] = useState("");
   const [editRate, setEditRate] = useState<number>(2.5);
+  const [editBankInstitution, setEditBankInstitution] = useState("");
   const [editBankName, setEditBankName] = useState("");
   const [editBankAcc, setEditBankAcc] = useState("");
   const [editBankIfsc, setEditBankIfsc] = useState("");
@@ -146,6 +148,7 @@ export default function AgentsPage() {
             commissionEarned: `₹${earned.toLocaleString("en-IN")}`,
             rawCommissionPending: pending,
             commissionPending: `₹${pending.toLocaleString("en-IN")}`,
+            bankInstitution: d.bank_name || null,
             bankName: d.bank_account_name || null,
             bankAcc: d.bank_account_number || null,
             bankIfsc: d.bank_ifsc || null,
@@ -202,6 +205,7 @@ export default function AgentsPage() {
     setEditPhone(agent.phone === "—" ? "" : agent.phone);
     setEditRefCode(agent.referralCode === "—" ? "" : agent.referralCode);
     setEditRate(agent.commissionRatePct);
+    setEditBankInstitution(agent.bankInstitution || "");
     setEditBankName(agent.bankName || "");
     setEditBankAcc(agent.bankAcc || "");
     setEditBankIfsc(agent.bankIfsc || "");
@@ -228,6 +232,7 @@ export default function AgentsPage() {
           full_address: editAgency ? `Agency: ${editAgency}` : undefined,
           referral_code: editRefCode,
           commission_rate_pct: Number(editRate),
+          bank_name: editBankInstitution,
           bank_account_name: editBankName,
           bank_account_number: editBankAcc,
           bank_ifsc: editBankIfsc,
@@ -249,6 +254,7 @@ export default function AgentsPage() {
               phone: editPhone || "—",
               referralCode: editRefCode || "—",
               commissionRatePct: Number(editRate),
+              bankInstitution: editBankInstitution || null,
               bankName: editBankName || null,
               bankAcc: editBankAcc || null,
               bankIfsc: editBankIfsc || null,
@@ -670,6 +676,7 @@ export default function AgentsPage() {
                 "Sales Volume (INR)",
                 "Commission Earned (INR)",
                 "Commission Pending (INR)",
+                "Bank Institution",
                 "Bank Name",
                 "Bank Account",
                 "IFSC",
@@ -687,6 +694,7 @@ export default function AgentsPage() {
                 a.rawSalesVolume,
                 a.rawCommissionEarned,
                 a.rawCommissionPending,
+                `"${a.bankInstitution || "—"}"`,
                 `"${a.bankName || "—"}"`,
                 `"${a.bankAcc || "—"}"`,
                 `"${a.bankIfsc || "—"}"`,
@@ -875,6 +883,9 @@ export default function AgentsPage() {
                       <div>
                         <div style={{ fontSize: "0.8rem", fontWeight: 700, color: "#334155" }}>
                           {agent.bankName || "Bank Account"}
+                        </div>
+                        <div style={{ color: "#64748B" }}>
+                          {agent.bankInstitution || "Unknown Bank"}
                         </div>
                         <div style={{ fontSize: "0.75rem", color: "#64748B" }}>
                           A/C: {agent.bankAcc}
@@ -1730,7 +1741,27 @@ export default function AgentsPage() {
                     🏦 Settlement Bank Account Details
                   </h4>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "14px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "14px" }}>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748B" }}>
+                        BANK NAME
+                      </label>
+                      <input
+                        type="text"
+                        value={editBankInstitution}
+                        placeholder="e.g. HDFC Bank, SBI..."
+                        onChange={(e) => setEditBankInstitution(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "10px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          marginTop: "4px",
+                          fontSize: "0.9rem",
+                        }}
+                      />
+                    </div>
+
                     <div>
                       <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748B" }}>
                         ACCOUNT HOLDER NAME

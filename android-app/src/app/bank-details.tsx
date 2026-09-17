@@ -12,6 +12,7 @@ export default function BankDetailsScreen() {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>('loading');
   
+  const [bankInstName, setBankInstName] = useState('');
   const [accName, setAccName] = useState('');
   const [accNumber, setAccNumber] = useState('');
   const [ifsc, setIfsc] = useState('');
@@ -35,6 +36,7 @@ export default function BankDetailsScreen() {
       if (res.ok) {
         const data = await res.json();
         if (data.bankDetails && data.bankDetails.accountNumber) {
+          setBankInstName(data.bankDetails.bankName || '');
           setAccName(data.bankDetails.accountName || '');
           setAccNumber(data.bankDetails.accountNumber || '');
           setIfsc(data.bankDetails.ifsc || '');
@@ -83,6 +85,7 @@ export default function BankDetailsScreen() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
+          bank_name: bankInstName,
           bank_account_name: accName,
           bank_account_number: accNumber,
           bank_ifsc: ifsc
@@ -126,6 +129,9 @@ export default function BankDetailsScreen() {
                 </View>
                 <Text style={styles.secureText}>Linked & Secure</Text>
               </View>
+              
+              <Text style={styles.cardHolderLabel}>BANK NAME</Text>
+              <Text style={styles.cardHolderName}>{bankInstName || 'Unknown Bank'}</Text>
               
               <Text style={styles.cardHolderLabel}>ACCOUNT HOLDER</Text>
               <Text style={styles.cardHolderName}>{accName}</Text>
@@ -185,6 +191,15 @@ export default function BankDetailsScreen() {
       <View style={styles.content}>
         <Text style={styles.subtitle}>Enter your exact bank details to ensure timely commission payouts without any delays.</Text>
         
+        <Text style={styles.inputLabel}>Bank Name</Text>
+        <TextInput 
+          style={styles.input} 
+          placeholder="e.g. HDFC Bank, SBI..." 
+          value={bankInstName} 
+          onChangeText={setBankInstName} 
+          placeholderTextColor="#9CA3AF" 
+        />
+
         <Text style={styles.inputLabel}>Account Holder Name</Text>
         <TextInput 
           style={styles.input} 

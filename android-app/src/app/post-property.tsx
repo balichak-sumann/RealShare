@@ -21,7 +21,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
 
-const CATEGORIES = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Buyer'] as const;
+const CATEGORIES = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Plots & Farms'] as const;
 
 const MAJOR_CITIES = [
   { name: 'Hyderabad', state: 'Telangana' },

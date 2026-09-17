@@ -61,7 +61,7 @@ export default function SellScreen() {
     fetchPortfolio();
   }, [currentUser]);
 
-  const propertyTypes = ['Residential', 'Commercial', 'Fractional', 'Holiday', 'Buyer'];
+  const propertyTypes = ['Residential', 'Commercial', 'Fractional', 'Holiday', 'Plots & Farms'];
   
   const sellListingTypes = [
     { label: 'Outright Sale', value: 'outright' },

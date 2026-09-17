@@ -97,7 +97,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
     const data = await request.json();
 
     if (data.property_type) {
-      const allowedCategories = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Buyer'];
+      const allowedCategories = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Plots & Farms'];
       const pType = allowedCategories.find(c => c.toLowerCase() === String(data.property_type).trim().toLowerCase());
       if (!pType) {
         console.error('INVALID PROPERTY TYPE RECEIVED:', data.property_type, typeof data.property_type);

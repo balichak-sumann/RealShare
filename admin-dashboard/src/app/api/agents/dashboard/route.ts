@@ -129,6 +129,7 @@ export async function GET(req: Request) {
       totalEarned: `₹${totalEarned.toLocaleString('en-IN')}`,
       pendingPayout: `₹${pendingPayout.toLocaleString('en-IN')}`,
       bankDetails: profile.bank_account_number ? {
+        bankName: profile.bank_name,
         accountName: profile.bank_account_name,
         accountNumber: profile.bank_account_number,
         ifsc: profile.bank_ifsc

@@ -69,7 +69,7 @@ export default function AboutScreen() {
                 Raj Kumar, a seasoned leader and serial entrepreneur, began his career 20
                 years ago with a startup distributing computers and providing networking
                 solutions. He rose to become the founder-director of Skytel, an internet and
-                VoIP services company, and went on to establish Zye Telecom Pvt Ltd in 2013.
+                VoIP services company, and went on to establish Zyetek Telecom Pvt Ltd.
                 He also started Zyetek Network Pvt Ltd in 2022 before rebranding the company
                 as Realshare Properties Pvt. Ltd., which is selling commercial, residential
                 and vacation properties in India and abroad. Raj Kumar has investments in

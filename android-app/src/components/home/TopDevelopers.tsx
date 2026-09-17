@@ -29,10 +29,6 @@ export function TopDevelopers() {
       // Fallback data if API fails or is empty
       setDevelopers([
         { id: 'dev-makuta', name: 'Makuta Developers', rating: 4.9, _count: { properties: 10 }, logo_source: require('@/assets/images/developers/prestige.png') },
-        { id: '1', name: 'DLF Group', rating: 4.8, _count: { properties: 12 }, logo_source: require('@/assets/images/developers/dlf.png') },
-        { id: '2', name: 'Prestige', rating: 4.6, _count: { properties: 8 }, logo_source: require('@/assets/images/developers/prestige.png') },
-        { id: '3', name: 'Lodha', rating: 4.9, _count: { properties: 15 }, logo_source: require('@/assets/images/developers/lodha.jpg') },
-        { id: '4', name: 'Godrej', rating: 4.7, _count: { properties: 10 }, logo_source: require('@/assets/images/developers/godrej.png') },
       ]);
     };
     fetchDevelopers();

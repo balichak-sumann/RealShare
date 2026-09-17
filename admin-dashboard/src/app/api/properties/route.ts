@@ -5,7 +5,7 @@ import { auth } from '@/lib/firebase-admin';
 const ALLOWED_LISTING_TYPES = ['fractional', 'outright', 'rental', 'resale'] as const;
 type ListingType = (typeof ALLOWED_LISTING_TYPES)[number];
 
-const ALLOWED_CATEGORIES = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Buyer'] as const;
+const ALLOWED_CATEGORIES = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Plots & Farms'] as const;
 
 /**
  * Parses coordinates from Google Maps URLs in various formats:

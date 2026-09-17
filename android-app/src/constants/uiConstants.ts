@@ -4,7 +4,6 @@ export const PROPERTY_CATEGORIES = [
   { id: 'Residential', label: 'Residential', icon: 'home-outline' },
   { id: 'Commercial', label: 'Commercial', icon: 'business-outline' },
   { id: 'Fractional', label: 'Fractional', icon: 'pie-chart-outline' },
-  { id: 'Buyer', label: 'Buyer', icon: 'trending-up-outline' },
   { id: 'Plots & Farms', label: 'Plots & Farms', icon: 'leaf-outline' },
   { id: 'Holiday', label: 'Holiday', icon: 'airplane-outline' },
 ];

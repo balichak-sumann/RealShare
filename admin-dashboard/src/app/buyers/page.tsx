@@ -53,6 +53,7 @@ interface Buyer {
   referralCode: string;
   referredByCode: string;
   fullAddress: string;
+  bankName: string;
   bankAccountName: string;
   bankAccountNumber: string;
   bankIfsc: string;
@@ -112,6 +113,7 @@ function mapApiInvestor(inv: any): Buyer {
     referralCode: inv.referral_code || "—",
     referredByCode: inv.referred_by_code || "—",
     fullAddress: inv.full_address || "—",
+    bankName: inv.bank_name || "—",
     bankAccountName: inv.bank_account_name || "—",
     bankAccountNumber: inv.bank_account_number || "—",
     bankIfsc: inv.bank_ifsc || "—",
@@ -179,6 +181,7 @@ export default function InvestorsPage() {
   const [editName, setEditName] = useState("");
   const [editPhone, setEditPhone] = useState("");
   const [editAddress, setEditAddress] = useState("");
+  const [editBankInstitution, setEditBankInstitution] = useState("");
   const [editBankName, setEditBankName] = useState("");
   const [editBankAcc, setEditBankAcc] = useState("");
   const [editBankIfsc, setEditBankIfsc] = useState("");
@@ -226,6 +229,7 @@ export default function InvestorsPage() {
     setEditName(inv.name);
     setEditPhone(inv.phone === "—" ? "" : inv.phone);
     setEditAddress(inv.fullAddress === "—" ? "" : inv.fullAddress);
+    setEditBankInstitution(inv.bankName === "—" ? "" : inv.bankName);
     setEditBankName(inv.bankAccountName === "—" ? "" : inv.bankAccountName);
     setEditBankAcc(inv.bankAccountNumber === "—" ? "" : inv.bankAccountNumber);
     setEditBankIfsc(inv.bankIfsc === "—" ? "" : inv.bankIfsc);
@@ -266,6 +270,7 @@ export default function InvestorsPage() {
       full_name: editName,
       phone_number: editPhone,
       full_address: editAddress,
+      bank_name: editBankInstitution,
       bank_account_name: editBankName,
       bank_account_number: editBankAcc,
       bank_ifsc: editBankIfsc,
@@ -1601,7 +1606,27 @@ export default function InvestorsPage() {
                     🏦 Linked Bank Account
                   </h4>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "14px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                    <div>
+                      <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748B" }}>
+                        BANK NAME
+                      </label>
+                      <input
+                        type="text"
+                        value={editBankInstitution}
+                        placeholder="e.g. HDFC Bank, SBI..."
+                        onChange={(e) => setEditBankInstitution(e.target.value)}
+                        style={{
+                          width: "100%",
+                          padding: "10px 12px",
+                          borderRadius: "8px",
+                          border: "1px solid #CBD5E1",
+                          marginTop: "4px",
+                          fontSize: "0.9rem",
+                        }}
+                      />
+                    </div>
+
                     <div>
                       <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748B" }}>
                         ACCOUNT HOLDER NAME

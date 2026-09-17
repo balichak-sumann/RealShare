@@ -35,6 +35,11 @@ export default function ProfileScreen() {
   const { profile: user, setProfile } = useUser();
   const [loading, setLoading] = useState(false);
   
+  // Wallet Top-up States
+  const [showWalletModal, setShowWalletModal] = useState(false);
+  const [walletAmount, setWalletAmount] = useState('');
+  const [isAddingMoney, setIsAddingMoney] = useState(false);
+  
   // OTP Verification States
   const [isOtpModalVisible, setOtpModalVisible] = useState(false);
   const [otpType, setOtpType] = useState<'phone' | 'email'>('phone');
@@ -96,6 +101,125 @@ export default function ProfileScreen() {
       }
     } catch (error) {
       console.error('Error picking image:', error);
+    }
+  };
+
+  const loadRazorpay = () => {
+    return new Promise((resolve) => {
+      if (Platform.OS !== 'web') {
+        resolve(true); 
+        return;
+      }
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = () => resolve(true);
+      script.onerror = () => resolve(false);
+      document.body.appendChild(script);
+    });
+  };
+
+  const handleAddMoney = async () => {
+    const amount = Number(walletAmount);
+    if (!amount || amount < 100) {
+      Alert.alert('Invalid Amount', 'Please enter an amount of at least ₹100.');
+      return;
+    }
+    
+    setIsAddingMoney(true);
+    
+    // Load Razorpay Script (for Web)
+    const res = await loadRazorpay();
+    if (!res && Platform.OS === 'web') {
+      Alert.alert('Error', 'Razorpay SDK failed to load. Are you online?');
+      setIsAddingMoney(false);
+      return;
+    }
+
+    try {
+      if (!auth.currentUser) {
+        Alert.alert('Error', 'Please sign in to continue.');
+        setIsAddingMoney(false);
+        return;
+      }
+      const token = await auth.currentUser.getIdToken();
+
+      const orderResponse = await fetch(`${getApiUrl()}/api/wallet/add-balance`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ amount })
+      });
+
+      const orderData = await orderResponse.json();
+      if (!orderResponse.ok) {
+        throw new Error(orderData.error || 'Failed to create top-up order');
+      }
+
+      if (Platform.OS === 'web') {
+        const options = {
+          key: orderData.keyId, 
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: 'Realshare Wallet',
+          description: `Add ₹${amount} to Wallet`,
+          order_id: orderData.orderId,
+          handler: async function (response: any) {
+            const verifyRes = await fetch(`${getApiUrl()}/api/transactions/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: response.razorpay_order_id,
+                razorpay_payment_id: response.razorpay_payment_id,
+                razorpay_signature: response.razorpay_signature,
+                transactionId: orderData.transactionId
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              Alert.alert('Success', 'Wallet balance added successfully!');
+              setShowWalletModal(false);
+              setWalletAmount('');
+              // Trigger a user fetch to update the UI
+              const userRes = await fetch(`${getApiUrl()}/api/users/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              if(userRes.ok) {
+                const userData = await userRes.json();
+                if(userData.profile) setProfile(userData.profile);
+              }
+            } else {
+              Alert.alert('Error', 'Payment Verification Failed!');
+            }
+          },
+          prefill: {
+            name: auth.currentUser?.displayName || 'User',
+            email: auth.currentUser?.email || '',
+          },
+          theme: {
+            color: GoldSystem.primaryGold
+          }
+        };
+
+        const rzp = new (window as any).Razorpay(options);
+        rzp.on('payment.failed', function (response: any) {
+          Alert.alert('Payment Failed', response.error.description);
+        });
+        rzp.open();
+      } else {
+        Alert.alert('Notice', 'Native payment not configured yet. Opening mock success.');
+        setShowWalletModal(false);
+        setWalletAmount('');
+      }
+    } catch (err: any) {
+      Alert.alert('Error', err.message || 'Payment initiation failed');
+    } finally {
+      setIsAddingMoney(false);
     }
   };
 
@@ -643,7 +767,7 @@ export default function ProfileScreen() {
               </View>
               <TouchableOpacity 
                 style={styles.walletBtn} 
-                onPress={() => Alert.alert('Coming Soon', 'Payment Gateway Integration is pending.')}
+                onPress={() => setShowWalletModal(true)}
               >
                 <Text style={styles.walletBtnText}>+ Add Money</Text>
               </TouchableOpacity>
@@ -805,6 +929,64 @@ export default function ProfileScreen() {
         </View>
       </Modal>
 
+        {/* ─── ADD MONEY MODAL ─── */}
+        <Modal
+          visible={showWalletModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => !isAddingMoney && setShowWalletModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <Text style={styles.modalTitle}>Add Money to Wallet</Text>
+              <Text style={styles.modalSubtitle}>Enter the amount you want to add.</Text>
+              
+              <View style={styles.walletInputContainer}>
+                <Text style={styles.walletCurrencyPrefix}>₹</Text>
+                <TextInput
+                  style={styles.walletAmountInput}
+                  keyboardType="numeric"
+                  placeholder="5000"
+                  placeholderTextColor={Neutrals.gray400}
+                  value={walletAmount}
+                  onChangeText={(text) => setWalletAmount(text.replace(/[^0-9]/g, ''))}
+                  editable={!isAddingMoney}
+                />
+              </View>
+
+              <View style={styles.quickAmounts}>
+                {[5000, 10000, 25000, 50000].map(amt => (
+                  <TouchableOpacity 
+                    key={amt} 
+                    style={styles.quickAmountBtn}
+                    onPress={() => setWalletAmount(amt.toString())}
+                    disabled={isAddingMoney}
+                  >
+                    <Text style={styles.quickAmountText}>+₹{amt}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              <View style={styles.modalActions}>
+                <TouchableOpacity 
+                  style={[styles.modalBtn, styles.modalBtnCancel]} 
+                  onPress={() => setShowWalletModal(false)}
+                  disabled={isAddingMoney}
+                >
+                  <Text style={styles.modalBtnCancelText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.modalBtn, styles.modalBtnPrimary, (!walletAmount || isAddingMoney) && { opacity: 0.7 }]} 
+                  onPress={handleAddMoney}
+                  disabled={!walletAmount || isAddingMoney}
+                >
+                  {isAddingMoney ? <ActivityIndicator color="#000" /> : <Text style={styles.modalBtnPrimaryText}>Proceed to Pay</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
     </View>
     </TabAnimationWrapper>
   );
@@ -864,7 +1046,90 @@ const styles = StyleSheet.create({
   heroBackText: {
     fontSize: 22,
     color: Neutrals.white,
-    fontWeight: '300',
+    fontWeight: '600',
+  },
+  /* ─── MODAL WALLET INPUT ─── */
+  walletInputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Neutrals.gray200,
+    borderRadius: Radius.md,
+    paddingHorizontal: 16,
+    marginBottom: 16,
+    height: 56,
+  },
+  walletCurrencyPrefix: {
+    fontSize: 20,
+    fontWeight: '600',
+    color: Neutrals.gray800,
+    marginRight: 8,
+  },
+  walletAmountInput: {
+    flex: 1,
+    fontSize: 20,
+    fontWeight: '600',
+    color: Neutrals.gray800,
+    outlineStyle: 'none'
+  } as any,
+  quickAmounts: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 24,
+  },
+  quickAmountBtn: {
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderWidth: 1,
+    borderColor: GoldSystem.primaryGold,
+    borderRadius: Radius.full,
+    backgroundColor: 'rgba(212, 175, 55, 0.05)',
+  },
+  quickAmountText: {
+    color: GoldSystem.primaryGold,
+    fontWeight: '600',
+    fontSize: 14,
+  },
+  modalContent: {
+    backgroundColor: Neutrals.white,
+    padding: 24,
+    borderRadius: Radius.lg,
+    width: '90%',
+    maxWidth: 400,
+    shadowColor: Neutrals.black,
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 10,
+  },
+  modalActions: {
+    flexDirection: 'row',
+    gap: 12,
+    marginTop: 8,
+  },
+  modalBtn: {
+    flex: 1,
+    height: 48,
+    borderRadius: Radius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalBtnCancel: {
+    backgroundColor: Neutrals.gray100,
+  },
+  modalBtnCancelText: {
+    color: Neutrals.gray800,
+    fontWeight: '600',
+    fontSize: 15,
+  },
+  modalBtnPrimary: {
+    backgroundColor: GoldSystem.primaryGold,
+  },
+  modalBtnPrimaryText: {
+    color: Neutrals.black,
+    fontWeight: '600',
+    fontSize: 15,
   },
   heroPageTitle: {
     ...Typography.headlineMedium,

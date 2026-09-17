@@ -5,6 +5,9 @@ export type UserProfile = {
   role: 'buyer' | 'agent' | 'builder' | 'admin' | 'employee';
   employee_department?: string | null;
   full_name: string;
+  expo_push_token?: string | null;
+  bank_name?: string | null;
+  bank_account_name?: string | null;
   email: string | null;
   phone_number: string | null;
   full_address?: string | null;

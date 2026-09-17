@@ -1,14 +1,17 @@
 import nodemailer from 'nodemailer';
 
-const transporter = nodemailer.createTransport({
-  host: 'smtp.gmail.com',
-  port: 465,
-  secure: true, // use SSL
-  auth: {
-    user: process.env.SMTP_EMAIL,
-    pass: process.env.SMTP_PASSWORD,
-  },
-});
+function getTransporter() {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, // use STARTTLS
+    auth: {
+      user: process.env.SMTP_EMAIL,
+      pass: process.env.SMTP_PASSWORD,
+    },
+    connectionTimeout: 10000, // 10s timeout
+  });
+}
 
 export interface ServiceInquiryDetails {
   customer_name: string;
@@ -72,7 +75,7 @@ export async function sendServiceInquiryEmail(details: ServiceInquiryDetails) {
   };
 
   try {
-    await transporter.sendMail(mailOptions);
+    await getTransporter().sendMail(mailOptions);
     console.log(`Service inquiry email sent for ${details.service_type}`);
   } catch (error) {
     console.error('Failed to send service inquiry email:', error);
@@ -106,7 +109,7 @@ export async function sendOtpEmail(email: string, otp: string): Promise<{ succes
       `,
     };
 
-    const info = await transporter.sendMail(mailOptions);
+    const info = await getTransporter().sendMail(mailOptions);
     console.log('[Email] OTP sent: %s', info.messageId);
     return { success: true };
   } catch (err: any) {

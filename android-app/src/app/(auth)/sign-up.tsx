@@ -27,8 +27,6 @@ export default function SignUpScreen() {
   
   // Buyer & Builder & Agent specific fields
   const [fullName, setFullName] = useState('');
-  const [mobileNumber, setMobileNumber] = useState('');
-  const [email, setEmail] = useState('');
   const [fullAddress, setFullAddress] = useState('');
   
   // Agent specific fields
@@ -58,7 +56,6 @@ export default function SignUpScreen() {
 
   const [pendingVerification, setPendingVerification] = useState(false);
   const [code, setCode] = useState('');
-  const [emailCode, setEmailCode] = useState('');
   const [referralCode, setReferralCode] = useState('');
   const [role, setRole] = useState<'buyer' | 'investor' | 'agent' | 'builder'>('buyer');
   const [loading, setLoading] = useState(false);
@@ -94,7 +91,7 @@ export default function SignUpScreen() {
       
       if (role === 'buyer' || role === 'builder' || role === 'agent' || role === 'investor') {
         body.full_name = fullName.trim();
-        body.phone_number = `+91 ${mobileNumber.replace(/\D/g, '').slice(-10)}`;
+        body.phone_number = isEmail ? '' : `+91 ${identifier.replace(/\D/g, '').slice(-10)}`;
         if (role !== 'buyer') {
           body.full_address = fullAddress.trim();
         }
@@ -149,13 +146,13 @@ export default function SignUpScreen() {
     setError('');
 
     try {
-      if (!fullName.trim() || !mobileNumber.trim()) {
+      if (!fullName.trim() || !identifier.trim()) {
         setError('Please fill in all required fields.');
         setLoading(false); return;
       }
       
       if (role !== 'buyer') {
-        if (!email.trim() || !fullAddress.trim()) {
+        if (!fullAddress.trim()) {
           setError('Please fill in all required fields.');
           setLoading(false); return;
         }
@@ -205,38 +202,45 @@ export default function SignUpScreen() {
           }
         }
       }
-      if (role !== 'buyer' && !EMAIL_REGEX.test(email.trim())) {
-        setError('Please enter a valid email address (e.g. john@gmail.com).');
-        setLoading(false); return;
-      }
-      const cleanedPhone = mobileNumber.replace(/\D/g, '');
-      if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
-        setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
-        setLoading(false); return;
+      if (isEmail) {
+        if (!EMAIL_REGEX.test(identifier.trim())) {
+          setError('Please enter a valid email address (e.g. john@gmail.com).');
+          setLoading(false); return;
+        }
+      } else {
+        const cleanedPhone = identifier.replace(/\D/g, '');
+        if (!/^[6-9]\d{9}$/.test(cleanedPhone)) {
+          setError('Please enter a valid 10-digit mobile number starting with 6, 7, 8, or 9.');
+          setLoading(false); return;
+        }
       }
 
       // Call APIs to send OTPs
-      const phoneRes = await fetch(`${getApiUrl()}/api/otp/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: cleanedPhone }),
-      });
-      const phoneData = await phoneRes.json();
-
-      let emailData = { success: true, error: '' };
-      if (role !== 'buyer') {
+      if (isEmail) {
         const emailRes = await fetch(`${getApiUrl()}/api/otp/send-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: email.trim() }),
+          body: JSON.stringify({ email: identifier.trim() }),
         });
-        emailData = await emailRes.json();
-      }
-
-      if (phoneData.success && emailData.success) {
-        setPendingVerification(true);
+        const emailData = await emailRes.json();
+        if (emailData.success) {
+          setPendingVerification(true);
+        } else {
+          setError(emailData.error || 'Failed to send Email OTP.');
+        }
       } else {
-        setError(phoneData.error || emailData.error || 'Failed to send OTPs.');
+        const cleanedPhone = identifier.replace(/\D/g, '').slice(-10);
+        const phoneRes = await fetch(`${getApiUrl()}/api/otp/send`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: cleanedPhone }),
+        });
+        const phoneData = await phoneRes.json();
+        if (phoneData.success) {
+          setPendingVerification(true);
+        } else {
+          setError(phoneData.error || 'Failed to send Phone OTP.');
+        }
       }
     } catch (err: any) {
       setError('Failed to connect to the server.');
@@ -285,31 +289,22 @@ export default function SignUpScreen() {
   };
 
   const onVerifyOtpPress = async () => {
-    if (role === 'buyer') {
-      if (!code || code.length !== 6) {
-        setError('Please enter a valid 6-digit OTP for Phone.');
-        return;
-      }
-    } else {
-      if (!code || code.length !== 6 || !emailCode || emailCode.length !== 6) {
-        setError('Please enter valid 6-digit OTPs for both Phone and Email.');
-        return;
-      }
+    if (!code || code.length !== 6) {
+      setError('Please enter a valid 6-digit OTP.');
+      return;
     }
     
     setLoading(true);
     setError('');
 
     try {
-      const cleanedPhone = mobileNumber.replace(/\D/g, '').slice(-10);
+      const payloadId = isEmail ? identifier.trim() : identifier.replace(/\D/g, '').slice(-10);
       const res = await fetch(`${getApiUrl()}/api/auth/signup-otp`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
-          phone: cleanedPhone, 
-          phoneOtp: code,
-          email: email.trim(),
-          emailOtp: emailCode,
+          identifier: payloadId,
+          otp: code,
           fullName: fullName.trim(),
           role: role
         }),
@@ -435,28 +430,18 @@ export default function SignUpScreen() {
                 <TextInput value={fullName} placeholder="Jane Doe" placeholderTextColor="#94A3B8" onChangeText={setFullName} style={styles.mobileInput} />
               )}
 
-              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Mobile Number <Text style={{color: '#EF4444'}}>*</Text></Text>
+              <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email or Mobile Number <Text style={{color: '#EF4444'}}>*</Text></Text>
               {isDesktopWeb ? (
                 <View style={styles.desktopInputWrapper}>
-                  <Ionicons name="call-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
-                  <TextInput keyboardType="phone-pad" value={mobileNumber} placeholder="9988776655" placeholderTextColor={Neutrals.gray400} onChangeText={setMobileNumber} style={styles.desktopInput} />
+                  <Ionicons name="mail-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
+                  <TextInput autoCapitalize="none" keyboardType="email-address" value={identifier} placeholder="jane@example.com or 9988776655" placeholderTextColor={Neutrals.gray400} onChangeText={setIdentifier} style={styles.desktopInput} />
                 </View>
               ) : (
-                <TextInput keyboardType="phone-pad" value={mobileNumber} placeholder="9988776655" placeholderTextColor="#94A3B8" onChangeText={setMobileNumber} style={styles.mobileInput} />
+                <TextInput autoCapitalize="none" keyboardType="email-address" value={identifier} placeholder="jane@example.com or 9988776655" placeholderTextColor="#94A3B8" onChangeText={setIdentifier} style={styles.mobileInput} />
               )}
 
               {role !== 'buyer' && (
                 <>
-                  <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Email Address <Text style={{color: '#EF4444'}}>*</Text></Text>
-                  {isDesktopWeb ? (
-                    <View style={styles.desktopInputWrapper}>
-                      <Ionicons name="mail-outline" size={20} color={Neutrals.gray500} style={styles.desktopInputIcon} />
-                      <TextInput autoCapitalize="none" keyboardType="email-address" value={email} placeholder="jane@example.com" placeholderTextColor={Neutrals.gray400} onChangeText={setEmail} style={styles.desktopInput} />
-                    </View>
-                  ) : (
-                    <TextInput autoCapitalize="none" keyboardType="email-address" value={email} placeholder="jane@example.com" placeholderTextColor="#94A3B8" onChangeText={setEmail} style={styles.mobileInput} />
-                  )}
-
                   <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Full Address <Text style={{color: '#EF4444'}}>*</Text></Text>
                   {isDesktopWeb ? (
                     <View style={styles.desktopInputWrapper}>
@@ -806,9 +791,9 @@ export default function SignUpScreen() {
 
       {pendingVerification && (
         <View style={styles.form}>
-          <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Mobile Verification Code</Text>
+          <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>Verification Code</Text>
           <Text style={{ color: isDesktopWeb ? Neutrals.gray500 : '#94A3B8', marginBottom: 16 }}>
-            Sent to +91 {mobileNumber}
+            We've sent a 6-digit code to {isEmail ? identifier : `+91 ${identifier.replace(/\D/g, '')}`}
           </Text>
           {isDesktopWeb ? (
             <View style={[styles.desktopInputWrapper, { paddingHorizontal: 0 }]}>
@@ -826,32 +811,6 @@ export default function SignUpScreen() {
               style={[styles.mobileInput, { textAlign: 'center', letterSpacing: 8, fontSize: 24 }]}
               keyboardType="number-pad" maxLength={6}
             />
-          )}
-
-          {role !== 'buyer' && (
-            <>
-              <Text style={[isDesktopWeb ? styles.desktopLabel : styles.mobileLabel, { marginTop: 16 }]}>Email Verification Code</Text>
-              <Text style={{ color: isDesktopWeb ? Neutrals.gray500 : '#94A3B8', marginBottom: 16 }}>
-                Sent to {email}
-              </Text>
-              {isDesktopWeb ? (
-                <View style={[styles.desktopInputWrapper, { paddingHorizontal: 0 }]}>
-                  <TextInput
-                    value={emailCode} placeholder="------" placeholderTextColor={Neutrals.gray300}
-                    onChangeText={(c) => setEmailCode(c.replace(/[^0-9]/g, ''))}
-                    style={[styles.desktopInput, { textAlign: 'center', letterSpacing: 8, fontSize: 24, paddingVertical: 16 }]}
-                    keyboardType="number-pad" maxLength={6}
-                  />
-                </View>
-              ) : (
-                <TextInput
-                  value={emailCode} placeholder="------" placeholderTextColor="#94A3B8"
-                  onChangeText={(c) => setEmailCode(c.replace(/[^0-9]/g, ''))}
-                  style={[styles.mobileInput, { textAlign: 'center', letterSpacing: 8, fontSize: 24 }]}
-                  keyboardType="number-pad" maxLength={6}
-                />
-              )}
-            </>
           )}
 
           <TouchableOpacity style={isDesktopWeb ? styles.desktopPrimaryButton : styles.mobilePrimaryButton} onPress={onVerifyOtpPress} disabled={loading}>

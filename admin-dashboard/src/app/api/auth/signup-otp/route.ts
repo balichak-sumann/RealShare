@@ -23,83 +23,57 @@ function getOtpStore(): Map<string, OtpEntry> {
 export async function POST(request: Request) {
   try {
     const body = await request.json();
-    const phone = body?.phone?.replace(/\D/g, '').slice(-10);
-    const phoneOtp = body?.phoneOtp;
-    const email = body?.email?.toLowerCase().trim();
-    const emailOtp = body?.emailOtp;
+    const identifier = body?.identifier?.toLowerCase().trim() || body?.phone?.replace(/\\D/g, '').slice(-10);
+    const otp = body?.otp || body?.phoneOtp; // Support legacy payload during transition
     const role = body?.role;
 
-    if (!phone || phone.length !== 10) {
-      return NextResponse.json({ success: false, error: 'Invalid phone number.' }, { status: 400 });
+    if (!identifier) {
+      return NextResponse.json({ success: false, error: 'Identifier (email or phone) is required.' }, { status: 400 });
     }
 
-    if (role !== 'buyer') {
-      if (!email || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)) {
-        return NextResponse.json({ success: false, error: 'Invalid email address.' }, { status: 400 });
-      }
-      if (!phoneOtp || phoneOtp.length !== 6 || !emailOtp || emailOtp.length !== 6) {
-        return NextResponse.json({ success: false, error: 'Please provide valid 6-digit OTPs for both Mobile and Email.' }, { status: 400 });
-      }
-    } else {
-      if (!phoneOtp || phoneOtp.length !== 6) {
-        return NextResponse.json({ success: false, error: 'Please provide a valid 6-digit OTP.' }, { status: 400 });
-      }
+    if (!otp || otp.length !== 6) {
+      return NextResponse.json({ success: false, error: 'Please provide a valid 6-digit OTP.' }, { status: 400 });
     }
 
     const otpStore = getOtpStore();
-    
-    // Check Phone OTP
-    const pEntry = otpStore.get(phone);
-    if (!pEntry) return NextResponse.json({ success: false, error: 'No OTP sent to this phone number.' }, { status: 400 });
-    if (Date.now() > pEntry.expiresAt) {
-      otpStore.delete(phone);
-      return NextResponse.json({ success: false, error: 'Phone OTP expired.' }, { status: 400 });
-    }
-    if (pEntry.attempts >= 3) {
-      otpStore.delete(phone);
-      return NextResponse.json({ success: false, error: 'Too many incorrect phone attempts.' }, { status: 400 });
-    }
-    if (pEntry.otp !== phoneOtp) {
-      pEntry.attempts += 1;
-      return NextResponse.json({ success: false, error: 'Incorrect Phone OTP.' }, { status: 400 });
+    const entry = otpStore.get(identifier);
+
+    if (!entry) {
+      return NextResponse.json({ success: false, error: 'No OTP sent to this address/number.' }, { status: 400 });
     }
 
-    // Check Email OTP
-    if (role !== 'buyer') {
-      const eEntry = otpStore.get(email);
-      if (!eEntry) return NextResponse.json({ success: false, error: 'No OTP sent to this email.' }, { status: 400 });
-      if (Date.now() > eEntry.expiresAt) {
-        otpStore.delete(email);
-        return NextResponse.json({ success: false, error: 'Email OTP expired.' }, { status: 400 });
-      }
-      if (eEntry.attempts >= 3) {
-        otpStore.delete(email);
-        return NextResponse.json({ success: false, error: 'Too many incorrect email attempts.' }, { status: 400 });
-      }
-      if (eEntry.otp !== emailOtp) {
-        eEntry.attempts += 1;
-        return NextResponse.json({ success: false, error: 'Incorrect Email OTP.' }, { status: 400 });
-      }
-      otpStore.delete(email);
+    if (Date.now() > entry.expiresAt) {
+      otpStore.delete(identifier);
+      return NextResponse.json({ success: false, error: 'OTP expired. Please request a new one.' }, { status: 400 });
     }
 
-    otpStore.delete(phone);
+    if (entry.attempts >= 3) {
+      otpStore.delete(identifier);
+      return NextResponse.json({ success: false, error: 'Too many incorrect attempts.' }, { status: 400 });
+    }
 
-    // Create a new Firebase user. 
-    // We will use phone_${phone} as the base ID for backward compatibility with the existing phone auth structure,
-    // or we can just use the phone number. Let's use `phone_${phone}` as the UID.
-    const uid = `phone_${phone}`;
+    if (entry.otp !== otp) {
+      entry.attempts += 1;
+      return NextResponse.json({ success: false, error: 'Incorrect OTP.' }, { status: 400 });
+    }
+
+    // OTP is correct
+    otpStore.delete(identifier);
+
+    const isEmail = identifier.includes('@');
+    const uid = isEmail ? `email_${identifier}` : `phone_${identifier}`;
 
     try {
       // Create or update Firebase user
       const authPayload: any = {
-        phoneNumber: `+91${phone}`,
         displayName: body?.fullName || 'User'
       };
       
-      if (role !== 'buyer' && email) {
-        authPayload.email = email;
+      if (isEmail) {
+        authPayload.email = identifier;
         authPayload.emailVerified = true;
+      } else {
+        authPayload.phoneNumber = `+91${identifier}`;
       }
 
       try {
@@ -113,7 +87,7 @@ export async function POST(request: Request) {
             ...authPayload
           });
         } else {
-          // If phone number is already linked to another account, it might throw here
+          // If phone number/email is already linked to another account, it might throw here
           throw err;
         }
       }
@@ -127,7 +101,6 @@ export async function POST(request: Request) {
       });
     } catch (firebaseErr: any) {
       console.error('[OTP Signup] Firebase token creation failed:', firebaseErr?.message);
-      // It's common for Firebase to complain if phone number or email is already in use by ANOTHER uid.
       if (firebaseErr?.code === 'auth/email-already-exists') {
          return NextResponse.json({ success: false, error: 'Email is already registered.' }, { status: 400 });
       }

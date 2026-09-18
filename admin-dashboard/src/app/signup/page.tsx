@@ -7,12 +7,10 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
 export default function Signup() {
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
+  const [identifier, setIdentifier] = useState('');
   const [bootstrapSecret, setBootstrapSecret] = useState('');
   
-  const [phoneOtp, setPhoneOtp] = useState('');
-  const [emailOtp, setEmailOtp] = useState('');
+  const [otp, setOtp] = useState('');
   
   const [step, setStep] = useState<1 | 2>(1);
   const [error, setError] = useState('');
@@ -22,14 +20,20 @@ export default function Signup() {
 
   const handleSendOtps = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phone || phone.length !== 10) {
-      setError('Please enter a valid 10-digit mobile number.');
-      return;
+    const isEmail = identifier.includes('@');
+    if (isEmail) {
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
+        setError('Please enter a valid email address.');
+        return;
+      }
+    } else {
+      const cleanPhone = identifier.replace(/\D/g, '');
+      if (cleanPhone.length !== 10) {
+        setError('Please enter a valid 10-digit mobile number.');
+        return;
+      }
     }
-    if (!email || !email.includes('@')) {
-      setError('Please enter a valid email address.');
-      return;
-    }
+    
     if (!bootstrapSecret) {
       setError('Bootstrap Secret is required.');
       return;
@@ -40,28 +44,28 @@ export default function Signup() {
     setSuccess('');
 
     try {
-      // Send Phone OTP
-      const phoneRes = await fetch('/api/otp/send', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone }),
-      });
-      const phoneData = await phoneRes.json();
-      if (!phoneData.success) throw new Error(phoneData.error || 'Failed to send Phone OTP.');
+      if (isEmail) {
+        const emailRes = await fetch('/api/otp/send-email', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: identifier.trim() }),
+        });
+        const emailData = await emailRes.json();
+        if (!emailData.success) throw new Error(emailData.error || 'Failed to send Email OTP.');
+      } else {
+        const phoneRes = await fetch('/api/otp/send', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: identifier.replace(/\D/g, '').slice(-10) }),
+        });
+        const phoneData = await phoneRes.json();
+        if (!phoneData.success) throw new Error(phoneData.error || 'Failed to send Phone OTP.');
+      }
 
-      // Send Email OTP
-      const emailRes = await fetch('/api/otp/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
-      });
-      const emailData = await emailRes.json();
-      if (!emailData.success) throw new Error(emailData.error || 'Failed to send Email OTP.');
-
-      setSuccess('OTPs sent successfully to your mobile and email!');
+      setSuccess(`OTP sent successfully to your ${isEmail ? 'email' : 'mobile'}!`);
       setStep(2);
     } catch (err: any) {
-      setError(err.message || 'Failed to send OTPs');
+      setError(err.message || 'Failed to send OTP');
     } finally {
       setLoading(false);
     }
@@ -69,8 +73,8 @@ export default function Signup() {
 
   const handleVerifySignup = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!phoneOtp || phoneOtp.length !== 6 || !emailOtp || emailOtp.length !== 6) {
-      setError('Please enter both 6-digit OTPs.');
+    if (!otp || otp.length !== 6) {
+      setError('Please enter the 6-digit OTP.');
       return;
     }
     
@@ -78,15 +82,13 @@ export default function Signup() {
     setError('');
 
     try {
-      // Verify both OTPs and create Firebase User
+      // Verify OTP and create Firebase User
       const res = await fetch('/api/auth/signup-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          phone,
-          phoneOtp,
-          email,
-          emailOtp,
+          identifier: identifier,
+          otp: otp,
           role: 'admin',
           fullName: 'Admin User'
         }),
@@ -94,7 +96,7 @@ export default function Signup() {
       const data = await res.json();
       
       if (!data.success || !data.firebaseToken) {
-        throw new Error(data.error || 'Failed to verify OTPs or create account.');
+        throw new Error(data.error || 'Failed to verify OTP or create account.');
       }
 
       // Sign in with the returned custom token
@@ -153,33 +155,22 @@ export default function Signup() {
         {step === 1 ? (
           <form onSubmit={handleSendOtps} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Mobile Number</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Email or Mobile Number</label>
               <div style={{ display: 'flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '8px', overflow: 'hidden' }}>
-                <div style={{ padding: '12px', background: '#F1F5F9', color: '#64748B', fontWeight: 600, fontSize: '15px', borderRight: '1px solid #CBD5E1' }}>
-                  +91
-                </div>
+                {!identifier.includes('@') && identifier.length > 0 && /^[0-9]+$/.test(identifier) && (
+                  <div style={{ padding: '12px', background: '#F1F5F9', color: '#64748B', fontWeight: 600, fontSize: '15px', borderRight: '1px solid #CBD5E1' }}>
+                    +91
+                  </div>
+                )}
                 <input 
-                  type="tel" 
+                  type="text" 
                   required 
-                  maxLength={10}
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value.replace(/[^0-9]/g, ''))}
+                  value={identifier}
+                  onChange={(e) => setIdentifier(e.target.value)}
                   style={{ width: '100%', padding: '12px 16px', border: 'none', outline: 'none', fontSize: '15px' }}
-                  placeholder="9876543210"
+                  placeholder="admin@realshare.com or 9876543210"
                 />
               </div>
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Admin Email Address</label>
-              <input 
-                type="email" 
-                required 
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px' }}
-                placeholder="admin@realshare.com"
-              />
             </div>
             
             <div>
@@ -199,35 +190,22 @@ export default function Signup() {
 
             <button 
               type="submit" 
-              disabled={loading || phone.length !== 10 || !email}
+              disabled={loading || !identifier}
               style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#1E40AF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
             >
-              {loading ? 'Sending OTPs...' : 'Continue'}
+              {loading ? 'Sending OTP...' : 'Continue'}
             </button>
           </form>
         ) : (
           <form onSubmit={handleVerifySignup} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
             <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Mobile OTP (Sent to {phone})</label>
+              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Enter 6-digit OTP</label>
               <input 
                 type="text" 
                 required 
                 maxLength={6}
-                value={phoneOtp}
-                onChange={(e) => setPhoneOtp(e.target.value.replace(/[^0-9]/g, ''))}
-                style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px', letterSpacing: '2px', textAlign: 'center', fontWeight: 'bold' }}
-                placeholder="000000"
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '14px', fontWeight: 600, color: '#334155', marginBottom: '6px' }}>Email OTP (Sent to {email})</label>
-              <input 
-                type="text" 
-                required 
-                maxLength={6}
-                value={emailOtp}
-                onChange={(e) => setEmailOtp(e.target.value.replace(/[^0-9]/g, ''))}
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
                 style={{ width: '100%', padding: '12px 16px', borderRadius: '8px', border: '1px solid #CBD5E1', fontSize: '15px', letterSpacing: '2px', textAlign: 'center', fontWeight: 'bold' }}
                 placeholder="000000"
               />
@@ -235,7 +213,7 @@ export default function Signup() {
             
             <button 
               type="submit" 
-              disabled={loading || phoneOtp.length !== 6 || emailOtp.length !== 6}
+              disabled={loading || otp.length !== 6}
               style={{ marginTop: '10px', width: '100%', padding: '14px', background: '#1E40AF', color: '#FFF', border: 'none', borderRadius: '8px', fontSize: '15px', fontWeight: 700, cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}
             >
               {loading ? 'Creating Account...' : 'Verify & Create Admin'}
@@ -243,7 +221,7 @@ export default function Signup() {
             
             <button
               type="button"
-              onClick={() => { setStep(1); setPhoneOtp(''); setEmailOtp(''); setError(''); setSuccess(''); }}
+              onClick={() => { setStep(1); setOtp(''); setError(''); setSuccess(''); }}
               style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '14px', cursor: 'pointer', marginTop: '8px' }}
             >
               Go Back

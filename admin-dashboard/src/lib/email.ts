@@ -114,6 +114,6 @@ export async function sendOtpEmail(email: string, otp: string): Promise<{ succes
     return { success: true };
   } catch (err: any) {
     console.error('[Email] Failed to send OTP:', err?.message);
-    return { success: false, error: 'Failed to send email' };
+    return { success: false, error: err?.message || 'Failed to send email' };
   }
 }

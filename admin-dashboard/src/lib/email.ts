@@ -2,9 +2,12 @@ import nodemailer from 'nodemailer';
 
 function getTransporter() {
   return nodemailer.createTransport({
-    host: 'smtp.gmail.com',
+    host: '142.250.190.109', // Force IPv4 to bypass Render's broken IPv6 routing
     port: 587,
     secure: false, // use STARTTLS
+    tls: {
+      servername: 'smtp.gmail.com', // Required since we're using an IP address for host
+    },
     auth: {
       user: process.env.SMTP_EMAIL,
       pass: process.env.SMTP_PASSWORD,

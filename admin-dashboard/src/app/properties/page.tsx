@@ -101,11 +101,11 @@ const INITIAL_NEW_PROP_STATE = {
   reraNumber: "",
   permissionNumber: "",
   googleMapsUrl: "",
-  totalFractions: 50,
-  totalPrice: 25000000, // total property price for fractional
-  price: 500000,        // price per fraction (auto-calculated) or direct price for outright/rental
-  yield: 8.5,
-  irr: 15.0,
+  totalFractions: "" as unknown as number,
+  totalPrice: "" as unknown as number, // total property price for fractional
+  price: "" as unknown as number,        // price per fraction (auto-calculated) or direct price for outright/rental
+  yield: "" as unknown as number,
+  irr: "" as unknown as number,
   postedBy: "Admin" as const,
   subType: "",
   floorType: "",
@@ -235,11 +235,11 @@ export default function PropertiesPage() {
       reraNumber: p.rera_number || "",
       permissionNumber: p.permission_number || "",
       googleMapsUrl: p.google_maps_url || "",
-      totalFractions: p.total_fractions || 50,
-      totalPrice: (Number(p.price_per_fraction) || 500000) * (p.total_fractions || 50),
-      price: Number(p.price_per_fraction) || 500000,
-      yield: Number(p.assured_yield) || 8.5,
-      irr: Number(p.target_irr) || 15.0,
+      totalFractions: p.total_fractions != null ? p.total_fractions : ("" as unknown as number),
+      totalPrice: p.price_per_fraction != null ? Number(p.price_per_fraction) * (p.total_fractions || 1) : ("" as unknown as number),
+      price: p.price_per_fraction != null ? Number(p.price_per_fraction) : ("" as unknown as number),
+      yield: p.assured_yield != null ? Number(p.assured_yield) : ("" as unknown as number),
+      irr: p.target_irr != null ? Number(p.target_irr) : ("" as unknown as number),
       postedBy: "Admin",
       // Shared
       subType: p.sub_type || "",
@@ -327,7 +327,7 @@ export default function PropertiesPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [mapLat, setMapLat] = useState(17.385);
   const [mapLng, setMapLng] = useState(78.4867);
-  const HOME_APP_URL = process.env.NEXT_PUBLIC_HOME_APP_URL || 'http://localhost:8081';
+  const HOME_APP_URL = process.env.NEXT_PUBLIC_HOME_APP_URL || 'https://realshare.in';
 
   // Preview & Publish state
   const [showPreviewModal, setShowPreviewModal] = useState(false);
@@ -2308,13 +2308,13 @@ export default function PropertiesPage() {
         </div>
       )}
 
-      {/* ── Property Preview Modal ── */}
+      {/* ── Property Preview Modal (Property Details Page Replica) ── */}
       {showPreviewModal && (
         <div
           style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: "rgba(15,23,42,0.82)",
-            backdropFilter: "blur(6px)",
+            backgroundColor: "rgba(15,23,42,0.85)",
+            backdropFilter: "blur(4px)",
             zIndex: 300,
             display: "flex", justifyContent: "center", alignItems: "center",
             padding: "20px",
@@ -2322,172 +2322,221 @@ export default function PropertiesPage() {
         >
           <div
             style={{
-              backgroundColor: "#fff",
+              backgroundColor: "#F8FAFC",
               borderRadius: "20px",
               width: "100%",
-              maxWidth: "640px",
-              maxHeight: "92vh",
+              maxWidth: "1100px",
+              maxHeight: "94vh",
               overflowY: "auto",
-              boxShadow: "0 32px 80px rgba(0,0,0,0.35)",
+              boxShadow: "0 32px 80px rgba(0,0,0,0.4)",
+              position: "relative",
+              display: "flex",
+              flexDirection: "column",
             }}
           >
-            {/* Header */}
-            <div style={{
-              background: "linear-gradient(135deg, #1E3A5F, #2563EB)",
-              borderRadius: "20px 20px 0 0",
-              padding: "20px 24px",
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-            }}>
-              <div>
-                <div style={{ color: "#93C5FD", fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "4px" }}>Home Page Preview</div>
-                <div style={{ color: "#fff", fontSize: "1.15rem", fontWeight: 800 }}>How this listing will appear</div>
+            {/* Top Close Button (Floating) */}
+            <button
+              onClick={() => { setShowPreviewModal(false); previewBlobUrls.forEach(u => URL.revokeObjectURL(u)); setPreviewBlobUrls([]); }}
+              style={{ position: "absolute", top: "16px", right: "20px", background: "#fff", border: "1px solid #E2E8F0", borderRadius: "50%", width: "36px", height: "36px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 10, boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}
+            >
+              <span style={{ fontSize: "1.2rem", fontWeight: 700, color: "#64748B" }}>✕</span>
+            </button>
+
+            {/* Header (Top Navbar mock) */}
+            <div style={{ background: "#fff", padding: "12px 32px", borderBottom: "1px solid #E2E8F0", display: "flex", alignItems: "center" }}>
+              <div style={{ fontSize: "0.85rem", color: "#64748B" }}>
+                Home &nbsp;&gt;&nbsp; Properties &nbsp;&gt;&nbsp; <span style={{ fontWeight: 600, color: "#1E293B" }}>{newProp.title || "Draft Property"}</span>
               </div>
-              <button
-                onClick={() => { setShowPreviewModal(false); previewBlobUrls.forEach(u => URL.revokeObjectURL(u)); setPreviewBlobUrls([]); }}
-                style={{ background: "rgba(255,255,255,0.15)", border: "none", borderRadius: "8px", padding: "6px 12px", cursor: "pointer", color: "#fff", fontWeight: 700, fontSize: "1.1rem" }}
-              >
-                ✕
-              </button>
             </div>
 
-            {/* Property Card Preview */}
-            <div style={{ padding: "24px" }}>
-              {/* Cover Image */}
-              <div style={{ position: "relative", borderRadius: "14px", overflow: "hidden", height: "220px", background: "#E2E8F0", marginBottom: "16px" }}>
-                {previewBlobUrls.length > 0 ? (
-                  <img src={previewBlobUrls[0]} alt="Preview" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+            {/* Main Content Area */}
+            <div style={{ padding: "32px", flex: 1, display: "flex", gap: "32px", alignItems: "flex-start" }}>
+              
+              {/* Left & Center Section (Flex 1) */}
+              <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: "32px" }}>
+                
+                {/* Top Row: Text (Left) + Image (Center) */}
+                <div style={{ display: "flex", gap: "32px" }}>
+                  
+                  {/* Text Column */}
+                  <div style={{ width: "320px", display: "flex", flexDirection: "column", gap: "16px" }}>
+                    <div>
+                      <h1 style={{ fontSize: "1.75rem", fontWeight: 800, color: "#1E293B", margin: "0 0 4px 0", lineHeight: 1.2 }}>
+                        {newProp.title || "Property Title"}
+                      </h1>
+                      <div style={{ fontSize: "0.85rem", color: "#64748B", display: "flex", alignItems: "center", gap: "6px" }}>
+                        <span>📍</span>
+                        <span>{[newProp.locality, newProp.district, newProp.state].filter(Boolean).join(", ")}</span>
+                        <span style={{ color: "#1E293B", fontWeight: 700, marginLeft: "8px", cursor: "pointer" }}>Open in Google Maps ↗</span>
+                      </div>
+                    </div>
+
+                    <div style={{ fontSize: "0.85rem", color: "#64748B", lineHeight: 1.6 }}>
+                      {newProp.description ? (
+                        newProp.description.substring(0, 150) + (newProp.description.length > 150 ? "..." : "")
+                      ) : "Property description will appear here..."}
+                    </div>
+
+                    {/* Quick Stats Grid */}
+                    <div style={{ background: "#F8FAFC", borderRadius: "12px", border: "1px solid #E2E8F0", padding: "16px", display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "1.2rem", color: "#64748B" }}>🏢</span>
+                        <div>
+                          <div style={{ fontSize: "0.65rem", color: "#94A3B8", fontWeight: 600, textTransform: "uppercase" }}>Type</div>
+                          <div style={{ fontSize: "0.85rem", color: "#1E293B", fontWeight: 700 }}>{newProp.type || "Commercial"}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span style={{ fontSize: "1.2rem", color: "#64748B" }}>📐</span>
+                        <div>
+                          <div style={{ fontSize: "0.65rem", color: "#94A3B8", fontWeight: 600, textTransform: "uppercase" }}>Area</div>
+                          <div style={{ fontSize: "0.85rem", color: "#1E293B", fontWeight: 700 }}>{Number(newProp.areaSqft || 0).toLocaleString("en-IN")} sqft</div>
+                        </div>
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px", gridColumn: "span 2" }}>
+                        <span style={{ fontSize: "1.2rem", color: "#D4AF37" }}>💳</span>
+                        <div>
+                          <div style={{ fontSize: "0.65rem", color: "#94A3B8", fontWeight: 600, textTransform: "uppercase" }}>Facilities</div>
+                          <div style={{ fontSize: "0.85rem", color: "#1E293B", fontWeight: 700 }}>ATMs, 24x7 Security</div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Posted By Box */}
+                    <div style={{ background: "#fff", borderRadius: "12px", border: "1px solid #E2E8F0", padding: "12px", display: "flex", alignItems: "center", gap: "12px" }}>
+                      <div style={{ width: "40px", height: "40px", borderRadius: "20px", background: "#F1F5F9", display: "flex", alignItems: "center", justifyContent: "center", color: "#94A3B8", fontSize: "1.2rem" }}>👤</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontSize: "0.6rem", color: "#64748B", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.5px" }}>Property Posted By User</div>
+                        <div style={{ fontSize: "0.9rem", color: "#1E293B", fontWeight: 700 }}>Realshare Admin</div>
+                      </div>
+                      <span style={{ color: "#059669", fontSize: "1.2rem" }}>✓</span>
+                    </div>
+
+                    <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: "10px", padding: "10px", fontSize: "0.75rem", color: "#92400E" }}>
+                      ℹ️ <strong>Live Preview</strong> - Ready to post.
+                    </div>
+                  </div>
+
+                  {/* Gallery Column (Center) */}
+                  <div style={{ flex: 1 }}>
+                    <div style={{ position: "relative", width: "100%", height: "400px", borderRadius: "16px", overflow: "hidden", background: "#E2E8F0" }}>
+                      {previewBlobUrls.length > 0 ? (
+                        <img src={previewBlobUrls[0]} alt="Preview Cover" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                      ) : (
+                        <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94A3B8" }}>
+                          <span style={{ fontSize: "3rem", marginBottom: "8px" }}>🏠</span>
+                          <span>No cover image selected</span>
+                        </div>
+                      )}
+                      
+                      {/* Floating actions over image */}
+                      <div style={{ position: "absolute", top: "16px", right: "72px", width: "40px", height: "40px", background: "#fff", borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+                        <span style={{ fontSize: "1.1rem" }}>♡</span>
+                      </div>
+                      <div style={{ position: "absolute", top: "16px", right: "16px", width: "40px", height: "40px", background: "#fff", borderRadius: "20px", display: "flex", alignItems: "center", justifyContent: "center", boxShadow: "0 4px 12px rgba(0,0,0,0.15)" }}>
+                        <span style={{ fontSize: "1.1rem" }}>↗</span>
+                      </div>
+                      <div style={{ position: "absolute", bottom: "16px", right: "16px", background: "rgba(0,0,0,0.7)", color: "#fff", padding: "8px 16px", borderRadius: "20px", fontSize: "0.85rem", fontWeight: 600, display: "flex", alignItems: "center", gap: "6px" }}>
+                        ▶ View Gallery
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Tabs Section (Static Mock) */}
+                <div style={{ marginTop: "16px" }}>
+                  <div style={{ display: "flex", gap: "24px", borderBottom: "1px solid #E2E8F0", paddingBottom: "12px", marginBottom: "24px" }}>
+                    {["Overview", "Property Details", "Amenities", "Location", "Developer", "Documents"].map((tab, idx) => (
+                      <div key={tab} style={{ fontSize: "0.85rem", fontWeight: 700, color: idx === 0 ? "#D4AF37" : "#64748B", position: "relative", cursor: "pointer" }}>
+                        {tab}
+                        {idx === 0 && <div style={{ position: "absolute", bottom: "-13px", left: 0, right: 0, height: "2px", background: "#D4AF37" }} />}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Right Column (Price & Actions) */}
+              <div style={{ width: "320px", display: "flex", flexDirection: "column", gap: "24px" }}>
+                
+                {/* Price Card */}
+                <div style={{ background: "#fff", borderRadius: "16px", border: "1px solid #E2E8F0", padding: "24px", boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
+                  <div style={{ fontSize: "0.85rem", color: "#64748B", fontWeight: 600, marginBottom: "4px" }}>Estimated Price</div>
+                  <div style={{ fontSize: "2rem", fontWeight: 800, color: "#D4AF37", marginBottom: "20px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>₹</span>
+                    <span>
+                      {newProp.listingType === "fractional"
+                        ? Math.round(Number(newProp.totalPrice || 0) / Math.max(1, Number(newProp.totalFractions))).toLocaleString("en-IN")
+                        : Number(newProp.price || 0).toLocaleString("en-IN")}
+                    </span>
+                  </div>
+                  <button style={{ width: "100%", background: "#B48811", color: "#fff", border: "none", borderRadius: "8px", padding: "14px", fontWeight: 700, fontSize: "0.95rem", display: "flex", alignItems: "center", justifyContent: "center", gap: "8px", cursor: "pointer" }}>
+                    📅 Request Details
+                  </button>
+                  <div style={{ fontSize: "0.7rem", color: "#94A3B8", textAlign: "center", marginTop: "12px", display: "flex", alignItems: "center", justifyContent: "center", gap: "4px" }}>
+                    <span style={{ color: "#059669" }}>✓</span> Your information is secure with Realshare
+                  </div>
+                </div>
+
+                {/* Calculator Mock */}
+                <div style={{ background: "#fff", borderRadius: "16px", border: "1px solid #E2E8F0", padding: "24px", boxShadow: "0 4px 20px rgba(0,0,0,0.03)" }}>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 800, color: "#1E293B", marginBottom: "16px", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>🧮</span> Payment Calculator
+                  </div>
+                  <div style={{ marginBottom: "12px" }}>
+                    <div style={{ fontSize: "0.75rem", color: "#64748B", marginBottom: "6px" }}>Property Price (₹)</div>
+                    <div style={{ border: "1px solid #E2E8F0", borderRadius: "8px", padding: "10px", fontSize: "0.9rem", color: "#1E293B" }}>{Number(newProp.price || 0).toLocaleString("en-IN")}</div>
+                  </div>
+                  <div style={{ marginBottom: "12px" }}>
+                    <div style={{ fontSize: "0.75rem", color: "#64748B", marginBottom: "6px" }}>Down Payment (%)</div>
+                    <div style={{ border: "1px solid #E2E8F0", borderRadius: "8px", padding: "10px", fontSize: "0.9rem", color: "#1E293B" }}>20</div>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            {/* Bottom Sticky Action Bar */}
+            <div style={{ position: "sticky", bottom: 0, background: "#fff", borderTop: "1px solid #E2E8F0", padding: "16px 32px", display: "flex", justifyContent: "flex-end", gap: "16px", borderBottomLeftRadius: "20px", borderBottomRightRadius: "20px", boxShadow: "0 -4px 12px rgba(0,0,0,0.02)" }}>
+              <button
+                type="button"
+                onClick={() => { setShowPreviewModal(false); previewBlobUrls.forEach(u => URL.revokeObjectURL(u)); setPreviewBlobUrls([]); }}
+                style={{ padding: "12px 24px", borderRadius: "8px", border: "1px solid #CBD5E1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: "0.95rem", color: "#475569" }}
+              >
+                Back to Edit
+              </button>
+              <button
+                type="button"
+                disabled={isUploading}
+                onClick={async () => {
+                  setShowPreviewModal(false);
+                  previewBlobUrls.forEach(u => URL.revokeObjectURL(u));
+                  setPreviewBlobUrls([]);
+                  await handleCreateProperty();
+                }}
+                style={{
+                  padding: "12px 32px",
+                  borderRadius: "8px",
+                  background: isUploading ? "#93C5FD" : "linear-gradient(135deg, #059669, #10B981)",
+                  color: "#fff",
+                  border: "none",
+                  cursor: isUploading ? "not-allowed" : "pointer",
+                  fontWeight: 700,
+                  fontSize: "0.95rem",
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "8px",
+                  boxShadow: "0 4px 12px rgba(16,185,129,0.3)",
+                }}
+              >
+                {isUploading ? (
+                  <><span style={{ display: "inline-block", width: "16px", height: "16px", border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Uploading...</>
+                ) : editingPropertyId ? (
+                  <>✅ Update Live Property</>
                 ) : (
-                  <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", color: "#94A3B8" }}>
-                    <span style={{ fontSize: "2.5rem", marginBottom: "8px" }}>🏠</span>
-                    <span style={{ fontSize: "0.85rem" }}>No image selected — a placeholder will be used</span>
-                  </div>
+                  <>🚀 Confirm &amp; Post Property</>
                 )}
-                {/* Badges overlaid */}
-                <div style={{ position: "absolute", top: "10px", left: "10px", display: "flex", gap: "6px" }}>
-                  <span style={{ background: "rgba(37,99,235,0.9)", color: "#fff", fontSize: "0.68rem", fontWeight: 700, padding: "3px 8px", borderRadius: "6px", textTransform: "uppercase", backdropFilter: "blur(4px)" }}>
-                    {newProp.listingType === "fractional" ? "Fractional" : newProp.listingType === "rental" ? "Rental" : newProp.listingType === "resale" ? "Resale" : "Outright"}
-                  </span>
-                  <span style={{ background: "rgba(15,23,42,0.75)", color: "#fff", fontSize: "0.68rem", fontWeight: 700, padding: "3px 8px", borderRadius: "6px", textTransform: "uppercase", backdropFilter: "blur(4px)" }}>
-                    {newProp.type}
-                  </span>
-                </div>
-                <div style={{ position: "absolute", top: "10px", right: "10px", background: "rgba(245,158,11,0.9)", color: "#fff", fontSize: "0.68rem", fontWeight: 700, padding: "3px 10px", borderRadius: "6px", backdropFilter: "blur(4px)" }}>
-                  🕐 Draft — Pending Review
-                </div>
-                {previewBlobUrls.length > 1 && (
-                  <div style={{ position: "absolute", bottom: "10px", right: "10px", background: "rgba(0,0,0,0.6)", color: "#fff", fontSize: "0.72rem", fontWeight: 700, padding: "3px 8px", borderRadius: "6px" }}>
-                    +{previewBlobUrls.length - 1} more photos
-                  </div>
-                )}
-              </div>
-
-              {/* Title & Location */}
-              <h2 style={{ fontSize: "1.25rem", fontWeight: 800, color: "#0F172A", margin: "0 0 6px 0", lineHeight: 1.3 }}>
-                {newProp.title || "(No title entered)"}
-              </h2>
-              <div style={{ display: "flex", alignItems: "center", gap: "4px", color: "#64748B", fontSize: "0.85rem", marginBottom: "18px" }}>
-                <span>📍</span>
-                <span>{[newProp.locality, newProp.district, newProp.state].filter(Boolean).join(", ")}</span>
-              </div>
-
-              {/* Key Stats Grid */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "18px" }}>
-                <div style={{ background: "#F0F9FF", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
-                  <div style={{ fontSize: "0.68rem", color: "#0369A1", fontWeight: 700, textTransform: "uppercase", marginBottom: "4px" }}>
-                    {newProp.listingType === "rental" ? "Rent / Month" : newProp.listingType === "fractional" ? "Price / Fraction" : "Price"}
-                  </div>
-                  <div style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
-                    ₹{newProp.listingType === "fractional"
-                      ? Math.round(Number(newProp.totalPrice || 0) / Math.max(1, Number(newProp.totalFractions))).toLocaleString("en-IN")
-                      : Number(newProp.price).toLocaleString("en-IN")}
-                  </div>
-                </div>
-                <div style={{ background: "#F0FDF4", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
-                  <div style={{ fontSize: "0.68rem", color: "#15803D", fontWeight: 700, textTransform: "uppercase", marginBottom: "4px" }}>Area</div>
-                  <div style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>
-                    {Number(newProp.areaSqft).toLocaleString("en-IN")} {newProp.areaUnit}
-                  </div>
-                </div>
-                {newProp.listingType === "fractional" ? (
-                  <div style={{ background: "#FFF7ED", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
-                    <div style={{ fontSize: "0.68rem", color: "#C2410C", fontWeight: 700, textTransform: "uppercase", marginBottom: "4px" }}>Assured Yield</div>
-                    <div style={{ fontSize: "1.05rem", fontWeight: 800, color: "#0F172A" }}>{newProp.yield}%</div>
-                  </div>
-                ) : (
-                  <div style={{ background: "#FAF5FF", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
-                    <div style={{ fontSize: "0.68rem", color: "#7C3AED", fontWeight: 700, textTransform: "uppercase", marginBottom: "4px" }}>Listing Type</div>
-                    <div style={{ fontSize: "0.95rem", fontWeight: 800, color: "#0F172A", textTransform: "capitalize" }}>{newProp.listingType}</div>
-                  </div>
-                )}
-              </div>
-
-              {/* Description snippet */}
-              {newProp.description && (
-                <div style={{ background: "#F8FAFC", borderRadius: "10px", padding: "14px", marginBottom: "18px" }}>
-                  <div style={{ fontWeight: 700, fontSize: "0.8rem", color: "#334155", marginBottom: "6px" }}>Description</div>
-                  <div style={{ fontSize: "0.85rem", color: "#475569", lineHeight: 1.6, maxHeight: "80px", overflow: "hidden", WebkitLineClamp: 3, display: "-webkit-box", WebkitBoxOrient: "vertical" as any }}>
-                    {newProp.description}
-                  </div>
-                </div>
-              )}
-
-              {/* Fractional pool info */}
-              {newProp.listingType === "fractional" && (
-                <div style={{ background: "#EFF6FF", borderRadius: "10px", padding: "12px 14px", marginBottom: "18px", display: "flex", justifyContent: "space-between", fontSize: "0.82rem" }}>
-                  <span>🔢 <strong>{newProp.totalFractions}</strong> total fractions</span>
-                  <span>💰 Total: <strong>₹{Number((newProp as any).totalPrice || 0).toLocaleString("en-IN")}</strong></span>
-                  <span>📈 IRR: <strong>{newProp.irr}%</strong></span>
-                </div>
-              )}
-
-              <div style={{ background: "#FFFBEB", border: "1px solid #FDE68A", borderRadius: "10px", padding: "12px 14px", fontSize: "0.8rem", color: "#92400E", marginBottom: "20px" }}>
-                ℹ️ This is a <strong>live preview</strong> of how the listing will appear in the app. The property will be submitted for approval after you click Post.
-              </div>
-
-              {/* Action buttons */}
-              <div style={{ display: "flex", gap: "12px", justifyContent: "flex-end" }}>
-                <button
-                  type="button"
-                  onClick={() => { setShowPreviewModal(false); previewBlobUrls.forEach(u => URL.revokeObjectURL(u)); setPreviewBlobUrls([]); }}
-                  style={{ padding: "11px 22px", borderRadius: "10px", border: "1px solid #CBD5E1", background: "#fff", cursor: "pointer", fontWeight: 700, fontSize: "0.9rem", color: "#334155" }}
-                >
-                  ← Back to Edit
-                </button>
-                <button
-                  type="button"
-                  disabled={isUploading}
-                  onClick={async () => {
-                    setShowPreviewModal(false);
-                    previewBlobUrls.forEach(u => URL.revokeObjectURL(u));
-                    setPreviewBlobUrls([]);
-                    await handleCreateProperty();
-                  }}
-                  style={{
-                    padding: "11px 28px",
-                    borderRadius: "10px",
-                    background: isUploading ? "#93C5FD" : "linear-gradient(135deg, #059669, #10B981)",
-                    color: "#fff",
-                    border: "none",
-                    cursor: isUploading ? "not-allowed" : "pointer",
-                    fontWeight: 700,
-                    fontSize: "0.9rem",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "8px",
-                    boxShadow: "0 4px 12px rgba(16,185,129,0.35)",
-                  }}
-                >
-                  {isUploading ? (
-                    <><span style={{ display: "inline-block", width: "14px", height: "14px", border: "2px solid #fff", borderTopColor: "transparent", borderRadius: "50%", animation: "spin 0.7s linear infinite" }} /> Uploading...</>
-                  ) : editingPropertyId ? (
-                    <>✅ Update Property</>
-                  ) : (
-                    <>🚀 Post Property</>
-                  )}
-                </button>
-              </div>
+              </button>
             </div>
           </div>
         </div>

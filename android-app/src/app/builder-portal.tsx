@@ -11,6 +11,7 @@ import {
   Modal,
   Dimensions,
   Platform,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useUser } from '@/contexts/UserContext';
@@ -60,16 +61,17 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
   const [stateName, setStateName] = useState('Telangana');
   const [type, setType] = useState('Commercial');
   const [listingType, setListingType] = useState<'fractional' | 'outright'>('fractional');
-  const [fractions, setFractions] = useState('100');
-  const [price, setPrice] = useState('500000');
-  const [yieldVal, setYieldVal] = useState('9.5');
-  const [targetIrr, setTargetIrr] = useState('15.0');
+  const [fractions, setFractions] = useState('');
+  const [price, setPrice] = useState('');
+  const [yieldVal, setYieldVal] = useState('');
+  const [targetIrr, setTargetIrr] = useState('');
   const [reraNo, setReraNo] = useState('');
   const [description, setDescription] = useState('');
   const [imageUri, setImageUri] = useState<string | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
   const [postFormErrors, setPostFormErrors] = useState<string[]>([]);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
     if (profile && profile.role !== 'builder' && profile.role !== 'admin') {
@@ -141,7 +143,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
     }
   };
 
-  const handlePostProperty = async () => {
+  const handleValidateAndPreview = () => {
     const errors: string[] = [];
     if (!title || !title.trim()) errors.push('Property Title is required.');
     if (!locality || !locality.trim()) errors.push('Locality is required.');
@@ -150,6 +152,10 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
       return;
     }
     setPostFormErrors([]);
+    setShowPreviewModal(true);
+  };
+
+  const submitPostProperty = async () => {
     setIsUploading(true);
     
     try {
@@ -628,13 +634,13 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
 
             <TouchableOpacity
               style={[styles.submitBtn, isUploading && { opacity: 0.7 }]}
-              onPress={handlePostProperty}
+              onPress={handleValidateAndPreview}
               disabled={isUploading}
             >
               {isUploading ? (
                 <ActivityIndicator color={Neutrals.white} />
               ) : (
-                <Text style={styles.submitBtnText}>👁️ Preview &amp; Submit for Verification</Text>
+                <Text style={styles.submitBtnText}>👁️ Preview &amp; Publish</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -668,7 +674,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
                 <TextInput
                   style={styles.input}
                   keyboardType="numeric"
-                  value={String(editingProp?.rawPrice || '')}
+                  value={editingProp?.rawPrice != null ? String(editingProp.rawPrice) : ''}
                   onChangeText={(text) => setEditingProp({ ...editingProp, rawPrice: text })}
                 />
               </View>
@@ -677,7 +683,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
                 <TextInput
                   style={styles.input}
                   keyboardType="numeric"
-                  value={String(editingProp?.rawYield || '')}
+                  value={editingProp?.rawYield != null ? String(editingProp.rawYield) : ''}
                   onChangeText={(text) => setEditingProp({ ...editingProp, rawYield: text })}
                 />
               </View>
@@ -691,6 +697,181 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
                 <Text style={styles.submitBtnText}>Save Changes</Text>
               </TouchableOpacity>
             </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ── Property Preview Modal (Property Details Page Replica) ── */}
+      <Modal visible={showPreviewModal} animationType="slide" transparent={false}>
+        <View style={{ flex: 1, backgroundColor: '#fff' }}>
+          
+          {/* Header */}
+          <View style={{ paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 60 : 36, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
+             <Text style={{ fontSize: 14, color: '#64748B' }}>Home  &gt;  Properties  &gt;  <Text style={{ fontWeight: '600', color: '#1E293B' }}>{title || 'Draft Property'}</Text></Text>
+             <TouchableOpacity onPress={() => setShowPreviewModal(false)} style={{ padding: 8, backgroundColor: '#F1F5F9', borderRadius: 20 }}>
+               <Ionicons name="close" size={20} color="#64748B" />
+             </TouchableOpacity>
+          </View>
+
+          <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
+            {(() => {
+              const { width } = useWindowDimensions();
+              const isDesktop = width >= 1024;
+              
+              return (
+                <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 40 : 0 }}>
+                  
+                  {/* Main Content (Left on Desktop) */}
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 32, marginBottom: 32 }}>
+                      
+                      {/* Text Column */}
+                      <View style={{ width: isDesktop ? 340 : '100%' }}>
+                        <Text style={{ fontSize: isDesktop ? 28 : 22, fontWeight: '800', color: '#1E293B', marginBottom: 4 }}>
+                          {title || 'Property Title'}
+                        </Text>
+                        
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                          <Text style={{ fontSize: 14, color: '#475569', fontWeight: '500' }}>📍 {[locality, district, stateName].filter(Boolean).join(', ')}</Text>
+                          <Text style={{ color: '#1E293B', fontWeight: '700', fontSize: 13, marginLeft: 16 }}>Open in Google Maps ↗</Text>
+                        </View>
+
+                        <Text style={{ fontSize: 14, color: '#64748B', lineHeight: 22, marginBottom: 20 }} numberOfLines={4}>
+                          {description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.'}
+                        </Text>
+
+                        {/* Quick Stats Container */}
+                        <View style={{ marginTop: 16, backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16 }}>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 16, columnGap: 12 }}>
+                            <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Ionicons name="business-outline" size={20} color="#64748B" />
+                              <View>
+                                <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
+                                <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', textTransform: 'capitalize' }}>{listingType}</Text>
+                              </View>
+                            </View>
+                            <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Ionicons name="resize-outline" size={20} color="#64748B" />
+                              <View>
+                                <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Fractions</Text>
+                                <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{listingType === 'fractional' ? fractions : 1}</Text>
+                              </View>
+                            </View>
+                            <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Ionicons name="shield-checkmark-outline" size={20} color="#B48811" />
+                              <View>
+                                <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Yield</Text>
+                                <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{yieldVal}%</Text>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+
+                        {/* Posted By */}
+                        <View style={{ marginTop: 16, padding: 14, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name="person" size={24} color="#94A3B8" />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 10, color: '#64748B', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>PROPERTY POSTED BY YOU</Text>
+                            <Text style={{ fontSize: 15, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>{profile?.full_name || 'Builder User'}</Text>
+                          </View>
+                          <Ionicons name="checkmark-circle" size={20} color="#059669" />
+                        </View>
+                      </View>
+
+                      {/* Gallery Column */}
+                      <View style={{ flex: 1, width: isDesktop ? undefined : '100%', marginTop: isDesktop ? 0 : 24 }}>
+                        <View style={{ width: '100%', height: isDesktop ? 420 : 240, borderRadius: 16, overflow: 'hidden', backgroundColor: '#E2E8F0', marginBottom: 12 }}>
+                          {imageUri ? (
+                             <Image source={{ uri: imageUri }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                          ) : (
+                             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                               <Ionicons name="image-outline" size={48} color="#94A3B8" />
+                               <Text style={{ color: '#94A3B8', fontSize: 14, marginTop: 8 }}>No cover image selected</Text>
+                             </View>
+                          )}
+                          <View style={{ position: 'absolute', top: 16, right: 72, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name="heart-outline" size={22} color="#1E293B" />
+                          </View>
+                          <View style={{ position: 'absolute', top: 16, right: 16, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name="share-social-outline" size={22} color="#1E293B" />
+                          </View>
+                        </View>
+                      </View>
+
+                    </View>
+
+                    {/* Static Tabs Mock */}
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ borderBottomWidth: 1, borderBottomColor: '#E2E8F0', paddingBottom: 8, marginBottom: 24, gap: 24 }}>
+                      {['Overview', 'Property Details', 'Amenities', 'Location', 'Developer', 'Documents'].map((tab, idx) => (
+                        <View key={tab}>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: idx === 0 ? '#D4AF37' : '#64748B', paddingBottom: 4 }}>{tab}</Text>
+                          {idx === 0 && <View style={{ position: 'absolute', bottom: -9, left: 0, right: 0, height: 2, backgroundColor: '#D4AF37' }} />}
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </View>
+
+                  {/* Right Column (Price Cards) */}
+                  <View style={{ width: isDesktop ? 320 : '100%' }}>
+                     <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2, marginBottom: 24 }}>
+                        <Text style={{ fontSize: 14, color: '#64748B', fontWeight: '600', marginBottom: 4 }}>Estimated Price</Text>
+                        <Text style={{ fontSize: 32, fontWeight: '800', color: '#D4AF37', marginBottom: 20 }}>
+                           ₹{Number(price || 0).toLocaleString('en-IN')}
+                        </Text>
+                        <View style={{ width: '100%', backgroundColor: '#B48811', paddingVertical: 14, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }}>
+                           <Ionicons name="calendar-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
+                           <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Request Details</Text>
+                        </View>
+                     </View>
+
+                     <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                           <Text style={{ fontSize: 18 }}>🧮</Text>
+                           <Text style={{ fontSize: 17, fontWeight: '800', color: '#1E293B', marginLeft: 8 }}>Payment Calculator</Text>
+                        </View>
+                        <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 6 }}>Property Price (₹)</Text>
+                        <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 10, marginBottom: 12 }}>
+                           <Text style={{ fontSize: 14, color: '#1E293B' }}>{Number(price || 0).toLocaleString('en-IN')}</Text>
+                        </View>
+                     </View>
+                  </View>
+                </View>
+              );
+            })()}
+          </ScrollView>
+
+          {/* Fixed Action Buttons */}
+          <View style={{
+            position: 'absolute', bottom: 0, left: 0, right: 0,
+            flexDirection: 'row', gap: 12, padding: 20,
+            backgroundColor: '#fff',
+            borderTopWidth: 1, borderTopColor: '#E2E8F0',
+            paddingBottom: Platform.OS === 'ios' ? 36 : 20,
+          }}>
+            <TouchableOpacity
+              style={{ flex: 1, backgroundColor: '#F1F5F9', paddingVertical: 14, borderRadius: 12, alignItems: 'center' }}
+              onPress={() => setShowPreviewModal(false)}
+              disabled={isUploading}
+            >
+              <Text style={{ fontWeight: '700', color: '#334155', fontSize: 15 }}>← Back to Edit</Text>
+            </TouchableOpacity>
+            
+            <TouchableOpacity
+              style={[{ flex: 2, paddingVertical: 14, borderRadius: 12, alignItems: 'center', justifyContent: 'center' }, isUploading ? { backgroundColor: '#93C5FD' } : { backgroundColor: '#059669' }]}
+              onPress={() => {
+                setShowPreviewModal(false);
+                submitPostProperty();
+              }}
+              disabled={isUploading}
+            >
+              {isUploading ? (
+                <ActivityIndicator color="#fff" />
+              ) : (
+                <Text style={{ color: '#fff', fontWeight: '800', fontSize: 15 }}>🚀 Confirm &amp; Post Property</Text>
+              )}
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>

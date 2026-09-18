@@ -11,6 +11,7 @@ import {
   Platform,
   Alert,
   Modal,
+  useWindowDimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
@@ -108,10 +109,10 @@ export default function PostPropertyScreen() {
   // Financials
   const [price, setPrice] = useState('');
   const [totalPriceStr, setTotalPriceStr] = useState('');
-  const [totalFractions, setTotalFractions] = useState('100');
-  const [bookingAmount, setBookingAmount] = useState('50000');
-  const [assuredYield, setAssuredYield] = useState('8.5');
-  const [targetIrr, setTargetIrr] = useState('15.0');
+  const [totalFractions, setTotalFractions] = useState('');
+  const [bookingAmount, setBookingAmount] = useState('');
+  const [assuredYield, setAssuredYield] = useState('');
+  const [targetIrr, setTargetIrr] = useState('');
   
   // Rental Financials
   const [rentalAmount, setRentalAmount] = useState('');
@@ -1370,111 +1371,145 @@ export default function PostPropertyScreen() {
         )}
       </ScrollView>
 
-      {/* ── Property Preview Modal ── */}
+      {/* ── Property Preview Modal (Property Details Page Replica) ── */}
       <Modal visible={showPreviewModal} animationType="slide" transparent={false}>
-        <View style={{ flex: 1, backgroundColor: '#F8FAFC' }}>
+        <View style={{ flex: 1, backgroundColor: '#fff' }}>
+          
           {/* Header */}
-          <View style={{
-            backgroundColor: '#1E3A5F',
-            paddingTop: Platform.OS === 'ios' ? 52 : 36,
-            paddingBottom: 16,
-            paddingHorizontal: 20,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}>
-            <View>
-              <Text style={{ color: '#93C5FD', fontSize: 11, fontWeight: '700', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 2 }}>Home Page Preview</Text>
-              <Text style={{ color: '#fff', fontSize: 17, fontWeight: '800' }}>How this listing will appear</Text>
-            </View>
-            <TouchableOpacity
-              onPress={() => setShowPreviewModal(false)}
-              style={{ backgroundColor: 'rgba(255,255,255,0.15)', borderRadius: 8, paddingHorizontal: 12, paddingVertical: 6 }}
-            >
-              <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>✕</Text>
-            </TouchableOpacity>
+          <View style={{ paddingHorizontal: 20, paddingTop: Platform.OS === 'ios' ? 60 : 36, paddingBottom: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderBottomWidth: 1, borderBottomColor: '#E2E8F0' }}>
+             <Text style={{ fontSize: 14, color: '#64748B' }}>Home  &gt;  Properties  &gt;  <Text style={{ fontWeight: '600', color: '#1E293B' }}>{title || 'Draft Property'}</Text></Text>
+             <TouchableOpacity onPress={() => setShowPreviewModal(false)} style={{ padding: 8, backgroundColor: '#F1F5F9', borderRadius: 20 }}>
+               <Ionicons name="close" size={20} color="#64748B" />
+             </TouchableOpacity>
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
-            {/* Cover Image */}
-            <View style={{ borderRadius: 14, overflow: 'hidden', height: 200, backgroundColor: '#E2E8F0', marginBottom: 16, position: 'relative' }}>
-              {localImageUris.length > 0 ? (
-                <Image source={{ uri: localImageUris[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
-              ) : (
-                <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-                  <Ionicons name="home-outline" size={48} color="#94A3B8" />
-                  <Text style={{ color: '#94A3B8', fontSize: 13, marginTop: 8 }}>No image selected — placeholder will be used</Text>
-                </View>
-              )}
-              {/* Badges */}
-              <View style={{ position: 'absolute', top: 10, left: 10, flexDirection: 'row', gap: 6 }}>
-                <View style={{ backgroundColor: 'rgba(37,99,235,0.9)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
-                  <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>{listingType}</Text>
-                </View>
-                <View style={{ backgroundColor: 'rgba(15,23,42,0.75)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
-                  <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700', textTransform: 'uppercase' }}>{category}</Text>
-                </View>
-              </View>
-              <View style={{ position: 'absolute', top: 10, right: 10, backgroundColor: 'rgba(245,158,11,0.9)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 3 }}>
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '700' }}>🕐 Draft — Pending Review</Text>
-              </View>
-              {localImageUris.length > 1 && (
-                <View style={{ position: 'absolute', bottom: 10, right: 10, backgroundColor: 'rgba(0,0,0,0.6)', borderRadius: 6, paddingHorizontal: 8, paddingVertical: 3 }}>
-                  <Text style={{ color: '#fff', fontSize: 11, fontWeight: '700' }}>+{localImageUris.length - 1} more</Text>
-                </View>
-              )}
-            </View>
+            {(() => {
+              const { width } = useWindowDimensions();
+              const isDesktop = width >= 1024;
+              
+              return (
+                <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 40 : 0 }}>
+                  
+                  {/* Main Content (Left on Desktop) */}
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: 32, marginBottom: 32 }}>
+                      
+                      {/* Text Column */}
+                      <View style={{ width: isDesktop ? 340 : '100%' }}>
+                        <Text style={{ fontSize: isDesktop ? 28 : 22, fontWeight: '800', color: '#1E293B', marginBottom: 4 }}>
+                          {title || 'Property Title'}
+                        </Text>
+                        
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+                          <Text style={{ fontSize: 14, color: '#475569', fontWeight: '500' }}>📍 {[locality, district === 'Other' ? customDistrict : district, stateName].filter(Boolean).join(', ')}</Text>
+                          <Text style={{ color: '#1E293B', fontWeight: '700', fontSize: 13, marginLeft: 16 }}>Open in Google Maps ↗</Text>
+                        </View>
 
-            {/* Title & Location */}
-            <Text style={{ fontSize: 20, fontWeight: '800', color: '#0F172A', marginBottom: 4 }}>{title || '(No title)'}</Text>
-            <Text style={{ fontSize: 14, color: '#64748B', marginBottom: 18 }}>📍 {[locality, district === 'Other' ? customDistrict : district, stateName].filter(Boolean).join(', ')}</Text>
+                        <Text style={{ fontSize: 14, color: '#64748B', lineHeight: 22, marginBottom: 20 }} numberOfLines={4}>
+                          {description || 'Premium property with excellent investment potential and high capital growth prospects. Located in a prime area with seamless connectivity.'}
+                        </Text>
 
-            {/* Stats Row */}
-            <View style={{ flexDirection: 'row', gap: 10, marginBottom: 18 }}>
-              <View style={{ flex: 1, backgroundColor: '#F0F9FF', borderRadius: 10, padding: 12, alignItems: 'center' }}>
-                <Text style={{ fontSize: 10, color: '#0369A1', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>
-                  {listingType === 'rental' ? 'Rent/Month' : listingType === 'fractional' ? 'Per Fraction' : 'Price'}
-                </Text>
-                <Text style={{ fontSize: 15, fontWeight: '800', color: '#0F172A' }}>₹{Number(price).toLocaleString('en-IN')}</Text>
-              </View>
-              <View style={{ flex: 1, backgroundColor: '#F0FDF4', borderRadius: 10, padding: 12, alignItems: 'center' }}>
-                <Text style={{ fontSize: 10, color: '#15803D', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Area</Text>
-                <Text style={{ fontSize: 15, fontWeight: '800', color: '#0F172A' }}>{areaSqft} {newProp.areaUnit}</Text>
-              </View>
-              {listingType === 'fractional' ? (
-                <View style={{ flex: 1, backgroundColor: '#FFF7ED', borderRadius: 10, padding: 12, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 10, color: '#C2410C', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Yield</Text>
-                  <Text style={{ fontSize: 15, fontWeight: '800', color: '#0F172A' }}>{assuredYield}%</Text>
+                        {/* Quick Stats Container */}
+                        <View style={{ marginTop: 16, backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', padding: 16 }}>
+                          <View style={{ flexDirection: 'row', flexWrap: 'wrap', rowGap: 16, columnGap: 12 }}>
+                            <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Ionicons name="business-outline" size={20} color="#64748B" />
+                              <View>
+                                <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Type</Text>
+                                <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700', textTransform: 'capitalize' }}>{listingType}</Text>
+                              </View>
+                            </View>
+                            <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Ionicons name="resize-outline" size={20} color="#64748B" />
+                              <View>
+                                <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
+                                <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{Number(areaSqft || 0).toLocaleString('en-IN')} {newProp.areaUnit}</Text>
+                              </View>
+                            </View>
+                            <View style={{ width: '45%', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                              <Ionicons name="shield-checkmark-outline" size={20} color="#B48811" />
+                              <View>
+                                <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Facilities</Text>
+                                <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>24x7 Security</Text>
+                              </View>
+                            </View>
+                          </View>
+                        </View>
+
+                        {/* Posted By */}
+                        <View style={{ marginTop: 16, padding: 14, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                          <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: '#F1F5F9', alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name="person" size={24} color="#94A3B8" />
+                          </View>
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontSize: 10, color: '#64748B', fontWeight: '700', textTransform: 'uppercase', letterSpacing: 0.5 }}>PROPERTY POSTED BY YOU</Text>
+                            <Text style={{ fontSize: 15, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>Realshare User</Text>
+                          </View>
+                          <Ionicons name="checkmark-circle" size={20} color="#059669" />
+                        </View>
+                      </View>
+
+                      {/* Gallery Column */}
+                      <View style={{ flex: 1, width: isDesktop ? undefined : '100%', marginTop: isDesktop ? 0 : 24 }}>
+                        <View style={{ width: '100%', height: isDesktop ? 420 : 240, borderRadius: 16, overflow: 'hidden', backgroundColor: '#E2E8F0', marginBottom: 12 }}>
+                          {localImageUris.length > 0 ? (
+                             <Image source={{ uri: localImageUris[0] }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+                          ) : (
+                             <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+                               <Ionicons name="image-outline" size={48} color="#94A3B8" />
+                               <Text style={{ color: '#94A3B8', fontSize: 14, marginTop: 8 }}>No cover image selected</Text>
+                             </View>
+                          )}
+                          <View style={{ position: 'absolute', top: 16, right: 72, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name="heart-outline" size={22} color="#1E293B" />
+                          </View>
+                          <View style={{ position: 'absolute', top: 16, right: 16, width: 44, height: 44, backgroundColor: '#fff', borderRadius: 22, alignItems: 'center', justifyContent: 'center' }}>
+                            <Ionicons name="share-social-outline" size={22} color="#1E293B" />
+                          </View>
+                        </View>
+                      </View>
+
+                    </View>
+
+                    {/* Static Tabs Mock */}
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ borderBottomWidth: 1, borderBottomColor: '#E2E8F0', paddingBottom: 8, marginBottom: 24, gap: 24 }}>
+                      {['Overview', 'Property Details', 'Amenities', 'Location', 'Developer', 'Documents'].map((tab, idx) => (
+                        <View key={tab}>
+                          <Text style={{ fontSize: 14, fontWeight: '700', color: idx === 0 ? '#D4AF37' : '#64748B', paddingBottom: 4 }}>{tab}</Text>
+                          {idx === 0 && <View style={{ position: 'absolute', bottom: -9, left: 0, right: 0, height: 2, backgroundColor: '#D4AF37' }} />}
+                        </View>
+                      ))}
+                    </ScrollView>
+                  </View>
+
+                  {/* Right Column (Price Cards) */}
+                  <View style={{ width: isDesktop ? 320 : '100%' }}>
+                     <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2, marginBottom: 24 }}>
+                        <Text style={{ fontSize: 14, color: '#64748B', fontWeight: '600', marginBottom: 4 }}>Estimated Price</Text>
+                        <Text style={{ fontSize: 32, fontWeight: '800', color: '#D4AF37', marginBottom: 20 }}>
+                           ₹{Number(price || 0).toLocaleString('en-IN')}
+                        </Text>
+                        <View style={{ width: '100%', backgroundColor: '#B48811', paddingVertical: 14, borderRadius: 8, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' }}>
+                           <Ionicons name="calendar-outline" size={18} color="#fff" style={{ marginRight: 8 }} />
+                           <Text style={{ color: '#fff', fontWeight: '700', fontSize: 15 }}>Request Details</Text>
+                        </View>
+                     </View>
+
+                     <View style={{ backgroundColor: '#fff', borderRadius: 16, borderWidth: 1, borderColor: '#E2E8F0', padding: 24, shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.05, shadowRadius: 12, elevation: 2 }}>
+                        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+                           <Text style={{ fontSize: 18 }}>🧮</Text>
+                           <Text style={{ fontSize: 17, fontWeight: '800', color: '#1E293B', marginLeft: 8 }}>Payment Calculator</Text>
+                        </View>
+                        <Text style={{ fontSize: 12, color: '#64748B', marginBottom: 6 }}>Property Price (₹)</Text>
+                        <View style={{ borderWidth: 1, borderColor: '#E2E8F0', borderRadius: 8, padding: 10, marginBottom: 12 }}>
+                           <Text style={{ fontSize: 14, color: '#1E293B' }}>{Number(price || 0).toLocaleString('en-IN')}</Text>
+                        </View>
+                     </View>
+                  </View>
                 </View>
-              ) : (
-                <View style={{ flex: 1, backgroundColor: '#FAF5FF', borderRadius: 10, padding: 12, alignItems: 'center' }}>
-                  <Text style={{ fontSize: 10, color: '#7C3AED', fontWeight: '700', textTransform: 'uppercase', marginBottom: 4 }}>Mode</Text>
-                  <Text style={{ fontSize: 13, fontWeight: '800', color: '#0F172A', textTransform: 'capitalize' }}>{listingType}</Text>
-                </View>
-              )}
-            </View>
-
-            {/* Description */}
-            {description.trim().length > 0 && (
-              <View style={{ backgroundColor: '#F8FAFC', borderRadius: 10, padding: 14, marginBottom: 16 }}>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: '#334155', marginBottom: 6 }}>Description</Text>
-                <Text style={{ fontSize: 13, color: '#475569', lineHeight: 20 }} numberOfLines={4}>{description}</Text>
-              </View>
-            )}
-
-            {/* Fractional pool */}
-            {listingType === 'fractional' && (
-              <View style={{ backgroundColor: '#EFF6FF', borderRadius: 10, padding: 12, marginBottom: 16, flexDirection: 'row', justifyContent: 'space-between' }}>
-                <Text style={{ fontSize: 12, color: '#1E40AF' }}>🔢 <Text style={{ fontWeight: '700' }}>{totalFractions}</Text> fractions</Text>
-                <Text style={{ fontSize: 12, color: '#1E40AF' }}>💰 Booking: <Text style={{ fontWeight: '700' }}>₹{Number(bookingAmount).toLocaleString('en-IN')}</Text></Text>
-                <Text style={{ fontSize: 12, color: '#1E40AF' }}>📈 IRR: <Text style={{ fontWeight: '700' }}>{targetIrr}%</Text></Text>
-              </View>
-            )}
-
-            {/* Info note */}
-            <View style={{ backgroundColor: '#FFFBEB', borderWidth: 1, borderColor: '#FDE68A', borderRadius: 10, padding: 12, marginBottom: 24 }}>
-              <Text style={{ fontSize: 12, color: '#92400E' }}>ℹ️ This preview shows how your listing will appear. After posting, it will be reviewed by Admin before going live.</Text>
-            </View>
+              );
+            })()}
           </ScrollView>
 
           {/* Fixed Action Buttons */}
@@ -1488,6 +1523,7 @@ export default function PostPropertyScreen() {
             <TouchableOpacity
               style={{ flex: 1, backgroundColor: '#F1F5F9', paddingVertical: 14, borderRadius: 12, alignItems: 'center' }}
               onPress={() => setShowPreviewModal(false)}
+
               disabled={isSubmitting}
             >
               <Text style={{ fontWeight: '700', color: '#334155', fontSize: 15 }}>← Back to Edit</Text>

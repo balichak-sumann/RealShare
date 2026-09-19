@@ -8,20 +8,25 @@
 
 const SMSGATEWAYHUB_ENDPOINT = 'https://www.smsgatewayhub.com/api/mt/SendSMS';
 
-export async function sendOtpSms(phone: string, otp: string): Promise<{ success: boolean; error?: string }> {
+export async function sendOtpSms(phone: string, otp: string, isLogin: boolean = false): Promise<{ success: boolean; error?: string }> {
   const apiKey = process.env.SMSGATEWAYHUB_API_KEY;
   const senderId = process.env.SMSGATEWAYHUB_SENDER_ID;
   const entityId = process.env.SMSGATEWAYHUB_ENTITY_ID;
-  const templateId = process.env.SMSGATEWAYHUB_DLT_TEMPLATE_ID;
+  
+  // Use specific template for login, fallback to env or hardcoded registration template
+  const templateId = isLogin 
+    ? (process.env.SMSGATEWAYHUB_LOGIN_DLT_TEMPLATE_ID || '1277178972017302343')
+    : process.env.SMSGATEWAYHUB_DLT_TEMPLATE_ID;
 
   if (!apiKey || apiKey === 'your_smsgatewayhub_api_key' || !senderId || !entityId || entityId === 'your_dlt_entity_id' || !templateId || templateId === 'your_dlt_template_id') {
-    console.warn(`\n[SMS MOCK] Missing SMS credentials. Mocking SMS delivery.\n[SMS MOCK] Sent to: ${phone}\n[SMS MOCK] OTP IS: ${otp}\n`);
+    console.warn(`\n[SMS MOCK] Missing SMS credentials. Mocking SMS delivery.\n[SMS MOCK] Sent to: ${phone}\n[SMS MOCK] OTP IS: ${otp}\n[SMS MOCK] Context: ${isLogin ? 'Login' : 'Registration'}\n`);
     return { success: true };
   }
 
   // The message text MUST match the DLT-approved template exactly.
-  // Approved Jio DLT Template ID: 1207175454269228947
-  const message = `Your Realshare Properties OTP to register your account is: ${otp}. Please do not share with anyone.`;
+  const message = isLogin
+    ? `Your OTP for login to Realshare is ${otp}. This OTP is valid for 10 minutes. Please do not share it with anyone.`
+    : `Your Realshare Properties OTP to register your account is: ${otp}. Please do not share with anyone.`;
 
   const url = new URL(SMSGATEWAYHUB_ENDPOINT);
   url.searchParams.set('APIKey', apiKey);

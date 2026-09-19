@@ -94,7 +94,9 @@ export async function POST(request: Request) {
     const expiresAt = now + 5 * 60 * 1000; // 5 minutes
 
     // Send OTP via SMSGatewayHub
-    const result = await sendOtpSms(phone, otp);
+    // If checkExists is true, it's a login attempt. If action='login', it's a login.
+    const isLogin = Boolean(body?.checkExists || body?.action === 'login');
+    const result = await sendOtpSms(phone, otp, isLogin);
 
     if (!result.success) {
       console.error(`[OTP] Failed to send OTP to ${phone}:`, result.error);

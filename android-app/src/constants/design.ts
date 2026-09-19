@@ -84,40 +84,32 @@ export const Radius = {
   full: 999,
 };
 
+import { Platform } from 'react-native';
+
 export const Shadows = {
-  soft: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.06,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  medium: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  md: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.08,
-    shadowRadius: 16,
-    elevation: 4,
-  },
-  strong: {
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.12,
-    shadowRadius: 32,
-    elevation: 8,
-  },
-  gold: {
-    shadowColor: GoldSystem.metallicGold,
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 20,
-    elevation: 4,
-  },
+  soft: Platform.select({
+    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 8 },
+    android: { shadowColor: '#000', elevation: 2 },
+    default: { boxShadow: '0 2px 8px rgba(0,0,0,0.06)' },
+  }),
+  medium: Platform.select({
+    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 16 },
+    android: { shadowColor: '#000', elevation: 4 },
+    default: { boxShadow: '0 4px 16px rgba(0,0,0,0.08)' },
+  }),
+  md: Platform.select({
+    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.08, shadowRadius: 16 },
+    android: { shadowColor: '#000', elevation: 4 },
+    default: { boxShadow: '0 4px 16px rgba(0,0,0,0.08)' },
+  }),
+  strong: Platform.select({
+    ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.12, shadowRadius: 32 },
+    android: { shadowColor: '#000', elevation: 8 },
+    default: { boxShadow: '0 8px 32px rgba(0,0,0,0.12)' },
+  }),
+  gold: Platform.select({
+    ios: { shadowColor: GoldSystem.metallicGold, shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.3, shadowRadius: 12 },
+    android: { shadowColor: GoldSystem.metallicGold, elevation: 8 },
+    default: { boxShadow: '0 4px 16px rgba(212, 175, 55, 0.3)' },
+  }),
 };

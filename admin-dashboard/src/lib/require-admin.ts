@@ -26,8 +26,8 @@ export async function requireAuth(request: Request): Promise<AuthResult> {
 export async function requireAdmin(request: Request): Promise<AuthResult> {
   const result = await requireAuth(request);
   if (!result.ok) return result;
-  if (result.role !== 'admin') {
-    return { ok: false, response: NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 }) };
+  if (result.role !== 'admin' && result.role !== 'employee') {
+    return { ok: false, response: NextResponse.json({ error: 'Forbidden: Admin or Employee access required' }, { status: 403 }) };
   }
   return result;
 }

@@ -8,16 +8,18 @@ import { useRouter, usePathname } from 'next/navigation';
 
 interface AuthContextType {
   user: User | null;
+  userProfile: any | null;
   loading: boolean;
   logout: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType>({ user: null, loading: true, logout: async () => {} });
+const AuthContext = createContext<AuthContextType>({ user: null, userProfile: null, loading: true, logout: async () => {} });
 
 const publicPaths = ['/login', '/signup', '/employee-login'];
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [userProfile, setUserProfile] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
@@ -70,6 +72,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         }
 
         const profile = await res.json();
+        setUserProfile(profile);
         const role = profile?.role;
 
         if (role === 'admin' || role === 'employee') {
@@ -96,11 +99,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const logout = async () => {
     disconnectSocket();
     await signOut(auth);
+    setUserProfile(null);
     router.push('/login');
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, logout }}>
+    <AuthContext.Provider value={{ user, userProfile, loading, logout }}>
       {!loading && children}
     </AuthContext.Provider>
   );

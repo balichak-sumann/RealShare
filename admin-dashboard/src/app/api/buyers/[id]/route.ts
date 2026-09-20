@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
+import { logAdminAction } from '@/lib/audit';
 
 // GET: Full details for a single buyer
 export async function GET(
@@ -121,6 +122,8 @@ export async function PATCH(
               : null,
         },
       });
+      
+      await logAdminAction(auth.uid, `KYC_${kyc_action.toUpperCase()}`, 'User', id, { status, rejection_reason });
     }
 
     // 2. Handle Wallet Balance Adjustments
@@ -159,6 +162,8 @@ export async function PATCH(
           },
         },
       });
+      
+      await logAdminAction(auth.uid, 'WALLET_ADJUSTMENT', 'User', id, { type: wallet_adjustment.type, amount: adjAmount, reason: wallet_adjustment.reason });
     }
 
     // 3. Handle Profile and Status Field Updates
@@ -181,6 +186,7 @@ export async function PATCH(
         where: { id },
         data: updateData,
       });
+      await logAdminAction(auth.uid, 'UPDATE_USER_PROFILE', 'User', id, updateData);
     }
 
     // Return the updated profile with deep relations

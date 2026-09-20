@@ -278,6 +278,16 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         profile: { select: { full_name: true, role: true } },
       },
     });
+
+    if (user.isAdmin || user.role === 'employee') {
+      const { logAdminAction } = await import('@/lib/audit');
+      await logAdminAction(user.uid, 'UPDATE_PROPERTY_STATUS', 'Property', id, { 
+        approval_status: data.approval_status, 
+        is_sold_out: data.is_sold_out, 
+        featured: data.featured 
+      });
+    }
+
     return NextResponse.json(attachComputedFields(updated));
   } catch (error) {
     console.error('Failed to patch property:', error);
@@ -298,6 +308,12 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
     }
 
     await deletePropertyWithRelations(id);
+
+    if (user.isAdmin || user.role === 'employee') {
+      const { logAdminAction } = await import('@/lib/audit');
+      await logAdminAction(user.uid, 'DELETE_PROPERTY', 'Property', id, {});
+    }
+
     return NextResponse.json({ success: true });
   } catch (error: any) {
     console.error('Failed to delete property:', error);

@@ -13,30 +13,51 @@ interface AdminLayoutProps {
 
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, userProfile, logout } = useAuth();
 
-  const navItems = [
-    { name: "Overview", path: "/", icon: "📊" },
-    { name: "Properties & Shares", path: "/properties", icon: "🏢" },
-    { name: "Featured Properties", path: "/featured-properties", icon: "⭐" },
-    { name: "Developers", path: "/developers", icon: "🏗️" },
-    { name: "Users & KYC", path: "/buyers", icon: "👥" },
-    { name: "Account Approvals", path: "/approvals", icon: "✅" },
-    { name: "Employees (RBAC)", path: "/employees", icon: "👔" },
-    { name: "Agents & Commissions", path: "/agents", icon: "🤝" },
-    { name: "Referral Tracking", path: "/referrals", icon: "🔗" },
-    { name: "Financial Ledger", path: "/ledger", icon: "💰" },
-    { name: "Additional Services", path: "/services", icon: "🛎️" },
-    { name: "Services Inquiries", path: "/services-inquiries", icon: "✨" },
-    { name: "Partner Apps", path: "/partner-applications", icon: "🤝" },
-    { name: "Contact Messages", path: "/contact-messages", icon: "📧" },
-    { name: "Property Requests", path: "/property-requests", icon: "🏠" },
-    { name: "Support Tickets", path: "/tickets", icon: "🎫" },
-    { name: "Messages", path: "/messages", icon: "💬" },
-    { name: "Notifications Hub", path: "/notifications", icon: "📢" },
-    { name: "Content & Banners", path: "/cms", icon: "🎨" },
-    { name: "System Settings", path: "/settings", icon: "⚙️" },
-  ];
+  const navItems = React.useMemo(() => {
+    const allItems = [
+      { name: "Overview", path: "/", icon: "📊" },
+      { name: "Properties & Shares", path: "/properties", icon: "🏢" },
+      { name: "Featured Properties", path: "/featured-properties", icon: "⭐" },
+      { name: "Developers", path: "/developers", icon: "🏗️" },
+      { name: "Users & KYC", path: "/buyers", icon: "👥" },
+      { name: "Account Approvals", path: "/approvals", icon: "✅" },
+      { name: "Employees (RBAC)", path: "/employees", icon: "👔" },
+      { name: "Agents & Commissions", path: "/agents", icon: "🤝" },
+      { name: "Referral Tracking", path: "/referrals", icon: "🔗" },
+      { name: "Financial Ledger", path: "/ledger", icon: "💰" },
+      { name: "Additional Services", path: "/services", icon: "🛎️" },
+      { name: "Services Inquiries", path: "/services-inquiries", icon: "✨" },
+      { name: "Partner Apps", path: "/partner-applications", icon: "🤝" },
+      { name: "Contact Messages", path: "/contact-messages", icon: "📧" },
+      { name: "Property Requests", path: "/property-requests", icon: "🏠" },
+      { name: "Support Tickets", path: "/tickets", icon: "🎫" },
+      { name: "Messages", path: "/messages", icon: "💬" },
+      { name: "Notifications Hub", path: "/notifications", icon: "📢" },
+      { name: "Content & Banners", path: "/cms", icon: "🎨" },
+      { name: "System Settings", path: "/settings", icon: "⚙️" },
+      { name: "Audit Logs", path: "/audit-logs", icon: "📝" }, // New audit log page
+    ];
+
+    if (userProfile?.role === 'admin') {
+      return allItems;
+    }
+
+    const dept = userProfile?.employee_department;
+    if (dept === 'sales') {
+      return allItems.filter(item => ['/', '/properties', '/featured-properties', '/developers', '/buyers', '/agents', '/referrals', '/property-requests'].includes(item.path));
+    }
+    if (dept === 'support') {
+      return allItems.filter(item => ['/', '/buyers', '/tickets', '/messages', '/services-inquiries', '/contact-messages', '/partner-applications', '/notifications'].includes(item.path));
+    }
+    if (dept === 'accounts') {
+      return allItems.filter(item => ['/', '/ledger', '/approvals', '/agents', '/services'].includes(item.path));
+    }
+
+    // Default fallback: just show overview if department is unrecognized
+    return allItems.filter(item => item.path === '/');
+  }, [userProfile]);
 
   return (
     <div className={styles.layout}>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
+import { logAdminAction } from '@/lib/audit';
 
 export async function GET(request: Request) {
   try {
@@ -54,11 +55,13 @@ export async function PATCH(request: Request) {
         where: { id },
         data: { is_banned: true },
       });
+      await logAdminAction(auth.uid, 'REJECT_USER', 'User', id, { reason: 'banned via approvals' });
     } else {
       updatedUser = await prisma.profile.update({
         where: { id },
         data: { is_approved: true },
       });
+      await logAdminAction(auth.uid, 'APPROVE_USER', 'User', id, {});
     }
 
     return NextResponse.json(updatedUser);
@@ -83,6 +86,8 @@ export async function DELETE(request: Request) {
     await prisma.profile.delete({
       where: { id },
     });
+    
+    await logAdminAction(auth.uid, 'DELETE_USER', 'User', id, {});
 
     return NextResponse.json({ success: true });
   } catch (error: any) {

@@ -60,6 +60,7 @@ model Profile {
   conversation_participants ConversationParticipant[]
   messages                  Message[]
   developer                 Developer?        @relation(fields: [developer_id], references: [id])
+  audit_logs                AuditLog[]        @relation("EmployeeAuditLogs")
 
   @@map("profiles")
 }
@@ -580,4 +581,18 @@ model ContactMessage {
   created_at      DateTime @default(now()) @db.Timestamptz(6)
 
   @@map("contact_messages")
+}
+
+model AuditLog {
+  id          String   @id @default(uuid()) @db.VarChar(36)
+  employee_id String   @db.VarChar(128)
+  action      String   @db.VarChar(100) // e.g., "APPROVE_KYC", "UPDATE_PROPERTY"
+  entity_type String   @db.VarChar(100) // e.g., "User", "Property", "Investment"
+  entity_id   String   @db.VarChar(128)
+  details     Json?    // Optional JSON payload with what changed or additional context
+  created_at  DateTime @default(now()) @db.Timestamptz(6)
+
+  employee    Profile  @relation("EmployeeAuditLogs", fields: [employee_id], references: [id], onDelete: Cascade)
+
+  @@map("audit_logs")
 }

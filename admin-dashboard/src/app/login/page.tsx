@@ -40,7 +40,7 @@ function LoginForm() {
 
     try {
       const endpoint = isEmail ? '/api/otp/send-email' : '/api/otp/send';
-      const payload = isEmail ? { email: identifier.trim() } : { phone: identifier.replace(/\D/g, '').slice(-10) };
+      const payload = isEmail ? { email: identifier.trim(), action: 'login' } : { phone: identifier.replace(/\D/g, '').slice(-10), action: 'login' };
       
       const res = await fetch(endpoint, {
         method: 'POST',

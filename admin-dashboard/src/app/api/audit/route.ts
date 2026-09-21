@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { verifyIdToken } from '@/lib/firebase-admin';
+import prisma from '@/lib/prisma';
+import { auth } from '@/lib/firebase-admin';
 
 export async function GET(request: Request) {
   try {
@@ -10,7 +10,7 @@ export async function GET(request: Request) {
     }
     
     const token = authHeader.split('Bearer ')[1];
-    const decodedToken = await verifyIdToken(token);
+    const decodedToken = await auth.verifyIdToken(token);
     
     // Check if the user is an admin
     const profile = await prisma.profile.findUnique({

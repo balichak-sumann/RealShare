@@ -14,18 +14,19 @@ interface SmsConfig {
   message: string;
 }
 
-/** Build config for the requested context (login vs registration). */
 function getSmsConfig(otp: string, isLogin: boolean): SmsConfig {
   if (isLogin && process.env.SMSGATEWAYHUB_LOGIN_DLT_TEMPLATE_ID) {
+    const templateText = process.env.SMSGATEWAYHUB_LOGIN_TEMPLATE_TEXT || 'Your OTP for login to Realshare is {#var#}. This OTP is valid for 10 minutes. Please do not share it with anyone.';
     return {
       templateId: process.env.SMSGATEWAYHUB_LOGIN_DLT_TEMPLATE_ID,
-      message: `Your OTP for login to Realshare is ${otp}. This OTP is valid for 10 minutes. Please do not share it with anyone.`,
+      message: templateText.replace('{#var#}', otp),
     };
   }
   // Registration template (also used as fallback when login template is unavailable)
+  const templateText = process.env.SMSGATEWAYHUB_DLT_TEMPLATE_TEXT || 'Your Realshare Properties OTP to register your account is: {#var#}. Please do not share with anyone.';
   return {
     templateId: process.env.SMSGATEWAYHUB_DLT_TEMPLATE_ID!,
-    message: `Your Realshare Properties OTP to register your account is: ${otp}. Please do not share with anyone.`,
+    message: templateText.replace('{#var#}', otp),
   };
 }
 

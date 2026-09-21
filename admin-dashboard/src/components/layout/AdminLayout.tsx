@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,6 +14,7 @@ interface AdminLayoutProps {
 export default function AdminLayout({ children, title }: AdminLayoutProps) {
   const pathname = usePathname();
   const { user, userProfile, logout } = useAuth();
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const navItems = React.useMemo(() => {
     const allItems = [
@@ -58,13 +59,19 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     // Default fallback: just show overview if department is unrecognized
     return allItems.filter(item => item.path === '/');
   }, [userProfile]);
-
   return (
     <div className={styles.layout}>
+      {/* Mobile Overlay */}
+      {isMobileOpen && (
+        <div className={styles.mobileOverlay} onClick={() => setIsMobileOpen(false)} />
+      )}
+
       {/* Sidebar */}
-      <aside className={styles.sidebar}>
+      <aside className={`${styles.sidebar} ${isMobileOpen ? styles.sidebarOpen : ""}`}>
         <div className={styles.logo}>
           <img src="/logo.png" alt="Realshare Logo" style={{ height: '64px' }} />
+          {/* Close button for mobile inside sidebar */}
+          <button className={styles.mobileCloseBtn} onClick={() => setIsMobileOpen(false)}>✕</button>
         </div>
         <div className={styles.navLabel}>MANAGEMENT CONSOLE</div>
         <nav className={styles.nav}>
@@ -72,6 +79,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
             <Link
               key={item.path}
               href={item.path}
+              onClick={() => setIsMobileOpen(false)}
               className={`${styles.navItem} ${
                 pathname === item.path ? styles.active : ""
               }`}
@@ -99,9 +107,14 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       <main className={styles.main}>
         {/* Header */}
         <header className={styles.header}>
-          <div>
-            <h1 className={styles.headerTitle}>{title}</h1>
-            <p className={styles.headerSubtitle}>Realshare Management Portal</p>
+          <div className={styles.headerLeft}>
+            <button className={styles.mobileMenuBtn} onClick={() => setIsMobileOpen(true)}>
+              ☰
+            </button>
+            <div>
+              <h1 className={styles.headerTitle}>{title}</h1>
+              <p className={styles.headerSubtitle}>Realshare Management Portal</p>
+            </div>
           </div>
           <div className={styles.headerActions}>
             <div className={styles.searchBar}>

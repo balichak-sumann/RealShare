@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Linking, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image, Platform, Linking, Animated, useWindowDimensions } from 'react-native';
 import { useRouter, Link } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Typography, Radius } from '@/constants/design';
@@ -82,21 +82,7 @@ const storeBadgeStyles = StyleSheet.create({
  * Web-only informational footer (About, How It Works, Contact, Partner
  * With Us, Privacy Policy, Terms of Service, plus a copyright/address bar).
  *
- * NOT auto-rendered by WebShell -- WebShell's 'page' tier body is `flex:1`
- * and most screens fill it with their own full-height ScrollView, so a
- * footer sibling there would render with zero height. Instead this is
- * mounted explicitly, per-screen, at the end of that screen's own
- * ScrollView content. Currently wired into the Home screen only
- * (`(tabs)/index.tsx`, gated on `isDesktop`) for discoverability; the new
- * marketing/legal pages (about.tsx, how-it-works.tsx, contact.tsx,
- * partners.tsx, and LegalPageLayout for the two legal pages) each mount
- * their own copy at the bottom of their content too. Add it the same way
- * to any other screen that should end with it.
- *
- * Every route WebFooter links to (about, how-it-works, contact, partners,
- * privacy-policy, terms-of-service) is itself guarded with
- * `if (Platform.OS !== 'web') return <Redirect href="/" />;`, so this
- * component -- and everything it links to -- never surfaces on native.
+ * Fully adaptive: mobile (<768px), tablet (768-1099px), desktop (>=1100px).
  */
 
 interface FooterLinkProps {
@@ -106,19 +92,35 @@ interface FooterLinkProps {
 
 function FooterLink({ label, href }: FooterLinkProps) {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
   return (
     <TouchableOpacity onPress={() => router.push(href as any)} activeOpacity={0.7}>
-      <Text style={[styles.link, !isDesktop && { marginBottom: 4, fontSize: 11 }]}>{label}</Text>
+      <Text style={[styles.link, !isWide && { marginBottom: 4, fontSize: 11 }]}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
-export function WebFooter() {
-  const { isDesktop } = useResponsive();
-  const router = useRouter();
+/** Social media icons row */
+function SocialIcons({ size = 20 }: { size?: number }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: size === 16 ? 16 : 14, flexWrap: 'wrap' }}>
+      <TouchableOpacity onPress={() => Linking.openURL('https://www.facebook.com/RealshareProperties/')}><Ionicons name="logo-facebook" size={size} color={Neutrals.gray400} /></TouchableOpacity>
+      <TouchableOpacity onPress={() => Linking.openURL('https://www.instagram.com/realshare_properties/')}><Ionicons name="logo-instagram" size={size} color={Neutrals.gray400} /></TouchableOpacity>
+      <TouchableOpacity onPress={() => Linking.openURL('https://www.linkedin.com/in/realshare-properties-7a96a1344/')}><Ionicons name="logo-linkedin" size={size} color={Neutrals.gray400} /></TouchableOpacity>
+      <TouchableOpacity onPress={() => Linking.openURL('https://x.com/Realshare_Prop')}><Ionicons name="logo-twitter" size={size} color={Neutrals.gray400} /></TouchableOpacity>
+      <TouchableOpacity onPress={() => Linking.openURL('https://in.pinterest.com/Realshare_Properties')}><Ionicons name="logo-pinterest" size={size} color={Neutrals.gray400} /></TouchableOpacity>
+      <TouchableOpacity onPress={() => Linking.openURL('https://www.youtube.com/@RealshareProperties')}><Ionicons name="logo-youtube" size={size} color={Neutrals.gray400} /></TouchableOpacity>
+    </View>
+  );
+}
 
-  if (!isDesktop) {
+export function WebFooter() {
+  const { isDesktop, isTablet, isMobile, width } = useResponsive();
+  const router = useRouter();
+  const isWide = isDesktop || isTablet;
+
+  if (isMobile) {
     // Ultra-compact mobile footer
     return (
       <View style={{ backgroundColor: Neutrals.obsidian, paddingHorizontal: 16, paddingTop: 14, paddingBottom: 14 }}>
@@ -140,12 +142,7 @@ export function WebFooter() {
           </View>
         </View>
         <View style={{ flexDirection: 'row', gap: 16, marginTop: 8, marginBottom: 8 }}>
-          <TouchableOpacity onPress={() => Linking.openURL('https://www.facebook.com/RealshareProperties/')}><Ionicons name="logo-facebook" size={16} color={Neutrals.gray400} /></TouchableOpacity>
-          <TouchableOpacity onPress={() => Linking.openURL('https://www.instagram.com/realshare_properties/')}><Ionicons name="logo-instagram" size={16} color={Neutrals.gray400} /></TouchableOpacity>
-          <TouchableOpacity onPress={() => Linking.openURL('https://www.linkedin.com/in/realshare-properties-7a96a1344/')}><Ionicons name="logo-linkedin" size={16} color={Neutrals.gray400} /></TouchableOpacity>
-          <TouchableOpacity onPress={() => Linking.openURL('https://x.com/Realshare_Prop')}><Ionicons name="logo-twitter" size={16} color={Neutrals.gray400} /></TouchableOpacity>
-          <TouchableOpacity onPress={() => Linking.openURL('https://in.pinterest.com/Realshare_Properties')}><Ionicons name="logo-pinterest" size={16} color={Neutrals.gray400} /></TouchableOpacity>
-          <TouchableOpacity onPress={() => Linking.openURL('https://www.youtube.com/@RealshareProperties')}><Ionicons name="logo-youtube" size={16} color={Neutrals.gray400} /></TouchableOpacity>
+          <SocialIcons size={16} />
         </View>
         {Platform.OS === 'web' && (
           <View style={{ flexDirection: 'row', gap: 8, marginBottom: 10 }}>
@@ -159,25 +156,32 @@ export function WebFooter() {
     );
   }
 
+  // Tablet: 2-column grid for link sections, full-width brand + address
+  // Desktop: 5-column single row
+  const isNarrowTablet = isTablet && width < 900;
+
   return (
     <View style={[styles.footer, { marginTop: 40 }]}>
-      <View style={[styles.inner, { paddingHorizontal: 40, paddingTop: 48, paddingBottom: 24 }]}>
-        <View style={[styles.columns, { gap: 32 }]}>
-          <View style={[styles.brandCol, { marginRight: 16 }]}>
+      <View style={[styles.inner, { paddingHorizontal: isTablet ? 24 : 40, paddingTop: isTablet ? 36 : 48, paddingBottom: 24 }]}>
+        
+        {/* Main columns area */}
+        <View style={[styles.columns, { gap: isTablet ? 20 : 32 }]}>
+          
+          {/* Brand column — full width on tablet, flex on desktop */}
+          <View style={[
+            styles.brandCol, 
+            { marginRight: isDesktop ? 16 : 0 },
+            isTablet && { flexBasis: '100%', marginBottom: 24 },
+          ]}>
             <View style={styles.brandRow}>
               <Image source={require('../../../assets/logo.png')} style={styles.logo} />
               <Text style={styles.brandName}>Realshare</Text>
             </View>
-            <Text style={styles.brandBlurb}>
+            <Text style={[styles.brandBlurb, isTablet && { maxWidth: '100%' }]}>
               A new age Intelligent platform bringing Homes that Inspire Life. Earn rental income with commercial and Holiday properties. Invest in premium Realestate with fractional ownership and exit with ease.
             </Text>
             <View style={{ flexDirection: 'row', gap: 16, marginTop: 24 }}>
-              <TouchableOpacity onPress={() => Linking.openURL('https://www.facebook.com/RealshareProperties/')}><Ionicons name="logo-facebook" size={20} color={Neutrals.gray400} /></TouchableOpacity>
-              <TouchableOpacity onPress={() => Linking.openURL('https://www.instagram.com/realshare_properties/')}><Ionicons name="logo-instagram" size={20} color={Neutrals.gray400} /></TouchableOpacity>
-              <TouchableOpacity onPress={() => Linking.openURL('https://www.linkedin.com/in/realshare-properties-7a96a1344/')}><Ionicons name="logo-linkedin" size={20} color={Neutrals.gray400} /></TouchableOpacity>
-              <TouchableOpacity onPress={() => Linking.openURL('https://x.com/Realshare_Prop')}><Ionicons name="logo-twitter" size={20} color={Neutrals.gray400} /></TouchableOpacity>
-              <TouchableOpacity onPress={() => Linking.openURL('https://in.pinterest.com/Realshare_Properties')}><Ionicons name="logo-pinterest" size={20} color={Neutrals.gray400} /></TouchableOpacity>
-              <TouchableOpacity onPress={() => Linking.openURL('https://www.youtube.com/@RealshareProperties')}><Ionicons name="logo-youtube" size={20} color={Neutrals.gray400} /></TouchableOpacity>
+              <SocialIcons size={20} />
             </View>
             <View style={{ flexDirection: 'row', gap: 10, marginTop: 16 }}>
               <StoreBadge icon="logo-google-playstore" label="Play Store" url={PLAY_STORE_URL} />
@@ -185,30 +189,44 @@ export function WebFooter() {
             </View>
           </View>
 
-          <View style={styles.col}>
+          {/* Link columns — on tablet these wrap into a 2×2 grid, on desktop they're in a row */}
+          <View style={[
+            styles.col, 
+            isTablet && { flexBasis: isNarrowTablet ? '45%' : '22%', minWidth: 140 },
+          ]}>
             <Text style={styles.colTitle}>Learn</Text>
             <FooterLink label="How It Works" href="/how-it-works" />
             <FooterLink label="About Us" href="/about" />
             <FooterLink label="FAQs" href="/support" />
           </View>
 
-          <View style={styles.col}>
+          <View style={[
+            styles.col,
+            isTablet && { flexBasis: isNarrowTablet ? '45%' : '22%', minWidth: 140 },
+          ]}>
             <Text style={styles.colTitle}>Company</Text>
             <FooterLink label="Contact Us" href="/contact" />
             <FooterLink label="Partner With Us" href="/partners" />
           </View>
 
-          <View style={styles.col}>
+          <View style={[
+            styles.col,
+            isTablet && { flexBasis: isNarrowTablet ? '45%' : '22%', minWidth: 140 },
+          ]}>
             <Text style={styles.colTitle}>Legal</Text>
             <FooterLink label="Privacy Policy" href="/privacy-policy" />
             <FooterLink label="Terms of Service" href="/terms-of-service" />
             <FooterLink label="Disclaimer" href="/disclaimer" />
           </View>
 
-          <View style={[styles.col, { flexBasis: 240 }]}>
+          {/* Address column — adapts width to content, never wraps text */}
+          <View style={[
+            styles.col, 
+            { flexBasis: isDesktop ? 260 : isNarrowTablet ? '45%' : '22%', minWidth: 200, flexShrink: 0 },
+          ]}>
             <Text style={styles.colTitle}>Registered Office</Text>
             <Text style={styles.addressText}>
-              <Text numberOfLines={1} adjustsFontSizeToFit style={Platform.OS === 'web' ? { whiteSpace: 'nowrap' } as any : {}}>Realshare Properties Pvt. Ltd.</Text>{'\n'}
+              Realshare Properties Pvt. Ltd.{'\n'}
               206, Panchsheel Complex, Nizampet{'\n'}
               Hyderabad – 500090, Telangana, India
             </Text>
@@ -216,7 +234,7 @@ export function WebFooter() {
           </View>
         </View>
 
-        <View style={[styles.bottomBar, { marginTop: 32, paddingTop: 20 }]}>
+        <View style={[styles.bottomBar, { marginTop: isTablet ? 24 : 32, paddingTop: 20 }]}>
           <Text style={styles.copyright}>All trademarks, logos and names are properties of their respective owners. All rights reserved. © Copyright {new Date().getFullYear()} Realshare Properties Pvt Ltd</Text>
         </View>
       </View>
@@ -230,6 +248,8 @@ const styles = StyleSheet.create({
   },
   inner: {
     width: '100%',
+    maxWidth: 1400,
+    alignSelf: 'center',
   },
   columns: {
     flexDirection: 'row',
@@ -238,6 +258,7 @@ const styles = StyleSheet.create({
   brandCol: {
     flexBasis: 280,
     flexGrow: 1,
+    flexShrink: 1,
   },
   brandRow: {
     flexDirection: 'row',
@@ -261,8 +282,10 @@ const styles = StyleSheet.create({
     maxWidth: 320,
   },
   col: {
-    flexBasis: 160,
+    flexBasis: 140,
     flexGrow: 1,
+    flexShrink: 1,
+    marginBottom: 16,
   },
   colTitle: {
     ...Typography.labelLarge,

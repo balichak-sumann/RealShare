@@ -33,10 +33,11 @@ const ACTION_ICON_COLORS: Record<string, string> = {
 
 export function QuickActions({ children }: { children?: React.ReactNode }) {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
 
   return (
-    <View style={[styles.wrapper, !isDesktop && { marginTop: 8 }]}>
+    <View style={[styles.wrapper, !isWide && { marginTop: 8 }]}>
       {/* Section Header */}
       <View style={styles.headerContainer}>
         <Text style={styles.superTitle}>DISCOVER MORE</Text>
@@ -56,7 +57,7 @@ export function QuickActions({ children }: { children?: React.ReactNode }) {
 
       {/* Cards Row */}
       <View 
-        style={[styles.cardsContainer, styles.cardsContainerDesktop, !isDesktop && { gap: 8 }]}
+        style={[styles.cardsContainer, styles.cardsContainerDesktop, !isWide && { gap: 8 }]}
       >
         {QUICK_ACTIONS.map((action, index) => (
           <TouchableOpacity
@@ -78,20 +79,20 @@ export function QuickActions({ children }: { children?: React.ReactNode }) {
             />
             
             {/* Top Icon */}
-            <View style={[styles.topIconContainer, !isDesktop && { top: 8, left: 8 }]}>
-              <View style={[styles.iconWrapper, { backgroundColor: ACTION_COLORS[action.id] }, !isDesktop && { width: 28, height: 28, borderRadius: 14 }]}>
+            <View style={[styles.topIconContainer, !isWide && { top: 8, left: 8 }]}>
+              <View style={[styles.iconWrapper, { backgroundColor: ACTION_COLORS[action.id] }, !isWide && { width: 28, height: 28, borderRadius: 14 }]}>
                 <Ionicons
                   name={action.icon as IoniconName}
-                  size={isDesktop ? 20 : 14}
+                  size={isWide ? 20 : 14}
                   color={ACTION_ICON_COLORS[action.id]}
                 />
               </View>
             </View>
 
             {/* Bottom Content overlaid on image */}
-            <View style={[styles.overlayContent, !isDesktop && { padding: 4, paddingBottom: 6, justifyContent: 'flex-end' }]}>
-              <Text style={[styles.overlayTitle, !isDesktop && { fontSize: 10, lineHeight: 12, marginBottom: 0, textAlign: 'center' }]} numberOfLines={2}>{action.title}</Text>
-              {isDesktop && (
+            <View style={[styles.overlayContent, !isWide && { padding: 4, paddingBottom: 6, justifyContent: 'flex-end' }]}>
+              <Text style={[styles.overlayTitle, !isWide && { fontSize: 10, lineHeight: 12, marginBottom: 0, textAlign: 'center' }]} numberOfLines={2}>{action.title}</Text>
+              {isWide && (
                 <>
                   <Text style={styles.overlaySubtitle} numberOfLines={1}>{action.subtitle}</Text>
                   

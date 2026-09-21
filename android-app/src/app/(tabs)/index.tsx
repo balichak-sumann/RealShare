@@ -51,7 +51,8 @@ import { getApiUrl, resilientFetch } from '@/lib/api';
 export default function HomeScreen() {
   const router = useRouter();
   const { profile } = useUser();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
   const { city } = useLocation();
   const { toggleDrawer } = useDrawer();
   const [userName, setUserName] = useState('Buyer');
@@ -198,7 +199,7 @@ export default function HomeScreen() {
     <TabAnimationWrapper>
     <View style={styles.container}>
       {/* Header — phone only; desktop is navigated from DesktopNav */}
-      {!isDesktop && (
+      {!isWide && (
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <TouchableOpacity onPress={toggleDrawer} style={styles.headerIconBtn}>
@@ -244,8 +245,8 @@ export default function HomeScreen() {
         style={styles.scrollContent} 
         showsVerticalScrollIndicator={false} 
         contentContainerStyle={[
-          { paddingBottom: isDesktop ? 64 : 0 },
-          isDesktop && { width: '100%', paddingHorizontal: 24, paddingTop: 16 },
+          { paddingBottom: isWide ? 64 : 0 },
+          isWide && { width: '100%', paddingHorizontal: 24, paddingTop: 16 },
         ] as any}
         onScroll={Animated.event(
           [{ nativeEvent: { contentOffset: { y: scrollY } } }],
@@ -258,7 +259,7 @@ export default function HomeScreen() {
         <CategoryGrid activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
         
         {/* Search Bar with Location Picker */}
-        {isDesktop && Platform.OS === 'web' && (
+        {isWide && Platform.OS === 'web' && (
           <View style={styles.homeSearchContainer}>
             <View style={styles.homeSearchBox}>
               <TouchableOpacity style={styles.homeLocationDropdown} activeOpacity={0.7} onPress={() => setShowLocationPicker(true)}>
@@ -365,7 +366,7 @@ export default function HomeScreen() {
 
         <ServicesStrip />
 
-        {isDesktop && <QuoteSection />}
+        {isWide && <QuoteSection />}
 
         {/* Trust Banner */}
         <View style={styles.trustBanner}>

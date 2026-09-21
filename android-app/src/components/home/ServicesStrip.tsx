@@ -35,7 +35,7 @@ const getImageSource = (img: any, fallbackUrl?: string) => {
   return { uri: fallbackUrl || '' };
 };
 
-const AnimatedServiceItem = ({ item, onPress, isDesktop }: { item: any, onPress: () => void, isDesktop: boolean }) => {
+const AnimatedServiceItem = ({ item, onPress, isWide }: { item: any, onPress: () => void, isWide: boolean }) => {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = () => {
@@ -62,26 +62,26 @@ const AnimatedServiceItem = ({ item, onPress, isDesktop }: { item: any, onPress:
     >
       <Animated.View style={[
         styles.serviceItem, 
-        isDesktop && styles.serviceItemDesktop, 
-        { transform: [{ scale: scaleAnim }], overflow: 'hidden', borderRadius: isDesktop ? Radius.xl : Radius.lg }
+        isWide && styles.serviceItemDesktop, 
+        { transform: [{ scale: scaleAnim }], overflow: 'hidden', borderRadius: isWide ? Radius.xl : Radius.lg }
       ]}>
-        {isDesktop && item.video ? (
+        {isWide && item.video ? (
           <ImageBackground 
             source={getImageSource(item.image, item.image_url)} 
             style={styles.imageBg}
-            imageStyle={{ borderRadius: isDesktop ? Radius.xl : Radius.lg }}
+            imageStyle={{ borderRadius: isWide ? Radius.xl : Radius.lg }}
           >
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.85)']}
-              style={[styles.gradient, isDesktop && styles.gradientDesktop]}
+              style={[styles.gradient, isWide && styles.gradientDesktop]}
             />
-            <Text style={[styles.title, isDesktop && styles.titleDesktop]}>{item.title}</Text>
+            <Text style={[styles.title, isWide && styles.titleDesktop]}>{item.title}</Text>
           </ImageBackground>
         ) : (
           <ImageBackground 
             source={getImageSource(item.image, item.image_url)} 
             style={styles.imageBg}
-            imageStyle={{ borderRadius: isDesktop ? Radius.xl : Radius.lg }}
+            imageStyle={{ borderRadius: isWide ? Radius.xl : Radius.lg }}
           >
             <LinearGradient
               colors={['transparent', 'rgba(0,0,0,0.85)']}
@@ -97,7 +97,8 @@ const AnimatedServiceItem = ({ item, onPress, isDesktop }: { item: any, onPress:
 
 export function ServicesStrip() {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
   const [services, setServices] = useState<any[]>(DEFAULT_SERVICES);
 
   useEffect(() => {
@@ -132,13 +133,13 @@ export function ServicesStrip() {
     <View style={styles.container}>
       <SectionHeader title="Premium Services" onViewAll={() => router.push('/services')} />
       
-      {isDesktop ? (
+      {isWide ? (
         <View style={styles.desktopGrid}>
           {services.map((service) => (
             <AnimatedServiceItem 
               key={service.id} 
               item={service} 
-              isDesktop={isDesktop}
+              isWide={isWide}
               onPress={() => router.push(getServiceRoute(service.title) as any)}
             />
           ))}
@@ -149,7 +150,7 @@ export function ServicesStrip() {
             <AnimatedServiceItem 
               key={service.id} 
               item={service} 
-              isDesktop={isDesktop}
+              isWide={isWide}
               onPress={() => router.push(getServiceRoute(service.title) as any)}
             />
           ))}

@@ -6,6 +6,11 @@ import { Platform, useWindowDimensions } from 'react-native';
  * IMPORTANT: On native (iOS/Android) this ALWAYS reports mobile.
  * Every consumer therefore renders exactly the phone layout it always has.
  * Only the web build ever sees tablet/desktop values.
+ *
+ * Breakpoints:
+ *   Mobile:  < 768px
+ *   Tablet:  768px – 1099px  (iPad, small laptops)
+ *   Desktop: >= 1100px       (full desktop)
  */
 
 export const Breakpoints = {
@@ -13,10 +18,8 @@ export const Breakpoints = {
   mobile: 768,
   /** top end of tablet layout */
   tabletMax: 1100,
-  /** at/above this = full desktop layout. 
-   * NOTE: We set this to 768 so that legacy `isDesktop` checks 
-   * automatically apply to tablets, fixing their layouts. */
-  desktop: 768,
+  /** at/above this = full desktop layout */
+  desktop: 1100,
 };
 
 export const FrameWidth = {
@@ -54,7 +57,7 @@ export function useResponsive(): Responsive {
   }
 
   const isMobile = width < Breakpoints.mobile;
-  const isTablet = width >= Breakpoints.mobile && width < Breakpoints.tabletMax;
+  const isTablet = width >= Breakpoints.mobile && width < Breakpoints.desktop;
   const isDesktop = width >= Breakpoints.desktop;
 
   return {

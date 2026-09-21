@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, TextInput, Platform, ActivityIndicator, useWindowDimensions } from 'react-native';
+import { StyleSheet, View, Text, ScrollView, Image, TouchableOpacity, TextInput, Platform, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { useRouter, Link } from 'expo-router';
 import { useUser } from '@/contexts/UserContext';
@@ -7,10 +7,11 @@ import { useShortlist } from '@/contexts/ShortlistContext';
 import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
 import { getApiUrl, resilientFetch } from '@/lib/api';
+import { useResponsive } from '@/hooks/useResponsive';
 
 export default function ExploreScreen() {
-  const { width } = useWindowDimensions();
-  const isDesktop = width >= 768;
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
   const { profile } = useUser();
   const isAgent = profile?.role === 'agent';
   const isEmployee = profile?.role === 'employee';
@@ -319,32 +320,38 @@ export default function ExploreScreen() {
         )}
       </View>
 
-      <View style={{ flex: 1, flexDirection: isDesktop ? 'row' : 'column' }}>
-        <View style={[styles.mapContainer, { flex: isDesktop ? 1.5 : undefined, height: isDesktop ? '100%' : 220 }]}>
-          {Platform.OS === 'web' ? (
-            <iframe 
-              width="100%" 
-              height="100%" 
-              style={{ border: 0 }}
-              srcDoc={generateMapHtml(filteredProperties)}
-            />
+      <View style={[styles.mainLayout, isWide && styles.mainLayoutDesktop]}>
+        {/* Left Panel (Map) - Sticky on Desktop */}
+        <View style={[styles.leftPanel, isWide && styles.leftPanelDesktop]}>
+          {!isWide && (
+            <View style={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: 4, backgroundColor: '#FFFFFF' }}>
+              <Text style={{ fontSize: 13, color: '#6B7280', fontWeight: '500' }}>
+                Showing {filteredProperties.length} properties on map
+              </Text>
+            </View>
+          )}
+          {loading ? (
+            <View style={[styles.mapContainer, isWide && { height: '100%', borderRadius: 16 }]} />
+          ) : Platform.OS === 'web' ? (
+            <div dangerouslySetInnerHTML={{ __html: generateMapHtml(filteredProperties) }} style={{ width: '100%', height: '100%', borderRadius: isWide ? 16 : 0, overflow: 'hidden' }} />
           ) : (
             <WebView 
-              source={{ html: generateMapHtml(filteredProperties) }}
-              style={{ flex: 1, backgroundColor: '#E5E7EB' }}
-              showsVerticalScrollIndicator={false}
-              showsHorizontalScrollIndicator={false}
+              source={{ html: generateMapHtml(filteredProperties) }} 
+              style={[styles.mapContainer, isWide && { borderRadius: 16, overflow: 'hidden' }]} 
+              scrollEnabled={false}
             />
           )}
         </View>
 
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}>
-          <View style={styles.listContainer}>
-            {filteredProperties.length === 0 && (
-              <Text style={{ textAlign: 'center', marginTop: 40, color: '#6B7280', width: '100%' }}>No properties found.</Text>
-            )}
-            {/* narrow side panel beside the map: fewer columns than a full-width page */}
-            <ResponsiveGrid desktopColumns={2} tabletColumns={1}>
+        {/* Right Panel (Listings & Filters) */}
+        <View style={[styles.rightPanel, isWide && styles.rightPanelDesktop]}>
+          <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 100, paddingTop: 10 }}>
+            <View style={styles.listContainer}>
+              {filteredProperties.length === 0 && (
+                <Text style={{ textAlign: 'center', marginTop: 40, color: '#6B7280', width: '100%' }}>No properties found.</Text>
+              )}
+              {/* narrow side panel beside the map: fewer columns than a full-width page */}
+              <ResponsiveGrid desktopColumns={2} tabletColumns={1}>
             {filteredProperties.map((prop) => (
               <View key={prop.id} style={styles.card}>
                   <View style={{ position: 'relative' }}>
@@ -433,6 +440,7 @@ export default function ExploreScreen() {
             </ResponsiveGrid>
           </View>
         </ScrollView>
+        </View>
       </View>
     </View>
     </TabAnimationWrapper>
@@ -440,6 +448,27 @@ export default function ExploreScreen() {
 }
 
 const styles = StyleSheet.create({
+  mainLayout: {
+    flex: 1,
+    flexDirection: 'column',
+  },
+  mainLayoutDesktop: {
+    flexDirection: 'row',
+  },
+  leftPanel: {
+    flex: 1,
+    minHeight: 300,
+  },
+  leftPanelDesktop: {
+    flex: 1.5,
+    height: '100%',
+  },
+  rightPanel: {
+    flex: 1,
+  },
+  rightPanelDesktop: {
+    flex: 1,
+  },
   container: {
     flex: 1,
     backgroundColor: '#F3F4F6',
@@ -581,7 +610,7 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     overflow: 'hidden',
     width: '100%',
-    maxWidth: 360,
+    maxWidth: '100%',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.05,

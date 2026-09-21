@@ -1468,7 +1468,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   actionCard: {
-    width: (SCREEN_WIDTH - 52) / 2,
+    flexBasis: Platform.OS === 'web' ? 140 : '47%',
+    flexGrow: 1,
+    maxWidth: Platform.OS === 'web' ? 300 : undefined,
     backgroundColor: Neutrals.white,
     borderRadius: Radius.lg,
     padding: 18,

@@ -10,7 +10,8 @@ import { WebFooter } from '@/components/layout/WebFooter';
 // is a second guard in case a deep link ever points here on device.
 export default function AboutScreen() {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
 
 
   return (
@@ -24,7 +25,7 @@ export default function AboutScreen() {
       </View>
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
-        <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
+        <View style={[styles.hero, isWide && styles.heroDesktop]}>
           <Text style={styles.heroKicker}>ABOUT REALSHARE</Text>
           <Text style={styles.heroTitle}>Rebranding real estate ownership</Text>
           <Text style={styles.heroSubtitle}>
@@ -32,8 +33,8 @@ export default function AboutScreen() {
           </Text>
         </View>
 
-        <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
-          <View style={[styles.storyRow, isDesktop && styles.storyRowDesktop]}>
+        <View style={[styles.section, isWide && styles.sectionDesktop]}>
+          <View style={[styles.storyRow, isWide && styles.storyRowDesktop]}>
             <View style={{ flex: 1 }}>
               <Text style={styles.sectionTitle}>Our story</Text>
               <Text style={styles.bodyText}>
@@ -55,12 +56,12 @@ export default function AboutScreen() {
           </View>
         </View>
 
-        <View style={[styles.section, styles.founderSection, isDesktop && styles.sectionDesktop]}>
+        <View style={[styles.section, styles.founderSection, isWide && styles.sectionDesktop]}>
           <Text style={styles.sectionTitle}>Founder & Promoter</Text>
-          <View style={[styles.founderCard, isDesktop && styles.founderCardDesktop]}>
+          <View style={[styles.founderCard, isWide && styles.founderCardDesktop]}>
             <Image 
               source={require('../../assets/images/founder.png')} 
-              style={[styles.founderImage, isDesktop && styles.founderImageDesktop]} 
+              style={[styles.founderImage, isWide && styles.founderImageDesktop]} 
             />
             <View style={styles.founderInfo}>
               <Text style={styles.founderName}>Raj Kumar Chinthireddy</Text>
@@ -79,7 +80,7 @@ export default function AboutScreen() {
           </View>
         </View>
 
-        <View style={[styles.section, isDesktop && styles.sectionDesktop]}>
+        <View style={[styles.section, isWide && styles.sectionDesktop]}>
           <Text style={styles.sectionTitle}>Registered office</Text>
           <Text style={styles.bodyText}>
             Realshare Properties Pvt. Ltd.{'\n'}

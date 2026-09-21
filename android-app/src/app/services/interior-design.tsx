@@ -12,7 +12,8 @@ const HERO_IMAGE = require('../../../assets/images/indian_interior_design.jpg');
 export default function InteriorDesignScreen() {
   const router = useRouter();
   const { profile } = useUser();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
 
   const [name, setName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone_number || '');
@@ -62,7 +63,7 @@ export default function InteriorDesignScreen() {
 
   return (
     <View style={styles.container}>
-      {!isDesktop && (
+      {!isWide && (
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.push('/')} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
@@ -73,7 +74,7 @@ export default function InteriorDesignScreen() {
       )}
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
-        <ImageBackground source={HERO_IMAGE} style={[styles.heroBanner, isDesktop && styles.heroBannerDesktop]}>
+        <ImageBackground source={HERO_IMAGE} style={[styles.heroBanner, isWide && styles.heroBannerDesktop]}>
           <LinearGradient colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.8)']} style={styles.heroOverlay} />
           <View style={styles.heroContent}>
             <Text style={styles.heroSuperTitle}>REALSHARE INTERIORS</Text>
@@ -82,8 +83,8 @@ export default function InteriorDesignScreen() {
           </View>
         </ImageBackground>
 
-        <View style={[styles.mainSection, isDesktop && styles.mainSectionDesktop]}>
-          <View style={[styles.detailsContainer, isDesktop && { flex: 1 }]}>
+        <View style={[styles.mainSection, isWide && styles.mainSectionDesktop]}>
+          <View style={[styles.detailsContainer, isWide && { flex: 1 }]}>
             <Text style={styles.promoHeader}>Interior Services</Text>
             
             <View style={styles.featureItem}>
@@ -121,7 +122,7 @@ export default function InteriorDesignScreen() {
             <Text style={styles.disclaimerText}>*Interior design services are provided by third party designer studios.</Text>
           </View>
 
-          <View style={[styles.formContainer, isDesktop && { width: 400 }]}>
+          <View style={[styles.formContainer, isWide && { width: 400 }]}>
             <Text style={styles.formTitle}>Book a Free Consultation</Text>
             <Text style={styles.formSubtitle}>Speak with our expert designers</Text>
             

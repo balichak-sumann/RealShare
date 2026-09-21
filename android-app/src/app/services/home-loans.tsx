@@ -23,7 +23,8 @@ const BANK_PARTNERS = [
 export default function HomeLoansScreen() {
   const router = useRouter();
   const { profile } = useUser();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
 
   const [name, setName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone_number || '');
@@ -73,7 +74,7 @@ export default function HomeLoansScreen() {
 
   return (
     <View style={styles.container}>
-      {!isDesktop && (
+      {!isWide && (
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.push('/')} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
@@ -84,7 +85,7 @@ export default function HomeLoansScreen() {
       )}
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
-        <ImageBackground source={HERO_IMAGE} style={[styles.heroBanner, isDesktop && styles.heroBannerDesktop]}>
+        <ImageBackground source={HERO_IMAGE} style={[styles.heroBanner, isWide && styles.heroBannerDesktop]}>
           <LinearGradient colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.8)']} style={styles.heroOverlay} />
           <View style={styles.heroContent}>
             <Text style={styles.heroSuperTitle}>REALSHARE FINANCE</Text>
@@ -93,8 +94,8 @@ export default function HomeLoansScreen() {
           </View>
         </ImageBackground>
 
-        <View style={[styles.mainSection, isDesktop && styles.mainSectionDesktop]}>
-          <View style={[styles.detailsContainer, isDesktop && { flex: 1 }]}>
+        <View style={[styles.mainSection, isWide && styles.mainSectionDesktop]}>
+          <View style={[styles.detailsContainer, isWide && { flex: 1 }]}>
             <Text style={styles.promoHeader}>Get Home Loans at the Lowest rate from our partner Bank.</Text>
             
             <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
@@ -143,7 +144,7 @@ export default function HomeLoansScreen() {
             </View>
           </View>
 
-          <View style={[styles.formContainer, isDesktop && { width: 400 }]}>
+          <View style={[styles.formContainer, isWide && { width: 400 }]}>
             <Text style={styles.formTitle}>Check Your Eligibility</Text>
             <Text style={styles.formSubtitle}>Enter your details for a quick callback</Text>
             
@@ -383,7 +384,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     ...Platform.select({
       ios: Shadows.soft,
-      android: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 },
+      android: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.1, shadowRadius: 2, elevation: 2 } as any,
       web: Shadows.soft,
     }),
   },

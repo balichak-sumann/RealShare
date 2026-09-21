@@ -12,7 +12,8 @@ const HERO_IMAGE = require('../../../assets/images/indian_property_management.jp
 export default function PropertyManagementScreen() {
   const router = useRouter();
   const { profile } = useUser();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
 
   const [name, setName] = useState(profile?.full_name || '');
   const [phone, setPhone] = useState(profile?.phone_number || '');
@@ -62,7 +63,7 @@ export default function PropertyManagementScreen() {
 
   return (
     <View style={styles.container}>
-      {!isDesktop && (
+      {!isWide && (
         <View style={styles.header}>
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.push('/')} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
@@ -73,7 +74,7 @@ export default function PropertyManagementScreen() {
       )}
 
       <ScrollView style={styles.content} contentContainerStyle={{ paddingBottom: 80 }} showsVerticalScrollIndicator={false}>
-        <ImageBackground source={HERO_IMAGE} style={[styles.heroBanner, isDesktop && styles.heroBannerDesktop]}>
+        <ImageBackground source={HERO_IMAGE} style={[styles.heroBanner, isWide && styles.heroBannerDesktop]}>
           <LinearGradient colors={['rgba(0,0,0,0.2)', 'rgba(0,0,0,0.8)']} style={styles.heroOverlay} />
           <View style={styles.heroContent}>
             <Text style={styles.heroSuperTitle}>REALSHARE MANAGEMENT</Text>
@@ -82,8 +83,8 @@ export default function PropertyManagementScreen() {
           </View>
         </ImageBackground>
 
-        <View style={[styles.mainSection, isDesktop && styles.mainSectionDesktop]}>
-          <View style={[styles.detailsContainer, isDesktop && { flex: 1 }]}>
+        <View style={[styles.mainSection, isWide && styles.mainSectionDesktop]}>
+          <View style={[styles.detailsContainer, isWide && { flex: 1 }]}>
             <Text style={styles.promoHeader}>Property Management Services</Text>
             
             <View style={styles.featureItem}>
@@ -121,7 +122,7 @@ export default function PropertyManagementScreen() {
 
           </View>
 
-          <View style={[styles.formContainer, isDesktop && { width: 400 }]}>
+          <View style={[styles.formContainer, isWide && { width: 400 }]}>
             <Text style={styles.formTitle}>Get a Free Quote</Text>
             <Text style={styles.formSubtitle}>Enter your details below</Text>
             

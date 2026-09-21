@@ -117,7 +117,7 @@ const styles = StyleSheet.create({
     width: '48%',
     ...Platform.select({
       ios: Shadows.soft,
-      android: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 4 },
+      android: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 4 } as any,
       web: Shadows.soft,
     }),
   },
@@ -147,7 +147,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     ...Platform.select({
       ios: Shadows.soft,
-      android: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 4 },
+      android: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.1, shadowRadius: 3, elevation: 4 } as any,
       web: Shadows.soft,
     }),
   },

@@ -6,15 +6,16 @@ import { GoldButton } from '../ui/GoldButton';
 import { useRouter } from 'expo-router';
 
 export function WealthMarketingSection() {
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
   const router = useRouter();
 
   return (
-    <View style={[styles.container, isDesktop && styles.containerDesktop]}>
-      <View style={[styles.inner, isDesktop && styles.innerDesktop]}>
+    <View style={[styles.container, isWide && styles.containerDesktop]}>
+      <View style={[styles.inner, isWide && styles.innerDesktop]}>
         
         {/* Image Side */}
-        <View style={[styles.imageContainer, isDesktop && styles.imageContainerDesktop]}>
+        <View style={[styles.imageContainer, isWide && styles.imageContainerDesktop]}>
           <Image 
             source={{ uri: 'https://images.unsplash.com/photo-1577495508048-b635879837f1?w=1200&fit=crop' }} 
             style={styles.image}
@@ -23,12 +24,12 @@ export function WealthMarketingSection() {
         </View>
 
         {/* Content Side */}
-        <View style={[styles.contentContainer, isDesktop && styles.contentContainerDesktop]}>
+        <View style={[styles.contentContainer, isWide && styles.contentContainerDesktop]}>
           <Text style={styles.kicker}>Build Generational Wealth</Text>
-          <Text style={[styles.title, isDesktop && styles.titleDesktop]}>
+          <Text style={[styles.title, isWide && styles.titleDesktop]}>
             Fractional Ownership, Exponential Growth
           </Text>
-          <Text style={[styles.description, isDesktop && styles.descriptionDesktop]}>
+          <Text style={[styles.description, isWide && styles.descriptionDesktop]}>
             Smart investing means diversifying your portfolio. Access institutional-grade 
             assets that were previously out of reach, earn steady passive income, and 
             build a legacy with Realshare.

@@ -16,21 +16,22 @@ const FEATURES = [
 
 export function PostPropertyBanner() {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
 
   return (
-    <View style={[styles.container, isDesktop && styles.containerDesktop]}>
+    <View style={[styles.container, isWide && styles.containerDesktop]}>
       <LinearGradient
         colors={['#FFF9F0', '#FFF3E0', '#FFECD2']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.gradient}
       >
-        <View style={[styles.inner, isDesktop && styles.innerDesktop]}>
+        <View style={[styles.inner, isWide && styles.innerDesktop]}>
           {/* Left Content */}
-          <View style={[styles.leftContent, isDesktop && styles.leftContentDesktop]}>
+          <View style={[styles.leftContent, isWide && styles.leftContentDesktop]}>
             <Text style={styles.eyebrow}>SELL SMARTER</Text>
-            <Text style={[styles.headline, isDesktop && styles.headlineDesktop]}>
+            <Text style={[styles.headline, isWide && styles.headlineDesktop]}>
               List Your Property{' '}
               <Text style={styles.headlineGold}>for Free</Text>
             </Text>
@@ -81,7 +82,7 @@ export function PostPropertyBanner() {
           </View>
 
           {/* Right Image — desktop web only */}
-          {isDesktop && Platform.OS === 'web' && (
+          {isWide && Platform.OS === 'web' && (
             <View style={styles.rightImage}>
               <Image
                 source={require('../../../assets/images/grid.png')}

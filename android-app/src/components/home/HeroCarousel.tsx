@@ -63,7 +63,8 @@ const FALLBACK_SLIDES: Banner[] = [
 
 export function HeroCarousel() {
   const [containerWidth, setContainerWidth] = useState(Dimensions.get('window').width || 400);
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isTablet } = useResponsive();
+  const isWide = isDesktop || isTablet;
   const router = useRouter();
   const [activeIndex, setActiveIndex] = useState(0);
   const [slides, setSlides] = useState<Banner[]>([]);
@@ -127,11 +128,11 @@ export function HeroCarousel() {
 
 
   if (slides.length === 0) {
-    return <View style={[styles.container, isDesktop && styles.containerDesktop]} />;
+    return <View style={[styles.container, isWide && styles.containerDesktop]} />;
   }
 
   return (
-    <View style={[styles.container, isDesktop && styles.containerDesktop]} onLayout={(e) => {
+    <View style={[styles.container, isWide && styles.containerDesktop]} onLayout={(e) => {
       const { width } = e.nativeEvent.layout;
       if (width > 0) setContainerWidth(width);
     }}>
@@ -143,7 +144,7 @@ export function HeroCarousel() {
         onMomentumScrollEnd={handleScroll}
       >
         {slides.map((slide, index) => (
-          <View key={slide.id} style={[styles.slide, isDesktop && styles.slideDesktop, { width: containerWidth }]}>
+          <View key={slide.id} style={[styles.slide, isWide && styles.slideDesktop, { width: containerWidth }]}>
             <Image
               source={{ uri: slide.image_url.startsWith('/') ? `${getApiUrl()}${slide.image_url}` : slide.image_url }}
               style={styles.image}
@@ -160,8 +161,8 @@ export function HeroCarousel() {
                 opacity: fadeAnim, 
                 transform: [{ translateY: fadeAnim.interpolate({ inputRange: [0, 1], outputRange: [15, 0] }) }] 
               }]}>
-                <Text style={[styles.title, isDesktop && styles.titleDesktop]}>{slide.title}</Text>
-                {!!slide.subtitle && <Text style={[styles.subtitle, isDesktop && styles.subtitleDesktop]}>{slide.subtitle}</Text>}
+                <Text style={[styles.title, isWide && styles.titleDesktop]}>{slide.title}</Text>
+                {!!slide.subtitle && <Text style={[styles.subtitle, isWide && styles.subtitleDesktop]}>{slide.subtitle}</Text>}
                 <GoldButton
                   title="Explore Properties"
                   onPress={() => router.push((slide.link_url || '/search') as any)}

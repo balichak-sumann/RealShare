@@ -15,7 +15,7 @@ export async function sendOtpSms(phone: string, otp: string, isLogin: boolean = 
   
   // Use specific template for login, fallback to env or hardcoded registration template
   const templateId = isLogin 
-    ? (process.env.SMSGATEWAYHUB_LOGIN_DLT_TEMPLATE_ID || '1277178972017302343')
+    ? process.env.SMSGATEWAYHUB_LOGIN_DLT_TEMPLATE_ID
     : process.env.SMSGATEWAYHUB_DLT_TEMPLATE_ID;
 
   if (!apiKey || apiKey === 'your_smsgatewayhub_api_key' || !senderId || !entityId || entityId === 'your_dlt_entity_id' || !templateId || templateId === 'your_dlt_template_id') {

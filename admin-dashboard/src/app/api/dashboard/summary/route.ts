@@ -39,6 +39,7 @@ export async function GET(request: Request) {
       recentKycDocs,
       recentInvestors,
       recentProps,
+      recentAgents,
     ] = await Promise.all([
       prisma.property.count().catch(() => 0),
       prisma.property.count({ where: { approval_status: 'approved' } }).catch(() => 0),
@@ -94,6 +95,12 @@ export async function GET(request: Request) {
         orderBy: { created_at: 'desc' },
         take: 4,
         select: { id: true, title: true, property_type: true, created_at: true, approval_status: true },
+      }).catch(() => []),
+      prisma.profile.findMany({
+        where: { role: 'agent' },
+        orderBy: { created_at: 'desc' },
+        take: 4,
+        select: { id: true, full_name: true, email: true, created_at: true, is_approved: true },
       }).catch(() => []),
     ]);
 
@@ -203,6 +210,22 @@ export async function GET(request: Request) {
           amount: null,
           status: inv.kyc_status === 'verified' ? 'verified' : 'registered',
           time: inv.created_at || new Date().toISOString(),
+        });
+      }
+    }
+
+    // Add Agent Registrations
+    if (Array.isArray(recentAgents)) {
+      for (const agent of recentAgents) {
+        activityItems.push({
+          id: `agent-${agent.id}`,
+          type: 'signup',
+          user: agent.full_name || agent.email?.split('@')[0] || 'New Agent',
+          action: 'registered as a partner agent',
+          target: 'Realshare Platform',
+          amount: null,
+          status: agent.is_approved ? 'approved' : 'pending',
+          time: agent.created_at || new Date().toISOString(),
         });
       }
     }

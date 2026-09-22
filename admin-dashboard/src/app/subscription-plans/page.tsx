@@ -97,7 +97,8 @@ export default function SubscriptionPlansPage() {
           referral_program: plan.referral_program,
           renewal: plan.renewal,
           is_active: plan.is_active,
-          tagline: plan.tagline
+          tagline: plan.tagline,
+          features: plan.features
         }),
       });
       if (res.ok) showMessage('Plan saved successfully!');
@@ -264,12 +265,51 @@ export default function SubscriptionPlansPage() {
                         <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Validity (Days)</label>
                         <input type="number" value={plan.validity_days} onChange={(e) => handlePlanChange(plan.id, 'validity_days', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }} />
                       </div>
+                      <div>
+                        <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Post Listing (Days)</label>
+                        <input type="number" value={plan.post_listing_days} onChange={(e) => handlePlanChange(plan.id, 'post_listing_days', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }} />
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Support Level</label>
+                        <select value={plan.support_level} onChange={(e) => handlePlanChange(plan.id, 'support_level', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
+                          <option value="Regular">Regular</option>
+                          <option value="Premium">Premium</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Post Assistance</label>
+                        <select value={plan.post_assistance} onChange={(e) => handlePlanChange(plan.id, 'post_assistance', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
+                          <option value="No">No</option>
+                          <option value="Yes">Yes</option>
+                          <option value="Premium">Premium</option>
+                        </select>
+                      </div>
                     </div>
                     
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: 8 }}>
-                      <label style={{ fontSize: '0.9rem', color: 'var(--text-primary)' }}>Is Active</label>
-                      <input type="checkbox" checked={plan.is_active} onChange={(e) => handlePlanChange(plan.id, 'is_active', e.target.checked)} style={{ width: 18, height: 18 }} />
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginTop: 8 }}>
+                       <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}><input type="checkbox" checked={plan.referral_program} onChange={(e) => handlePlanChange(plan.id, 'referral_program', e.target.checked)} /> Referral Program</label>
+                       <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}><input type="checkbox" checked={plan.renewal} onChange={(e) => handlePlanChange(plan.id, 'renewal', e.target.checked)} /> Renewal</label>
+                       <label style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: 8, color: 'var(--text-primary)' }}><input type="checkbox" checked={plan.is_active} onChange={(e) => handlePlanChange(plan.id, 'is_active', e.target.checked)} /> Is Active</label>
                     </div>
+
+                    {plan.role_type === 'builder' && (
+                      <div style={{ marginTop: 12, padding: 12, background: 'rgba(0,0,0,0.05)', borderRadius: 8 }}>
+                        <p style={{ fontSize: '0.85rem', fontWeight: 600, margin: '0 0 8px 0', color: 'var(--text-primary)' }}>Builder Features</p>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8 }}>
+                           <div>
+                              <label style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>Display</label>
+                              <select value={plan.features?.display || 'Local'} onChange={(e) => handlePlanChange(plan.id, 'features', { ...plan.features, display: e.target.value })} style={{ width: '100%', padding: 4, borderRadius: 4, background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }}>
+                                 <option value="Local">Local</option>
+                                 <option value="Pan India">Pan India</option>
+                              </select>
+                           </div>
+                           <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-primary)' }}><input type="checkbox" checked={plan.features?.boostMode || false} onChange={(e) => handlePlanChange(plan.id, 'features', { ...plan.features, boostMode: e.target.checked })} /> Boost Mode</label>
+                           <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-primary)' }}><input type="checkbox" checked={plan.features?.searchListing || false} onChange={(e) => handlePlanChange(plan.id, 'features', { ...plan.features, searchListing: e.target.checked })} /> Search Listing</label>
+                           <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-primary)' }}><input type="checkbox" checked={plan.features?.accountManager || false} onChange={(e) => handlePlanChange(plan.id, 'features', { ...plan.features, accountManager: e.target.checked })} /> Account Manager</label>
+                           <label style={{ fontSize: '0.75rem', display: 'flex', alignItems: 'center', gap: 4, color: 'var(--text-primary)' }}><input type="checkbox" checked={plan.features?.freeVerification || false} onChange={(e) => handlePlanChange(plan.id, 'features', { ...plan.features, freeVerification: e.target.checked })} /> Free Verification</label>
+                        </div>
+                      </div>
+                    )}
 
                     <button onClick={() => savePlan(plan)} disabled={savingPlanId === plan.id} style={{ marginTop: 16, width: '100%', padding: 12, borderRadius: 8, border: 'none', background: '#2563EB', color: '#fff', fontWeight: 600, cursor: savingPlanId === plan.id ? 'not-allowed' : 'pointer' }}>
                       {savingPlanId === plan.id ? 'Saving...' : 'Save Changes'}

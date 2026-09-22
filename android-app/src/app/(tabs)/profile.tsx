@@ -11,7 +11,6 @@ import {
   Modal,
   TextInput,
   Animated,
-  Dimensions,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -29,7 +28,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { getApiUrl } from '@/lib/api';
 import PlanSelector from '@/components/plans/PlanSelector';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function ProfileScreen() {
   const router = useRouter();

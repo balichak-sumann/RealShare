@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+import ResponsiveTables from "./ResponsiveTables";
 import styles from "./AdminLayout.module.css";
 
 interface AdminLayoutProps {
@@ -62,6 +63,9 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
   }, [userProfile]);
   return (
     <div className={styles.layout}>
+      {/* Annotates every table so it can stack into cards on small screens */}
+      <ResponsiveTables />
+
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div className={styles.mobileOverlay} onClick={() => setIsMobileOpen(false)} />

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, Redirect } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive, FrameWidth } from '@/hooks/useResponsive';
 import { WebFooter } from '@/components/layout/WebFooter';
 import { getApiUrl } from '@/lib/api';
 
@@ -16,7 +16,7 @@ const INTENTS: Intent[] = ['Buyer', 'Seller', 'Agent or Broker'];
 // success alert.
 export default function ContactScreen() {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isFramed } = useResponsive();
 
   const [intent, setIntent] = useState<Intent>('Buyer');
   const [fullName, setFullName] = useState('');
@@ -82,13 +82,17 @@ export default function ContactScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Contact Us</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      {/* Phone chrome only: from 768px up WebShell already renders DesktopNav,
+          and showing both stacked a redundant back bar under the real nav. */}
+      {!isFramed && (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Contact Us</Text>
+          <View style={{ width: 24 }} />
+        </View>
+      )}
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={[styles.body, isDesktop && styles.bodyDesktop]}>
@@ -197,7 +201,7 @@ const styles = StyleSheet.create({
   backIcon: { fontSize: 24, color: Neutrals.obsidian },
   headerTitle: { ...Typography.headlineMedium, color: Neutrals.obsidian },
   body: { padding: 24, flexDirection: 'column', gap: 32 },
-  bodyDesktop: { flexDirection: 'row', width: '100%', paddingHorizontal: 40, paddingTop: 32 },
+  bodyDesktop: { flexDirection: 'row', width: '100%', paddingHorizontal: 40, paddingTop: 32, maxWidth: FrameWidth.wide, alignSelf: 'center' },
   introCol: { flex: 1 },
   introTitle: { ...Typography.displayMedium, color: Neutrals.obsidian, marginBottom: 6 },
   introSubtitle: { ...Typography.headlineMedium, color: GoldSystem.darkGold, marginBottom: 16 },

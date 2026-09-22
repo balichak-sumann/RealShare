@@ -35,7 +35,6 @@ import { propertyToCardProps } from '@/lib/formatters';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { uploadImageToFirebase } from '@/lib/uploadImage';
-const screenWidth = Dimensions.get('window').width;
 
 let LineChart: any = null;
 if (Platform.OS !== 'web') {
@@ -48,6 +47,9 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
   const { openDrawer } = useDrawer();
   const { isDesktop } = useResponsive();
   const scrollRef = useRef<ScrollView>(null);
+  // Reactive, unlike the module-scope Dimensions.get() this replaces, which was
+  // measured once at bundle load and never updated on resize or rotation.
+  const { width: windowWidth } = useWindowDimensions();
   const [activeIndex, setActiveIndex] = useState(0);
 
   const [copied, setCopied] = useState(false);
@@ -200,11 +202,11 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
     const interval = setInterval(() => {
       let nextIndex = activeIndex + 1;
       if (nextIndex >= Math.min(properties.length > 0 ? properties.length : 1, 5)) nextIndex = 0;
-      scrollRef.current?.scrollTo({ x: nextIndex * screenWidth, animated: true });
+      scrollRef.current?.scrollTo({ x: nextIndex * windowWidth, animated: true });
       setActiveIndex(nextIndex);
     }, 3500);
     return () => clearInterval(interval);
-  }, [activeIndex, properties]);
+  }, [activeIndex, properties, windowWidth]);
 
   const fetchDashboardData = async () => {
     setLoading(true);

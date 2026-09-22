@@ -181,3 +181,48 @@
   color: var(--text-muted);
   font-size: 0.9rem;
 }
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   Row-level table stacking is handled globally in globals.css.
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .controlsBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  /* The 250px floor forces this input wider than a small phone viewport. */
+  .searchInput {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+    /* 16px stops iOS Safari zooming the page when the field takes focus. */
+    font-size: 16px;
+  }
+
+  .filtersGroup {
+    width: 100%;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .filterSelect {
+    flex: 1 1 140px;
+    min-width: 0;
+    font-size: 16px;
+  }
+
+  .pageTitle {
+    font-size: 1.1rem;
+  }
+
+  .tableCard {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+  }
+}

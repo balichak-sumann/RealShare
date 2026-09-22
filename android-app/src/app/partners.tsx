@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platfo
 import { useRouter, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive, FrameWidth } from '@/hooks/useResponsive';
 import { WebFooter } from '@/components/layout/WebFooter';
 import { getApiUrl } from '@/lib/api';
 
@@ -21,7 +21,7 @@ const VALUE_PROPS = [
 // record, not a form that goes nowhere.
 export default function PartnersScreen() {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isFramed } = useResponsive();
 
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
@@ -83,13 +83,17 @@ export default function PartnersScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Partners</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      {/* Phone chrome only: from 768px up WebShell already renders DesktopNav,
+          and showing both stacked a redundant back bar under the real nav. */}
+      {!isFramed && (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Partners</Text>
+          <View style={{ width: 24 }} />
+        </View>
+      )}
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
@@ -190,7 +194,7 @@ const styles = StyleSheet.create({
   heroTitle: { ...Typography.displayMedium, color: Neutrals.obsidian, textAlign: 'center', marginBottom: 12, maxWidth: 640 },
   heroSubtitle: { ...Typography.bodyLarge, color: Neutrals.gray600, textAlign: 'center', maxWidth: 640, lineHeight: 22 },
   section: { padding: 24 },
-  sectionDesktop: { width: '100%', paddingHorizontal: 40 },
+  sectionDesktop: { width: '100%', paddingHorizontal: 40, maxWidth: FrameWidth.wide, alignSelf: 'center' },
   sectionTitle: { ...Typography.headlineLarge, color: Neutrals.obsidian, marginBottom: 12, textAlign: 'center' },
   bodyText: { ...Typography.bodyLarge, color: Neutrals.gray600, lineHeight: 22, marginBottom: 14, textAlign: 'center' },
   valueGrid: { flexDirection: 'column', gap: 16 },

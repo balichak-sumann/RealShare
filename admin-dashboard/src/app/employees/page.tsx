@@ -251,7 +251,7 @@ export default function EmployeesPage() {
       )}
 
       {/* Role-Based Overview Cards */}
-      <div
+      <div className="rs-grid-3"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
@@ -462,6 +462,7 @@ export default function EmployeesPage() {
       {/* Create Employee Modal */}
       {showAddModal && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed",
             top: 0,
@@ -527,7 +528,7 @@ export default function EmployeesPage() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Work Email</label>
                   <input
@@ -552,7 +553,7 @@ export default function EmployeesPage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Department & Role</label>
                   <select
@@ -577,7 +578,7 @@ export default function EmployeesPage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Sales Incentive (% Rate)</label>
                   <input

@@ -577,7 +577,19 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive adjustments */
+/* ==========================================================================
+   RESPONSIVE ADJUSTMENTS
+   Blocks are ordered widest-first: media queries add no specificity, so a
+   narrower breakpoint only wins if it appears later in the file.
+   Base layout is .grid = 5 KPI cards, .secondaryStats = 3, .twoCol = 1.35fr/1fr.
+   ========================================================================== */
+
+@media (max-width: 1400px) {
+  .grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 @media (max-width: 1200px) {
   .grid {
     grid-template-columns: repeat(2, 1fr);
@@ -587,11 +599,79 @@
   }
 }
 
+@media (max-width: 1024px) {
+  .secondaryStats {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .container {
+    gap: 18px;
+  }
+}
+
 @media (max-width: 768px) {
   .grid {
     grid-template-columns: 1fr;
   }
   .secondaryStats {
     grid-template-columns: 1fr;
+  }
+  .container {
+    gap: 16px;
+  }
+
+  /* Alert banner: message above its buttons rather than squeezed beside them. */
+  .alertBar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+  .alertActions {
+    justify-content: flex-end;
+  }
+
+  .sectionHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .viewAllBtn {
+    align-self: flex-start;
+  }
+
+  /* Top-property rows: thumbnail and name stay on one line, the fixed-width
+     progress meter drops to its own full-width line instead of squeezing. */
+  .propertyRow {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .propertyInfo {
+    flex: 1 1 60%;
+    min-width: 0;
+  }
+  .progressContainer {
+    width: 100%;
+    flex-shrink: 1;
+  }
+  .propertyMetricsRow {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .activityRow {
+    padding: 10px;
+  }
+}
+
+@media (max-width: 480px) {
+  .cardValue {
+    font-size: 1.35rem;
+  }
+  .quickActionBtn {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+  .propertyName {
+    font-size: 0.9rem;
   }
 }

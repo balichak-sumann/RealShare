@@ -145,6 +145,10 @@
 /* ========== MAIN CONTENT ========== */
 .main {
   flex: 1;
+  /* Flex items default to min-width:auto, so without this a wide table pushes
+     .main past the viewport and the entire page scrolls sideways instead of
+     just the table. */
+  min-width: 0;
   margin-left: 260px;
   display: flex;
   flex-direction: column;
@@ -167,6 +171,7 @@
 .headerLeft {
   display: flex;
   align-items: center;
+  min-width: 0;
 }
 
 .headerTitle {
@@ -272,6 +277,7 @@
 .content {
   padding: 32px 36px;
   flex: 1;
+  min-width: 0;
 }
 
 /* ========== MOBILE / TABLET OVERLAYS ========== */
@@ -371,5 +377,69 @@
   }
   .headerActions {
     gap: 12px;
+  }
+}
+
+/* --------------------------------------------------------------------------
+   Additional small-screen refinements.
+   Appended after the blocks above so these win at equal specificity; ordered
+   widest-first for the same reason.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 1024px) {
+  .header {
+    padding: 0 20px;
+    gap: 12px;
+  }
+
+  .content {
+    padding: 20px;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    height: 64px;
+    padding: 0 16px;
+  }
+
+  .mobileMenuBtn {
+    margin-right: 12px;
+  }
+
+  /* A long page title must ellipsize rather than shove the header actions
+     off the right edge. */
+  .headerTitle {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .content {
+    padding: 16px 14px;
+  }
+
+  /* The drawer covers most of the screen but leaves a strip of the page
+     visible, so it reads as a panel over the content rather than a new page. */
+  .sidebar {
+    width: min(86vw, 300px);
+  }
+}
+
+@media (max-width: 480px) {
+  .header {
+    padding: 0 12px;
+  }
+
+  .headerTitle {
+    font-size: 1rem;
+  }
+
+  .content {
+    padding: 14px 12px;
+  }
+
+  .headerActions {
+    gap: 10px;
   }
 }

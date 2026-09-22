@@ -218,7 +218,7 @@ export default function LedgerPage() {
       )}
 
       {/* Summary KPI Cards */}
-      <div
+      <div className="rs-grid-4"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",

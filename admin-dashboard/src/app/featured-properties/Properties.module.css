@@ -100,7 +100,10 @@
   background: var(--bg-secondary);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-lg);
-  overflow: hidden;
+  /* Was `overflow: hidden`, which silently clipped every column past the
+     viewport edge with no way to reach them. Scroll instead of clip. */
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
   box-shadow: var(--shadow-subtle);
 }
 
@@ -252,4 +255,125 @@
   border-color: var(--border-color);
   color: var(--accent-primary);
   box-shadow: var(--shadow-subtle);
+}
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   This stylesheet is shared by 15 admin pages (properties, featured-properties,
+   buyers, agents, developers, employees, ledger, referrals, approvals, cms,
+   services, notifications, property-requests, contact-messages,
+   partner-applications, services-inquiries), so every rule here fans out
+   across the whole console.
+   Row-level table stacking is handled globally in globals.css.
+   ========================================================================== */
+
+@media (max-width: 1024px) {
+  .headerRight {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  /* Filter pills scroll sideways instead of wrapping into ragged rows. */
+  .filterGroup {
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filterGroup::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filterPill {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 1.1rem;
+  }
+
+  .headerRight {
+    width: 100%;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .filterGroup {
+    width: 100%;
+  }
+
+  .addButton {
+    width: 100%;
+    padding: 12px 20px;
+    text-align: center;
+  }
+
+  .searchBar {
+    margin-bottom: 16px;
+    padding: 10px 14px;
+  }
+
+  /* 16px is the threshold below which iOS Safari zooms the page in on focus. */
+  .searchBar input {
+    font-size: 16px;
+  }
+
+  /* Inside a stacked row the label sits left, so the value aligns right. */
+  .propCell {
+    justify-content: flex-end;
+    gap: 10px;
+    text-align: right;
+  }
+
+  .propThumb {
+    width: 44px;
+    height: 36px;
+    flex: 0 0 auto;
+  }
+
+  .fractionCell {
+    align-items: flex-end;
+    width: 55%;
+  }
+
+  .miniProgress {
+    width: 100%;
+    min-width: 80px;
+  }
+
+  .actions {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  /* 36px is under the 44px minimum comfortable tap target. */
+  .actionBtn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .propCell strong {
+    font-size: 0.85rem;
+  }
+
+  .badge,
+  .statusBadge {
+    font-size: 0.7rem;
+    padding: 3px 8px;
+  }
 }

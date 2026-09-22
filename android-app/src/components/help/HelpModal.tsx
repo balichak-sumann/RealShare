@@ -8,7 +8,6 @@ import {
   TextInput,
   ActivityIndicator,
   Animated,
-  Dimensions,
   Platform,
   Alert,
   KeyboardAvoidingView,
@@ -41,9 +40,9 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState<1 | 2 | 3>(1);
   // Measured width of the content column itself
-  const initialWidth = isDesktop 
-    ? Math.min(520 - 40, Dimensions.get('window').width - 40) 
-    : Dimensions.get('window').width - 40;
+  const initialWidth = isDesktop
+    ? Math.min(520 - 40, viewportWidth - 40)
+    : viewportWidth - 40;
   const [contentWidth, setContentWidth] = useState(initialWidth);
   const [category, setCategory] = useState('');
   const [subject, setSubject] = useState('');
@@ -52,7 +51,7 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
   const [loading, setLoading] = useState(false);
   const [ticketId, setTicketId] = useState('');
 
-  const slideAnim = useRef(new Animated.Value(Dimensions.get('window').height)).current;
+  const slideAnim = useRef(new Animated.Value(viewportHeight)).current;
 
   useEffect(() => {
     if (visible) {
@@ -71,12 +70,12 @@ export function HelpModal({ visible, onClose }: HelpModalProps) {
       }).start();
     } else {
       Animated.timing(slideAnim, {
-        toValue: Dimensions.get('window').height,
+        toValue: viewportHeight,
         duration: 250,
         useNativeDriver: true,
       }).start();
     }
-  }, [visible]);
+  }, [visible, viewportHeight]);
 
   const handleNext = () => {
     if (step === 1 && category) {

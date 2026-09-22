@@ -420,3 +420,101 @@
   color: #fff;
   cursor: pointer;
 }
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS  (Tickets + Messages share this stylesheet)
+   The desktop layout is a fixed 360px list beside a flexible detail panel.
+   Below 900px there is not enough room for both, so the panels stack: the
+   list keeps a capped height at the top and the thread sits beneath it,
+   which keeps both reachable without a router change.
+   ========================================================================== */
+
+@media (max-width: 900px) {
+  .page {
+    flex-direction: column;
+    height: auto;
+    min-height: 0;
+    gap: 14px;
+  }
+
+  .listPanel {
+    width: 100%;
+    flex-shrink: 1;
+    /* Capped so the thread below is always visible without a long scroll. */
+    max-height: 42vh;
+  }
+
+  .detailPanel {
+    min-height: 60vh;
+  }
+
+  .filterRow {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filterRow::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filterPill {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 768px) {
+  .listHeader,
+  .detailHeader {
+    padding: 12px 14px;
+  }
+
+  .thread {
+    padding: 14px;
+  }
+
+  .bubble {
+    max-width: 88%;
+  }
+
+  .replyBar {
+    padding: 10px 12px;
+    gap: 8px;
+  }
+
+  /* 16px stops iOS Safari zooming the page when the field takes focus. */
+  .replyInput,
+  .searchBox input {
+    font-size: 16px;
+  }
+
+  .sendBtn {
+    padding: 10px 16px;
+  }
+
+  .controlsRow {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .select {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .listPanel {
+    max-height: 38vh;
+  }
+
+  .detailTitle {
+    font-size: 0.95rem;
+  }
+
+  .sendBtn {
+    padding: 10px 12px;
+    font-size: 0.8rem;
+  }
+}

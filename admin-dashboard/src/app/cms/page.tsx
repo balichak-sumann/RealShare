@@ -272,7 +272,7 @@ export default function CMSPage() {
       </div>
 
       {/* Banners Grid */}
-      <div
+      <div className="rs-grid-3"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
@@ -399,6 +399,7 @@ export default function CMSPage() {
       {/* Add Banner Modal */}
       {showAddBanner && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed",
             top: 0,
@@ -476,7 +477,7 @@ export default function CMSPage() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Tag / Badge</label>
                   <input
@@ -537,6 +538,7 @@ export default function CMSPage() {
       {/* Edit Banner Modal */}
       {editingBanner && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed",
             top: 0,
@@ -612,7 +614,7 @@ export default function CMSPage() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Tag / Badge</label>
                   <input

@@ -10,10 +10,14 @@ import { useResponsive } from '@/hooks/useResponsive';
  */
 interface ResponsiveGridProps {
   children: React.ReactNode;
-  /** Columns on desktop (>=1100px). Defaults to 3. */
+  /** Columns on desktop (1100-1439px). Defaults to 3. */
   desktopColumns?: number;
   /** Columns on tablet (768-1099px). Defaults to 2. */
   tabletColumns?: number;
+  /** Columns on extra-wide screens (>=1440px). Defaults to desktopColumns + 1. */
+  wideColumns?: number;
+  /** Columns on an unfolded foldable / small tablet in portrait (600-767px). Defaults to 2. */
+  foldableColumns?: number;
   style?: StyleProp<ViewStyle>;
 }
 
@@ -21,15 +25,27 @@ export function ResponsiveGrid({
   children,
   desktopColumns = 3,
   tabletColumns = 2,
+  wideColumns,
+  foldableColumns = 2,
   style,
 }: ResponsiveGridProps) {
-  const { isDesktop, isTablet } = useResponsive();
+  const { isDesktop, isTablet, isWide, isFoldable, isWeb } = useResponsive();
 
-  if (!isDesktop && !isTablet) {
+  // An unfolded foldable / small tablet in portrait is still "mobile" by layout
+  // tier but has room for two cards. Web-only, so no native screen changes.
+  const useFoldableGrid = isWeb && isFoldable;
+
+  if (!isDesktop && !isTablet && !useFoldableGrid) {
     return <>{children}</>;
   }
 
-  const columns = isDesktop ? desktopColumns : tabletColumns;
+  const columns = isDesktop
+    ? isWide
+      ? wideColumns ?? desktopColumns + 1
+      : desktopColumns
+    : isTablet
+      ? tabletColumns
+      : foldableColumns;
   const items = React.Children.toArray(children).filter(Boolean);
 
   return (

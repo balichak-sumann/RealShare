@@ -325,7 +325,7 @@ export default function NotificationsPage() {
       )}
 
       {/* KPI Cards */}
-      <div
+      <div className="rs-grid-4"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
@@ -656,6 +656,7 @@ export default function NotificationsPage() {
       {/* Broadcast / Automation Modal */}
       {showBroadcastModal && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed",
             top: 0,
@@ -716,7 +717,7 @@ export default function NotificationsPage() {
                 <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "#334155", display: "block", marginBottom: "6px" }}>
                   Delivery Timing
                 </label>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                   <button
                     type="button"
                     onClick={() => setDeliveryMode("immediate")}
@@ -766,7 +767,7 @@ export default function NotificationsPage() {
               </div>
 
               {/* Audience & Channel */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Target Audience</label>
                   <select
@@ -825,7 +826,7 @@ export default function NotificationsPage() {
                     ⚙️ Recurrence & Scheduling Options
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                  <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                     <div>
                       <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#64748B" }}>Repeat Frequency</label>
                       <select
@@ -898,7 +899,7 @@ export default function NotificationsPage() {
                   </div>
 
                   {(newNotice.repeat_type !== "daily" || newNotice.repeat_preset === "custom") && (
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
+                    <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px" }}>
                       <div>
                         <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#64748B" }}>Exact Time (HH:MM)</label>
                         <input

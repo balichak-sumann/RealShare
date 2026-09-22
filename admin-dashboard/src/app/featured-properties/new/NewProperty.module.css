@@ -101,3 +101,40 @@
 .submitButton:hover {
   background-color: var(--accent-hover);
 }
+
+/* ==========================================================================
+   RESPONSIVE BREAKPOINTS
+   The form is a fixed two-column grid; it collapses to one column on phones
+   and the action buttons go full width so they stay comfortably tappable.
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .formContainer {
+    padding: 20px 16px;
+    border-radius: var(--border-radius-md);
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  /* 16px stops iOS Safari zooming the page when a field takes focus. */
+  .input,
+  .textarea {
+    font-size: 16px;
+  }
+
+  .actions {
+    flex-direction: column-reverse;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  .cancelButton,
+  .submitButton {
+    width: 100%;
+    text-align: center;
+  }
+}

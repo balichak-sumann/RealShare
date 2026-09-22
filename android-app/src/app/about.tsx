@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform } from 'react-native';
 import { useRouter, Redirect } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive, FrameWidth } from '@/hooks/useResponsive';
 import { WebFooter } from '@/components/layout/WebFooter';
 
 // Web-only marketing page (ported from the realshare.in "About" page). Native
@@ -16,13 +16,17 @@ export default function AboutScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>About Us</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      {/* Phone chrome only: on wide web WebShell already renders DesktopNav,
+          and showing both stacked a redundant back bar under the real nav. */}
+      {!isWide && (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>About Us</Text>
+          <View style={{ width: 24 }} />
+        </View>
+      )}
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={[styles.hero, isWide && styles.heroDesktop]}>
@@ -123,7 +127,7 @@ const styles = StyleSheet.create({
   heroTitle: { ...Typography.displayMedium, color: Neutrals.surface, textAlign: 'center', marginBottom: 12 },
   heroSubtitle: { ...Typography.bodyLarge, color: Neutrals.gray300, textAlign: 'center', maxWidth: 560, alignSelf: 'center' },
   section: { padding: 24 },
-  sectionDesktop: { width: '100%', paddingHorizontal: 40 },
+  sectionDesktop: { width: '100%', paddingHorizontal: 40, maxWidth: FrameWidth.wide, alignSelf: 'center' },
   sectionTitle: { ...Typography.headlineLarge, color: Neutrals.obsidian, marginBottom: 16 },
   bodyText: { ...Typography.bodyLarge, color: Neutrals.gray600, lineHeight: 24, marginBottom: 14 },
   storyRow: { flexDirection: 'column' },

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from '
 import { useRouter, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
-import { useResponsive } from '@/hooks/useResponsive';
+import { useResponsive, FrameWidth } from '@/hooks/useResponsive';
 import { WebFooter } from '@/components/layout/WebFooter';
 
 const STEPS = [
@@ -31,18 +31,22 @@ const HOLIDAY_FEATURES = [
 
 export default function HowItWorksScreen() {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, isFramed } = useResponsive();
 
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
-          <Text style={styles.backIcon}>←</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>How It Works</Text>
-        <View style={{ width: 24 }} />
-      </View>
+      {/* Phone chrome only: from 768px up WebShell already renders DesktopNav,
+          and showing both stacked a redundant back bar under the real nav. */}
+      {!isFramed && (
+        <View style={styles.header}>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+            <Text style={styles.backIcon}>←</Text>
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>How It Works</Text>
+          <View style={{ width: 24 }} />
+        </View>
+      )}
 
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={[styles.hero, isDesktop && styles.heroDesktop]}>
@@ -151,7 +155,7 @@ const styles = StyleSheet.create({
   heroKicker: { ...Typography.labelMedium, color: GoldSystem.darkGold, marginBottom: 10, textAlign: 'center' },
   heroTitle: { ...Typography.displayMedium, color: Neutrals.obsidian, textAlign: 'center', maxWidth: 720 },
   section: { padding: 24 },
-  sectionDesktop: { width: '100%', paddingHorizontal: 40 },
+  sectionDesktop: { width: '100%', paddingHorizontal: 40, maxWidth: FrameWidth.wide, alignSelf: 'center' },
   tintSection: { backgroundColor: Neutrals.cream, paddingVertical: 40 },
   sectionKicker: { ...Typography.labelMedium, color: GoldSystem.darkGold, marginBottom: 8 },
   sectionTitle: { ...Typography.headlineLarge, color: Neutrals.obsidian, marginBottom: 16 },

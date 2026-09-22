@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, TextInput, ScrollView, Platform, Dimensions } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, TextInput, ScrollView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { propertyToCardProps } from '@/lib/formatters';
@@ -7,7 +7,6 @@ import { PropertyCard } from '@/components/ui/PropertyCard';
 import { MapPropertyMarker } from '@/components/ui/MapPropertyMarker';
 import { getApiUrl } from '@/lib/api';
 
-const { width, height } = Dimensions.get('window');
 
 export default function MapSearchScreen() {
   const router = useRouter();

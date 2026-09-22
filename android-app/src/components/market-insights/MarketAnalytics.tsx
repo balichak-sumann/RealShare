@@ -1,9 +1,7 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, Dimensions, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, useWindowDimensions } from 'react-native';
 import { BarChart, LineChart } from 'react-native-chart-kit';
 import { Neutrals, Typography, Radius, Shadows } from '@/constants/design';
-
-const screenWidth = Dimensions.get('window').width;
 
 // Mock Data for MVP Analytics
 const highCostData = {
@@ -27,6 +25,13 @@ const popularLandsData = {
 };
 
 export default function MarketAnalytics() {
+  // Was a module-scope Dimensions.get() snapshot: frozen at bundle load, so the
+  // charts kept their original width after a resize, rotation or foldable
+  // unfold. useWindowDimensions re-renders on each of those.
+  const { width } = useWindowDimensions();
+  // Charts sit inside a padded card. Subtracting the padding alone made the
+  // chart as wide as the viewport on a desktop browser, so cap it too.
+  const chartWidth = Math.max(260, Math.min(width - 64, 720));
   const chartConfig = {
     backgroundGradientFrom: Neutrals.surface,
     backgroundGradientTo: Neutrals.surface,
@@ -63,7 +68,7 @@ export default function MarketAnalytics() {
         </View>
         <BarChart
           data={highCostData}
-          width={screenWidth - 64} // padding 32 on both sides
+          width={chartWidth}
           height={240}
           yAxisLabel="₹"
           yAxisSuffix=""
@@ -81,7 +86,7 @@ export default function MarketAnalytics() {
         </View>
         <LineChart
           data={popularLandsData}
-          width={screenWidth - 64}
+          width={chartWidth}
           height={240}
           withDots={Platform.OS !== 'web'}
           chartConfig={{

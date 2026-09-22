@@ -480,7 +480,7 @@ export default function InvestorsPage() {
       )}
 
       {/* KPI Header Cards */}
-      <div
+      <div className="rs-grid-4"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(4, 1fr)",
@@ -907,6 +907,7 @@ export default function InvestorsPage() {
       {/* Comprehensive Buyer 360° Management Drawer / Modal */}
       {selectedInvestor && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed",
             top: 0,
@@ -1102,7 +1103,7 @@ export default function InvestorsPage() {
                     Edit Buyer Details
                   </h3>
 
-                  <div
+                  <div className="rs-grid-2"
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr",
@@ -1324,7 +1325,7 @@ export default function InvestorsPage() {
             {/* TAB 2: Portfolio & Investments */}
             {activeTab === "portfolio" && (
               <div>
-                <div
+                <div className="rs-grid-2"
                   style={{
                     display: "grid",
                     gridTemplateColumns: "1fr 1fr",
@@ -1500,7 +1501,7 @@ export default function InvestorsPage() {
                     ⚡ Admin Wallet Balance Adjustment
                   </h4>
 
-                  <div
+                  <div className="rs-grid-3"
                     style={{
                       display: "grid",
                       gridTemplateColumns: "1fr 1fr 1fr",
@@ -1606,7 +1607,7 @@ export default function InvestorsPage() {
                     🏦 Linked Bank Account
                   </h4>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
+                  <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px" }}>
                     <div>
                       <label style={{ fontSize: "0.75rem", fontWeight: 700, color: "#64748B" }}>
                         BANK NAME
@@ -1715,7 +1716,7 @@ export default function InvestorsPage() {
               <div>
                 {selectedInvestor.kycDetails ? (
                   <div>
-                    <div
+                    <div className="rs-grid-2"
                       style={{
                         display: "grid",
                         gridTemplateColumns: "1fr 1fr",

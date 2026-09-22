@@ -1031,7 +1031,7 @@ export default function AdditionalServicesPage() {
 
         {/* Modal: Add Inquiry */}
         {showAddInquiryModal && (
-          <div style={{
+          <div className="rs-modal-overlay" style={{
             position: "fixed",
             inset: 0,
             backgroundColor: "rgba(0,0,0,0.5)",
@@ -1066,7 +1066,7 @@ export default function AdditionalServicesPage() {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#374151", marginBottom: "4px" }}>Phone Number *</label>
                     <input
@@ -1090,7 +1090,7 @@ export default function AdditionalServicesPage() {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#374151", marginBottom: "4px" }}>Service Type</label>
                     <select
@@ -1161,7 +1161,7 @@ export default function AdditionalServicesPage() {
 
         {/* Modal: Add/Edit Service Offering */}
         {showAddServiceModal && (
-          <div style={{
+          <div className="rs-modal-overlay" style={{
             position: "fixed",
             inset: 0,
             backgroundColor: "rgba(0,0,0,0.5)",
@@ -1198,7 +1198,7 @@ export default function AdditionalServicesPage() {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
+                <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", marginBottom: "12px" }}>
                   <div>
                     <label style={{ display: "block", fontSize: "12px", fontWeight: "600", color: "#374151", marginBottom: "4px" }}>Category</label>
                     <input
@@ -1396,7 +1396,7 @@ export default function AdditionalServicesPage() {
                   <div style={{ fontSize: "11px", fontWeight: "700", color: "#6B7280", textTransform: "uppercase", marginBottom: "4px" }}>
                     Status Workflow
                   </div>
-                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" }}>
+                  <div className="rs-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "6px" }}>
                     {(["New", "In Review", "Assigned", "Completed", "Cancelled"] as const).map((st) => (
                       <button
                         key={st}

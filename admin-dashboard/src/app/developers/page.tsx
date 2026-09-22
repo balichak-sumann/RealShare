@@ -312,6 +312,7 @@ export default function DevelopersPage() {
 
       {showAddModal && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed",
             top: 0,
@@ -380,7 +381,7 @@ export default function DevelopersPage() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Rating (0-5)</label>
                   <input
@@ -404,7 +405,7 @@ export default function DevelopersPage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Mobile Number</label>
                   <input
@@ -437,7 +438,7 @@ export default function DevelopersPage() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Website</label>
                   <input
@@ -458,7 +459,7 @@ export default function DevelopersPage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Company PAN</label>
                   <input
@@ -479,7 +480,7 @@ export default function DevelopersPage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Director Aadhaar</label>
                   <input
@@ -549,6 +550,7 @@ export default function DevelopersPage() {
 
       {editingDev && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed",
             top: 0,
@@ -627,7 +629,7 @@ export default function DevelopersPage() {
                 />
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Rating (0-5)</label>
                   <input

@@ -221,7 +221,7 @@ export default function SubscriptionPlansPage() {
                       <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Price (₹)</label>
                       <input type="number" value={plan.price} onChange={(e) => handlePlanChange(plan.id, 'price', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }} />
                     </div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+                    <div className="rs-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                       <div>
                         <label style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Postings</label>
                         <input type="number" value={plan.postings_limit} onChange={(e) => handlePlanChange(plan.id, 'postings_limit', e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)' }} />
@@ -299,7 +299,7 @@ export default function SubscriptionPlansPage() {
                   <input type="text" value={couponForm.code} onChange={e => setCouponForm({...couponForm, code: e.target.value.toUpperCase()})} placeholder="e.g. FESTIVAL50" style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', marginTop: 4, textTransform: 'uppercase' }} />
                 </div>
                 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="rs-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Discount Type *</label>
                     <select value={couponForm.discount_type} onChange={e => setCouponForm({...couponForm, discount_type: e.target.value})} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', marginTop: 4 }}>
@@ -313,7 +313,7 @@ export default function SubscriptionPlansPage() {
                   </div>
                 </div>
 
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+                <div className="rs-grid-2" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
                   <div>
                     <label style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Valid From *</label>
                     <input type="date" value={couponForm.valid_from} onChange={e => setCouponForm({...couponForm, valid_from: e.target.value})} style={{ width: '100%', padding: 10, borderRadius: 8, border: '1px solid var(--border-color)', background: 'var(--bg-tertiary)', color: 'var(--text-primary)', marginTop: 4 }} />

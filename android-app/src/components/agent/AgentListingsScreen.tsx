@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View, Text, StyleSheet, ScrollView, TouchableOpacity, Image,
-  ActivityIndicator, Alert, Modal, TextInput, Platform, RefreshControl, Dimensions
-} from 'react-native';
+  ActivityIndicator, Alert, Modal, TextInput, Platform, RefreshControl } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { auth } from '@/lib/firebase';
@@ -10,7 +9,6 @@ import { getApiUrl, getFullImageUrl } from '@/lib/api';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 
-const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 const CATEGORIES = [
   'Residential', 'Commercial', 'Holiday', 'Rental', 'Re-sale', 'Fractional'

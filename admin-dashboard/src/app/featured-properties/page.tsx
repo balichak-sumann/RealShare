@@ -718,7 +718,7 @@ export default function FeaturedPropertiesPage() {
       )}
 
       {/* Share Pool Analytics Cards (Work Order 3.3 Requirement) */}
-      <div
+      <div className="rs-grid-3"
         style={{
           display: "grid",
           gridTemplateColumns: "repeat(3, 1fr)",
@@ -1140,6 +1140,7 @@ export default function FeaturedPropertiesPage() {
       {/* Add New Property Modal */}
       {showAddModal && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed",
             top: 0,
@@ -1205,7 +1206,7 @@ export default function FeaturedPropertiesPage() {
                 <label style={{ fontSize: "0.8rem", fontWeight: 700, color: "#334155", display: "block", marginBottom: "6px" }}>
                   1. Listing Mode (Property Type) <span style={{ color: "#EF4444" }}>*</span>
                 </label>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
+                <div className="rs-grid-4" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "8px" }}>
                   {(
                     [
                       { key: "fractional", label: "Fractional", sub: "Invest / Shares" },
@@ -1295,7 +1296,7 @@ export default function FeaturedPropertiesPage() {
 
 
               {/* 3. Category, Sub-type & Area */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
+              <div className="rs-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                 <div>
                   <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
                     Category <span style={{ color: "#EF4444" }}>*</span>
@@ -1402,7 +1403,7 @@ export default function FeaturedPropertiesPage() {
                 {/* ---- RESIDENTIAL / HOLIDAY ---- */}
                 {(newProp.type === "Residential" || newProp.type === "Holiday") && (
                   <>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                    <div className="rs-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px", marginBottom: "12px" }}>
                       <div>
                         <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Bedrooms</label>
                         <select value={newProp.bedrooms ?? ""} onChange={(e) => setNewProp({ ...newProp, bedrooms: e.target.value ? Number(e.target.value) : null })}
@@ -1489,7 +1490,7 @@ export default function FeaturedPropertiesPage() {
                 {/* ---- COMMERCIAL / FRACTIONAL ---- */}
                 {(newProp.type === "Commercial" || newProp.type === "Fractional") && (
                   <>
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
+                    <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginBottom: "12px" }}>
                       <div>
                         <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>Floor Type</label>
                         <select value={newProp.floorType} onChange={(e) => setNewProp({ ...newProp, floorType: e.target.value })}
@@ -1601,7 +1602,7 @@ export default function FeaturedPropertiesPage() {
                 <div style={{ fontSize: "0.85rem", fontWeight: 700, color: "#1E293B", marginBottom: "12px" }}>
                   📍 Location & Mapping
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
+                <div className="rs-grid-3" style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "10px" }}>
                   <div>
                     <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#475569" }}>City / District <span style={{ color: "#EF4444" }}>*</span></label>
                     <select
@@ -1935,6 +1936,7 @@ export default function FeaturedPropertiesPage() {
       {/* ── Property Preview Modal ── */}
       {showPreviewModal && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed", top: 0, left: 0, right: 0, bottom: 0,
             backgroundColor: "rgba(15,23,42,0.82)",
@@ -2014,7 +2016,7 @@ export default function FeaturedPropertiesPage() {
                 <span>{[newProp.locality, newProp.district, newProp.state].filter(Boolean).join(", ")}</span>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "18px" }}>
+              <div className="rs-grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px", marginBottom: "18px" }}>
                 <div style={{ background: "#F0F9FF", borderRadius: "10px", padding: "12px", textAlign: "center" }}>
                   <div style={{ fontSize: "0.68rem", color: "#0369A1", fontWeight: 700, textTransform: "uppercase", marginBottom: "4px" }}>
                     {newProp.listingType === "fractional" ? "Price / Fraction" : "Price"}
@@ -2112,6 +2114,7 @@ export default function FeaturedPropertiesPage() {
       {/* View Property Modal (read-only) */}
       {selectedProperty && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed",
             top: 0,
@@ -2180,7 +2183,7 @@ export default function FeaturedPropertiesPage() {
               </div>
             )}
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", fontSize: "0.85rem", color: "#334155" }}>
+            <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "14px", fontSize: "0.85rem", color: "#334155" }}>
               <div><strong>Location:</strong> {selectedProperty.locality}, {selectedProperty.district}, {selectedProperty.state}</div>
               <div><strong>Area:</strong> {selectedProperty.area_sqft ? `${Number(selectedProperty.area_sqft).toLocaleString("en-IN")} sq.ft.` : "—"}</div>
               <div><strong>Listing Type:</strong> {selectedProperty.listing_type || "fractional"}</div>
@@ -2244,6 +2247,7 @@ export default function FeaturedPropertiesPage() {
       {/* Sell Property to Buyer Modal */}
       {sellModalProperty && (
         <div
+          className="rs-modal-overlay"
           style={{
             position: "fixed",
             top: 0,

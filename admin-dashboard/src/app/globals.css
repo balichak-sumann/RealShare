@@ -99,3 +99,236 @@ button {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+/* ==========================================================================
+   RESPONSIVE LAYER
+   Applies across every admin page. Page-level stylesheets are CSS modules and
+   therefore outrank plain element selectors, so rules that must win use the
+   [data-responsive-table] attribute hook (set by ResponsiveTables.tsx) to gain
+   specificity rather than reaching for !important.
+   Breakpoints: 1024px = tablet / drawer nav, 768px = phone, 480px = small phone.
+   ========================================================================== */
+
+/* --- Nothing may push the page wider than the screen ---------------------- */
+html {
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  max-width: 100%;
+  /* `clip` rather than `hidden`: it suppresses sideways scroll without turning
+     the body into a scroll container, so position: sticky keeps working. */
+  overflow-x: clip;
+}
+
+img,
+video,
+iframe,
+canvas {
+  max-width: 100%;
+}
+
+img,
+video {
+  height: auto;
+}
+
+/* Long unbroken strings (emails, wallet ids, URLs) are a common cause of
+   horizontal overflow on narrow screens. */
+td,
+th,
+p,
+h1,
+h2,
+h3,
+h4 {
+  overflow-wrap: break-word;
+}
+
+/* --- Tablet and below ----------------------------------------------------- */
+@media (max-width: 1024px) {
+  /* Tables stay tabular here but must never be clipped; the container scrolls. */
+  [class*="tableContainer"][class],
+  [class*="tableWrapper"][class] {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  [class*="tableContainer"][class] > table,
+  [class*="tableWrapper"][class] > table {
+    /* Wider than the tablet viewport on purpose: the container scrolls, and
+       this gives each column room to breathe instead of wrapping every cell.
+       Measured against a 7-column table at 820px. */
+    min-width: 1040px;
+  }
+}
+
+/* --- Phones: table rows become stacked cards ------------------------------ */
+@media (max-width: 768px) {
+  /* The row is the card now, so the container drops its own frame and the
+     horizontal scroll set above is no longer needed. */
+  [class*="tableContainer"][class],
+  [class*="tableWrapper"][class] {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    overflow-x: visible;
+  }
+
+  [class*="tableContainer"][class] > table,
+  [class*="tableWrapper"][class] > table {
+    min-width: 0;
+  }
+
+  table[data-responsive-table] {
+    display: block;
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  /* Kept in the accessibility tree for screen readers, removed visually —
+     each cell carries its own label once stacked. */
+  table[data-responsive-table] thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+
+  table[data-responsive-table] tbody {
+    display: block;
+    width: 100%;
+  }
+
+  table[data-responsive-table] tbody tr {
+    display: block;
+    width: 100%;
+    margin: 0 0 12px 0;
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--border-radius-lg);
+    box-shadow: var(--shadow-subtle);
+    overflow: hidden;
+  }
+
+  table[data-responsive-table] tbody tr:last-child {
+    margin-bottom: 0;
+  }
+
+  table[data-responsive-table] tbody td {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    width: auto;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: none;
+    border-bottom: 1px solid var(--border-color);
+    text-align: right;
+    font-size: 0.875rem;
+  }
+
+  table[data-responsive-table] tbody tr td:last-child {
+    border-bottom: none;
+  }
+
+  table[data-responsive-table] tbody td[data-label]::before {
+    content: attr(data-label);
+    flex: 0 0 auto;
+    max-width: 45%;
+    font-size: 0.68rem;
+    font-weight: 700;
+    letter-spacing: 0.4px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    text-align: left;
+  }
+
+  /* "No results" / loading rows span every column: show them as a plain
+     centred block, not as a labelled field. */
+  table[data-responsive-table] tbody td[colspan] {
+    display: block;
+    text-align: center;
+    border-bottom: none;
+  }
+
+  /* Action buttons sit on their own line so they keep a usable tap target. */
+  table[data-responsive-table] tbody td[class*="actions"] {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+  }
+}
+
+/* --- Collapsing grids that are declared as inline styles ------------------
+   ~60 layout grids across the admin pages are written as
+   style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr" }} and so can
+   never respond to a breakpoint on their own — an inline style outranks every
+   stylesheet rule. These utility classes are applied alongside those styles
+   and are the one place !important is warranted: overriding an inline style is
+   precisely what it exists for. Desktop is untouched (the inline value still
+   wins there); the override only applies once the screen is too narrow for the
+   declared column count.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 900px) {
+  .rs-grid-4 {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+@media (max-width: 700px) {
+  .rs-grid-2,
+  .rs-grid-3,
+  .rs-grid-4 {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* --- Forms and controls --------------------------------------------------- */
+@media (max-width: 768px) {
+  /* Any font-size under 16px makes iOS Safari zoom the page in when the field
+     takes focus, which leaves the layout shifted afterwards. */
+  input,
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* --- Modal overlays ------------------------------------------------------
+   Tagged by class on the overlay (see the page files); the panel is reached as
+   the overlay's direct child so each modal did not need identifying by hand.
+   Desktop keeps the authored 20px overlay / ~28px panel padding; on a phone
+   that combination eats roughly a quarter of the screen width.
+   -------------------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+  .rs-modal-overlay {
+    padding: 12px !important;
+  }
+
+  .rs-modal-overlay > div {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    padding: 18px 16px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .rs-modal-overlay {
+    padding: 8px !important;
+  }
+
+  .rs-modal-overlay > div {
+    padding: 16px 13px !important;
+    border-radius: 12px !important;
+  }
+}

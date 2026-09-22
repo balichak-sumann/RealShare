@@ -144,7 +144,7 @@ export default function SettingsPage() {
         </div>
       )}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
+      <div className="rs-grid-2" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
         <div>
           <div style={sectionStyle}>
             <div style={titleStyle}>🏢 Platform Configuration</div>

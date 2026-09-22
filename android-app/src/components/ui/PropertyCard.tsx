@@ -71,7 +71,16 @@ function PropertyCardInner({
   amenities = [],
 }: PropertyCardProps) {
   const router = useRouter();
-  const { isDesktop } = useResponsive();
+  const { isDesktop, select } = useResponsive();
+  // A flat 280px compact card is nearly full-bleed on a 360px phone and edge to
+  // edge on a 320px one, so the rail gives no hint that it scrolls. Scale the
+  // card with the screen instead. Desktop keeps its own wider style below.
+  const compactWidth = select({
+    'small-phone': 248,
+    default: 280,
+    'large-phone': 296,
+    foldable: 312,
+  });
   const { isShortlisted, toggleShortlist } = useShortlist();
   
   const isSaved = isShortlisted(id);
@@ -92,7 +101,7 @@ function PropertyCardInner({
     .slice(0, compact ? 4 : 6);
 
   return (
-    <PremiumCard style={[styles.card, compact && styles.compactCard, compact && isDesktop && styles.compactCardDesktop] as any} onPress={() => router.push(`/property/${id}` as any)}>
+    <PremiumCard style={[styles.card, compact && styles.compactCard, compact && !isDesktop && { width: compactWidth }, compact && isDesktop && styles.compactCardDesktop] as any} onPress={() => router.push(`/property/${id}` as any)}>
       <View style={styles.imageContainer}>
         <Image
           source={{ uri: heroImage }}

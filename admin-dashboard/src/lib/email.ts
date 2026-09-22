@@ -3,8 +3,8 @@ import nodemailer from 'nodemailer';
 function getTransporter() {
   return nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 587,
-    secure: false, // use STARTTLS
+    port: 465,
+    secure: true, // use SSL instead of STARTTLS
     family: 4, // Force IPv4 to bypass Render's broken IPv6 routing to Google
     auth: {
       user: process.env.SMTP_EMAIL,

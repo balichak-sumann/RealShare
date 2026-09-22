@@ -5,6 +5,7 @@ function getTransporter() {
     host: 'smtp.gmail.com',
     port: 587,
     secure: false, // use STARTTLS
+    family: 4, // Force IPv4 to bypass Render's broken IPv6 routing to Google
     auth: {
       user: process.env.SMTP_EMAIL,
       pass: process.env.SMTP_PASSWORD,

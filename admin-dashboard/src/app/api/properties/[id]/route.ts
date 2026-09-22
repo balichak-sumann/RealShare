@@ -251,19 +251,42 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     if (!user || !user.isAdmin) return NextResponse.json({ error: 'Unauthorized: Admin access required' }, { status: 401 });
 
     const data = await request.json();
+    let computedExpiry: Date | undefined = undefined;
+
+    const prop = await prisma.property.findUnique({ where: { id } });
+    if (!prop) {
+      return NextResponse.json({ error: 'Property not found' }, { status: 404 });
+    }
     
     // If reverting from sold out to live
     if (data.is_sold_out === false) {
-      const prop = await prisma.property.findUnique({ where: { id } });
-      if (prop) {
-        data.sold_fractions = 0;
-        data.available_fractions = prop.total_fractions;
-        
-        // Cancel investments so they are removed from buyer profiles without deleting records
-        await prisma.investment.updateMany({
-          where: { property_id: id, status: 'completed' },
-          data: { status: 'cancelled' }
-        });
+      data.sold_fractions = 0;
+      data.available_fractions = prop.total_fractions;
+      
+      // Cancel investments so they are removed from buyer profiles without deleting records
+      await prisma.investment.updateMany({
+        where: { property_id: id, status: 'completed' },
+        data: { status: 'cancelled' }
+      });
+    }
+
+    // If transitioning to approved, recalculate expiry from today
+    if (data.approval_status === 'approved' && prop.approval_status !== 'approved' && prop.posted_by) {
+      const activeSub = await prisma.userSubscription.findFirst({
+        where: {
+          user_id: prop.posted_by,
+          status: 'active',
+          expires_at: { gt: new Date() }
+        },
+        include: { plan: true },
+        orderBy: { created_at: 'desc' }
+      });
+
+      computedExpiry = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // fallback
+      if (activeSub && (activeSub as any).plan) {
+        const planPostDays = (activeSub as any).plan.post_listing_days || 180;
+        const listingExpiry = new Date(Date.now() + planPostDays * 24 * 60 * 60 * 1000);
+        computedExpiry = listingExpiry < activeSub.expires_at ? listingExpiry : activeSub.expires_at;
       }
     }
 
@@ -276,6 +299,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         is_sold_out: data.is_sold_out !== undefined ? data.is_sold_out : undefined,
         sold_fractions: data.sold_fractions !== undefined ? data.sold_fractions : undefined,
         available_fractions: data.available_fractions !== undefined ? data.available_fractions : undefined,
+        expires_at: computedExpiry !== undefined ? computedExpiry : undefined,
       },
       include: {
         images: {

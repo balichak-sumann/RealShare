@@ -258,6 +258,24 @@ export async function POST(request: Request) {
       imageUrls = [data.image_url.trim()];
     }
 
+    // Lookup active subscription to compute expiry
+    const activeSub = await prisma.userSubscription.findFirst({
+      where: {
+        user_id: userId,
+        status: 'active',
+        expires_at: { gt: new Date() }
+      },
+      include: { plan: true },
+      orderBy: { created_at: 'desc' }
+    });
+
+    let computedExpiry = new Date(Date.now() + 180 * 24 * 60 * 60 * 1000); // Default fallback
+    if (activeSub && (activeSub as any).plan) {
+      const planPostDays = (activeSub as any).plan.post_listing_days || 180;
+      const listingExpiry = new Date(Date.now() + planPostDays * 24 * 60 * 60 * 1000);
+      computedExpiry = listingExpiry < activeSub.expires_at ? listingExpiry : activeSub.expires_at;
+    }
+
     // Create property + images in database transaction
     const property = await prisma.$transaction(async (tx) => {
       const created = await tx.property.create({
@@ -293,7 +311,7 @@ export async function POST(request: Request) {
           posted_by: userId,
           developer_id: data.developer_id || null,
           approval_status: data.approval_status === 'draft' ? 'draft' : (isAdmin ? 'approved' : 'pending_approval'),
-          expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
+          expires_at: computedExpiry,
           // Speciality
           speciality: data.speciality || null,
           // Rental-specific

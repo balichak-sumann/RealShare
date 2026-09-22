@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView, Image, ImageBackground, Linking } from 'react-native';
 import { signOut, signInWithCustomToken } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -23,6 +23,17 @@ export default function SignInScreen() {
   const [error, setError] = useState('');
   
   const [pendingVerification, setPendingVerification] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (pendingVerification && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [pendingVerification, resendTimer]);
 
   const isEmail = identifier.includes('@');
 
@@ -52,6 +63,7 @@ export default function SignInScreen() {
           const data = await res.json();
           if (data.success) {
             setPendingVerification(true);
+            setResendTimer(60);
           } else {
             setError(data.error || 'Failed to send OTP.');
           }
@@ -82,6 +94,7 @@ export default function SignInScreen() {
           const data = await res.json();
           if (data.success) {
             setPendingVerification(true);
+            setResendTimer(60);
           } else {
             setError(data.error || 'Failed to send OTP.');
           }
@@ -273,8 +286,10 @@ export default function SignInScreen() {
           </TouchableOpacity>
           
           <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20, gap: 20 }}>
-            <TouchableOpacity onPress={onSignInPress} disabled={loading}>
-              <Text style={[styles.linkText, { color: loading ? Neutrals.gray400 : GoldSystem.primaryGold }]}>Resend Code</Text>
+            <TouchableOpacity onPress={onSignInPress} disabled={loading || resendTimer > 0}>
+              <Text style={[styles.linkText, { color: (loading || resendTimer > 0) ? (isDesktopWeb ? Neutrals.gray400 : '#94A3B8') : GoldSystem.primaryGold }]}>
+                {resendTimer > 0 ? `Resend Code in ${resendTimer}s` : "Resend Code"}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setPendingVerification(false)}>
               <Text style={styles.linkText}>Change {isEmail ? 'Email' : 'Number'}</Text>

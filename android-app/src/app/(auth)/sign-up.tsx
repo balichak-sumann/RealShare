@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Platform, KeyboardAvoidingView, ScrollView, Image, Modal, ImageBackground, Linking } from 'react-native';
 import { signOut, signInWithCustomToken } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
@@ -56,7 +56,18 @@ export default function SignUpScreen() {
   const [builderPassportNumber, setBuilderPassportNumber] = useState('');
 
   const [pendingVerification, setPendingVerification] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
   const [code, setCode] = useState('');
+
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval>;
+    if (pendingVerification && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [pendingVerification, resendTimer]);
   const [referralCode, setReferralCode] = useState('');
   const [role, setRole] = useState<'buyer' | 'investor' | 'agent' | 'builder'>('buyer');
   const [loading, setLoading] = useState(false);
@@ -234,6 +245,7 @@ export default function SignUpScreen() {
         const emailData = await emailRes.json();
         if (emailData.success) {
           setPendingVerification(true);
+          setResendTimer(60);
         } else {
           setError(emailData.error || 'Failed to send Email OTP.');
         }
@@ -247,6 +259,7 @@ export default function SignUpScreen() {
         const phoneData = await phoneRes.json();
         if (phoneData.success) {
           setPendingVerification(true);
+          setResendTimer(60);
         } else {
           setError(phoneData.error || 'Failed to send Phone OTP.');
         }
@@ -913,8 +926,10 @@ export default function SignUpScreen() {
           </TouchableOpacity>
           
           <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20, gap: 20 }}>
-            <TouchableOpacity onPress={onSignUpPress} disabled={loading}>
-              <Text style={[styles.linkText, { color: loading ? Neutrals.gray400 : GoldSystem.primaryGold }]}>Resend Code</Text>
+            <TouchableOpacity onPress={onSignUpPress} disabled={loading || resendTimer > 0}>
+              <Text style={[styles.linkText, { color: (loading || resendTimer > 0) ? (isDesktopWeb ? Neutrals.gray400 : '#94A3B8') : GoldSystem.primaryGold }]}>
+                {resendTimer > 0 ? `Resend Code in ${resendTimer}s` : "Resend Code"}
+              </Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setPendingVerification(false)}>
               <Text style={styles.linkText}>Change Details</Text>

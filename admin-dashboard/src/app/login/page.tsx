@@ -1,6 +1,6 @@
 "use client";
 
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { signInWithCustomToken } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -13,9 +13,20 @@ function LoginForm() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendTimer, setResendTimer] = useState(0);
   const router = useRouter();
   const searchParams = useSearchParams();
   const unauthorized = searchParams.get('unauthorized') === '1';
+
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (step === 2 && resendTimer > 0) {
+      interval = setInterval(() => {
+        setResendTimer((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [step, resendTimer]);
 
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,6 +66,7 @@ function LoginForm() {
       
       setSuccess('OTP sent successfully!');
       setStep(2);
+      setResendTimer(60);
     } catch (err: any) {
       setError(err.message || 'Failed to send OTP');
     } finally {
@@ -207,7 +219,16 @@ function LoginForm() {
               onClick={() => { setStep(1); setOtp(''); setError(''); setSuccess(''); }}
               style={{ background: 'none', border: 'none', color: '#64748B', fontSize: '14px', cursor: 'pointer', marginTop: '8px' }}
             >
-              Change Mobile Number
+              Change Email / Mobile Number
+            </button>
+
+            <button
+              type="button"
+              onClick={handleSendOtp}
+              disabled={resendTimer > 0 || loading}
+              style={{ background: 'none', border: 'none', color: resendTimer > 0 ? '#94A3B8' : '#2563EB', fontSize: '14px', cursor: resendTimer > 0 ? 'not-allowed' : 'pointer', marginTop: '4px', fontWeight: resendTimer > 0 ? 'normal' : 'bold' }}
+            >
+              {resendTimer > 0 ? `Resend OTP in ${resendTimer}s` : "Didn't receive the OTP? Resend"}
             </button>
           </form>
         )}

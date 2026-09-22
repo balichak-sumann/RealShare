@@ -10,7 +10,8 @@ interface Employee {
   name: string;
   email: string;
   phone: string;
-  department: "Sales" | "Support" | "Accounts" | "Tech";
+  department: "Sales" | "Support" | "Accounts" | "Tech" | "Admin" | "Management";
+  role: string;
   employeeCode: string;
   incentiveRatePct: number;
   monthlyTarget: string;
@@ -25,12 +26,15 @@ function mapApiEmployee(p: any): Employee {
     support: 'Support',
     accounts: 'Accounts',
     tech: 'Tech',
+    admin: 'Admin',
+    management: 'Management',
   };
   return {
     id: p.id,
     name: p.full_name || 'Unknown',
     email: p.email || '',
     phone: p.phone_number || '',
+    role: p.role || 'employee',
     department: deptMap[p.employee_department] || 'Sales',
     employeeCode: p.id.slice(0, 8).toUpperCase(),
     incentiveRatePct: 0,
@@ -41,7 +45,7 @@ function mapApiEmployee(p: any): Employee {
   };
 }
 export default function EmployeesPage() {
-  const { user } = useAuth();
+  const { user, userProfile } = useAuth();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [loading, setLoading] = useState(true);
   const [deptFilter, setDeptFilter] = useState("All");
@@ -77,6 +81,7 @@ export default function EmployeesPage() {
     name: "",
     email: "",
     phone: "",
+    role: "employee" as "employee" | "admin" | "superadmin",
     department: "Sales" as const,
     employeeCode: `RS-EMP-${Math.floor(10 + Math.random() * 90)}`,
     incentiveRatePct: 0.5,
@@ -98,24 +103,42 @@ export default function EmployeesPage() {
     try {
       const res = await fetch(`/api/admin/employees/${id}`, {
         method: 'PATCH',
-        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...authHeader
+        },
         body: JSON.stringify({ is_active: newActive }),
       });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        showToast(err.error || 'Failed to update status.', "error");
-        return;
+      if (res.ok) {
+        setEmployees(employees.map(e => e.id === id ? { ...e, status: newActive ? "Active" : "Inactive" } : e));
+        showToast(`Employee ${target.name} is now ${newActive ? 'Active' : 'Inactive'}`, "success");
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Failed to update employee', "error");
       }
-      setEmployees((prev) =>
-        prev.map((emp) =>
-          emp.id === id
-            ? { ...emp, status: emp.status === "Active" ? "Inactive" : "Active" }
-            : emp
-        )
-      );
-      showToast("Employee status updated successfully.");
     } catch (e) {
-      showToast("Failed to update status.", "error");
+      showToast('Error updating employee', "error");
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Are you sure you want to permanently delete this account? This cannot be undone.")) return;
+    const authHeader = await getAuthHeader();
+    if (!authHeader) return;
+    try {
+      const res = await fetch(`/api/admin/employees/${id}`, {
+        method: 'DELETE',
+        headers: authHeader,
+      });
+      if (res.ok) {
+        setEmployees(employees.filter(e => e.id !== id));
+        showToast("Account deleted successfully", "success");
+      } else {
+        const err = await res.json();
+        showToast(err.error || 'Failed to delete account', "error");
+      }
+    } catch (e) {
+      showToast('Error deleting account', "error");
     }
   };
 
@@ -147,6 +170,7 @@ export default function EmployeesPage() {
           full_name: newEmp.name,
           email: newEmp.email,
           phone_number: newEmp.phone || undefined,
+          role: newEmp.role,
           department: newEmp.department.toLowerCase(),
         }),
       });
@@ -164,8 +188,9 @@ export default function EmployeesPage() {
         name: data.employee.full_name,
         email: data.employee.email,
         phone: data.employee.phone_number || "+91 00000 00000",
+        role: data.employee.role,
         department: newEmp.department,
-        employeeCode: data.employee.employeeCode,
+        employeeCode: data.employee.employeeCode || data.employee.id.slice(0, 8).toUpperCase(),
         incentiveRatePct: Number(newEmp.incentiveRatePct),
         monthlyTarget: newEmp.monthlyTarget,
         currentMonthSales: "₹0",
@@ -193,6 +218,7 @@ export default function EmployeesPage() {
         name: "",
         email: "",
         phone: "",
+        role: "employee",
         department: "Sales",
         employeeCode: `RS-EMP-${Math.floor(10 + Math.random() * 90)}`,
         incentiveRatePct: 0.5,
@@ -386,7 +412,8 @@ export default function EmployeesPage() {
           <thead>
             <tr>
               <th className={styles.th}>Employee Name & ID</th>
-              <th className={styles.th}>Department & Role</th>
+              <th className={styles.th}>Role</th>
+              <th className={styles.th}>Department</th>
               <th className={styles.th}>Incentive Code</th>
               <th className={styles.th}>Commission / Incentive</th>
               <th className={styles.th}>Performance (Current MTD)</th>
@@ -403,6 +430,11 @@ export default function EmployeesPage() {
                   <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>
                     {emp.email} • {emp.phone}
                   </div>
+                </td>
+                <td className={styles.td}>
+                  <span style={{ display: "inline-block", padding: "4px 8px", borderRadius: "6px", fontSize: "0.75rem", fontWeight: 700, background: "#F1F5F9", color: "#334155", textTransform: "capitalize" }}>
+                    {emp.role}
+                  </span>
                 </td>
                 <td className={styles.td}>
                   <span
@@ -461,20 +493,39 @@ export default function EmployeesPage() {
                   </span>
                 </td>
                 <td className={styles.td}>
-                  <button
-                    onClick={() => handleToggleStatus(emp.id)}
-                    style={{
-                      padding: "4px 10px",
-                      borderRadius: "6px",
-                      border: "1px solid var(--border-color)",
-                      background: "#fff",
-                      fontSize: "0.75rem",
-                      fontWeight: 600,
-                      cursor: "pointer",
-                    }}
-                  >
-                    {emp.status === "Active" ? "Deactivate" : "Activate"}
-                  </button>
+                  <div style={{ display: "flex", gap: "6px", alignItems: "center" }}>
+                    <button
+                      onClick={() => handleToggleStatus(emp.id)}
+                      style={{
+                        padding: "4px 10px",
+                        borderRadius: "6px",
+                        border: "1px solid var(--border-color)",
+                        background: "#fff",
+                        fontSize: "0.75rem",
+                        fontWeight: 600,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {emp.status === "Active" ? "Disable" : "Enable"}
+                    </button>
+                    {userProfile?.role === 'superadmin' && (
+                      <button
+                        onClick={() => handleDelete(emp.id)}
+                        style={{
+                          padding: "4px 10px",
+                          borderRadius: "6px",
+                          border: "1px solid #FCA5A5",
+                          background: "#FEF2F2",
+                          color: "#DC2626",
+                          fontSize: "0.75rem",
+                          fontWeight: 600,
+                          cursor: "pointer",
+                        }}
+                      >
+                        Delete
+                      </button>
+                    )}
+                  </div>
                 </td>
               </tr>
             ))}
@@ -575,9 +626,21 @@ export default function EmployeesPage() {
                 </div>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "12px" }}>
                 <div>
-                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Department & Role</label>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Role *</label>
+                  <select
+                    value={newEmp.role}
+                    onChange={(e) => setNewEmp({ ...newEmp, role: e.target.value as any })}
+                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                  >
+                    <option value="employee">Employee</option>
+                    <option value="admin">Admin</option>
+                    {userProfile?.role === 'superadmin' && <option value="superadmin">Super Admin</option>}
+                  </select>
+                </div>
+                <div>
+                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>Department</label>
                   <select
                     value={newEmp.department}
                     onChange={(e) => setNewEmp({ ...newEmp, department: e.target.value as any })}

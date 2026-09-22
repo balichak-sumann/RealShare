@@ -44,8 +44,8 @@ export async function POST(req: Request) {
     let requestedRole = 'buyer';
     if (!existingProfile) {
       // First time this user has ever synced: role may be set once.
-      if (body.role === 'admin' && bootstrapAllowed) {
-        requestedRole = 'admin';
+      if ((body.role === 'admin' || body.role === 'superadmin') && bootstrapAllowed) {
+        requestedRole = body.role;
       } else if (body.role && SELF_SERVICE_ROLES.includes(body.role)) {
         requestedRole = body.role;
       }
@@ -87,7 +87,7 @@ export async function POST(req: Request) {
         full_address: body.full_address || null,
         avatar_url: decodedToken.picture || null,
         role: requestedRole,
-        is_approved: requestedRole === 'admin' || requestedRole === 'buyer',
+        is_approved: requestedRole === 'admin' || requestedRole === 'superadmin' || requestedRole === 'buyer',
         referred_by_code: referredByCode || null,
         expo_push_token: expoPushToken || null,
         ...builderFields,

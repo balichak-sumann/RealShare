@@ -9,6 +9,7 @@ import Link from 'next/link';
 export default function Signup() {
   const [identifier, setIdentifier] = useState('');
   const [bootstrapSecret, setBootstrapSecret] = useState('');
+  const [role, setRole] = useState<'admin' | 'superadmin'>('admin');
   
   const [otp, setOtp] = useState('');
   
@@ -89,8 +90,8 @@ export default function Signup() {
         body: JSON.stringify({
           identifier: identifier,
           otp: otp,
-          role: 'admin',
-          fullName: 'Admin User'
+          role: role,
+          fullName: role === 'superadmin' ? 'Super Admin User' : 'Admin User'
         }),
       });
       const data = await res.json();
@@ -111,12 +112,12 @@ export default function Signup() {
           'Content-Type': 'application/json',
           'x-admin-bootstrap-secret': bootstrapSecret,
         },
-        body: JSON.stringify({ role: 'admin' })
+        body: JSON.stringify({ role })
       });
       
       const syncData = await syncRes.json().catch(() => null);
-      if (syncData?.profile?.role !== 'admin') {
-        setError('Bootstrap secret was incorrect, so an admin account was not created. Ask an existing admin to add you from Employees instead.');
+      if (syncData?.profile?.role !== role) {
+        setError('Bootstrap secret was incorrect, so the account was not created. Ask an existing admin to add you from Employees instead.');
         await auth.signOut();
         return;
       }
@@ -137,7 +138,32 @@ export default function Signup() {
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '16px' }}>
             <img src="/logo.png" alt="Realshare Logo" style={{ height: '48px', objectFit: 'contain' }} />
           </div>
-          <h2 style={{ fontSize: '18px', color: '#475569', margin: 0 }}>Create Admin Account</h2>
+          <h2 style={{ fontSize: '18px', color: '#475569', margin: 0 }}>Create Account</h2>
+        </div>
+
+        <div style={{ display: 'flex', gap: '8px', marginBottom: '24px', background: '#F1F5F9', padding: '4px', borderRadius: '8px' }}>
+          <button
+            onClick={() => setRole('admin')}
+            style={{
+              flex: 1, padding: '8px', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              background: role === 'admin' ? '#FFF' : 'transparent',
+              color: role === 'admin' ? '#1E40AF' : '#64748B',
+              boxShadow: role === 'admin' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+            }}
+          >
+            Admin
+          </button>
+          <button
+            onClick={() => setRole('superadmin')}
+            style={{
+              flex: 1, padding: '8px', border: 'none', borderRadius: '6px', fontSize: '14px', fontWeight: 600, cursor: 'pointer',
+              background: role === 'superadmin' ? '#FFF' : 'transparent',
+              color: role === 'superadmin' ? '#1E40AF' : '#64748B',
+              boxShadow: role === 'superadmin' ? '0 1px 3px rgba(0,0,0,0.1)' : 'none'
+            }}
+          >
+            Super Admin
+          </button>
         </div>
 
         {error && (

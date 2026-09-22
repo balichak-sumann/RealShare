@@ -21,6 +21,7 @@ import { Neutrals, GoldSystem, Radius, Typography } from '@/constants/design';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import * as DocumentPicker from 'expo-document-picker';
+import { MapPicker } from '@/components/ui/MapPicker';
 
 const CATEGORIES = ['Commercial', 'Fractional', 'Residential', 'Holiday', 'Plots & Farms'] as const;
 
@@ -30,9 +31,13 @@ const MAJOR_CITIES = [
   { name: 'Mumbai', state: 'Maharashtra' },
   { name: 'Pune', state: 'Maharashtra' },
   { name: 'Delhi NCR', state: 'Delhi' },
+  { name: 'Gurugram', state: 'Haryana' },
+  { name: 'Noida', state: 'Uttar Pradesh' },
   { name: 'Chennai', state: 'Tamil Nadu' },
   { name: 'Kolkata', state: 'West Bengal' },
+  { name: 'Ahmedabad', state: 'Gujarat' },
   { name: 'Goa', state: 'Goa' },
+  { name: 'Kochi', state: 'Kerala' },
   { name: 'Other', state: '' },
 ];
 
@@ -54,8 +59,11 @@ function parseGoogleMapsUrl(url: string): { lat: number; lng: number } | null {
 export default function PostPropertyScreen() {
   const router = useRouter();
   const { profile } = useUser();
+  const { width } = useWindowDimensions();
+  const isDesktop = width >= 1024;
 
   const [step, setStep] = useState(1);
+  const [stepError, setStepError] = useState<string>('');
 
   // Form states
   const [listingType, setListingType] = useState<'fractional' | 'outright' | 'rental' | 'resale'>('fractional');
@@ -65,6 +73,9 @@ export default function PostPropertyScreen() {
   const [description, setDescription] = useState('');
   const [speciality, setSpeciality] = useState('');
   const [areaSqft, setAreaSqft] = useState('');
+  const [areaSqftMax, setAreaSqftMax] = useState('');
+  const [reraNumber, setReraNumber] = useState('');
+  const [permissionNumber, setPermissionNumber] = useState('');
   const [district, setDistrict] = useState('Hyderabad');
   const [customDistrict, setCustomDistrict] = useState('');
   const [stateName, setStateName] = useState('Telangana');
@@ -106,6 +117,8 @@ export default function PostPropertyScreen() {
     ownershipType: "Single",
   });
 
+  const [bhkAreas, setBhkAreas] = useState<Record<string, string>>({});
+
   // Financials
   const [price, setPrice] = useState('');
   const [totalPriceStr, setTotalPriceStr] = useState('');
@@ -128,6 +141,8 @@ export default function PostPropertyScreen() {
   const [statusMessage, setStatusMessage] = useState('');
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [formErrors, setFormErrors] = useState<string[]>([]);
+  const [submittedPropertyId, setSubmittedPropertyId] = useState<string | null>(null);
+  const [acceptedTerms, setAcceptedTerms] = useState(false);
 
   const handlePickImages = async () => {
     try {
@@ -275,6 +290,7 @@ export default function PostPropertyScreen() {
     const finalDistrict = district === 'Other' ? customDistrict.trim() : district;
     if (!locality.trim() || !finalDistrict) errors.push('Locality and District are required.');
     if (!price || Number(price) < 0) errors.push('A valid price is required.');
+    if (!acceptedTerms) errors.push('You must accept the Terms of Service to post this property.');
     if (errors.length > 0) {
       setFormErrors(errors);
       return;
@@ -364,7 +380,10 @@ export default function PostPropertyScreen() {
         property_type: category,
         listing_type: listingType,
         area_sqft: Number(areaSqft),
+        area_sqft_max: areaSqftMax ? Number(areaSqftMax) : undefined,
         area_unit: newProp.areaUnit || 'sqft',
+        rera_number: reraNumber.trim() || undefined,
+        permission_number: permissionNumber.trim() || undefined,
         state: stateName.trim() || 'Telangana',
         district: finalDistrict,
         locality: locality.trim(),
@@ -372,21 +391,27 @@ export default function PostPropertyScreen() {
         google_maps_url: googleMapsUrl.trim() || undefined,
         lat: lat ? Number(lat) : undefined,
         lng: lng ? Number(lng) : undefined,
-        price_per_fraction: Number(price),
+        // Fractional: fraction price = totalPrice / totalFractions; else direct price
+        price_per_fraction: listingType === 'fractional'
+          ? Math.round(Number(totalPriceStr || 0) / Math.max(1, Number(totalFractions)))
+          : Number(price),
         total_fractions: listingType === 'fractional' ? Number(totalFractions) || 100 : 1,
         available_fractions: listingType === 'fractional' ? Number(totalFractions) || 100 : 1,
-        booking_amount: bookingAmount ? Number(bookingAmount) : 50000,
-        assured_yield: assuredYield ? Number(assuredYield) : undefined,
-        target_irr: targetIrr ? Number(targetIrr) : undefined,
+        booking_amount: listingType === 'fractional'
+          ? (bookingAmount ? Number(bookingAmount) : Math.round(Number(totalPriceStr || 0) / Math.max(1, Number(totalFractions)) * 0.1))
+          : (bookingAmount ? Number(bookingAmount) : Math.round(Number(price) * 0.1)),
+        // Yield / IRR (non-rental)
+        assured_yield: listingType !== 'rental' && assuredYield ? Number(assuredYield) : undefined,
+        target_irr: listingType !== 'rental' && targetIrr ? Number(targetIrr) : undefined,
         video_url: videoUrl.trim() || undefined,
         image_urls: uploadedUrls,
         document_urls: uploadedDocUrls,
         speciality: speciality.trim() || undefined,
         // Rental specific
+        rental_amount: listingType === 'rental' ? Number(rentalAmount) || undefined : undefined,
         deposit_type: listingType === 'rental' ? depositType : undefined,
         deposit_months: listingType === 'rental' && depositType === 'months' ? Number(depositMonths) : undefined,
         deposit_amount: listingType === 'rental' && depositType === 'amount' ? Number(depositAmount) : undefined,
-        rental_amount: listingType === 'rental' ? Number(rentalAmount) : undefined,
         // Shared
         sub_type: newProp.subType || undefined,
         floor_type: newProp.floorType || undefined,
@@ -434,51 +459,9 @@ export default function PostPropertyScreen() {
         throw new Error(data.error || 'Failed to create listing');
       }
 
-      const successMsg = `Property "${title}" has been submitted successfully${profile?.role === 'admin' ? ' and is now LIVE' : ' and is pending admin approval'}.`;
-      
-      if (Platform.OS === 'web') {
-        alert('Success! 🎉\n\n' + successMsg);
-        if (profile?.role === 'agent') {
-          router.replace('/agent-portal');
-        } else if (profile?.role === 'builder') {
-          router.replace('/builder-portal');
-        } else {
-          router.replace('/');
-        }
-      } else {
-        Alert.alert(
-          'Success! 🎉',
-          successMsg,
-          [
-            {
-              text: 'View Property',
-              onPress: () => {
-                if (data.id) {
-                  router.replace(`/property/${data.id}`);
-                } else if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace('/');
-                }
-              },
-            },
-            {
-              text: 'Return to Portal',
-              onPress: () => {
-                if (profile?.role === 'agent') {
-                  router.replace('/agent-portal');
-                } else if (profile?.role === 'builder') {
-                  router.replace('/builder-portal');
-                } else if (router.canGoBack()) {
-                  router.back();
-                } else {
-                  router.replace('/');
-                }
-              },
-            },
-          ]
-        );
-      }
+      setShowPreviewModal(false);
+      setSubmittedPropertyId(data.id || 'draft');
+      router.replace(`/submission-success?id=${data.id || 'draft'}&title=${encodeURIComponent(title)}`);
     } catch (e: any) {
       Alert.alert('Error', e.message || 'Failed to submit property listing.');
     } finally {
@@ -574,133 +557,196 @@ export default function PostPropertyScreen() {
             </View>
 
             {/* Pricing & Financials (Directly below Listing Mode) */}
-            <Text style={[styles.inputLabel, { marginTop: 20 }]}>
-              2. {listingType === 'rental' ? 'Monthly Rent (₹) *' : 'Total Property Value (₹) *'}
-            </Text>
-            {listingType === 'rental' ? (
-              <TextInput
-                style={styles.textInput}
-                keyboardType="numeric"
-                placeholder="e.g. 25000"
-                value={rentalAmount}
-                onChangeText={setRentalAmount}
-              />
-            ) : (
-              <TextInput
-                style={styles.textInput}
-                keyboardType="numeric"
-                placeholder="e.g. 50000000"
-                value={totalPriceStr}
-                onChangeText={(val) => {
-                  setTotalPriceStr(val);
-                  if (listingType === 'fractional') {
-                    const pricePer = Number(val) / Number(totalFractions || 1);
-                    setPrice(pricePer.toString());
-                  } else {
-                    setPrice(val);
-                  }
-                }}
-              />
-            )}
+            <View style={{ backgroundColor: '#F8FAFC', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', marginTop: 20 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#1E293B', marginBottom: 12 }}>💰 Pricing & Investment Metrics</Text>
 
-            {listingType === 'fractional' && (
-              <>
-                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Number of Fractions *</Text>
-                <TextInput
-                  style={styles.textInput}
-                  keyboardType="numeric"
-                  placeholder="e.g. 100"
-                  value={totalFractions}
-                  onChangeText={(val) => {
-                    setTotalFractions(val);
-                    const pricePer = Number(totalPriceStr || 0) / Number(val || 1);
-                    setPrice(pricePer.toString());
-                  }}
-                />
+              {/* FRACTIONAL MODE */}
+              {listingType === 'fractional' && (
+                <>
+                  <Text style={styles.inputLabel}>Total Property Price (₹) *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    keyboardType="numeric"
+                    placeholder="e.g. 25000000"
+                    value={totalPriceStr}
+                    onChangeText={(val) => {
+                      setTotalPriceStr(val);
+                      const pricePer = Math.round(Number(val) / Math.max(1, Number(totalFractions || 1)));
+                      setPrice(pricePer.toString());
+                    }}
+                  />
+                  <View style={[styles.grid2Row, { marginTop: 12 }]}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.inputLabel}>No. of Fractions *</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        keyboardType="numeric"
+                        placeholder="e.g. 100"
+                        value={totalFractions}
+                        onChangeText={(val) => {
+                          setTotalFractions(val);
+                          const pricePer = Math.round(Number(totalPriceStr || 0) / Math.max(1, Number(val || 1)));
+                          setPrice(pricePer.toString());
+                        }}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.inputLabel}>Price Per Fraction (₹) — Auto</Text>
+                      <View style={[styles.textInput, { backgroundColor: '#F0FDF4', justifyContent: 'center' }]}>
+                        <Text style={{ fontSize: 15, fontWeight: '800', color: '#065F46' }}>
+                          ₹ {price && Number(price) > 0 ? Number(price).toLocaleString('en-IN') : '—'}
+                        </Text>
+                      </View>
+                      <Text style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>Calculated automatically</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.inputLabel, { marginTop: 12 }]}>Booking Amount Per Fraction (₹)</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    keyboardType="numeric"
+                    placeholder={`Auto: ₹${price && Number(price) > 0 ? Math.round(Number(price) * 0.1).toLocaleString('en-IN') : '—'} (10%)`}
+                    value={bookingAmount}
+                    onChangeText={setBookingAmount}
+                  />
+                  <Text style={{ fontSize: 10, color: '#64748B', marginTop: 2 }}>Leave blank for auto 10% of fraction price</Text>
+                </>
+              )}
 
-                <Text style={[styles.inputLabel, { marginTop: 14, color: GoldSystem.primaryGold }]}>Calculated Price per Fraction (₹)</Text>
-                <TextInput
-                  style={[styles.textInput, { backgroundColor: '#F8FAFC', color: '#64748B' }]}
-                  editable={false}
-                  value={price && Number(price) > 0 ? `₹ ${Number(price).toLocaleString('en-IN')}` : '₹ 0'}
-                />
+              {/* OUTRIGHT / RESALE MODE */}
+              {(listingType === 'outright' || listingType === 'resale') && (
+                <>
+                  <View style={styles.grid2Row}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.inputLabel}>Total Price (₹) *</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        keyboardType="numeric"
+                        placeholder="e.g. 50000000"
+                        value={totalPriceStr}
+                        onChangeText={(val) => {
+                          setTotalPriceStr(val);
+                          setPrice(val);
+                        }}
+                      />
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.inputLabel}>Assured Yield (%)</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        keyboardType="numeric"
+                        placeholder="8.5"
+                        value={assuredYield}
+                        onChangeText={setAssuredYield}
+                      />
+                    </View>
+                  </View>
+                  <Text style={[styles.inputLabel, { marginTop: 12 }]}>Target IRR (%)</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    keyboardType="numeric"
+                    placeholder="15.0"
+                    value={targetIrr}
+                    onChangeText={setTargetIrr}
+                  />
+                </>
+              )}
 
-                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Booking Amount Per Fraction (₹)</Text>
-                <TextInput
-                  style={styles.textInput}
-                  keyboardType="numeric"
-                  placeholder="e.g. 50000"
-                  value={bookingAmount}
-                  onChangeText={setBookingAmount}
-                />
-              </>
-            )}
+              {/* RENTAL MODE */}
+              {listingType === 'rental' && (
+                <>
+                  <Text style={styles.inputLabel}>Monthly Rent (₹) *</Text>
+                  <TextInput
+                    style={styles.textInput}
+                    keyboardType="numeric"
+                    placeholder="e.g. 45000"
+                    value={rentalAmount}
+                    onChangeText={(val) => {
+                      setRentalAmount(val);
+                      setPrice(val);
+                    }}
+                  />
 
-            {listingType === 'rental' && (
-              <>
-                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Security Deposit Type *</Text>
-                <View style={{ flexDirection: 'row', gap: 10, marginTop: 8 }}>
-                  <TouchableOpacity
-                    style={[styles.modeCard, { flex: 1, padding: 12 }, depositType === 'months' && styles.modeCardActive]}
-                    onPress={() => setDepositType('months')}
-                  >
-                    <Text style={[styles.modeCardLabel, { fontSize: 13 }, depositType === 'months' && styles.modeCardLabelActive]}>By Months</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.modeCard, { flex: 1, padding: 12 }, depositType === 'amount' && styles.modeCardActive]}
-                    onPress={() => setDepositType('amount')}
-                  >
-                    <Text style={[styles.modeCardLabel, { fontSize: 13 }, depositType === 'amount' && styles.modeCardLabelActive]}>Fixed Amount</Text>
-                  </TouchableOpacity>
+                  <Text style={[styles.inputLabel, { marginTop: 14 }]}>Security Deposit Type *</Text>
+                  <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+                    <TouchableOpacity
+                      style={[styles.modeCard, { flex: 1, padding: 12 }, depositType === 'months' && styles.modeCardActive]}
+                      onPress={() => setDepositType('months')}
+                    >
+                      <Text style={[styles.modeCardLabel, { fontSize: 13 }, depositType === 'months' && styles.modeCardLabelActive]}>By Months</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={[styles.modeCard, { flex: 1, padding: 12 }, depositType === 'amount' && styles.modeCardActive]}
+                      onPress={() => setDepositType('amount')}
+                    >
+                      <Text style={[styles.modeCardLabel, { fontSize: 13 }, depositType === 'amount' && styles.modeCardLabelActive]}>Fixed Amount</Text>
+                    </TouchableOpacity>
+                  </View>
+
+                  {depositType === 'months' ? (
+                    <>
+                      <Text style={[styles.inputLabel, { marginTop: 12 }]}>Number of Months *</Text>
+                      <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                        {[1,2,3,4,5,6].map(m => (
+                          <TouchableOpacity
+                            key={m}
+                            style={[styles.tagBtn, { paddingHorizontal: 14 }, depositMonths === m.toString() && styles.tagBtnActive]}
+                            onPress={() => setDepositMonths(m.toString())}
+                          >
+                            <Text style={[styles.tagBtnText, depositMonths === m.toString() && styles.tagBtnTextActive]}>{m}M</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </>
+                  ) : (
+                    <>
+                      <Text style={[styles.inputLabel, { marginTop: 12 }]}>Deposit Amount (₹) *</Text>
+                      <TextInput
+                        style={styles.textInput}
+                        keyboardType="numeric"
+                        placeholder="e.g. 100000"
+                        value={depositAmount}
+                        onChangeText={setDepositAmount}
+                      />
+                    </>
+                  )}
+
+                  {/* Deposit Summary */}
+                  <View style={[styles.textInput, { backgroundColor: '#F0FDF4', marginTop: 10, justifyContent: 'center' }]}>
+                    <Text style={{ fontSize: 13, fontWeight: '700', color: '#065F46' }}>
+                      Deposit: {depositType === 'amount'
+                        ? `₹ ${Number(depositAmount || 0).toLocaleString('en-IN')} (Custom)`
+                        : `₹ ${(Number(rentalAmount || 0) * Number(depositMonths || 2)).toLocaleString('en-IN')} (${depositMonths || 2} months)`
+                      }
+                    </Text>
+                  </View>
+                </>
+              )}
+
+              {/* Yield & IRR for fractional only (outright/resale handled above) */}
+              {listingType === 'fractional' && (
+                <View style={[styles.grid2Row, { marginTop: 12 }]}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.inputLabel}>Assured Yield (%)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      keyboardType="numeric"
+                      placeholder="8.5"
+                      value={assuredYield}
+                      onChangeText={setAssuredYield}
+                    />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.inputLabel}>Target IRR (%)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      keyboardType="numeric"
+                      placeholder="15.0"
+                      value={targetIrr}
+                      onChangeText={setTargetIrr}
+                    />
+                  </View>
                 </View>
-
-                {depositType === 'months' ? (
-                  <>
-                    <Text style={[styles.inputLabel, { marginTop: 14 }]}>Number of Months *</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      keyboardType="numeric"
-                      placeholder="e.g. 3"
-                      value={depositMonths}
-                      onChangeText={setDepositMonths}
-                    />
-                  </>
-                ) : (
-                  <>
-                    <Text style={[styles.inputLabel, { marginTop: 14 }]}>Deposit Amount (₹) *</Text>
-                    <TextInput
-                      style={styles.textInput}
-                      keyboardType="numeric"
-                      placeholder="e.g. 100000"
-                      value={depositAmount}
-                      onChangeText={setDepositAmount}
-                    />
-                  </>
-                )}
-              </>
-            )}
-
-            <View style={styles.grid2Row}>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Assured Yield (%)</Text>
-                <TextInput
-                  style={styles.textInput}
-                  keyboardType="numeric"
-                  placeholder="8.5"
-                  value={assuredYield}
-                  onChangeText={setAssuredYield}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[styles.inputLabel, { marginTop: 14 }]}>Target IRR (%)</Text>
-                <TextInput
-                  style={styles.textInput}
-                  keyboardType="numeric"
-                  placeholder="15.0"
-                  value={targetIrr}
-                  onChangeText={setTargetIrr}
-                />
-              </View>
+              )}
             </View>
 
             <Text style={[styles.inputLabel, { marginTop: 24 }]}>3. Asset Category *</Text>
@@ -739,52 +785,174 @@ export default function PostPropertyScreen() {
               onChangeText={setTitle}
             />
 
-            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Total Area / Size *</Text>
-            <View style={{ flexDirection: 'row', gap: 10 }}>
-              <TextInput
-                style={[styles.textInput, { flex: 2 }]}
-                placeholder="e.g. 1500"
-                placeholderTextColor={Neutrals.gray400}
-                keyboardType="numeric"
-                value={areaSqft}
-                onChangeText={setAreaSqft}
-              />
-              <View style={{ flex: 1, backgroundColor: '#FFFFFF', borderRadius: 8, borderWidth: 1, borderColor: '#E2E8F0', overflow: 'hidden' }}>
-                <TouchableOpacity
-                  style={{ paddingVertical: 12, alignItems: 'center' }}
-                  onPress={() => {
-                    Alert.alert(
-                      'Select Area Unit',
-                      'Choose the unit of measurement',
-                      [
-                        { text: 'Sq.Ft', onPress: () => setNewProp({ ...newProp, areaUnit: 'sqft' }) },
-                        { text: 'Sq.Yards', onPress: () => setNewProp({ ...newProp, areaUnit: 'sqyards' as any }) },
-                        { text: 'Acres', onPress: () => setNewProp({ ...newProp, areaUnit: 'acres' }) },
-                        { text: 'Cancel', style: 'cancel' }
-                      ]
-                    );
-                  }}
-                >
-                  <Text style={{ fontSize: 15, fontWeight: '600', color: '#334155' }}>
-                    {(newProp.areaUnit as any) === 'sqyards' ? 'Sq.Yards' : newProp.areaUnit === 'acres' ? 'Acres' : 'Sq.Ft'}
-                  </Text>
-                </TouchableOpacity>
+            {/* Category, Sub-type & Area — matching admin Section 3 */}
+            <View style={{ backgroundColor: '#F8FAFC', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', marginTop: 16 }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#1E293B', marginBottom: 12 }}>📐 Category, Sub-type & Area</Text>
+              <Text style={styles.inputLabel}>Category *</Text>
+              <View style={styles.categoriesContainer}>
+                {CATEGORIES.map(cat => (
+                  <TouchableOpacity
+                    key={cat}
+                    style={[styles.categoryPill, category === cat && styles.categoryPillActive]}
+                    onPress={() => setCategory(cat)}
+                  >
+                    <Text style={[styles.categoryPillText, category === cat && styles.categoryPillTextActive]}>
+                      {cat === 'Commercial' ? '🏢 ' : cat === 'Fractional' ? '📊 ' : cat === 'Residential' ? '🏠 ' : cat === 'Holiday' ? '🌴 ' : '🌾 '}{cat}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
               </View>
+
+              <Text style={[styles.inputLabel, { marginTop: 14 }]}>Sub-Type</Text>
+              <View style={[styles.grid2, { marginBottom: 4 }]}>
+                {((category === 'Residential' || category === 'Holiday')
+                  ? ['Apartment', 'Villa', 'Independent House', 'Row House', 'Studio', 'Penthouse']
+                  : (category === 'Plots & Farms')
+                  ? ['Open Plot', 'Farm Land', 'Agricultural Land']
+                  : ['Office Space', 'Retail Shop', 'Showroom', 'Warehouse', 'Co-working']
+                ).map(s => (
+                  <TouchableOpacity
+                    key={s}
+                    style={[styles.tagBtn, newProp.subType === s && styles.tagBtnActive]}
+                    onPress={() => setNewProp({ ...newProp, subType: s })}
+                  >
+                    <Text style={[styles.tagBtnText, newProp.subType === s && styles.tagBtnTextActive]}>{s}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+
+              {['Residential', 'Holiday'].includes(category) ? (
+                <View style={{ marginTop: 16 }}>
+                  <Text style={styles.inputLabel}>Available Configurations *</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 6, marginBottom: 16 }}>
+                    {['1 BHK', '2 BHK', '3 BHK', '4 BHK', '5 BHK', '5+ BHK'].map(bhk => (
+                      <TouchableOpacity
+                        key={bhk}
+                        style={[styles.tagBtn, bhkAreas[bhk] !== undefined && styles.tagBtnActive]}
+                        onPress={() => {
+                          const newAreas = { ...bhkAreas };
+                          if (newAreas[bhk] !== undefined) {
+                            delete newAreas[bhk];
+                          } else {
+                            newAreas[bhk] = '';
+                          }
+                          setBhkAreas(newAreas);
+                        }}
+                      >
+                        <Text style={[styles.tagBtnText, bhkAreas[bhk] !== undefined && styles.tagBtnTextActive]}>{bhk}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                  
+                  {Object.keys(bhkAreas).length > 0 && (
+                    <View style={{ backgroundColor: '#F8FAFC', padding: 12, borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 4 }}>
+                      <Text style={[styles.inputLabel, { marginBottom: 12 }]}>Enter Area (Sq.Ft) for selected configurations:</Text>
+                      {Object.keys(bhkAreas).sort().map(bhk => (
+                        <View key={bhk} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+                          <Text style={{ width: 70, fontWeight: '600', color: '#475569' }}>{bhk}</Text>
+                          <TextInput
+                            style={[styles.textInput, { flex: 1, height: 40, marginBottom: 0 }]}
+                            placeholder={`e.g. ${bhk === '1 BHK' ? '600' : bhk === '2 BHK' ? '1200' : '1800'}`}
+                            keyboardType="numeric"
+                            value={bhkAreas[bhk]}
+                            onChangeText={(val) => setBhkAreas({ ...bhkAreas, [bhk]: val })}
+                          />
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              ) : (
+                <View style={[styles.grid2Row, { marginTop: 12 }]}>
+                  <View style={{ flex: 2 }}>
+                    <Text style={styles.inputLabel}>Area (Min) *</Text>
+                    <View style={{ flexDirection: 'row', gap: 6 }}>
+                      <TextInput
+                        style={[styles.textInput, { flex: 2 }]}
+                        placeholder={newProp.areaUnit === 'acres' ? 'e.g. 4' : newProp.areaUnit === 'sqyards' as any ? 'e.g. 150' : 'e.g. 1200'}
+                        placeholderTextColor={Neutrals.gray400}
+                        keyboardType="numeric"
+                        value={areaSqft}
+                        onChangeText={setAreaSqft}
+                      />
+                      <TouchableOpacity
+                        style={[styles.textInput, { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', paddingHorizontal: 4 }]}
+                        onPress={() => {
+                          const units = ['sqft', 'sqyards', 'acres'];
+                          const current = newProp.areaUnit || 'sqft';
+                          const nextIdx = (units.indexOf(current) + 1) % units.length;
+                          setNewProp({ ...newProp, areaUnit: units[nextIdx] as any });
+                        }}
+                      >
+                        <Text style={{ fontSize: 13, fontWeight: '600', color: '#334155' }}>
+                          {(newProp.areaUnit as any) === 'sqyards' ? 'Sq.Yds' : newProp.areaUnit === 'acres' ? 'Acres' : 'Sq.Ft'}
+                        </Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.inputLabel}>Area (Max)</Text>
+                    <TextInput
+                      style={styles.textInput}
+                      placeholder={newProp.areaUnit === 'acres' ? 'e.g. 6' : 'e.g. 1500'}
+                      placeholderTextColor={Neutrals.gray400}
+                      keyboardType="numeric"
+                      value={areaSqftMax}
+                      onChangeText={setAreaSqftMax}
+                    />
+                    <Text style={{ fontSize: 10, color: '#94A3B8', marginTop: 2 }}>Optional</Text>
+                  </View>
+                </View>
+              )}
             </View>
+
+            {/* Property Title */}
+            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Property Title *</Text>
+            <TextInput
+              style={styles.textInput}
+              placeholder="e.g. Rajapushpa Provincia, Financial District"
+              placeholderTextColor={Neutrals.gray400}
+              value={title}
+              onChangeText={setTitle}
+            />
 
             <Text style={[styles.inputLabel, { marginTop: 16 }]}>Short Description</Text>
             <TextInput
               style={styles.textInput}
-              placeholder="Visible on the home screen cards"
+              placeholder="Visible on the home screen property cards"
               placeholderTextColor={Neutrals.gray400}
               value={shortDescription}
               onChangeText={setShortDescription}
             />
 
-            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Description *</Text>
+            {/* RERA & Permission Numbers — matching admin */}
+            <View style={[styles.grid2Row, { marginTop: 14 }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.inputLabel}>RERA Number <Text style={{ fontSize: 10, color: '#94A3B8' }}>(Optional)</Text></Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="e.g. P02400001234"
+                  placeholderTextColor={Neutrals.gray400}
+                  value={reraNumber}
+                  onChangeText={setReraNumber}
+                />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.inputLabel}>Permission No. <Text style={{ fontSize: 10, color: '#94A3B8' }}>(Optional)</Text></Text>
+                <TextInput
+                  style={styles.textInput}
+                  placeholder="e.g. HMDA/123/2024"
+                  placeholderTextColor={Neutrals.gray400}
+                  value={permissionNumber}
+                  onChangeText={setPermissionNumber}
+                />
+              </View>
+            </View>
+
+            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Property Description *</Text>
             <TextInput
               style={[styles.textInput, { height: 110, textAlignVertical: 'top' }]}
-              placeholder="Detailed description of property highlights, tenant profile, amenities, lease terms..."
+              placeholder="Detailed overview of features, tenant profile, lease terms, amenities..."
               placeholderTextColor={Neutrals.gray400}
               multiline
               numberOfLines={4}
@@ -792,16 +960,25 @@ export default function PostPropertyScreen() {
               onChangeText={setDescription}
             />
 
-            <Text style={[styles.inputLabel, { marginTop: 16 }]}>Property Highlights / Speciality (Optional)</Text>
-            <TextInput
-              style={[styles.textInput, { height: 80, textAlignVertical: 'top' }]}
-              placeholder="e.g. Sea-facing, 5 min from Metro Station, Corner plot..."
-              placeholderTextColor={Neutrals.gray400}
-              multiline
-              numberOfLines={3}
-              value={speciality}
-              onChangeText={setSpeciality}
-            />
+            {/* Property Speciality — matching admin Section 5.9 */}
+            <View style={{ backgroundColor: '#FFFBEB', padding: 14, borderRadius: 12, borderWidth: 1, borderColor: '#FDE68A', marginTop: 16 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 6 }}>
+                <Text style={{ fontSize: 18 }}>⭐</Text>
+                <View>
+                  <Text style={{ fontSize: 14, fontWeight: '700', color: '#92400E' }}>Property Speciality</Text>
+                  <Text style={{ fontSize: 11, color: '#B45309' }}>Optional — Highlighted card on property detail page</Text>
+                </View>
+              </View>
+              <TextInput
+                style={[styles.textInput, { height: 80, textAlignVertical: 'top', borderColor: '#FDE68A' }]}
+                placeholder="e.g. Prime location • Award-winning architecture • IGBC Gold Rated • 5 mins from Metro"
+                placeholderTextColor={Neutrals.gray400}
+                multiline
+                numberOfLines={3}
+                value={speciality}
+                onChangeText={setSpeciality}
+              />
+            </View>
 
             <View style={styles.buttonRow}>
               <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(1)}>
@@ -810,42 +987,53 @@ export default function PostPropertyScreen() {
               <TouchableOpacity
                 style={[styles.primaryButton, { flex: 2 }]}
                 onPress={() => {
-                  if (!title.trim() || !description.trim() || !areaSqft) {
-                    Alert.alert('Required Fields', 'Please fill in Title, Description, and Area.');
+                  let finalAreaSqft = areaSqft;
+                  
+                  // For Residential, calculate min/max from selected BHKs
+                  if (['Residential', 'Holiday'].includes(category)) {
+                    const areas = Object.values(bhkAreas).map(v => Number(v)).filter(v => v > 0);
+                    if (areas.length > 0) {
+                      const min = Math.min(...areas);
+                      const max = Math.max(...areas);
+                      finalAreaSqft = min.toString();
+                      setAreaSqft(finalAreaSqft);
+                      if (max > min) setAreaSqftMax(max.toString());
+                      
+                      // Also auto-set bedrooms if a single BHK was selected
+                      if (areas.length === 1) {
+                        const bhkKey = Object.keys(bhkAreas)[0];
+                        const bhkNum = parseInt(bhkKey);
+                        if (!isNaN(bhkNum)) setNewProp(p => ({ ...p, bedrooms: bhkNum }));
+                      }
+                    } else {
+                      finalAreaSqft = ''; // Reset if nothing selected
+                    }
+                  }
+
+                  if (!title.trim() || !description.trim() || !finalAreaSqft) {
+                    setStepError('Please fill in Title, Description, and select/enter Area.');
                     return;
                   }
+                  setStepError('');
                   setStep(3);
                 }}
               >
                 <Text style={styles.primaryButtonText}>Continue to Features →</Text>
               </TouchableOpacity>
             </View>
+            {stepError ? <Text style={{ color: '#EF4444', textAlign: 'center', marginTop: 12, fontSize: 13, fontWeight: '600' }}>{stepError}</Text> : null}
           </View>
         )}
 
-        {/* STEP 3: Property Features (Dynamic) */}
+        {/* STEP 3: Property Features (Dynamic) — matching admin Section 5.5 */}
         {step === 3 && (
           <View style={styles.stepContainer}>
-            <Text style={styles.stepTitle}>Property Features</Text>
+            <Text style={styles.stepTitle}>
+              {(category === 'Residential' || category === 'Holiday') ? '🏠 Apartment / Residential Details'
+                : category === 'Plots & Farms' ? '🌾 Plot / Farm Land Details'
+                : '🏢 Commercial Property Details'}
+            </Text>
             <Text style={styles.stepSubtitle}>Provide specific amenities and features based on asset type.</Text>
-
-            <Text style={styles.inputLabel}>Sub-Type</Text>
-            <View style={[styles.grid2, { marginBottom: 16 }]}>
-              {((category === 'Residential' || category === 'Holiday') 
-                ? ["Apartment", "Villa", "Independent House", "Row House", "Studio", "Penthouse"]
-                : (category === 'Buyer')
-                ? ["Open Plot", "Farm Land", "Agricultural Land"]
-                : ["Office Space", "Retail Shop", "Showroom", "Warehouse", "Co-working"]
-              ).map(s => (
-                <TouchableOpacity
-                  key={s}
-                  style={[styles.tagBtn, newProp.subType === s && styles.tagBtnActive]}
-                  onPress={() => setNewProp({ ...newProp, subType: s })}
-                >
-                  <Text style={[styles.tagBtnText, newProp.subType === s && styles.tagBtnTextActive]}>{s}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
 
             {(category === 'Residential' || category === 'Holiday') && (
               <>
@@ -874,7 +1062,13 @@ export default function PostPropertyScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.inputLabel, { marginTop: 14 }]}>Flooring</Text>
-                    <TextInput style={styles.textInput} placeholder="e.g. Vitrified" value={newProp.flooring} onChangeText={t => setNewProp({...newProp, flooring: t})} />
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                      {['Vitrified Tiles', 'Marble', 'Wooden', 'Other'].map(flr => (
+                        <TouchableOpacity key={flr} style={[styles.tagBtn, { paddingVertical: 6, paddingHorizontal: 10 }, newProp.flooring === flr && styles.tagBtnActive]} onPress={() => setNewProp({...newProp, flooring: flr})}>
+                          <Text style={[styles.tagBtnText, { fontSize: 11 }, newProp.flooring === flr && styles.tagBtnTextActive]}>{flr.split(' ')[0]}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
                   </View>
                 </View>
                 <Text style={[styles.inputLabel, { marginTop: 14 }]}>Kitchen Type</Text>
@@ -962,7 +1156,7 @@ export default function PostPropertyScreen() {
               </>
             )}
 
-            {(category === 'Commercial' || category === 'Fractional') && (
+            {(category === 'Commercial' || category === 'Fractional') && !(['Residential', 'Holiday', 'Plots & Farms'].includes(category)) && (
               <>
                 <Text style={styles.inputLabel}>Floor Type</Text>
                 <View style={[styles.grid2, { marginBottom: 16 }]}>
@@ -979,7 +1173,13 @@ export default function PostPropertyScreen() {
                   </View>
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.inputLabel, { marginTop: 14 }]}>Flooring</Text>
-                    <TextInput style={styles.textInput} placeholder="e.g. Marble" value={newProp.flooring} onChangeText={t => setNewProp({...newProp, flooring: t})} />
+                    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+                      {['Vitrified Tiles', 'Marble', 'Wooden', 'Other'].map(flr => (
+                        <TouchableOpacity key={flr} style={[styles.tagBtn, { paddingVertical: 6, paddingHorizontal: 10 }, newProp.flooring === flr && styles.tagBtnActive]} onPress={() => setNewProp({...newProp, flooring: flr})}>
+                          <Text style={[styles.tagBtnText, { fontSize: 11 }, newProp.flooring === flr && styles.tagBtnTextActive]}>{flr.split(' ')[0]}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
                   </View>
                 </View>
                 <Text style={[styles.inputLabel, { marginTop: 14 }]}>Features & Status</Text>
@@ -1062,7 +1262,7 @@ export default function PostPropertyScreen() {
               </>
             )}
 
-            {category === 'Buyer' && (
+            {(category === 'Plots & Farms' || category === 'Buyer') && (
               <>
                 <Text style={styles.inputLabel}>Area Unit</Text>
                 <View style={[styles.grid2, { marginBottom: 16 }]}>
@@ -1175,7 +1375,21 @@ export default function PostPropertyScreen() {
             {/* Google Maps Link with Coords extraction */}
             <View style={styles.mapsCard}>
               <Text style={{ fontSize: 13, fontWeight: '700', color: Neutrals.obsidian, marginBottom: 4 }}>
-                📍 Google Maps Share Link
+                📍 Select Location on Map or Enter Coordinates
+              </Text>
+
+              {/* Leaflet Map Picker */}
+              <MapPicker 
+                lat={parseFloat(lat) || 17.3850} 
+                lng={parseFloat(lng) || 78.4867} 
+                onLocationChange={(newLat, newLng) => {
+                  setLat(newLat.toString());
+                  setLng(newLng.toString());
+                }} 
+              />
+
+              <Text style={{ fontSize: 12, fontWeight: '600', color: Neutrals.gray600, marginTop: 12, marginBottom: 4 }}>
+                Or extract from Google Maps Link:
               </Text>
               <TextInput
                 style={[styles.textInput, { fontSize: 13, height: 42 }]}
@@ -1229,14 +1443,16 @@ export default function PostPropertyScreen() {
               </TouchableOpacity>
               <TouchableOpacity style={[styles.primaryButton, { flex: 2 }]} onPress={() => {
                   if (!locality.trim()) {
-                    Alert.alert('Locality Required', 'Please enter the locality.');
+                    setStepError('Please enter the locality.');
                     return;
                   }
+                  setStepError('');
                   setStep(5);
               }}>
                 <Text style={styles.primaryButtonText}>Continue to Media →</Text>
               </TouchableOpacity>
             </View>
+            {stepError ? <Text style={{ color: '#EF4444', textAlign: 'center', marginTop: 12, fontSize: 13, fontWeight: '600' }}>{stepError}</Text> : null}
           </View>
         )}
 
@@ -1353,6 +1569,69 @@ export default function PostPropertyScreen() {
               </View>
             )}
 
+            {/* Inline Terms and Conditions */}
+            <View style={{ backgroundColor: '#F8FAFC', padding: 16, borderRadius: 12, marginTop: 24, borderWidth: 1, borderColor: '#E2E8F0' }}>
+              <Text style={{ fontSize: 14, fontWeight: '700', color: '#1E293B', marginBottom: 12 }}>
+                Important Guidelines & Cyber Laws
+              </Text>
+              
+              <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                <Text style={{ fontSize: 13, color: '#64748B', marginRight: 8 }}>•</Text>
+                <Text style={{ fontSize: 13, color: '#475569', flex: 1, lineHeight: 18 }}>
+                  <Text style={{ fontWeight: '600' }}>Legal Ownership:</Text> You confirm you are the legal owner or an authorized representative to list this property.
+                </Text>
+              </View>
+              
+              <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                <Text style={{ fontSize: 13, color: '#64748B', marginRight: 8 }}>•</Text>
+                <Text style={{ fontSize: 13, color: '#475569', flex: 1, lineHeight: 18 }}>
+                  <Text style={{ fontWeight: '600' }}>Accurate Information:</Text> Posting false, misleading, or fraudulent property details is strictly prohibited under IT Act 2000 & 2008 amendments.
+                </Text>
+              </View>
+
+              <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+                <Text style={{ fontSize: 13, color: '#64748B', marginRight: 8 }}>•</Text>
+                <Text style={{ fontSize: 13, color: '#475569', flex: 1, lineHeight: 18 }}>
+                  <Text style={{ fontWeight: '600' }}>No Fraudulent Media:</Text> Uploading unauthorized images or copyright-infringing content may result in permanent account suspension and legal action.
+                </Text>
+              </View>
+              
+              <View style={{ flexDirection: 'row' }}>
+                <Text style={{ fontSize: 13, color: '#64748B', marginRight: 8 }}>•</Text>
+                <Text style={{ fontSize: 13, color: '#475569', flex: 1, lineHeight: 18 }}>
+                  <Text style={{ fontWeight: '600' }}>Platform Policy:</Text> Realshare reserves the right to unlist properties that violate our internal terms of service without prior notice.
+                </Text>
+              </View>
+            </View>
+
+            {/* Terms and Conditions Checkbox */}
+            <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: 16, marginBottom: 10, paddingHorizontal: 4 }}>
+              <TouchableOpacity onPress={() => setAcceptedTerms(!acceptedTerms)} style={{ marginRight: 10, marginTop: 2 }}>
+                <Ionicons 
+                  name={acceptedTerms ? "checkbox" : "square-outline"} 
+                  size={22} 
+                  color={acceptedTerms ? GoldSystem.primaryGold : Neutrals.gray400} 
+                />
+              </TouchableOpacity>
+              <View style={{ flex: 1, flexDirection: 'row', flexWrap: 'wrap' }}>
+                <Text style={{ fontSize: 13, color: Neutrals.gray600, lineHeight: 20 }} onPress={() => setAcceptedTerms(!acceptedTerms)}>
+                  I confirm that I have the legal authority to list this property and that all provided information is accurate. I agree to Realshare's{' '}
+                </Text>
+                <TouchableOpacity onPress={() => router.push('/terms-of-service')}>
+                  <Text style={{ color: GoldSystem.primaryGold, fontWeight: '600', fontSize: 13, lineHeight: 20 }}>Terms of Service</Text>
+                </TouchableOpacity>
+                <Text style={{ fontSize: 13, color: Neutrals.gray600, lineHeight: 20 }} onPress={() => setAcceptedTerms(!acceptedTerms)}>
+                  {' '}and{' '}
+                </Text>
+                <TouchableOpacity onPress={() => router.push('/privacy-policy')}>
+                  <Text style={{ color: GoldSystem.primaryGold, fontWeight: '600', fontSize: 13, lineHeight: 20 }}>Privacy Policy</Text>
+                </TouchableOpacity>
+                <Text style={{ fontSize: 13, color: Neutrals.gray600, lineHeight: 20 }} onPress={() => setAcceptedTerms(!acceptedTerms)}>
+                  .
+                </Text>
+              </View>
+            </View>
+
             <View style={styles.buttonRow}>
               <TouchableOpacity style={styles.secondaryButton} onPress={() => setStep(4)} disabled={isSubmitting}>
                 <Text style={styles.secondaryButtonText}>← Back</Text>
@@ -1384,12 +1663,7 @@ export default function PostPropertyScreen() {
           </View>
 
           <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
-            {(() => {
-              const { width } = useWindowDimensions();
-              const isDesktop = width >= 1024;
-              
-              return (
-                <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 40 : 0 }}>
+            <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 40 : 0 }}>
                   
                   {/* Main Content (Left on Desktop) */}
                   <View style={{ flex: 1 }}>
@@ -1508,8 +1782,6 @@ export default function PostPropertyScreen() {
                      </View>
                   </View>
                 </View>
-              );
-            })()}
           </ScrollView>
 
           {/* Fixed Action Buttons */}

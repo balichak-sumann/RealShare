@@ -6,7 +6,7 @@
 
 /* ========== SIDEBAR ========== */
 .sidebar {
-  width: 260px;
+  width: 240px;
   background: var(--bg-secondary);
   border-right: 1px solid var(--border-color);
   display: flex;
@@ -17,16 +17,15 @@
 }
 
 .logo {
-  height: 72px;
-  padding: 0 20px;
+  height: 80px;
+  padding: 10px 20px;
   font-size: 1.25rem;
   font-weight: 800;
   color: var(--text-primary);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  letter-spacing: -0.5px;
+  justify-content: center;
+  position: relative;
 }
 
 .logoIcon {
@@ -61,7 +60,7 @@
 }
 
 .navItem {
-  padding: 10px 14px;
+  padding: 10px 12px;
   color: var(--text-secondary);
   font-weight: 600;
   font-size: 0.85rem;
@@ -69,7 +68,7 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
   border-radius: var(--border-radius-md);
   border: 1px solid transparent;
 }
@@ -149,7 +148,7 @@
      .main past the viewport and the entire page scrolls sideways instead of
      just the table. */
   min-width: 0;
-  margin-left: 260px;
+  margin-left: 240px;
   display: flex;
   flex-direction: column;
   min-height: 100vh;
@@ -298,6 +297,8 @@
   border: none;
   color: var(--text-secondary);
   cursor: pointer;
+  position: absolute;
+  right: 16px;
 }
 
 .mobileOverlay {

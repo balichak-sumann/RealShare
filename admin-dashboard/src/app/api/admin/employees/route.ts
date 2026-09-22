@@ -34,7 +34,8 @@ function generateEmployeeCode(department: string, sequence: number): string {
   const deptPrefix =
     department === 'sales' ? 'SALES' :
     department === 'support' ? 'SUPP' :
-    'ACCT';
+    department === 'accounts' ? 'ACCT' :
+    'TECH';
   return `RS-${deptPrefix}-${String(sequence).padStart(3, '0')}`;
 }
 
@@ -53,25 +54,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Check if the user making the request is an admin
+    // Check if the user making the request is an admin or superadmin
     const adminUser = await prisma.profile.findUnique({
       where: { id: decodedToken.uid }
     });
 
-    if (!adminUser || adminUser.role !== 'admin') {
+    if (!adminUser || (adminUser.role !== 'admin' && adminUser.role !== 'superadmin')) {
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
     const body = await request.json();
-    const { full_name, email, phone_number, department } = body;
+    const { full_name, email, phone_number, department, role } = body;
 
     if (!full_name || !email || !department) {
       return NextResponse.json({ error: 'Missing required fields: full_name, email, department' }, { status: 400 });
     }
 
-    const validDepartments = ['sales', 'support', 'accounts'];
+    const validDepartments = ['sales', 'support', 'accounts', 'tech', 'admin', 'management'];
     if (!validDepartments.includes(department.toLowerCase())) {
-      return NextResponse.json({ error: 'Invalid department. Must be: sales, support, or accounts' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid department.' }, { status: 400 });
+    }
+
+    const assignedRole = role && ['employee', 'admin', 'superadmin'].includes(role) ? role : 'employee';
+    
+    // Only a superadmin can create another superadmin
+    if (assignedRole === 'superadmin' && adminUser.role !== 'superadmin') {
+      return NextResponse.json({ error: 'Forbidden: Only superadmins can create other superadmins.' }, { status: 403 });
     }
 
     // Check if email already exists in the database
@@ -88,7 +96,7 @@ export async function POST(request: NextRequest) {
     // Count existing employees in this department for the employee code sequence
     const deptCount = await prisma.profile.count({
       where: {
-        role: 'employee',
+        role: assignedRole,
         employee_department: department.toLowerCase(),
       }
     });
@@ -118,7 +126,7 @@ export async function POST(request: NextRequest) {
         full_name,
         email,
         phone_number: phone_number || null,
-        role: 'employee',
+        role: assignedRole,
         employee_department: department.toLowerCase(),
         wallet_balance: 0,
       }
@@ -157,6 +165,7 @@ export async function POST(request: NextRequest) {
         full_name: newEmployee.full_name,
         email: newEmployee.email,
         phone_number: newEmployee.phone_number,
+        role: newEmployee.role,
         department: newEmployee.employee_department,
         employeeCode,
       },
@@ -180,7 +189,7 @@ export async function GET(request: NextRequest) {
     if (!authCheck.ok) return authCheck.response;
 
     const employees = await prisma.profile.findMany({
-      where: { role: 'employee' },
+      where: { role: { in: ['employee', 'admin', 'superadmin'] } },
       orderBy: { created_at: 'desc' },
     });
 

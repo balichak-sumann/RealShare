@@ -40,6 +40,26 @@ export async function POST(request: Request) {
       );
     }
 
+    // --- APPLE APP REVIEW BYPASS ---
+    // If it's Apple's test account, we skip checking the OTP store entirely
+    if (identifier === '9999999999' && otp === '123456') {
+      try {
+        const userRecord = await auth.getUserByPhoneNumber('+919999999999');
+        const customToken = await auth.createCustomToken(userRecord.uid);
+        return NextResponse.json({
+          success: true,
+          firebaseToken: customToken,
+        });
+      } catch (err: any) {
+        console.error('[OTP Verify] Apple Bypass failed:', err?.message);
+        return NextResponse.json(
+          { success: false, error: 'Apple test account not found in database. Please create it.' },
+          { status: 404 }
+        );
+      }
+    }
+    // -------------------------------
+
     const otpStore = getOtpStore();
     const entry = otpStore.get(identifier);
 

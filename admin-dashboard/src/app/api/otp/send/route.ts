@@ -56,6 +56,16 @@ export async function POST(request: Request) {
       );
     }
 
+    // --- APPLE APP REVIEW BYPASS ---
+    // Apple Reviewers will use this static number to bypass SMS sending
+    if (phone === '9999999999') {
+      return NextResponse.json({
+        success: true,
+        message: 'OTP bypassed for App Review.',
+      });
+    }
+    // -------------------------------
+
     if (body?.checkExists) {
       try {
         const { auth } = await import('@/lib/firebase-admin');

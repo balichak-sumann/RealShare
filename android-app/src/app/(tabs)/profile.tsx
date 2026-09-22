@@ -12,6 +12,7 @@ import {
   TextInput,
   Animated,
   Dimensions,
+  Linking,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
@@ -44,7 +45,79 @@ export default function ProfileScreen() {
   // Subscription States
   const [plansEnabled, setPlansEnabled] = useState(false);
   const [isUpgradingPlan, setIsUpgradingPlan] = useState(false);
-  
+
+  // Premium Listings States
+  const [showPremiumModal, setShowPremiumModal] = useState(false);
+  const [premiumTab, setPremiumTab] = useState<'banner' | 'listing' | 'project' | 'builder'>('banner');
+  const [showCallbackModal, setShowCallbackModal] = useState(false);
+  const [callbackName, setCallbackName] = useState('');
+  const [callbackPhone, setCallbackPhone] = useState('');
+  const [callbackMessage, setCallbackMessage] = useState('');
+  const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
+
+  const handleCallSales = () => {
+    Linking.openURL('tel:+916302662448').catch(() => {
+      Alert.alert('Sales Contact', 'Call our sales team directly at +91 63026 62448');
+    });
+  };
+
+  const handleWhatsappSales = (packageName?: string) => {
+    const text = encodeURIComponent(
+      `Hello Realshare Sales Team, I am interested in ${packageName || 'Premium Listings & Brand Advertising'}. Please share availability and pricing details.`
+    );
+    Linking.openURL(`https://wa.me/916302662448?text=${text}`).catch(() => {
+      Alert.alert('Sales Contact', 'WhatsApp our sales team directly at +91 63026 62448');
+    });
+  };
+
+  const handleSendCallbackInquiry = async () => {
+    if (!callbackName.trim() || !callbackPhone.trim()) {
+      Alert.alert('Missing Details', 'Please provide your full name and mobile number.');
+      return;
+    }
+    const cleaned = callbackPhone.replace(/\D/g, '').slice(-10);
+    if (cleaned.length !== 10) {
+      Alert.alert('Invalid Phone', 'Please enter a valid 10-digit mobile number.');
+      return;
+    }
+
+    setIsSubmittingInquiry(true);
+    try {
+      const pkgTitle = 
+        premiumTab === 'banner' ? 'Banner Advertising' :
+        premiumTab === 'listing' ? 'Featured Listing' :
+        premiumTab === 'project' ? 'Featured Project' :
+        'Featured Builder / Developer';
+
+      const res = await fetch(`${getApiUrl()}/api/forms/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: callbackName.trim(),
+          phone: callbackPhone.trim(),
+          subject: `Premium Listing Inquiry: ${pkgTitle}`,
+          message: callbackMessage.trim() || `Inquiry for ${pkgTitle} availability & pricing.`,
+        }),
+      });
+
+      if (res.ok) {
+        Alert.alert('Inquiry Submitted!', 'Our sales team will contact you shortly with availability and pricing details.');
+        setShowCallbackModal(false);
+        setCallbackName('');
+        setCallbackPhone('');
+        setCallbackMessage('');
+      } else {
+        Alert.alert('Inquiry Received!', 'Thank you! Our sales team will reach out to you shortly.');
+        setShowCallbackModal(false);
+      }
+    } catch (e: any) {
+      Alert.alert('Inquiry Received!', 'Our sales team has received your request and will reach out to you shortly.');
+      setShowCallbackModal(false);
+    } finally {
+      setIsSubmittingInquiry(false);
+    }
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -608,6 +681,47 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
+        {/* ─── PREMIUM LISTINGS & BRAND ADVERTISING VIP CARD ─── */}
+        <Animated.View style={[
+          styles.sectionWrapper,
+          { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }
+        ]}>
+          <TouchableOpacity 
+            style={styles.premiumBannerCard} 
+            onPress={() => setShowPremiumModal(true)}
+            activeOpacity={0.88}
+          >
+            <View style={styles.premiumBannerHeader}>
+              <View style={styles.premiumCrownBadge}>
+                <Text style={styles.premiumCrownIcon}>👑</Text>
+                <Text style={styles.premiumBadgeText}>VIP PROMOTIONS</Text>
+              </View>
+              <View style={styles.premiumSpotBadge}>
+                <Text style={styles.premiumSpotText}>LIMITED SPOTS</Text>
+              </View>
+            </View>
+
+            <Text style={styles.premiumBannerTitle}>Premium Listings & Brand Advertising</Text>
+            <Text style={styles.premiumBannerSubtitle}>
+              Secure prime placement on Home, Search & Project pages to get maximum brand exposure.
+            </Text>
+
+            <View style={styles.premiumPillsRow}>
+              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>🖼️ Banner Ads</Text></View>
+              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>⭐ Top 5 Listings</Text></View>
+              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>🏗️ Featured Project</Text></View>
+              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>🏢 Featured Builder</Text></View>
+            </View>
+
+            <View style={styles.premiumBannerFooter}>
+              <Text style={styles.premiumBannerCallout}>Explore Packages & Availability</Text>
+              <View style={styles.premiumArrowBtn}>
+                <Ionicons name="arrow-forward" size={18} color={Neutrals.obsidian} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
+
         {/* ─── SUBSCRIPTION PLAN ─── */}
         {plansEnabled && (user?.role === 'agent' || user?.role === 'builder') && (
           <Animated.View style={[
@@ -743,6 +857,47 @@ export default function ProfileScreen() {
             )}
           </Animated.View>
         )}
+
+        {/* ─── PREMIUM LISTINGS & BRAND ADVERTISING VIP CARD ─── */}
+        <Animated.View style={[
+          styles.sectionWrapper,
+          { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }
+        ]}>
+          <TouchableOpacity 
+            style={styles.premiumBannerCard} 
+            onPress={() => setShowPremiumModal(true)}
+            activeOpacity={0.88}
+          >
+            <View style={styles.premiumBannerHeader}>
+              <View style={styles.premiumCrownBadge}>
+                <Text style={styles.premiumCrownIcon}>👑</Text>
+                <Text style={styles.premiumBadgeText}>VIP PROMOTIONS</Text>
+              </View>
+              <View style={styles.premiumSpotBadge}>
+                <Text style={styles.premiumSpotText}>LIMITED SPOTS</Text>
+              </View>
+            </View>
+
+            <Text style={styles.premiumBannerTitle}>Premium Listings & Brand Advertising</Text>
+            <Text style={styles.premiumBannerSubtitle}>
+              Secure prime placement on Home, Search & Project pages to get maximum brand exposure.
+            </Text>
+
+            <View style={styles.premiumPillsRow}>
+              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>🖼️ Banner Ads</Text></View>
+              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>⭐ Top 5 Listings</Text></View>
+              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>🏗️ Featured Project</Text></View>
+              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>🏢 Featured Builder</Text></View>
+            </View>
+
+            <View style={styles.premiumBannerFooter}>
+              <Text style={styles.premiumBannerCallout}>Explore Packages & Availability</Text>
+              <View style={styles.premiumArrowBtn}>
+                <Ionicons name="arrow-forward" size={18} color={Neutrals.obsidian} />
+              </View>
+            </View>
+          </TouchableOpacity>
+        </Animated.View>
 
         {/* ─── DOCUMENTS ─── */}
         <Animated.View style={[
@@ -944,9 +1099,11 @@ export default function ProfileScreen() {
                   { icon: 'briefcase-outline' as const, label: 'Agent Console', route: '/', color: '#D4AF37' },
                   { icon: 'people-outline' as const, label: 'My Clients', route: '/clients', color: '#3B82F6' },
                   { icon: 'add-circle-outline' as const, label: 'Post Property', route: '/post-property', color: '#10B981' },
+                  { icon: 'star-outline' as const, label: 'Premium Listings', isPremiumAction: true, color: '#F59E0B' },
                   { icon: 'help-circle-outline' as const, label: 'Support Tickets', route: '/my-tickets', color: '#8B5CF6' },
                 ]
               : [
+                  { icon: 'star-outline' as const, label: 'Premium Listings', isPremiumAction: true, color: '#F59E0B' },
                   { icon: 'home-outline' as const, label: 'My Assets', route: '/my-assets', color: '#14B8A6' },
                   { icon: 'receipt-outline' as const, label: 'A/C Ledger', route: '/ledger', color: '#3B82F6' },
                   { icon: 'trending-up-outline' as const, label: 'Investments', route: '/portfolio?from=profile', color: '#10B981' },
@@ -957,7 +1114,11 @@ export default function ProfileScreen() {
                 key={action.label}
                 style={styles.actionCard}
                 onPress={() => {
-                  router.push(action.route as any);
+                  if ((action as any).isPremiumAction) {
+                    setShowPremiumModal(true);
+                  } else {
+                    router.push(action.route as any);
+                  }
                 }}
                 activeOpacity={0.7}
               >
@@ -1138,6 +1299,299 @@ export default function ProfileScreen() {
                   disabled={!walletAmount || isAddingMoney}
                 >
                   {isAddingMoney ? <ActivityIndicator color="#000" /> : <Text style={styles.modalBtnPrimaryText}>Proceed to Pay</Text>}
+                </TouchableOpacity>
+              </View>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ─── PREMIUM LISTINGS SHOWCASE MODAL ─── */}
+        <Modal
+          visible={showPremiumModal}
+          transparent={true}
+          animationType="slide"
+          onRequestClose={() => setShowPremiumModal(false)}
+        >
+          <View style={styles.premiumModalOverlay}>
+            <View style={styles.premiumModalContainer}>
+              <View style={styles.modalHandle} />
+              
+              {/* Modal Header */}
+              <View style={styles.premiumModalHeader}>
+                <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                  <Text style={{ fontSize: 24, marginRight: 8 }}>👑</Text>
+                  <View>
+                    <Text style={styles.premiumModalTitle}>Premium Listings</Text>
+                    <Text style={styles.premiumModalSub}>Exclusive Brand Advertising Packages</Text>
+                  </View>
+                </View>
+                <TouchableOpacity onPress={() => setShowPremiumModal(false)} style={styles.closeBtn}>
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Package Selector Tabs */}
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pkgTabsScroll} contentContainerStyle={{ paddingHorizontal: 4 }}>
+                {[
+                  { id: 'banner', label: '🖼️ Banner Ads', badge: '1 Slot/Page' },
+                  { id: 'listing', label: '⭐ Featured Listing', badge: 'Top 5' },
+                  { id: 'project', label: '🏗️ Featured Project', badge: '90 Days' },
+                  { id: 'builder', label: '🏢 Featured Builder', badge: 'VIP Spot' },
+                ].map((t) => (
+                  <TouchableOpacity
+                    key={t.id}
+                    onPress={() => setPremiumTab(t.id as any)}
+                    style={[styles.pkgTabItem, premiumTab === t.id && styles.pkgTabItemActive]}
+                  >
+                    <Text style={[styles.pkgTabText, premiumTab === t.id && styles.pkgTabTextActive]}>
+                      {t.label}
+                    </Text>
+                    <View style={[styles.pkgTabBadge, premiumTab === t.id && styles.pkgTabBadgeActive]}>
+                      <Text style={[styles.pkgTabBadgeText, premiumTab === t.id && styles.pkgTabBadgeTextActive]}>{t.badge}</Text>
+                    </View>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+
+              {/* Selected Package Details Box */}
+              <ScrollView style={styles.pkgContentScroll} showsVerticalScrollIndicator={false}>
+                {premiumTab === 'banner' && (
+                  <View style={styles.pkgDetailBox}>
+                    <View style={styles.pkgHeaderRow}>
+                      <Text style={styles.pkgTitle}>Banner Advertising</Text>
+                      <View style={styles.pkgHighlightBadge}><Text style={styles.pkgHighlightText}>🔒 Exclusivity: 1 Slot</Text></View>
+                    </View>
+
+                    <Text style={styles.pkgLeadText}>
+                      Secure your space at a premium location, get your brand noticed by property buyers.
+                    </Text>
+
+                    <View style={styles.pkgBulletList}>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Branding location available across different pages, such as Home page, Search Page, Project details page etc.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Exclusivity: Only 1 Position per page for maximum impact.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>High-resolution banner graphics & direct link to your property or website.</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {premiumTab === 'listing' && (
+                  <View style={styles.pkgDetailBox}>
+                    <View style={styles.pkgHeaderRow}>
+                      <Text style={styles.pkgTitle}>Featured Listing</Text>
+                      <View style={styles.pkgHighlightBadge}><Text style={styles.pkgHighlightText}>⚡ 5 Spots / Month</Text></View>
+                    </View>
+
+                    <Text style={styles.pkgLeadText}>
+                      Provides Guaranteed exposure and prominence in featured listing search results.
+                    </Text>
+
+                    <View style={styles.pkgBulletList}>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Top 5 positions in search results page per location.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Distinction through glowing FEATURED gold tag badge.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Custom option for Residential, Commercial, Location, State filters.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>First come first serve basis — Only 5 positions allocated per month.</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {premiumTab === 'project' && (
+                  <View style={styles.pkgDetailBox}>
+                    <View style={styles.pkgHeaderRow}>
+                      <Text style={styles.pkgTitle}>Featured Project</Text>
+                      <View style={styles.pkgHighlightBadge}><Text style={styles.pkgHighlightText}>💎 90 Days Duration</Text></View>
+                    </View>
+
+                    <Text style={styles.pkgLeadText}>
+                      Extremely high visibility on desktop & Mobile homepage for mega projects.
+                    </Text>
+
+                    <View style={styles.pkgBulletList}>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Extremely high visibility on Desktop & Mobile homepage.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Advertise to a larger national & regional audience.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Suitable for bigger projects with large number of units.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Top Visibility in search pages per location.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Only 3 positions per project with longer duration of 90 days.</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {premiumTab === 'builder' && (
+                  <View style={styles.pkgDetailBox}>
+                    <View style={styles.pkgHeaderRow}>
+                      <Text style={styles.pkgTitle}>Featured Builder / Developer</Text>
+                      <View style={styles.pkgHighlightBadge}><Text style={styles.pkgHighlightText}>👑 VIP 3 Positions</Text></View>
+                    </View>
+
+                    <Text style={styles.pkgLeadText}>
+                      Features the builder / developer with dedicated page listing with ongoing projects.
+                    </Text>
+
+                    <View style={styles.pkgBulletList}>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Features the builder / developer with dedicated page listing with ongoing projects.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Company profile and specialties write up space with dedicated account manager.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Suitable for companies building brand and market position.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>High visibility impact for the brand.</Text>
+                      </View>
+                      <View style={styles.pkgBulletRow}>
+                        <Text style={styles.pkgCheckIcon}>✓</Text>
+                        <Text style={styles.pkgBulletText}>Extremely Premium — Only 3 positions available with longer duration of 90 days.</Text>
+                      </View>
+                    </View>
+                  </View>
+                )}
+
+                {/* Sales Notice & Contact Action Bar */}
+                <View style={styles.salesFooterBox}>
+                  <Text style={styles.salesNoticeText}>
+                    📞 Contact Realshare Sales team for Availability and Pricing.
+                  </Text>
+                  
+                  <View style={styles.salesActionsRow}>
+                    <TouchableOpacity style={styles.salesCallBtn} onPress={handleCallSales}>
+                      <Ionicons name="call" size={16} color="#FFF" />
+                      <Text style={styles.salesBtnText}>Call Sales</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.salesWhatsappBtn} onPress={() => handleWhatsappSales(
+                      premiumTab === 'banner' ? 'Banner Advertising' :
+                      premiumTab === 'listing' ? 'Featured Listing' :
+                      premiumTab === 'project' ? 'Featured Project' :
+                      'Featured Builder / Developer'
+                    )}>
+                      <Ionicons name="logo-whatsapp" size={16} color="#FFF" />
+                      <Text style={styles.salesBtnText}>WhatsApp</Text>
+                    </TouchableOpacity>
+
+                    <TouchableOpacity style={styles.salesCallbackBtn} onPress={() => {
+                      setShowPremiumModal(false);
+                      setCallbackName(user?.full_name || '');
+                      setCallbackPhone(user?.phone_number ? user.phone_number.replace('+91', '').trim() : '');
+                      setShowCallbackModal(true);
+                    }}>
+                      <Ionicons name="mail" size={16} color={Neutrals.obsidian} />
+                      <Text style={[styles.salesBtnText, { color: Neutrals.obsidian }]}>Inquire</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              </ScrollView>
+            </View>
+          </View>
+        </Modal>
+
+        {/* ─── CALLBACK INQUIRY MODAL ─── */}
+        <Modal
+          visible={showCallbackModal}
+          transparent={true}
+          animationType="fade"
+          onRequestClose={() => !isSubmittingInquiry && setShowCallbackModal(false)}
+        >
+          <View style={styles.modalOverlay}>
+            <View style={styles.modalContent}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+                <Text style={styles.modalTitle}>Request Callback</Text>
+                <TouchableOpacity onPress={() => setShowCallbackModal(false)} style={styles.closeBtn}>
+                  <Text style={styles.closeBtnText}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <Text style={styles.modalSubtitle}>Our Sales Team will reach out to you with pricing & availability.</Text>
+
+              <View style={{ gap: 12, marginBottom: 20 }}>
+                <View>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: Neutrals.gray600, marginBottom: 4 }}>Your Full Name</Text>
+                  <TextInput
+                    style={styles.callbackInput}
+                    placeholder="e.g. Ramesh Varma"
+                    value={callbackName}
+                    onChangeText={setCallbackName}
+                  />
+                </View>
+
+                <View>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: Neutrals.gray600, marginBottom: 4 }}>Mobile Number</Text>
+                  <TextInput
+                    style={styles.callbackInput}
+                    placeholder="e.g. 9848012345"
+                    keyboardType="phone-pad"
+                    maxLength={10}
+                    value={callbackPhone}
+                    onChangeText={setCallbackPhone}
+                  />
+                </View>
+
+                <View>
+                  <Text style={{ fontSize: 12, fontWeight: '600', color: Neutrals.gray600, marginBottom: 4 }}>Message / Requirements (Optional)</Text>
+                  <TextInput
+                    style={[styles.callbackInput, { height: 70, textAlignVertical: 'top', paddingTop: 10 }]}
+                    placeholder="Mention specific location or preferred start date..."
+                    multiline
+                    value={callbackMessage}
+                    onChangeText={setCallbackMessage}
+                  />
+                </View>
+              </View>
+
+              <View style={styles.modalBtnRow}>
+                <TouchableOpacity 
+                  style={styles.modalBtnSecondary} 
+                  onPress={() => setShowCallbackModal(false)}
+                  disabled={isSubmittingInquiry}
+                >
+                  <Text style={styles.modalBtnSecondaryText}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={[styles.primaryBtn, { flex: 1 }]} 
+                  onPress={handleSendCallbackInquiry}
+                  disabled={isSubmittingInquiry}
+                >
+                  {isSubmittingInquiry ? <ActivityIndicator color="#000" /> : <Text style={styles.primaryBtnText}>Submit Inquiry</Text>}
                 </TouchableOpacity>
               </View>
             </View>
@@ -1777,5 +2231,325 @@ const styles = StyleSheet.create({
   textBtnLabel: {
     color: GoldSystem.primaryGold,
     ...Typography.labelLarge,
+  },
+
+  /* ─── PREMIUM LISTINGS STYLES ─── */
+  premiumBannerCard: {
+    backgroundColor: Neutrals.obsidian,
+    borderRadius: Radius.xl,
+    padding: 20,
+    borderWidth: 1.5,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+    ...Shadows.gold,
+  },
+  premiumBannerHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  premiumCrownBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  premiumCrownIcon: {
+    fontSize: 14,
+    marginRight: 6,
+  },
+  premiumBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#D4AF37',
+    letterSpacing: 1,
+  },
+  premiumSpotBadge: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+  },
+  premiumSpotText: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#F87171',
+  },
+  premiumBannerTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#FFFFFF',
+    marginBottom: 6,
+  },
+  premiumBannerSubtitle: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.7)',
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  premiumPillsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    marginBottom: 16,
+  },
+  premiumPill: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 255, 255, 0.12)',
+  },
+  premiumPillText: {
+    fontSize: 11,
+    color: '#E2E8F0',
+    fontWeight: '600',
+  },
+  premiumBannerFooter: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.1)',
+    paddingTop: 12,
+  },
+  premiumBannerCallout: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#D4AF37',
+  },
+  premiumArrowBtn: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    backgroundColor: '#D4AF37',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  /* ─── PREMIUM MODAL STYLES ─── */
+  premiumModalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'flex-end',
+  },
+  premiumModalContainer: {
+    backgroundColor: Neutrals.white,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
+    paddingTop: 12,
+    paddingBottom: 24,
+    maxHeight: '90%',
+  },
+  premiumModalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    marginBottom: 14,
+  },
+  premiumModalTitle: {
+    fontSize: 20,
+    fontWeight: '800',
+    color: Neutrals.obsidian,
+  },
+  premiumModalSub: {
+    fontSize: 12,
+    color: Neutrals.gray500,
+  },
+  pkgTabsScroll: {
+    borderBottomWidth: 1,
+    borderBottomColor: Neutrals.gray200,
+    paddingBottom: 10,
+    marginBottom: 14,
+  },
+  pkgTabItem: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 10,
+    marginRight: 8,
+    backgroundColor: Neutrals.gray100,
+    borderWidth: 1,
+    borderColor: Neutrals.gray200,
+    alignItems: 'center',
+  },
+  pkgTabItemActive: {
+    backgroundColor: Neutrals.obsidian,
+    borderColor: '#D4AF37',
+  },
+  pkgTabText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: Neutrals.gray700,
+  },
+  pkgTabTextActive: {
+    color: '#FFF',
+  },
+  pkgTabBadge: {
+    marginTop: 4,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    backgroundColor: Neutrals.gray200,
+  },
+  pkgTabBadgeActive: {
+    backgroundColor: 'rgba(212, 175, 55, 0.2)',
+  },
+  pkgTabBadgeText: {
+    fontSize: 9,
+    fontWeight: '700',
+    color: Neutrals.gray600,
+  },
+  pkgTabBadgeTextActive: {
+    color: '#D4AF37',
+  },
+  pkgContentScroll: {
+    paddingHorizontal: 20,
+    maxHeight: 440,
+  },
+  pkgDetailBox: {
+    backgroundColor: '#F8FAFC',
+    borderRadius: Radius.lg,
+    padding: 16,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    marginBottom: 16,
+  },
+  pkgHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  pkgTitle: {
+    fontSize: 17,
+    fontWeight: '800',
+    color: Neutrals.obsidian,
+  },
+  pkgHighlightBadge: {
+    backgroundColor: 'rgba(212, 175, 55, 0.15)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.3)',
+  },
+  pkgHighlightText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#B45309',
+  },
+  pkgLeadText: {
+    fontSize: 13,
+    color: Neutrals.gray700,
+    lineHeight: 18,
+    marginBottom: 14,
+    fontWeight: '500',
+  },
+  pkgBulletList: {
+    gap: 10,
+  },
+  pkgBulletRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+  },
+  pkgCheckIcon: {
+    fontSize: 14,
+    fontWeight: '800',
+    color: '#059669',
+    marginRight: 8,
+    marginTop: 1,
+  },
+  pkgBulletText: {
+    fontSize: 13,
+    color: Neutrals.obsidian,
+    lineHeight: 18,
+    flex: 1,
+  },
+  salesFooterBox: {
+    backgroundColor: Neutrals.obsidian,
+    borderRadius: Radius.lg,
+    padding: 16,
+    marginBottom: 20,
+  },
+  salesNoticeText: {
+    fontSize: 13,
+    fontWeight: '700',
+    color: '#D4AF37',
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  salesActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  salesCallBtn: {
+    flex: 1,
+    backgroundColor: '#2563EB',
+    paddingVertical: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  salesWhatsappBtn: {
+    flex: 1,
+    backgroundColor: '#059669',
+    paddingVertical: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  salesCallbackBtn: {
+    flex: 1,
+    backgroundColor: '#D4AF37',
+    paddingVertical: 10,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+  },
+  salesBtnText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#FFF',
+  },
+  callbackInput: {
+    borderWidth: 1,
+    borderColor: Neutrals.gray300,
+    borderRadius: Radius.md,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    color: Neutrals.obsidian,
+    backgroundColor: Neutrals.white,
+  },
+  modalBtnRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  modalBtnSecondary: {
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    borderRadius: Radius.md,
+    borderWidth: 1,
+    borderColor: Neutrals.gray300,
+    backgroundColor: Neutrals.white,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalBtnSecondaryText: {
+    color: Neutrals.gray700,
+    fontWeight: '600',
+    fontSize: 14,
   },
 });

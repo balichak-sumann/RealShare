@@ -98,7 +98,7 @@ export async function GET(request: Request) {
     const search = searchParams.get('search');
 
     const authCtx = await getAuthContext(request);
-    const isAdmin = authCtx?.role === 'admin';
+    const isAdmin = authCtx?.role === 'admin' || authCtx?.role === 'superadmin';
     const isOwner = postedBy && authCtx?.uid === postedBy;
 
     const properties = await prisma.property.findMany({
@@ -118,8 +118,14 @@ export async function GET(request: Request) {
               ],
             }
           : {}),
-        // Non-admin callers only see approved listings unless querying their own listings
-        ...(isAdmin || isOwner ? {} : { approval_status: 'approved' }),
+        // Non-admin callers only see approved and non-expired listings unless querying their own listings
+        ...(isAdmin || isOwner ? {} : { 
+          approval_status: 'approved',
+          OR: [
+            { expires_at: null },
+            { expires_at: { gt: new Date() } }
+          ]
+        }),
       },
       include: {
         images: {
@@ -164,14 +170,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
 
-    // Role-based authorization: only admin, agent, and builder can create properties
-    if (!['admin', 'agent', 'builder'].includes(userRole)) {
+    // Role-based authorization: only admin, superadmin, agent, and builder can create properties
+    if (!['admin', 'superadmin', 'agent', 'builder'].includes(userRole)) {
       return NextResponse.json(
         { error: 'Forbidden: Only admins, agents, and builders can list properties.' },
         { status: 403 }
       );
     }
-    const isAdmin = userRole === 'admin';
+    const isAdmin = userRole === 'admin' || userRole === 'superadmin';
 
     const data = await request.json();
 
@@ -287,6 +293,7 @@ export async function POST(request: Request) {
           posted_by: userId,
           developer_id: data.developer_id || null,
           approval_status: data.approval_status === 'draft' ? 'draft' : (isAdmin ? 'approved' : 'pending_approval'),
+          expires_at: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000),
           // Speciality
           speciality: data.speciality || null,
           // Rental-specific

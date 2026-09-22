@@ -22,12 +22,22 @@ export async function requireAuth(request: Request): Promise<AuthResult> {
   }
 }
 
-/** Verifies the request's Bearer token AND that the caller's profile role is 'admin'. */
+/** Verifies the request's Bearer token AND that the caller's profile role is 'admin', 'employee', or 'superadmin'. */
 export async function requireAdmin(request: Request): Promise<AuthResult> {
   const result = await requireAuth(request);
   if (!result.ok) return result;
-  if (result.role !== 'admin' && result.role !== 'employee') {
-    return { ok: false, response: NextResponse.json({ error: 'Forbidden: Admin or Employee access required' }, { status: 403 }) };
+  if (result.role !== 'admin' && result.role !== 'employee' && result.role !== 'superadmin') {
+    return { ok: false, response: NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 }) };
+  }
+  return result;
+}
+
+/** Verifies the request's Bearer token AND that the caller's profile role is strictly 'superadmin'. */
+export async function requireSuperAdmin(request: Request): Promise<AuthResult> {
+  const result = await requireAuth(request);
+  if (!result.ok) return result;
+  if (result.role !== 'superadmin') {
+    return { ok: false, response: NextResponse.json({ error: 'Forbidden: Superadmin access required' }, { status: 403 }) };
   }
   return result;
 }

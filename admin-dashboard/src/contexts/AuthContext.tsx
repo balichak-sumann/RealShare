@@ -75,7 +75,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         setUserProfile(profile);
         const role = profile?.role;
 
-        if (role === 'admin' || role === 'employee') {
+        if (role === 'admin' || role === 'employee' || role === 'superadmin') {
           if (pathname === '/login' || pathname === '/signup' || pathname === '/employee-login') {
             router.push('/');
           }

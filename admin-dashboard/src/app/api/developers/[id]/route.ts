@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/require-admin';
+import { requireAdmin, requireSuperAdmin } from '@/lib/require-admin';
 import { deleteDeveloperWithProperties } from '@/lib/delete-cascade';
+import { verifyAndDeleteOtp } from '@/lib/otp-store';
 
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -115,10 +116,20 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
 
 export async function DELETE(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const authResult = await requireAdmin(request);
+    const authResult = await requireSuperAdmin(request);
     if (!authResult.ok) return authResult.response;
 
     const { id } = await params;
+    const { searchParams } = new URL(request.url);
+    const otp = searchParams.get('otp');
+    if (!otp) {
+      return NextResponse.json({ error: 'Security OTP is required to confirm developer deletion.' }, { status: 400 });
+    }
+    const otpCheck = verifyAndDeleteOtp(`delete_${id}`, otp);
+    if (!otpCheck.valid) {
+      return NextResponse.json({ error: otpCheck.error || 'Invalid deletion OTP.' }, { status: 400 });
+    }
+
     await deleteDeveloperWithProperties(id);
 
     return NextResponse.json({ success: true });

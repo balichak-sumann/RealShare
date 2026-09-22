@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/require-admin';
+import { requireAdmin, requireSuperAdmin } from '@/lib/require-admin';
+import { verifyAndDeleteOtp } from '@/lib/otp-store';
 
 function isValidImageUrl(value: string): boolean {
   if (!value || typeof value !== 'string') return false;
@@ -76,9 +77,18 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
 
 export async function DELETE(request: Request, context: { params: Promise<{ id: string }> }) {
   try {
-    const auth = await requireAdmin(request);
+    const auth = await requireSuperAdmin(request);
     if (!auth.ok) return auth.response;
     const { id } = await context.params;
+    const { searchParams } = new URL(request.url);
+    const otp = searchParams.get('otp');
+    if (!otp) {
+      return NextResponse.json({ error: 'Security OTP is required to confirm banner deletion.' }, { status: 400 });
+    }
+    const otpCheck = verifyAndDeleteOtp(`delete_${id}`, otp);
+    if (!otpCheck.valid) {
+      return NextResponse.json({ error: otpCheck.error || 'Invalid deletion OTP.' }, { status: 400 });
+    }
     await prisma.banner.delete({ where: { id } });
     return NextResponse.json({ success: true });
   } catch (error: any) {

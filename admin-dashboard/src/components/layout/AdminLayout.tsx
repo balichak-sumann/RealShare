@@ -42,7 +42,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       { name: "Audit Logs", path: "/audit-logs", icon: "📝" }, // New audit log page
     ];
 
-    if (userProfile?.role === 'admin') {
+    if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
       return allItems;
     }
 
@@ -55,6 +55,9 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     }
     if (dept === 'accounts') {
       return allItems.filter(item => ['/', '/ledger', '/approvals', '/agents', '/services'].includes(item.path));
+    }
+    if (dept === 'tech' || dept === 'tech_support') {
+      return allItems.filter(item => ['/', '/tickets', '/settings', '/audit-logs', '/notifications', '/cms', '/contact-messages'].includes(item.path));
     }
 
     // Default fallback: just show overview if department is unrecognized
@@ -95,7 +98,9 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
             <div className={styles.adminAvatar}>{user?.email?.[0].toUpperCase() || "A"}</div>
             <div>
               <div className={styles.adminName}>{user?.email?.split('@')[0] || "Admin"}</div>
-              <div className={styles.adminRole}>Administrator</div>
+              <div className={styles.adminRole}>
+                {userProfile?.role === 'superadmin' ? 'Super Administrator' : 'Administrator'}
+              </div>
             </div>
           </div>
           <button onClick={logout} style={{ marginTop: '12px', width: '100%', padding: '8px', background: 'transparent', color: '#EF4444', border: '1px solid #EF4444', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>

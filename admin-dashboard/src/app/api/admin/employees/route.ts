@@ -34,7 +34,8 @@ function generateEmployeeCode(department: string, sequence: number): string {
   const deptPrefix =
     department === 'sales' ? 'SALES' :
     department === 'support' ? 'SUPP' :
-    'ACCT';
+    department === 'accounts' ? 'ACCT' :
+    'TECH';
   return `RS-${deptPrefix}-${String(sequence).padStart(3, '0')}`;
 }
 
@@ -53,12 +54,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    // Check if the user making the request is an admin
+    // Check if the user making the request is an admin or superadmin
     const adminUser = await prisma.profile.findUnique({
       where: { id: decodedToken.uid }
     });
 
-    if (!adminUser || adminUser.role !== 'admin') {
+    if (!adminUser || (adminUser.role !== 'admin' && adminUser.role !== 'superadmin')) {
       return NextResponse.json({ error: 'Forbidden: Admin access required' }, { status: 403 });
     }
 
@@ -69,9 +70,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields: full_name, email, department' }, { status: 400 });
     }
 
-    const validDepartments = ['sales', 'support', 'accounts'];
+    const validDepartments = ['sales', 'support', 'accounts', 'tech'];
     if (!validDepartments.includes(department.toLowerCase())) {
-      return NextResponse.json({ error: 'Invalid department. Must be: sales, support, or accounts' }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid department. Must be: sales, support, accounts, or tech' }, { status: 400 });
     }
 
     // Check if email already exists in the database

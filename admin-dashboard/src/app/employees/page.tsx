@@ -10,7 +10,7 @@ interface Employee {
   name: string;
   email: string;
   phone: string;
-  department: "Sales" | "Support" | "Accounts";
+  department: "Sales" | "Support" | "Accounts" | "Tech";
   employeeCode: string;
   incentiveRatePct: number;
   monthlyTarget: string;
@@ -24,6 +24,7 @@ function mapApiEmployee(p: any): Employee {
     sales: 'Sales',
     support: 'Support',
     accounts: 'Accounts',
+    tech: 'Tech',
   };
   return {
     id: p.id,
@@ -254,7 +255,7 @@ export default function EmployeesPage() {
       <div
         style={{
           display: "grid",
-          gridTemplateColumns: "repeat(3, 1fr)",
+          gridTemplateColumns: "repeat(4, 1fr)",
           gap: "18px",
           marginBottom: "24px",
         }}
@@ -324,6 +325,28 @@ export default function EmployeesPage() {
             Permitted for Escrow reconciliation & yield distribution audits
           </div>
         </div>
+
+        <div
+          style={{
+            background: "var(--bg-secondary)",
+            border: "1px solid var(--border-color)",
+            borderRadius: "12px",
+            padding: "18px",
+          }}
+        >
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+            <span style={{ fontSize: "0.75rem", color: "#7C3AED", fontWeight: 700, textTransform: "uppercase" }}>
+              Tech Support & Engineering
+            </span>
+            <span style={{ fontSize: "1.2rem" }}>💻</span>
+          </div>
+          <div style={{ fontSize: "1.6rem", fontWeight: 800, marginTop: "6px", color: "var(--text-primary)" }}>
+            {employees.filter((e) => e.department === "Tech").length} Engineers
+          </div>
+          <div style={{ fontSize: "0.75rem", color: "#64748B", marginTop: 4 }}>
+            Permitted for Audit logs, System settings, Notifications & Debugging
+          </div>
+        </div>
       </div>
 
       {/* Header controls */}
@@ -331,7 +354,7 @@ export default function EmployeesPage() {
         <div className={styles.title}>All Employees & Team Roles ({filtered.length})</div>
         <div className={styles.headerRight}>
           <div className={styles.filterGroup}>
-            {["All", "Sales", "Support", "Accounts"].map((d) => (
+            {["All", "Sales", "Support", "Accounts", "Tech"].map((d) => (
               <button
                 key={d}
                 className={`${styles.filterPill} ${deptFilter === d ? styles.filterActive : ""}`}
@@ -563,6 +586,7 @@ export default function EmployeesPage() {
                     <option value="Sales">Sales Executive</option>
                     <option value="Support">Customer Support</option>
                     <option value="Accounts">Accounts & Finance</option>
+                    <option value="Tech">Tech Support & System Admin</option>
                   </select>
                 </div>
                 <div>

@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
-import { requireAdmin } from '@/lib/require-admin';
+import { requireAdmin, requireSuperAdmin } from '@/lib/require-admin';
 import { logAdminAction } from '@/lib/audit';
+import { verifyAndDeleteOtp } from '@/lib/otp-store';
 
 export async function GET(request: Request) {
   try {
@@ -73,7 +74,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const auth = await requireAdmin(request);
+    const auth = await requireSuperAdmin(request);
     if (!auth.ok) return auth.response;
 
     const { searchParams } = new URL(request.url);
@@ -81,6 +82,15 @@ export async function DELETE(request: Request) {
 
     if (!id) {
       return NextResponse.json({ error: 'User ID is required.' }, { status: 400 });
+    }
+
+    const otp = searchParams.get('otp');
+    if (!otp) {
+      return NextResponse.json({ error: 'Security OTP is required to confirm account deletion.' }, { status: 400 });
+    }
+    const otpCheck = verifyAndDeleteOtp(`delete_${id}`, otp);
+    if (!otpCheck.valid) {
+      return NextResponse.json({ error: otpCheck.error || 'Invalid deletion OTP.' }, { status: 400 });
     }
 
     await prisma.profile.delete({

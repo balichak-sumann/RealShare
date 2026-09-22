@@ -103,8 +103,8 @@ function LoginForm() {
       const roleData = await roleRes.json();
       
       if (roleData.success && roleData.profile) {
-        if (roleData.profile.role === 'admin') {
-          // Successfully authenticated as admin
+        if (roleData.profile.role === 'admin' || roleData.profile.role === 'superadmin') {
+          // Successfully authenticated as admin or superadmin
           setSuccess('Login successful! Redirecting...');
           router.push('/');
         } else {

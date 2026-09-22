@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from "react";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { getAuthHeader } from "@/lib/api-auth";
+import DeleteOtpModal from "@/components/modals/DeleteOtpModal";
 import styles from "../properties/Properties.module.css";
 
 interface Developer {
@@ -60,6 +61,7 @@ export default function DevelopersPage() {
   const [editingDev, setEditingDev] = useState<Developer | null>(null);
   const [editForm, setEditForm] = useState(emptyEditForm);
   const [isSavingEdit, setIsSavingEdit] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -187,23 +189,8 @@ export default function DevelopersPage() {
     }
   };
 
-  const handleDeleteDeveloper = async (d: Developer) => {
-    if (!confirm(`Delete developer "${d.name}" and all associated properties? This action cannot be undone.`)) return;
-    try {
-      const authHeader = await getAuthHeader();
-      if (!authHeader) { alert("You must be signed in to do that."); return; }
-      const res = await fetch(`/api/developers/${d.id}`, {
-        method: "DELETE",
-        headers: authHeader,
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || "Failed to delete developer");
-      setDevelopers((prev) => prev.filter((dev) => dev.id !== d.id));
-      showToast(`Developer "${d.name}" and their properties were removed.`);
-    } catch (err: any) {
-      console.error(err);
-      alert(err.message || "Could not delete developer. Please try again.");
-    }
+  const handleDeleteDeveloper = (d: Developer) => {
+    setDeleteTarget({ id: d.id, name: d.name });
   };
 
   return (
@@ -679,6 +666,22 @@ export default function DevelopersPage() {
           </div>
         </div>
       )}
+
+      {/* OTP Deletion Confirmation Modal */}
+      <DeleteOtpModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        targetId={deleteTarget?.id || ""}
+        targetName={deleteTarget?.name || ""}
+        targetType="Developer"
+        deleteUrl={`/api/developers/${deleteTarget?.id}`}
+        onSuccess={() => {
+          if (deleteTarget) {
+            setDevelopers((prev) => prev.filter((d) => d.id !== deleteTarget.id));
+            showToast(`Developer "${deleteTarget.name}" and their properties were removed.`);
+          }
+        }}
+      />
 
       {toastMessage && (
         <div

@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 import { auth } from '@/lib/firebase-admin';
 import { parseGoogleMapsCoordinates } from '../route';
 import { deletePropertyWithRelations } from '@/lib/delete-cascade';
+import { verifyAndDeleteOtp } from '@/lib/otp-store';
 
 // Auth helper
 async function getUser(request: Request) {
@@ -12,7 +13,13 @@ async function getUser(request: Request) {
     try {
       const decodedToken = await auth.verifyIdToken(token);
       const profile = await prisma.profile.findUnique({ where: { id: decodedToken.uid } });
-      return { uid: decodedToken.uid, role: profile?.role?.toLowerCase() || 'buyer', isAdmin: profile?.role === 'admin' };
+      const role = profile?.role?.toLowerCase() || 'buyer';
+      return { 
+        uid: decodedToken.uid, 
+        role, 
+        isAdmin: role === 'admin' || role === 'superadmin',
+        isSuperAdmin: role === 'superadmin' 
+      };
     } catch (e) {
       return null;
     }
@@ -303,8 +310,23 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
 
     const property = await prisma.property.findUnique({ where: { id } });
     if (!property) return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    if (!user.isAdmin && property.posted_by !== user.uid) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    
+    // Regular admins cannot delete properties, only superadmins or the original poster
+    if (!user.isSuperAdmin && property.posted_by !== user.uid) {
+      return NextResponse.json({ error: 'Forbidden: Only the poster or a Super Admin can delete properties' }, { status: 403 });
+    }
+
+    // Require OTP verification for Super Admin deletions
+    if (user.isSuperAdmin) {
+      const { searchParams } = new URL(request.url);
+      const otp = searchParams.get('otp');
+      if (!otp) {
+        return NextResponse.json({ error: 'Security OTP is required to confirm property deletion.' }, { status: 400 });
+      }
+      const otpCheck = verifyAndDeleteOtp(`delete_${id}`, otp);
+      if (!otpCheck.valid) {
+        return NextResponse.json({ error: otpCheck.error || 'Invalid deletion OTP.' }, { status: 400 });
+      }
     }
 
     await deletePropertyWithRelations(id);

@@ -47,31 +47,15 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
   const { profile } = useUser();
   const { toggleDrawer } = useDrawer();
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'analytics' | 'my_properties' | 'post_new'>('my_properties');
+  const [activeTab, setActiveTab] = useState<'analytics' | 'my_properties'>('my_properties');
   
   const [properties, setProperties] = useState<BuilderProperty[]>([]);
   const [statusFilter, setStatusFilter] = useState<'ALL' | 'LIVE' | 'PENDING' | 'REJECTED'>('ALL');
   const [searchQuery, setSearchQuery] = useState('');
   const [editingProp, setEditingProp] = useState<any>(null);
 
-  // Form states for posting property
-  const [title, setTitle] = useState('');
-  const [locality, setLocality] = useState('');
-  const [district, setDistrict] = useState('Hyderabad');
-  const [stateName, setStateName] = useState('Telangana');
-  const [type, setType] = useState('Commercial');
-  const [listingType, setListingType] = useState<'fractional' | 'outright'>('fractional');
-  const [fractions, setFractions] = useState('');
-  const [price, setPrice] = useState('');
-  const [yieldVal, setYieldVal] = useState('');
-  const [targetIrr, setTargetIrr] = useState('');
-  const [reraNo, setReraNo] = useState('');
-  const [description, setDescription] = useState('');
-  const [imageUri, setImageUri] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
+  // Simplified — posting is at /post-property
   const [successNotice, setSuccessNotice] = useState<string | null>(null);
-  const [postFormErrors, setPostFormErrors] = useState<string[]>([]);
-  const [showPreviewModal, setShowPreviewModal] = useState(false);
 
   useEffect(() => {
     if (profile && profile.role !== 'builder' && profile.role !== 'admin') {
@@ -130,99 +114,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
     }
   };
 
-  const pickImage = async () => {
-    let result = await ImagePicker.launchImageLibraryAsync({
-      mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
-      aspect: [16, 9],
-      quality: 0.8,
-      base64: true,
-    });
-    if (!result.canceled) {
-      setImageUri(result.assets[0].uri);
-    }
-  };
 
-  const handleValidateAndPreview = () => {
-    const errors: string[] = [];
-    if (!title || !title.trim()) errors.push('Property Title is required.');
-    if (!locality || !locality.trim()) errors.push('Locality is required.');
-    if (errors.length > 0) {
-      setPostFormErrors(errors);
-      return;
-    }
-    setPostFormErrors([]);
-    setShowPreviewModal(true);
-  };
-
-  const submitPostProperty = async () => {
-    setIsUploading(true);
-    
-    try {
-      let finalImageUrl = 'https://images.unsplash.com/photo-1574362848149-11496d93a7c7?w=800&fit=crop';
-      
-      if (imageUri) {
-        try {
-          const response = await fetch(imageUri);
-          const blob = await response.blob();
-          const filename = imageUri.substring(imageUri.lastIndexOf('/') + 1);
-          const storageRef = ref(storage, `builder_properties/${Date.now()}_${filename}`);
-          await uploadBytes(storageRef, blob);
-          finalImageUrl = await getDownloadURL(storageRef);
-        } catch (err) {
-          console.log("Storage upload fallback used (PostgreSQL text insertion).", err);
-          const base64Str = await FileSystem.readAsStringAsync(imageUri, { encoding: FileSystem.EncodingType.Base64 });
-          // Note: PostgreSQL insertion needs the full Data URI format to render correctly on the web
-          const extension = imageUri.split('.').pop() || 'jpeg';
-          finalImageUrl = `data:image/${extension};base64,${base64Str}`;
-        }
-      }
-
-      const user = auth.currentUser;
-      const token = await user?.getIdToken();
-
-      const res = await fetch(`${getApiUrl()}/api/properties`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          title,
-          description: description || `Property submitted by Builder ${profile?.full_name || ''}`,
-          locality,
-          district: district || 'Hyderabad',
-          state: stateName || 'Telangana',
-          property_type: type.toLowerCase(),
-          listing_type: listingType,
-          total_fractions: listingType === 'outright' ? 1 : Number(fractions),
-          available_fractions: listingType === 'outright' ? 1 : Number(fractions),
-          price_per_fraction: Number(price),
-          booking_amount: Number(price) * 0.1,
-          assured_yield: Number(yieldVal),
-          target_irr: Number(targetIrr),
-          image_url: finalImageUrl,
-        })
-      });
-
-      if (res.ok) {
-        setTitle('');
-        setLocality('');
-        setDescription('');
-        setImageUri(null);
-        setActiveTab('my_properties');
-        setSuccessNotice(`Property "${title}" successfully submitted to Realshare Admin for approval.`);
-        setTimeout(() => setSuccessNotice(null), 5000);
-        fetchProperties();
-      } else {
-        alert('Failed to submit property. Please try again.');
-      }
-    } catch(e) {
-      alert("Error submitting property details.");
-    } finally {
-      setIsUploading(false);
-    }
-  };
 
   const handleUpdateProperty = async () => {
     if (!editingProp) return;
@@ -472,179 +364,7 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
           </View>
         )}
 
-        {/* TAB 3: POST NEW PROPERTY */}
-        {activeTab === 'post_new' && (
-          <View style={styles.formCard}>
-            <Text style={styles.formTitle}>Post New Property for Fractional Listing</Text>
-            <Text style={styles.formSubtitle}>
-              Fill in project details. Submitted properties undergo RERA and title verification by Realshare Admin before going live.
-            </Text>
 
-            <Text style={styles.label}>Property Title / Project Name *</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. Phoenix One Commercial Hub"
-              placeholderTextColor={Neutrals.gray400}
-              value={title}
-              onChangeText={setTitle}
-            />
-
-            <View style={styles.rowInputs}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Locality / Area *</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="e.g. Nizampet"
-                  placeholderTextColor={Neutrals.gray400}
-                  value={locality}
-                  onChangeText={setLocality}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>District / City</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Hyderabad"
-                  placeholderTextColor={Neutrals.gray400}
-                  value={district}
-                  onChangeText={setDistrict}
-                />
-              </View>
-            </View>
-
-            <Text style={styles.label}>Listing Type</Text>
-            <View style={styles.typeRow}>
-              {(['fractional', 'outright'] as const).map((lt) => (
-                <TouchableOpacity
-                  key={lt}
-                  style={[styles.typePill, listingType === lt && styles.typePillActive]}
-                  onPress={() => setListingType(lt)}
-                >
-                  <Text style={[styles.typeText, listingType === lt && styles.typeTextActive]}>
-                    {lt === 'fractional' ? 'Fractional (shares)' : 'Outright (whole property)'}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            {/* Pricing & Fractions directly below Listing Type */}
-            <View style={styles.rowInputs}>
-              {listingType === 'fractional' && (
-                <View style={{ flex: 1 }}>
-                  <Text style={styles.label}>Total Fractions</Text>
-                  <TextInput
-                    style={styles.input}
-                    keyboardType="numeric"
-                    value={fractions}
-                    onChangeText={setFractions}
-                  />
-                </View>
-              )}
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>{listingType === 'outright' ? 'Property Price (₹)' : 'Price / Frac (₹)'}</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={price}
-                  onChangeText={setPrice}
-                />
-              </View>
-            </View>
-
-            <View style={styles.rowInputs}>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Assured Yield (%)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={yieldVal}
-                  onChangeText={setYieldVal}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={styles.label}>Target IRR (%)</Text>
-                <TextInput
-                  style={styles.input}
-                  keyboardType="numeric"
-                  value={targetIrr}
-                  onChangeText={setTargetIrr}
-                />
-              </View>
-            </View>
-
-            <Text style={styles.label}>Property Category</Text>
-            <View style={styles.typeRow}>
-              {['Commercial', 'Residential', 'Retail', 'Industrial', 'Land'].map((t) => (
-                <TouchableOpacity
-                  key={t}
-                  style={[styles.typePill, type === t && styles.typePillActive]}
-                  onPress={() => setType(t)}
-                >
-                  <Text style={[styles.typeText, type === t && styles.typeTextActive]}>{t}</Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-
-            <Text style={styles.label}>RERA Registration Number (Optional)</Text>
-            <TextInput
-              style={styles.input}
-              placeholder="e.g. P02400009988"
-              placeholderTextColor={Neutrals.gray400}
-              value={reraNo}
-              onChangeText={setReraNo}
-            />
-
-            <Text style={styles.label}>Property Description & Features</Text>
-            <TextInput
-              style={[styles.input, { height: 75, textAlignVertical: 'top' }]}
-              placeholder="Describe rental income, tenant details, amenities..."
-              placeholderTextColor={Neutrals.gray400}
-              multiline
-              value={description}
-              onChangeText={setDescription}
-            />
-
-            <Text style={styles.label}>Cover Image</Text>
-            <TouchableOpacity style={styles.uploadBox} onPress={pickImage}>
-              {imageUri ? (
-                <Image source={{ uri: imageUri }} style={styles.uploadedImagePreview} />
-              ) : (
-                <Text style={styles.uploadText}>📷 Tap to Upload Cover Image from Gallery</Text>
-              )}
-            </TouchableOpacity>
-
-            {/* Validation Error Banner */}
-            {postFormErrors.length > 0 && (
-              <View style={{
-                backgroundColor: '#FEF2F2',
-                borderWidth: 1,
-                borderColor: '#FECACA',
-                borderRadius: 10,
-                padding: 14,
-                marginBottom: 12,
-              }}>
-                <Text style={{ fontSize: 13, fontWeight: '700', color: '#DC2626', marginBottom: 6 }}>
-                  ⚠️ Please fill in all required fields:
-                </Text>
-                {postFormErrors.map((err, i) => (
-                  <Text key={i} style={{ fontSize: 12, color: '#B91C1C', marginBottom: 3 }}>• {err}</Text>
-                ))}
-              </View>
-            )}
-
-            <TouchableOpacity
-              style={[styles.submitBtn, isUploading && { opacity: 0.7 }]}
-              onPress={handleValidateAndPreview}
-              disabled={isUploading}
-            >
-              {isUploading ? (
-                <ActivityIndicator color={Neutrals.white} />
-              ) : (
-                <Text style={styles.submitBtnText}>👁️ Preview &amp; Publish</Text>
-              )}
-            </TouchableOpacity>
-          </View>
-        )}
       </View>
 
       {/* Edit Property Modal */}
@@ -715,9 +435,6 @@ export default function BuilderPortalScreen({ isEmbedded = false }: { isEmbedded
 
           <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 120 }}>
             {(() => {
-              const { width } = useWindowDimensions();
-              const isDesktop = width >= 1024;
-              
               return (
                 <View style={{ flexDirection: isDesktop ? 'row' : 'column', gap: isDesktop ? 40 : 0 }}>
                   

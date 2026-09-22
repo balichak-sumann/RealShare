@@ -3,7 +3,9 @@ import React, { useState, useEffect } from "react";
 import dynamic from "next/dynamic";
 import AdminLayout from "@/components/layout/AdminLayout";
 import { getAuthHeader } from "@/lib/api-auth";
+import { useAuth } from "@/contexts/AuthContext";
 import { uploadFileToServer } from "@/lib/upload";
+import DeleteOtpModal from "@/components/modals/DeleteOtpModal";
 import styles from "./Properties.module.css";
 
 // Dynamic import to avoid SSR issues with Leaflet
@@ -83,6 +85,7 @@ interface Property {
   deposit_amount?: number | string | null;
   rental_amount?: number | string | null;
   documents?: Array<{ id: string; title: string; document_url: string; file_type: string; file_size?: number | null }>;
+  expires_at?: string;
 }
 
 const INITIAL_NEW_PROP_STATE = {
@@ -158,6 +161,7 @@ const MAJOR_CITIES = [
 ];
 
 export default function PropertiesPage() {
+  const { userProfile } = useAuth();
   const [properties, setProperties] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -166,6 +170,8 @@ export default function PropertiesPage() {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedProperty, setSelectedProperty] = useState<Property | null>(null);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [bhkAreas, setBhkAreas] = useState<Record<string, string>>({});
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
   // Sell Property Modal state
   const [sellModalProperty, setSellModalProperty] = useState<Property | null>(null);
@@ -435,6 +441,32 @@ export default function PropertiesPage() {
     }
   };
 
+  const handleUpdateExpiresAt = async (id: string, newDateStr: string) => {
+    try {
+      const authHeader = await getAuthHeader();
+      if (!authHeader) { showToast('You must be signed in to do that.'); return; }
+      const res = await fetch(`/api/properties/${id}`, {
+        method: 'PATCH',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ expires_at: newDateStr })
+      });
+      if (res.ok) {
+        setProperties((prev) => prev.map((p) => {
+          if (p.id === id) {
+            return { ...p, expires_at: newDateStr };
+          }
+          return p;
+        }));
+        showToast(`Property expiration date updated.`);
+      } else {
+        const data = await res.json();
+        alert(`Failed to update expiration: ${data.error || res.status}`);
+      }
+    } catch(e: any) {
+      alert(`Network error: ${e.message}`);
+    }
+  };
+
   const handleMakeLive = async (id: string) => {
     if (!confirm("Are you sure you want to make this property live again? This will also cancel any active investments assigned to it.")) return;
     try {
@@ -546,21 +578,9 @@ export default function PropertiesPage() {
     }
   };
 
-  const handleDeleteProperty = async (id: string) => {
-    if (confirm("Are you sure you want to delete this property listing? This action cannot be undone.")) {
-      try {
-        const authHeader = await getAuthHeader();
-        if (!authHeader) { showToast('You must be signed in to do that.'); return; }
-        const res = await fetch(`/api/properties/${id}`, {
-          method: 'DELETE',
-          headers: authHeader
-        });
-        if (res.ok) {
-          setProperties((prev) => prev.filter((p) => p.id !== id));
-          showToast(`Property ${id} removed successfully by Admin.`);
-        }
-      } catch(e) {}
-    }
+  const handleDeleteProperty = (id: string) => {
+    const targetProp = properties.find((p) => p.id === id);
+    setDeleteTarget({ id, title: targetProp?.title || id });
   };
 
   // ── Validate required fields; returns array of error messages ──
@@ -577,6 +597,26 @@ export default function PropertiesPage() {
 
   // ── Called by 'Preview & Publish' button ──
   const handlePreviewAndPublish = () => {
+    // Sync BHK Areas for Residential/Holiday
+    if (['Residential', 'Holiday'].includes(newProp.type)) {
+      const areas = Object.values(bhkAreas).map(v => Number(v)).filter(v => v > 0);
+      if (areas.length > 0) {
+        const minArea = Math.min(...areas);
+        const maxArea = Math.max(...areas);
+        newProp.areaSqft = minArea;
+        newProp.areaSqftMax = maxArea > minArea ? maxArea : null;
+        
+        // Auto-set bedrooms if a single BHK was selected
+        if (areas.length === 1) {
+          const bhkKey = Object.keys(bhkAreas)[0];
+          const bhkNum = parseInt(bhkKey);
+          if (!isNaN(bhkNum)) newProp.bedrooms = bhkNum;
+        }
+      } else {
+        newProp.areaSqft = 0; // Trigger validation error
+      }
+    }
+
     const errors = validateForm();
     if (errors.length > 0) {
       setFormErrors(errors);
@@ -1165,6 +1205,17 @@ export default function PropertiesPage() {
                       {p.approval_status === "approved" ? "Active" : p.approval_status === "pending_approval" ? "Pending Approval" : p.approval_status}
                     </span>
                   )}
+                  <div style={{ marginTop: '6px', fontSize: '0.7rem', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{ color: '#64748B', fontWeight: 600 }}>Expire:</span>
+                    <input 
+                      type="date" 
+                      value={p.expires_at ? new Date(p.expires_at).toISOString().split('T')[0] : ''}
+                      onChange={(e) => {
+                        if(e.target.value) handleUpdateExpiresAt(p.id, new Date(e.target.value).toISOString());
+                      }}
+                      style={{ border: '1px solid #E2E8F0', borderRadius: '4px', padding: '2px 4px', fontSize: '0.7rem', marginTop: '2px', cursor: 'pointer', outline: 'none' }}
+                    />
+                  </div>
                 </td>
                 <td className={styles.td}>
                   <div className={styles.actions}>
@@ -1224,12 +1275,14 @@ export default function PropertiesPage() {
                     >
                       View
                     </button>
-                    <button
-                      onClick={() => handleDeleteProperty(p.id)}
-                      className={styles.deleteBtn}
-                    >
-                      Delete
-                    </button>
+                    {userProfile?.role === 'superadmin' && (
+                      <button
+                        onClick={() => handleDeleteProperty(p.id)}
+                        className={styles.deleteBtn}
+                      >
+                        Delete
+                      </button>
+                    )}
                   </div>
                 </td>
               </tr>
@@ -1495,42 +1548,94 @@ export default function PropertiesPage() {
                     }
                   </select>
                 </div>
-                <div>
-                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
-                    Area (Min) <span style={{ color: "#EF4444" }}>*</span>
-                  </label>
-                  <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
-                    <input
-                      type="number" required min={0}
-                      placeholder={newProp.areaUnit === "acres" ? "e.g. 4" : newProp.areaUnit === "sqyards" ? "e.g. 150" : "e.g. 1200"}
-                      value={newProp.areaSqft}
-                      onChange={(e) => setNewProp({ ...newProp, areaSqft: Number(e.target.value) })}
-                      style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1" }}
-                    />
-                    <select
-                      value={newProp.areaUnit || 'sqft'}
-                      onChange={(e) => setNewProp({ ...newProp, areaUnit: e.target.value as any })}
-                      style={{ padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", background: "#fff", fontSize: "0.85rem", minWidth: "90px" }}
-                    >
-                      <option value="sqft">Sq.Ft</option>
-                      <option value="sqyards">Sq.Yards</option>
-                      <option value="acres">Acres</option>
-                    </select>
+                {['Residential', 'Holiday'].includes(newProp.type) ? (
+                  <div style={{ gridColumn: "span 2", background: "#F8FAFC", padding: "12px", borderRadius: "8px", border: "1px solid #E2E8F0" }}>
+                    <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
+                      Available Configurations <span style={{ color: "#EF4444" }}>*</span>
+                    </label>
+                    <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", marginTop: "8px" }}>
+                      {['1 BHK', '2 BHK', '3 BHK', '4 BHK', '5 BHK', '5+ BHK'].map(bhk => (
+                        <button
+                          key={bhk}
+                          type="button"
+                          onClick={() => {
+                            const newAreas = { ...bhkAreas };
+                            if (newAreas[bhk] !== undefined) delete newAreas[bhk];
+                            else newAreas[bhk] = '';
+                            setBhkAreas(newAreas);
+                          }}
+                          style={{
+                            padding: "6px 12px", borderRadius: "20px", fontSize: "0.75rem", fontWeight: 600, cursor: "pointer",
+                            background: bhkAreas[bhk] !== undefined ? "#1E293B" : "#FFFFFF",
+                            color: bhkAreas[bhk] !== undefined ? "#FFFFFF" : "#64748B",
+                            border: `1px solid ${bhkAreas[bhk] !== undefined ? "#1E293B" : "#CBD5E1"}`
+                          }}
+                        >
+                          {bhk}
+                        </button>
+                      ))}
+                    </div>
+
+                    {Object.keys(bhkAreas).length > 0 && (
+                      <div style={{ marginTop: "12px", borderTop: "1px solid #E2E8F0", paddingTop: "12px" }}>
+                        <label style={{ fontSize: "0.75rem", fontWeight: 600, color: "#64748B" }}>Enter Area (Sq.Ft) for selected configurations:</label>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginTop: "8px" }}>
+                          {Object.keys(bhkAreas).sort().map(bhk => (
+                            <div key={bhk} style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                              <span style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569", width: "50px" }}>{bhk}</span>
+                              <input
+                                type="number" required min={1}
+                                placeholder={`e.g. ${bhk === '1 BHK' ? '600' : '1200'}`}
+                                value={bhkAreas[bhk]}
+                                onChange={(e) => setBhkAreas({ ...bhkAreas, [bhk]: e.target.value })}
+                                style={{ flex: 1, padding: "6px 10px", borderRadius: "6px", border: "1px solid #CBD5E1", fontSize: "0.8rem" }}
+                              />
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
-                <div>
-                  <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
-                    Area (Max) <span style={{ fontSize: "0.7rem", color: "#94A3B8" }}>(Optional)</span>
-                  </label>
-                  <input
-                    type="number" min={0}
-                    placeholder={newProp.areaUnit === "acres" ? "e.g. 6" : newProp.areaUnit === "sqyards" ? "e.g. 200" : "e.g. 1500"}
-                    value={newProp.areaSqftMax || ""}
-                    onChange={(e) => setNewProp({ ...newProp, areaSqftMax: e.target.value ? Number(e.target.value) : null })}
-                    style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
-                  />
-                  <div style={{ fontSize: "0.7rem", color: "#94A3B8", marginTop: "2px" }}>{newProp.areaUnit === "acres" ? "Acres" : newProp.areaUnit === "sqyards" ? "Sq. Yards" : "Sq. Ft."}</div>
-                </div>
+                ) : (
+                  <>
+                    <div>
+                      <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
+                        Area (Min) <span style={{ color: "#EF4444" }}>*</span>
+                      </label>
+                      <div style={{ display: "flex", gap: "6px", marginTop: "4px" }}>
+                        <input
+                          type="number" required min={0}
+                          placeholder={newProp.areaUnit === "acres" ? "e.g. 4" : newProp.areaUnit === "sqyards" ? "e.g. 150" : "e.g. 1200"}
+                          value={newProp.areaSqft}
+                          onChange={(e) => setNewProp({ ...newProp, areaSqft: Number(e.target.value) })}
+                          style={{ flex: 1, padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1" }}
+                        />
+                        <select
+                          value={newProp.areaUnit || 'sqft'}
+                          onChange={(e) => setNewProp({ ...newProp, areaUnit: e.target.value as any })}
+                          style={{ padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", background: "#fff", fontSize: "0.85rem", minWidth: "90px" }}
+                        >
+                          <option value="sqft">Sq.Ft</option>
+                          <option value="sqyards">Sq.Yards</option>
+                          <option value="acres">Acres</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "0.8rem", fontWeight: 600, color: "#475569" }}>
+                        Area (Max) <span style={{ fontSize: "0.7rem", color: "#94A3B8" }}>(Optional)</span>
+                      </label>
+                      <input
+                        type="number" min={0}
+                        placeholder={newProp.areaUnit === "acres" ? "e.g. 6" : newProp.areaUnit === "sqyards" ? "e.g. 200" : "e.g. 1500"}
+                        value={newProp.areaSqftMax || ""}
+                        onChange={(e) => setNewProp({ ...newProp, areaSqftMax: e.target.value ? Number(e.target.value) : null })}
+                        style={{ width: "100%", padding: "10px", borderRadius: "8px", border: "1px solid #CBD5E1", marginTop: "4px" }}
+                      />
+                      <div style={{ fontSize: "0.7rem", color: "#94A3B8", marginTop: "2px" }}>{newProp.areaUnit === "acres" ? "Acres" : newProp.areaUnit === "sqyards" ? "Sq. Yards" : "Sq. Ft."}</div>
+                    </div>
+                  </>
+                )}
               </div>
 
               {/* 4. Title */}
@@ -2930,6 +3035,21 @@ export default function PropertiesPage() {
           </div>
         </div>
       )}
+      {/* OTP Deletion Confirmation Modal */}
+      <DeleteOtpModal
+        isOpen={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        targetId={deleteTarget?.id || ""}
+        targetName={deleteTarget?.title || ""}
+        targetType="Property"
+        deleteUrl={`/api/properties/${deleteTarget?.id}`}
+        onSuccess={() => {
+          if (deleteTarget) {
+            setProperties((prev) => prev.filter((p) => p.id !== deleteTarget.id));
+            showToast(`Property "${deleteTarget.title}" permanently deleted.`);
+          }
+        }}
+      />
     </AdminLayout>
   );
 }

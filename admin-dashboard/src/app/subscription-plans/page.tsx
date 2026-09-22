@@ -50,6 +50,30 @@ export default function SubscriptionPlansPage() {
     }
   };
 
+  const seedPlans = async () => {
+    if (!confirm('Are you sure you want to seed default plans? This should only be done once.')) return;
+    setLoadingPlans(true);
+    const authHeader = await getAuthHeader();
+    if (!authHeader) return;
+    try {
+      const res = await fetch('/api/plans/seed', {
+        method: 'POST',
+        headers: { ...authHeader, 'Content-Type': 'application/json' },
+      });
+      if (res.ok) {
+        showMessage('Default plans seeded successfully!');
+        fetchPlans();
+      } else {
+        const data = await res.json();
+        showMessage(data.error || 'Failed to seed plans', 'error');
+      }
+    } catch (e) {
+      showMessage('Error seeding plans', 'error');
+    } finally {
+      setLoadingPlans(false);
+    }
+  };
+
   const handlePlanChange = (planId: string, field: string, value: any) => {
     setPlans(plans.map(p => p.id === planId ? { ...p, [field]: value } : p));
   };
@@ -202,7 +226,17 @@ export default function SubscriptionPlansPage() {
       {activeTab === 'plans' && (
         <div>
           {loadingPlans ? <p style={{ color: 'var(--text-secondary)' }}>Loading plans...</p> : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+            <>
+              {plans.length === 0 && (
+                <div style={{ padding: 40, textAlign: 'center', background: 'var(--bg-secondary)', borderRadius: 16, border: '1px dashed var(--border-color)', marginBottom: 24 }}>
+                  <h3 style={{ margin: '0 0 12px 0', color: 'var(--text-primary)' }}>No Subscription Plans Found</h3>
+                  <p style={{ color: 'var(--text-secondary)', marginBottom: 24 }}>Your database doesn't have any subscription plans configured yet.</p>
+                  <button onClick={seedPlans} style={{ padding: '12px 24px', background: '#2563EB', color: '#FFF', border: 'none', borderRadius: 8, fontWeight: 600, cursor: 'pointer', fontSize: '1rem' }}>
+                    Seed Default Plans
+                  </button>
+                </div>
+              )}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
               {plans.map(plan => (
                 <div key={plan.id} style={{ background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: 16, padding: 24, opacity: plan.is_active ? 1 : 0.6 }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
@@ -243,7 +277,8 @@ export default function SubscriptionPlansPage() {
                   </div>
                 </div>
               ))}
-            </div>
+              </div>
+            </>
           )}
         </div>
       )}

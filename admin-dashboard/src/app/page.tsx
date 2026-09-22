@@ -46,7 +46,7 @@ interface Summary {
   }[];
   recentActivity: {
     id: string;
-    type: "transaction" | "kyc" | "signup" | "property";
+    type: "transaction" | "kyc" | "signup" | "property" | "support" | "inquiry";
     user: string;
     action: string;
     target: string;
@@ -96,6 +96,10 @@ function getActivityAvatarColor(type: string) {
       return "#2563EB"; // Blue
     case "signup":
       return "#D97706"; // Amber
+    case "support":
+      return "#EF4444"; // Red
+    case "inquiry":
+      return "#0EA5E9"; // Light Blue
     default:
       return "#475569";
   }
@@ -111,6 +115,10 @@ function getActivityTypeIcon(type: string) {
       return "🏢";
     case "signup":
       return "👤";
+    case "support":
+      return "🎫";
+    case "inquiry":
+      return "🛎️";
     default:
       return "⚡";
   }

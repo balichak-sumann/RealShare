@@ -40,6 +40,10 @@ export async function GET(request: Request) {
       recentInvestors,
       recentProps,
       recentAgents,
+      recentBuilders,
+      recentTickets,
+      recentInquiries,
+      recentPartners,
     ] = await Promise.all([
       prisma.property.count().catch(() => 0),
       prisma.property.count({ where: { approval_status: 'approved' } }).catch(() => 0),
@@ -102,6 +106,27 @@ export async function GET(request: Request) {
         take: 4,
         select: { id: true, full_name: true, email: true, created_at: true, is_approved: true },
       }).catch(() => []),
+      prisma.profile.findMany({
+        where: { role: 'builder' },
+        orderBy: { created_at: 'desc' },
+        take: 4,
+        select: { id: true, full_name: true, email: true, created_at: true, is_approved: true },
+      }).catch(() => []),
+      prisma.supportTicket.findMany({
+        orderBy: { created_at: 'desc' },
+        take: 4,
+        select: { id: true, subject: true, status: true, created_at: true }
+      }).catch(() => []),
+      prisma.serviceInquiry.findMany({
+        orderBy: { created_at: 'desc' },
+        take: 4,
+        select: { id: true, customer_name: true, service_type: true, status: true, created_at: true }
+      }).catch(() => []),
+      prisma.partnerApplication.findMany({
+        orderBy: { created_at: 'desc' },
+        take: 4,
+        select: { id: true, full_name: true, company: true, status: true, created_at: true }
+      }).catch(() => []),
     ]);
 
     // Financial KPIs
@@ -157,7 +182,7 @@ export async function GET(request: Request) {
     // Unified Live Recent Activity Feed
     const activityItems: Array<{
       id: string;
-      type: 'transaction' | 'kyc' | 'signup' | 'property';
+      type: 'transaction' | 'kyc' | 'signup' | 'property' | 'support' | 'inquiry';
       user: string;
       action: string;
       target: string;
@@ -226,6 +251,70 @@ export async function GET(request: Request) {
           amount: null,
           status: agent.is_approved ? 'approved' : 'pending',
           time: agent.created_at || new Date().toISOString(),
+        });
+      }
+    }
+
+    // Add Builder Registrations
+    if (Array.isArray(recentBuilders)) {
+      for (const builder of recentBuilders) {
+        activityItems.push({
+          id: `bld-${builder.id}`,
+          type: 'signup',
+          user: builder.full_name || builder.email?.split('@')[0] || 'New Builder',
+          action: 'registered as a builder',
+          target: 'Realshare Platform',
+          amount: null,
+          status: builder.is_approved ? 'approved' : 'pending',
+          time: builder.created_at || new Date().toISOString(),
+        });
+      }
+    }
+
+    // Add Support Tickets
+    if (Array.isArray(recentTickets)) {
+      for (const t of recentTickets) {
+        activityItems.push({
+          id: `tkt-${t.id}`,
+          type: 'support',
+          user: 'Customer',
+          action: 'opened support ticket',
+          target: t.subject || 'Ticket',
+          amount: null,
+          status: t.status || 'open',
+          time: t.created_at || new Date().toISOString(),
+        });
+      }
+    }
+
+    // Add Service Inquiries
+    if (Array.isArray(recentInquiries)) {
+      for (const inq of recentInquiries) {
+        activityItems.push({
+          id: `inq-${inq.id}`,
+          type: 'inquiry',
+          user: inq.customer_name || 'User',
+          action: 'inquired about service',
+          target: inq.service_type || 'Service',
+          amount: null,
+          status: inq.status || 'New',
+          time: inq.created_at || new Date().toISOString(),
+        });
+      }
+    }
+
+    // Add Partner Applications
+    if (Array.isArray(recentPartners)) {
+      for (const p of recentPartners) {
+        activityItems.push({
+          id: `ptn-${p.id}`,
+          type: 'signup',
+          user: p.full_name || 'Partner',
+          action: 'applied for partnership',
+          target: p.company || 'Platform',
+          amount: null,
+          status: p.status || 'pending',
+          time: p.created_at || new Date().toISOString(),
         });
       }
     }

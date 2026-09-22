@@ -81,18 +81,10 @@ export async function POST(request: Request) {
     }
 
     if (body?.checkNotExists) {
-      const { auth } = await import('@/lib/firebase-admin');
-      let fbUser;
-      try {
-        fbUser = await auth.getUserByPhoneNumber(`+91${phone}`);
-      } catch (err: any) {
-        // Ignore user not found
-      }
-      
       const prisma = (await import('@/lib/prisma')).default;
       const dbUser = await prisma.profile.findFirst({ where: { phone_number: `+91${phone}` } });
 
-      if (fbUser || dbUser) {
+      if (dbUser) {
         return NextResponse.json(
           { success: false, error: 'Account already exists with this phone number. Please sign in instead.' },
           { status: 400 }

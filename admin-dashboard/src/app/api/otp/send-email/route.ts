@@ -66,18 +66,10 @@ export async function POST(request: Request) {
     }
 
     if (body?.checkNotExists) {
-      const { auth } = await import('@/lib/firebase-admin');
-      let fbUser;
-      try {
-        fbUser = await auth.getUserByEmail(email);
-      } catch (err: any) {
-        // Ignore user not found
-      }
-      
       const prisma = (await import('@/lib/prisma')).default;
       const dbUser = await prisma.profile.findFirst({ where: { email: email } });
 
-      if (fbUser || dbUser) {
+      if (dbUser) {
         return NextResponse.json(
           { success: false, error: 'Account already exists with this email address. Please sign in instead.' },
           { status: 400 }

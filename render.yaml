@@ -34,7 +34,12 @@ services:
       # App Security
       - key: ADMIN_BOOTSTRAP_SECRET
         sync: false
-      
+
+      # Email Configuration
+      - key: SMTP_EMAIL
+        sync: false
+      - key: SMTP_PASSWORD
+        sync: false
       # Next.js Specific
       - key: NODE_ENV
         value: production

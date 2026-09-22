@@ -62,17 +62,15 @@ export async function GET(request: Request) {
       prisma.supportTicket.findMany({
         take: 50,
         orderBy: { created_at: 'desc' },
-        include: { profile: true }
       }),
       prisma.serviceInquiry.findMany({
         take: 50,
         orderBy: { created_at: 'desc' },
-        include: { profile: true }
       }),
       prisma.property.findMany({
         take: 50,
         orderBy: { created_at: 'desc' },
-        include: { builder_profile: true, agent_profile: true }
+        include: { developer: true, profile: true }
       })
     ]);
 
@@ -160,7 +158,7 @@ export async function GET(request: Request) {
       activityItems.push({
         id: `tkt-${ticket.id}`,
         type: 'support',
-        user: ticket.profile?.full_name || ticket.profile?.email?.split('@')[0] || 'User',
+        user: ticket.user_id || 'Customer',
         action: 'opened support ticket',
         target: ticket.subject || 'Help Request',
         amount: null,
@@ -174,7 +172,7 @@ export async function GET(request: Request) {
       activityItems.push({
         id: `inq-${inq.id}`,
         type: 'inquiry',
-        user: inq.customer_name || inq.profile?.full_name || 'Customer',
+        user: inq.customer_name || 'Customer',
         action: 'inquired about service',
         target: inq.service_type || 'Platform Service',
         amount: null,
@@ -185,7 +183,7 @@ export async function GET(request: Request) {
 
     // Add Property Listings
     for (const prop of recentProperties) {
-      const user = prop.builder_profile?.full_name || prop.agent_profile?.full_name || 'Admin';
+      const user = prop.developer?.name || prop.profile?.full_name || 'Admin';
       activityItems.push({
         id: `prop-${prop.id}`,
         type: 'property',

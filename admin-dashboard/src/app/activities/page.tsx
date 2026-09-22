@@ -34,7 +34,7 @@ const formatInr = (amount: number) => {
 };
 
 export default function ActivitiesPage() {
-  const { getAuthHeader } = useAuth();
+  const { user } = useAuth();
   const [activities, setActivities] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [typeFilter, setTypeFilter] = useState("All");
@@ -43,24 +43,31 @@ export default function ActivitiesPage() {
   useEffect(() => {
     const loadActivities = async () => {
       setLoading(true);
-      const authHeader = await getAuthHeader();
-      if (!authHeader) {
+      if (!user) {
         setLoading(false);
         return;
       }
-      fetch("/api/activities", { headers: authHeader })
-        .then((res) => res.json())
-        .then((data) => {
-          setActivities(Array.isArray(data.activities) ? data.activities : []);
-          setLoading(false);
-        })
-        .catch((err) => {
-          console.error("Failed to load activities", err);
-          setLoading(false);
-        });
+      try {
+        const token = await user.getIdToken();
+        const authHeader = { Authorization: `Bearer ${token}` };
+        
+        fetch("/api/activities", { headers: authHeader })
+          .then((res) => res.json())
+          .then((data) => {
+            setActivities(Array.isArray(data.activities) ? data.activities : []);
+            setLoading(false);
+          })
+          .catch((err) => {
+            console.error("Failed to load activities", err);
+            setLoading(false);
+          });
+      } catch (err) {
+        console.error("Failed to get token", err);
+        setLoading(false);
+      }
     };
     loadActivities();
-  }, [getAuthHeader]);
+  }, [user]);
 
   const filteredActivities = activities.filter((act) => {
     if (typeFilter !== "All" && act.type !== typeFilter) return false;

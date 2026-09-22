@@ -108,7 +108,7 @@ export async function POST(req: Request) {
       {
         role_type: 'builder',
         tier: 'GOLD',
-        price: 14999,
+        price: 9999,
         postings_limit: 10,
         post_listing_days: 90,
         support_level: 'Regular',
@@ -123,7 +123,7 @@ export async function POST(req: Request) {
       {
         role_type: 'builder',
         tier: 'PLATINUM',
-        price: 29999,
+        price: 19999,
         postings_limit: 30,
         post_listing_days: 180,
         support_level: 'Premium',
@@ -138,7 +138,7 @@ export async function POST(req: Request) {
       {
         role_type: 'builder',
         tier: 'TITANIUM',
-        price: 49999,
+        price: 39999,
         postings_limit: 100,
         post_listing_days: 365,
         support_level: 'Premium',

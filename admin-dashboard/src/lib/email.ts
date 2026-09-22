@@ -11,7 +11,7 @@ function getTransporter() {
       pass: process.env.SMTP_PASSWORD,
     },
     connectionTimeout: 10000, // 10s timeout
-  });
+  } as any);
 }
 
 export interface ServiceInquiryDetails {

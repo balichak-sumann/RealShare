@@ -23,6 +23,15 @@ export type UserProfile = {
     verification_status: string;
   }>;
   is_approved?: boolean;
+  subscription?: {
+    id?: string;
+    tier: string;
+    plan_name: string;
+    postings_limit: number;
+    postings_used: number;
+    expires_at: string;
+    status: string;
+  } | null;
 };
 
 type UserContextType = {

@@ -37,6 +37,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       { name: "Messages", path: "/messages", icon: "💬" },
       { name: "Notifications Hub", path: "/notifications", icon: "📢" },
       { name: "Content & Banners", path: "/cms", icon: "🎨" },
+      { name: "Subscription Plans", path: "/subscription-plans", icon: "💎" },
       { name: "System Settings", path: "/settings", icon: "⚙️" },
       { name: "Audit Logs", path: "/audit-logs", icon: "📝" }, // New audit log page
     ];

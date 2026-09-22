@@ -3,6 +3,7 @@ import prisma from '@/lib/prisma';
 
 const DEFAULT_CONFIG = {
   requireKycOnSignup: true,
+  plansEnabled: true,
 };
 
 export async function GET() {
@@ -12,6 +13,7 @@ export async function GET() {
       const values = row.values as any;
       return NextResponse.json({
         requireKycOnSignup: values.requireKycOnSignup !== undefined ? values.requireKycOnSignup : DEFAULT_CONFIG.requireKycOnSignup,
+        plansEnabled: values.plansEnabled !== undefined ? values.plansEnabled : DEFAULT_CONFIG.plansEnabled,
       });
     }
     return NextResponse.json(DEFAULT_CONFIG);

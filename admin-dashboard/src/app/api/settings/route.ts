@@ -17,6 +17,7 @@ const DEFAULT_SETTINGS = {
   smsAlertsForKyc: false,
   weeklySummaryReport: true,
   requireKycOnSignup: true,
+  plansEnabled: true,
 };
 
 export async function GET(request: Request) {

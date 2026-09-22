@@ -18,6 +18,7 @@ interface Settings {
   smsAlertsForKyc: boolean;
   weeklySummaryReport: boolean;
   requireKycOnSignup: boolean;
+  plansEnabled: boolean;
 }
 
 export default function SettingsPage() {
@@ -222,12 +223,19 @@ export default function SettingsPage() {
               </div>
               <input type="checkbox" checked={settings.autoYieldDistributionEnabled} onChange={(e) => set("autoYieldDistributionEnabled", e.target.checked)} style={{ width: 20, height: 20, accentColor: "#2563EB" }} />
             </div>
-            <div style={{ ...toggleRow, borderBottom: "none" }}>
+            <div style={toggleRow}>
               <div>
                 <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Virtual Property Tours</div>
                 <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 2 }}>Enable 360° virtual tours for listed properties</div>
               </div>
               <input type="checkbox" checked={settings.virtualToursEnabled} onChange={(e) => set("virtualToursEnabled", e.target.checked)} style={{ width: 20, height: 20, accentColor: "#2563EB" }} />
+            </div>
+            <div style={{ ...toggleRow, borderBottom: "none" }}>
+              <div>
+                <div style={{ fontWeight: 600, color: "var(--text-primary)", fontSize: "0.9rem" }}>Subscription Plans</div>
+                <div style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginTop: 2 }}>Enable subscription plan system for Agents & Builders</div>
+              </div>
+              <input type="checkbox" checked={settings.plansEnabled} onChange={(e) => set("plansEnabled", e.target.checked)} style={{ width: 20, height: 20, accentColor: "#2563EB" }} />
             </div>
           </div>
 

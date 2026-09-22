@@ -11,6 +11,7 @@ import * as ImagePicker from 'expo-image-picker';
 
 import { useUser } from '@/contexts/UserContext';
 import { getApiUrl } from '@/lib/api';
+import PlanSelector from '@/components/plans/PlanSelector';
 
 // Email regex — must have valid format (user@domain.tld)
 const EMAIL_REGEX = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
@@ -62,6 +63,11 @@ export default function SignUpScreen() {
   const [error, setError] = useState('');
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [requireKycOnSignup, setRequireKycOnSignup] = useState(true);
+  
+  // Subscription flow states
+  const [plansEnabled, setPlansEnabled] = useState(false);
+  const [showPlanSelector, setShowPlanSelector] = useState(false);
+  const [createdUserToken, setCreatedUserToken] = useState<string | null>(null);
 
   React.useEffect(() => {
     (async () => {
@@ -71,6 +77,9 @@ export default function SignUpScreen() {
           const data = await res.json();
           if (typeof data.requireKycOnSignup === 'boolean') {
             setRequireKycOnSignup(data.requireKycOnSignup);
+          }
+          if (typeof data.plansEnabled === 'boolean') {
+            setPlansEnabled(data.plansEnabled);
           }
         }
       } catch (e) {
@@ -368,15 +377,101 @@ export default function SignUpScreen() {
         if (role === 'buyer') {
           router.replace('/');
         } else {
-          await signOut(auth).catch(() => {});
-          setProfile(null);
-          setShowSuccessModal(true);
+          if (plansEnabled) {
+            const token = await userCredential.user.getIdToken();
+            setCreatedUserToken(token);
+            setPendingVerification(false);
+            setShowPlanSelector(true);
+          } else {
+            await finishSignup();
+          }
         }
       } else {
         setError(data.error || 'Failed to verify OTPs.');
       }
     } catch (err: any) {
       setError('Failed to verify OTPs. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const finishSignup = async () => {
+    await signOut(auth).catch(() => {});
+    setProfile(null);
+    setShowPlanSelector(false);
+    setShowSuccessModal(true);
+  };
+
+  const handleSelectPlan = async (planId: string, couponCode: string | null) => {
+    if (!createdUserToken) return;
+    try {
+      setLoading(true);
+      const res = await fetch(`${getApiUrl()}/api/plans/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${createdUserToken}` },
+        body: JSON.stringify({ planId, couponCode })
+      });
+      const data = await res.json();
+      
+      if (!res.ok) {
+        setError(data.error || 'Failed to process subscription.');
+        return;
+      }
+      
+      if (data.amount === 0) {
+        // Free plan
+        await finishSignup();
+      } else {
+        if (Platform.OS === 'web') {
+           const options = {
+             key: data.keyId,
+             amount: data.amount,
+             currency: data.currency,
+             name: 'RealShare',
+             description: `Plan Subscription`,
+             order_id: data.order_id,
+             handler: async function (response: any) {
+               try {
+                 setLoading(true);
+                 const verifyRes = await fetch(`${getApiUrl()}/api/plans/verify`, {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${createdUserToken}` },
+                   body: JSON.stringify({
+                     razorpay_order_id: response.razorpay_order_id,
+                     razorpay_payment_id: response.razorpay_payment_id,
+                     razorpay_signature: response.razorpay_signature,
+                     planId,
+                     amount: data.amount,
+                     couponCode
+                   })
+                 });
+                 const verifyData = await verifyRes.json();
+                 if (verifyData.success) {
+                    await finishSignup();
+                 } else {
+                    setError('Payment verification failed.');
+                 }
+               } catch (e) {
+                 setError('Error verifying payment.');
+               } finally {
+                 setLoading(false);
+               }
+             },
+             theme: { color: GoldSystem.primaryGold }
+           };
+           const rzp = new (window as any).Razorpay(options);
+           rzp.on('payment.failed', function (res: any) {
+              setError(res.error.description);
+           });
+           rzp.open();
+        } else {
+           alert("Razorpay native not configured. Continuing as success.");
+           await finishSignup();
+        }
+      }
+    } catch (e) {
+      setError('Failed to process subscription.');
     } finally {
       setLoading(false);
     }
@@ -396,7 +491,7 @@ export default function SignUpScreen() {
 
       {error ? <Text style={isDesktopWeb ? styles.desktopErrorText : styles.mobileErrorText}>{error}</Text> : null}
 
-      {!pendingVerification && (
+      {!pendingVerification && !showPlanSelector && (
         <View style={styles.form}>
           <Text style={isDesktopWeb ? styles.desktopLabel : styles.mobileLabel}>I want to join as a:</Text>
           <View style={styles.roleRow}>
@@ -820,6 +915,12 @@ export default function SignUpScreen() {
           <TouchableOpacity style={{ marginTop: 20, alignItems: 'center' }} onPress={() => setPendingVerification(false)}>
             <Text style={styles.linkText}>Change Details</Text>
           </TouchableOpacity>
+        </View>
+      )}
+
+      {showPlanSelector && (
+        <View style={styles.form}>
+           <PlanSelector role={role as any} onSelectPlan={handleSelectPlan} />
         </View>
       )}
 

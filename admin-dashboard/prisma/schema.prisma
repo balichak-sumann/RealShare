@@ -43,6 +43,7 @@ model Profile {
   updated_at           DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
 
   // Relations
+  subscriptions             UserSubscription[]
   kyc_documents             KycDocument[]
   posted_properties         Property[]
   investments               Investment[]
@@ -595,4 +596,69 @@ model AuditLog {
   employee    Profile  @relation("EmployeeAuditLogs", fields: [employee_id], references: [id], onDelete: Cascade)
 
   @@map("audit_logs")
+}
+
+model SubscriptionPlan {
+  id                String   @id @default(uuid()) @db.VarChar(36)
+  role_type         String   @db.VarChar(20)    // "agent" | "builder"
+  tier              String   @db.VarChar(20)    // "REGULAR" | "GOLD" | "PLATINUM" | "TITANIUM"
+  price             Decimal  @db.Decimal(10, 2) // Admin-editable: 0, 499, 14999, etc.
+  postings_limit    Int                          // Admin-editable: 1, 5, 15, 50, 100
+  post_listing_days Int                          // Admin-editable: 30, 90, 180, 365
+  support_level     String   @db.VarChar(20)    // Admin-editable: "Regular" | "Premium"
+  post_assistance   String   @db.VarChar(20)    // Admin-editable: "No" | "Yes" | "Premium"
+  referral_program  Boolean  @default(false)     // Admin-editable
+  renewal           Boolean  @default(false)     // Admin-editable
+  validity_days     Int                          // Admin-editable: 30, 90, 365
+  tagline           String   @db.VarChar(100)   // Admin-editable: "Starter", etc.
+  features          Json?                        // Admin-editable: { display, boostMode, etc. }
+  sort_order        Int      @default(0)
+  is_active         Boolean  @default(true)      // Admin can disable individual plans
+  created_at        DateTime @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime @default(now()) @updatedAt @db.Timestamptz(6)
+
+  subscriptions UserSubscription[]
+
+  @@unique([role_type, tier])
+  @@map("subscription_plans")
+}
+
+model UserSubscription {
+  id                  String    @id @default(uuid()) @db.VarChar(36)
+  user_id             String    @db.VarChar(128)
+  plan_id             String    @db.VarChar(36)
+  status              String    @default("active") @db.VarChar(20) // "active" | "expired" | "cancelled"
+  postings_used       Int       @default(0)
+  razorpay_order_id   String?   @db.VarChar(255)
+  razorpay_payment_id String?   @db.VarChar(255)
+  amount_paid         Decimal   @db.Decimal(10, 2)
+  coupon_code         String?   @db.VarChar(50)   // coupon applied, if any
+  discount_amount     Decimal   @default(0) @db.Decimal(10, 2)
+  starts_at           DateTime  @default(now()) @db.Timestamptz(6)
+  expires_at          DateTime  @db.Timestamptz(6)
+  created_at          DateTime  @default(now()) @db.Timestamptz(6)
+
+  profile  Profile          @relation(fields: [user_id], references: [id])
+  plan     SubscriptionPlan @relation(fields: [plan_id], references: [id])
+
+  @@map("user_subscriptions")
+}
+
+model DiscountCoupon {
+  id              String    @id @default(uuid()) @db.VarChar(36)
+  code            String    @unique @db.VarChar(50)  // e.g. "LAUNCH50", "DIWALI30"
+  discount_type   String    @db.VarChar(20)           // "percentage" | "flat"
+  discount_value  Decimal   @db.Decimal(10, 2)        // 50 (= 50%) or 500 (= ₹500 off)
+  min_plan_price  Decimal   @default(0) @db.Decimal(10, 2) // min plan price to apply
+  applicable_role String?   @db.VarChar(20)           // null = all, "agent", "builder"
+  applicable_tier String?   @db.VarChar(20)           // null = all, "GOLD", "PLATINUM", etc.
+  max_uses        Int       @default(1)               // total times this coupon can be used
+  times_used      Int       @default(0)               // how many times it has been used
+  valid_from      DateTime  @db.Timestamptz(6)        // coupon validity start
+  valid_until     DateTime  @db.Timestamptz(6)        // coupon validity end
+  is_active       Boolean   @default(true)
+  created_by      String?   @db.VarChar(128)          // admin who created it
+  created_at      DateTime  @default(now()) @db.Timestamptz(6)
+
+  @@map("discount_coupons")
 }

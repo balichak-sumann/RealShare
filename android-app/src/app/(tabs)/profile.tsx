@@ -27,6 +27,7 @@ import { GoldSystem, Neutrals, Typography, Radius, Shadows } from '@/constants/d
 import { useFocusEffect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { getApiUrl } from '@/lib/api';
+import PlanSelector from '@/components/plans/PlanSelector';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -39,7 +40,27 @@ export default function ProfileScreen() {
   const [showWalletModal, setShowWalletModal] = useState(false);
   const [walletAmount, setWalletAmount] = useState('');
   const [isAddingMoney, setIsAddingMoney] = useState(false);
+
+  // Subscription States
+  const [plansEnabled, setPlansEnabled] = useState(false);
+  const [isUpgradingPlan, setIsUpgradingPlan] = useState(false);
   
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch(`${getApiUrl()}/api/config`);
+        if (res.ok) {
+          const data = await res.json();
+          if (typeof data.plansEnabled === 'boolean') {
+            setPlansEnabled(data.plansEnabled);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to load global config', e);
+      }
+    })();
+  }, []);
+
   // OTP Verification States
   const [isOtpModalVisible, setOtpModalVisible] = useState(false);
   const [otpType, setOtpType] = useState<'phone' | 'email'>('phone');
@@ -586,6 +607,142 @@ export default function ProfileScreen() {
             </View>
           </View>
         </Animated.View>
+
+        {/* ─── SUBSCRIPTION PLAN ─── */}
+        {plansEnabled && (user?.role === 'agent' || user?.role === 'builder') && (
+          <Animated.View style={[
+            styles.sectionWrapper,
+            { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }
+          ]}>
+            <Text style={styles.sectionTitle}>Subscription Plan</Text>
+            
+            {isUpgradingPlan ? (
+              <View style={[styles.card, { padding: 0, backgroundColor: 'transparent', borderWidth: 0 }]}>
+                 <TouchableOpacity style={{flexDirection: 'row', alignItems: 'center', marginBottom: 16}} onPress={() => setIsUpgradingPlan(false)}>
+                   <Ionicons name="arrow-back" size={20} color={Neutrals.obsidian} />
+                   <Text style={{fontWeight: '600', marginLeft: 8, color: Neutrals.obsidian}}>Back to Profile</Text>
+                 </TouchableOpacity>
+                 <PlanSelector 
+                    role={user.role} 
+                    currentPlanId={user?.subscription?.id}
+                    isUpgrade={true}
+                    onSelectPlan={async (planId, couponCode) => {
+                       try {
+                         setLoading(true);
+                         const token = await auth.currentUser?.getIdToken();
+                         const res = await fetch(`${getApiUrl()}/api/plans/subscribe`, {
+                           method: 'POST',
+                           headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                           body: JSON.stringify({ planId, couponCode })
+                         });
+                         const data = await res.json();
+                         if (!res.ok) {
+                           Alert.alert('Error', data.error || 'Subscription failed');
+                           return;
+                         }
+                         if (data.amount === 0) {
+                            Alert.alert('Success', 'Plan activated successfully.');
+                            setIsUpgradingPlan(false);
+                            const userRes = await fetch(`${getApiUrl()}/api/users/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+                            if (userRes.ok) {
+                              const userData = await userRes.json();
+                              setProfile(userData.profile);
+                            }
+                         } else {
+                            if (Platform.OS === 'web') {
+                              const options = {
+                                key: data.keyId,
+                                amount: data.amount,
+                                currency: data.currency,
+                                name: 'RealShare',
+                                description: `Upgrade Plan`,
+                                order_id: data.order_id,
+                                handler: async function (response: any) {
+                                  try {
+                                    setLoading(true);
+                                    const verifyRes = await fetch(`${getApiUrl()}/api/plans/verify`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                      body: JSON.stringify({
+                                        razorpay_order_id: response.razorpay_order_id,
+                                        razorpay_payment_id: response.razorpay_payment_id,
+                                        razorpay_signature: response.razorpay_signature,
+                                        planId,
+                                        amount: data.amount,
+                                        couponCode
+                                      })
+                                    });
+                                    const verifyData = await verifyRes.json();
+                                    if (verifyData.success) {
+                                       Alert.alert('Success', 'Plan upgraded successfully.');
+                                       setIsUpgradingPlan(false);
+                                       const userRes = await fetch(`${getApiUrl()}/api/users/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+                                       if (userRes.ok) {
+                                         const userData = await userRes.json();
+                                         setProfile(userData.profile);
+                                       }
+                                    } else {
+                                       Alert.alert('Error', 'Payment verification failed.');
+                                    }
+                                  } catch (e) {
+                                    Alert.alert('Error', 'Error verifying payment.');
+                                  } finally {
+                                    setLoading(false);
+                                  }
+                                },
+                                theme: { color: GoldSystem.primaryGold }
+                              };
+                              const rzp = new (window as any).Razorpay(options);
+                              rzp.on('payment.failed', function (res: any) {
+                                 Alert.alert('Payment Failed', res.error.description);
+                              });
+                              rzp.open();
+                            } else {
+                               Alert.alert('Notice', 'Razorpay native not configured. Continuing as success.');
+                               setIsUpgradingPlan(false);
+                            }
+                         }
+                       } catch (e) {
+                         Alert.alert('Error', 'Subscription failed.');
+                       } finally {
+                         setLoading(false);
+                       }
+                    }} 
+                 />
+              </View>
+            ) : (
+              <View style={styles.card}>
+                <View style={styles.infoRow}>
+                  <View style={[styles.infoIconBox, { backgroundColor: 'rgba(212, 175, 55, 0.1)' }]}>
+                    <Ionicons name="star" size={20} color="#D4AF37" />
+                  </View>
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Current Plan</Text>
+                    <Text style={styles.infoValue}>
+                      {user?.subscription?.plan_name || 'Free Tier'}
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.infoRow}>
+                  <View style={[styles.infoIconBox, { backgroundColor: 'rgba(16, 185, 129, 0.1)' }]}>
+                    <Ionicons name="flash-outline" size={20} color="#10B981" />
+                  </View>
+                  <View style={styles.infoContent}>
+                    <Text style={styles.infoLabel}>Postings Limit</Text>
+                    <Text style={styles.infoValue}>
+                      {user?.subscription?.postings_used || 0} / {user?.subscription?.postings_limit || 'N/A'} Used
+                    </Text>
+                  </View>
+                </View>
+                <View style={styles.divider} />
+                <TouchableOpacity style={{ marginTop: 12, alignItems: 'center', padding: 12, backgroundColor: Neutrals.obsidian, borderRadius: 8 }} onPress={() => setIsUpgradingPlan(true)}>
+                  <Text style={{ color: '#fff', fontWeight: '700' }}>Upgrade Plan</Text>
+                </TouchableOpacity>
+              </View>
+            )}
+          </Animated.View>
+        )}
 
         {/* ─── DOCUMENTS ─── */}
         <Animated.View style={[

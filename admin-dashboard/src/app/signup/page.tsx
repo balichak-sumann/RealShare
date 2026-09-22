@@ -48,7 +48,7 @@ export default function Signup() {
         const emailRes = await fetch('/api/otp/send-email', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: identifier.trim() }),
+          body: JSON.stringify({ email: identifier.trim(), checkNotExists: true }),
         });
         const emailData = await emailRes.json();
         if (!emailData.success) throw new Error(emailData.error || 'Failed to send Email OTP.');
@@ -56,7 +56,7 @@ export default function Signup() {
         const phoneRes = await fetch('/api/otp/send', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: identifier.replace(/\D/g, '').slice(-10) }),
+          body: JSON.stringify({ phone: identifier.replace(/\D/g, '').slice(-10), checkNotExists: true }),
         });
         const phoneData = await phoneRes.json();
         if (!phoneData.success) throw new Error(phoneData.error || 'Failed to send Phone OTP.');

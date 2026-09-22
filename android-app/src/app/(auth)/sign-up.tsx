@@ -229,7 +229,7 @@ export default function SignUpScreen() {
         const emailRes = await fetch(`${getApiUrl()}/api/otp/send-email`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: identifier.trim() }),
+          body: JSON.stringify({ email: identifier.trim(), checkNotExists: true }),
         });
         const emailData = await emailRes.json();
         if (emailData.success) {
@@ -242,7 +242,7 @@ export default function SignUpScreen() {
         const phoneRes = await fetch(`${getApiUrl()}/api/otp/send`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone: cleanedPhone }),
+          body: JSON.stringify({ phone: cleanedPhone, checkNotExists: true }),
         });
         const phoneData = await phoneRes.json();
         if (phoneData.success) {

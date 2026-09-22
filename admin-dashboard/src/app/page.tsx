@@ -412,8 +412,8 @@ export default function Home() {
                   Real-time events across investments, KYC & listings
                 </div>
               </div>
-              <Link href="/ledger" className={styles.viewAllBtn}>
-                Full Ledger →
+              <Link href="/activities" className={styles.viewAllBtn}>
+                View All Activity →
               </Link>
             </div>
 

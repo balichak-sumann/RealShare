@@ -42,7 +42,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       { name: "Audit Logs", path: "/audit-logs", icon: "📝" }, // New audit log page
     ];
 
-    if (userProfile?.role === 'admin') {
+    if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
       return allItems;
     }
 

@@ -101,7 +101,7 @@ function EmployeeLoginForm() {
       const roleData = await roleRes.json();
       
       if (roleData.success && roleData.profile) {
-        if (roleData.profile.role === 'employee' || roleData.profile.role === 'admin') {
+        if (roleData.profile.role === 'employee' || roleData.profile.role === 'admin' || roleData.profile.role === 'superadmin') {
           // Successfully authenticated as employee
           setSuccess('Login successful! Redirecting...');
           router.push('/');

@@ -912,9 +912,14 @@ export default function SignUpScreen() {
             {loading ? <ActivityIndicator color={isDesktopWeb ? Neutrals.white : "#0F172A"} /> : <Text style={isDesktopWeb ? styles.desktopPrimaryButtonText : styles.mobilePrimaryButtonText}>Verify & Create Account</Text>}
           </TouchableOpacity>
           
-          <TouchableOpacity style={{ marginTop: 20, alignItems: 'center' }} onPress={() => setPendingVerification(false)}>
-            <Text style={styles.linkText}>Change Details</Text>
-          </TouchableOpacity>
+          <View style={{ flexDirection: 'row', justifyContent: 'center', marginTop: 20, gap: 20 }}>
+            <TouchableOpacity onPress={onSignUpPress} disabled={loading}>
+              <Text style={[styles.linkText, { color: loading ? Neutrals.gray400 : GoldSystem.primaryGold }]}>Resend Code</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => setPendingVerification(false)}>
+              <Text style={styles.linkText}>Change Details</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 

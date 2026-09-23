@@ -58,6 +58,7 @@ import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { onAuthStateChanged, User } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { UserProvider, useUser } from '@/contexts/UserContext';
+import { useInactivityTimer } from '@/hooks/useInactivityTimer';
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // Ignore — splash may have already been hidden
@@ -165,15 +166,37 @@ function RootLayoutNav() {
     }
   }, [user, isLoaded, segments]);
 
+  const isRelevantRole = profile?.role === 'admin' || profile?.role === 'superadmin' || profile?.role === 'employee';
+
+  const panResponder = useInactivityTimer(
+    isRelevantRole,
+    () => {
+      console.log('Logging out due to inactivity');
+      import('firebase/auth').then(({ signOut }) => signOut(auth));
+      setProfile(null);
+      if (Platform.OS === 'web') {
+        window.alert("You have been logged out due to inactivity.");
+      } else {
+        import('react-native').then(({ Alert }) => {
+          Alert.alert("Session Expired", "You have been logged out due to inactivity.");
+        });
+      }
+      router.replace('/sign-in');
+    },
+    30 * 60 * 1000 // 30 minutes
+  );
+
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="property/[id]" options={{ presentation: 'modal', headerShown: false }} />
-      <Stack.Screen name="builder-portal" options={{ headerShown: false }} />
-      <Stack.Screen name="agent-portal" options={{ headerShown: false }} />
-      <Stack.Screen name="employee-portal" options={{ headerShown: false }} />
-    </Stack>
+    <View style={{ flex: 1 }} {...(panResponder ? panResponder.panHandlers : {})}>
+      <Stack screenOptions={{ headerShown: false }}>
+        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+        <Stack.Screen name="property/[id]" options={{ presentation: 'modal', headerShown: false }} />
+        <Stack.Screen name="builder-portal" options={{ headerShown: false }} />
+        <Stack.Screen name="agent-portal" options={{ headerShown: false }} />
+        <Stack.Screen name="employee-portal" options={{ headerShown: false }} />
+      </Stack>
+    </View>
   );
 }
 

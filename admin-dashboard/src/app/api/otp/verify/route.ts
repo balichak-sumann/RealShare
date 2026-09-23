@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { captureRequestContext } from '@/lib/audit-context';
+import { recordAudit } from '@/lib/audit';
 import { auth } from '@/lib/firebase-admin';
 
 interface OtpEntry {
@@ -21,6 +23,10 @@ function getOtpStore(): Map<string, OtpEntry> {
 }
 
 export async function POST(request: Request) {
+  // Public route: no authenticated actor, so IP and user agent are the only
+  // attribution available — and they are exactly what shows up a brute-force
+  // attempt against one account from one source.
+  captureRequestContext(request);
   try {
     const body = await request.json();
     const identifier = body?.identifier?.toLowerCase().trim() || body?.phone?.replace(/\D/g, '').slice(-10);
@@ -73,6 +79,9 @@ export async function POST(request: Request) {
     // Check expiry
     if (Date.now() > entry.expiresAt) {
       otpStore.delete(identifier);
+      await recordAudit({
+        action: 'OTP_EXPIRED', entityType: 'Auth', entityId: identifier, outcome: 'failure',
+      }).catch(() => {});
       return NextResponse.json(
         { success: false, error: 'OTP has expired. Please request a new one.' },
         { status: 400 }
@@ -82,6 +91,10 @@ export async function POST(request: Request) {
     // Check max wrong attempts
     if (entry.attempts >= 3) {
       otpStore.delete(identifier);
+      await recordAudit({
+        action: 'OTP_LOCKED_OUT', entityType: 'Auth', entityId: identifier, outcome: 'denied',
+        details: { attempts: entry.attempts },
+      }).catch(() => {});
       return NextResponse.json(
         { success: false, error: 'Too many incorrect attempts. Please request a new OTP.' },
         { status: 400 }
@@ -92,6 +105,11 @@ export async function POST(request: Request) {
     if (entry.otp !== otp) {
       entry.attempts += 1;
       const remaining = 3 - entry.attempts;
+      // The submitted code is deliberately NOT recorded — only that one was wrong.
+      await recordAudit({
+        action: 'OTP_VERIFY_FAILED', entityType: 'Auth', entityId: identifier, outcome: 'failure',
+        details: { attempt: entry.attempts, remaining },
+      }).catch(() => {});
       return NextResponse.json(
         { success: false, error: `Incorrect OTP. ${remaining} attempt${remaining !== 1 ? 's' : ''} remaining.` },
         { status: 400 }
@@ -116,6 +134,12 @@ export async function POST(request: Request) {
       // Generate a custom token
       const customToken = await auth.createCustomToken(userRecord.uid);
 
+      await recordAudit({
+        action: 'LOGIN_SUCCESS', entityType: 'Auth', entityId: identifier,
+        actor: { uid: userRecord.uid, email: userRecord.email ?? identifier },
+        details: { method: 'otp' },
+      }).catch(() => {});
+
       return NextResponse.json({
         success: true,
         firebaseToken: customToken,
@@ -123,6 +147,9 @@ export async function POST(request: Request) {
     } catch (firebaseErr: any) {
       console.error('[OTP Verify] Firebase lookup failed:', firebaseErr?.message);
       if (firebaseErr?.code === 'auth/user-not-found') {
+         await recordAudit({
+           action: 'LOGIN_UNKNOWN_ACCOUNT', entityType: 'Auth', entityId: identifier, outcome: 'failure',
+         }).catch(() => {});
          return NextResponse.json(
            { success: false, error: 'Account not found. Please sign up first.' },
            { status: 404 }

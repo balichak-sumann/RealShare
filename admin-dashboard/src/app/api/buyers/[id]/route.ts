@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
 import { requireAdmin } from '@/lib/require-admin';
-import { logAdminAction } from '@/lib/audit';
+import { logAdminAction, recordAudit } from '@/lib/audit';
 
 // GET: Full details for a single buyer
 export async function GET(
@@ -48,6 +48,21 @@ export async function GET(
     if (!buyer) {
       return NextResponse.json({ error: 'Buyer not found' }, { status: 404 });
     }
+
+    // Reads are invisible to the write-capture layer, but "who looked at this
+    // person's KYC documents and bank details" is usually the first question
+    // after a data-leak report.
+    await recordAudit({
+      action: 'VIEW_USER_SENSITIVE',
+      entityType: 'User',
+      entityId: id,
+      details: {
+        kyc_documents: Array.isArray((buyer as any)?.kyc_documents)
+          ? (buyer as any).kyc_documents.length
+          : 0,
+        included_bank_details: Boolean((buyer as any)?.bank_account_number),
+      },
+    }).catch(() => {});
 
     return NextResponse.json(buyer);
   } catch (error: any) {

@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { captureRequestContext } from '@/lib/audit-context';
+import { recordAudit } from '@/lib/audit';
 import { sendOtpSms } from '@/lib/sms';
 
 /**
@@ -45,6 +47,7 @@ function generateOtp(): string {
 }
 
 export async function POST(request: Request) {
+  captureRequestContext(request);
   try {
     const body = await request.json();
     const phone = body?.phone?.replace(/\D/g, '').slice(-10);
@@ -138,6 +141,14 @@ export async function POST(request: Request) {
     });
 
     console.log(`[OTP] Sent OTP to ${phone} (expires in 5 min)`);
+
+    await recordAudit({
+      action: 'OTP_SENT', entityType: 'Auth',
+      entityId: (body?.identifier || body?.phone || 'unknown').toString().toLowerCase().trim(),
+      details: { channel: body?.email ? 'email' : 'sms' },
+    }).catch((err) => {
+      console.error('[OTP] Failed to record audit log for OTP_SENT:', err?.message || err);
+    });
 
     return NextResponse.json({ success: true });
   } catch (err: any) {

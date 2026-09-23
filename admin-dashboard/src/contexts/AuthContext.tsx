@@ -5,6 +5,7 @@ import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { disconnectSocket } from '@/lib/socket';
 import { useRouter, usePathname } from 'next/navigation';
+import { useInactivityTimer } from '@/hooks/useInactivityTimer';
 
 interface AuthContextType {
   user: User | null;
@@ -23,6 +24,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
+
+  // Inactivity timeout: apply only to admin, superadmin, or employee roles
+  const isRelevantRole = userProfile?.role === 'admin' || userProfile?.role === 'superadmin' || userProfile?.role === 'employee';
+  
+  useInactivityTimer(
+    isRelevantRole,
+    () => {
+      // Auto-logout user on inactivity
+      console.log('Logging out due to inactivity');
+      logout();
+    },
+    30 * 60 * 1000 // 30 minutes
+  );
 
   // Pre-auth redirect: unauthenticated visitors get sent to /login (unchanged behavior).
   useEffect(() => {

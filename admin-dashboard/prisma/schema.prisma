@@ -62,7 +62,6 @@ model Profile {
   conversation_participants ConversationParticipant[]
   messages                  Message[]
   developer                 Developer?        @relation(fields: [developer_id], references: [id])
-  audit_logs                AuditLog[]        @relation("EmployeeAuditLogs")
 
   @@map("profiles")
 }
@@ -586,17 +585,65 @@ model ContactMessage {
   @@map("contact_messages")
 }
 
+/// Forensic audit trail.
+///
+/// Design rules that make this usable as evidence:
+///  - The actor is DENORMALISED onto every row (email/name/role/department) and
+///    employee_id is a plain historical reference with NO foreign key. The
+///    original relation cascaded, so deleting an employee destroyed their whole
+///    history. A SET NULL foreign key would fix that but still mutates the row
+///    on deletion — which the append-only rule forbids, and which would make
+///    deleting any employee fail outright. Dropping the constraint makes an
+///    audit row immutable for its whole life; attribution comes from the
+///    snapshot columns, which are written once and never touched again.
+///  - Every row records what it changed FROM as well as TO (`before`/`after`),
+///    so an overwritten value can still be recovered.
+///  - `outcome` distinguishes success from a denied or failed attempt. Refused
+///    attempts are usually the most interesting rows after an incident.
+///  - `seq` is a gapless counter and `prev_hash`/`hash` chain each row to the
+///    one before it, so deleting or editing any row is detectable.
 model AuditLog {
   id          String   @id @default(uuid()) @db.VarChar(36)
-  employee_id String   @db.VarChar(128)
+  /// Monotonic counter. A gap means rows were removed.
+  seq         BigInt   @default(autoincrement())
+
+  // ---- actor: plain reference (no FK) plus an immutable snapshot ----
+  employee_id String?  @db.VarChar(128)
+  actor_email String?  @db.VarChar(255)
+  actor_name  String?  @db.VarChar(255)
+  actor_role  String?  @db.VarChar(50)
+  actor_dept  String?  @db.VarChar(50)
+
+  // ---- what happened ----
   action      String   @db.VarChar(100) // e.g., "APPROVE_KYC", "UPDATE_PROPERTY"
   entity_type String   @db.VarChar(100) // e.g., "User", "Property", "Investment"
   entity_id   String   @db.VarChar(128)
-  details     Json?    // Optional JSON payload with what changed or additional context
+  /// "success" | "denied" | "failure"
+  outcome     String   @default("success") @db.VarChar(20)
+
+  // ---- the change itself (secrets redacted before storage) ----
+  before      Json?
+  after       Json?
+  details     Json?
+
+  // ---- request context: distinguishes the real actor from a stolen token ----
+  ip_address  String?  @db.VarChar(64)
+  user_agent  String?  @db.Text
+  request_id  String?  @db.VarChar(64)
+  http_method String?  @db.VarChar(10)
+  path        String?  @db.VarChar(512)
+
+  // ---- tamper evidence ----
+  prev_hash   String?  @db.VarChar(64)
+  hash        String   @db.VarChar(64)
+
   created_at  DateTime @default(now()) @db.Timestamptz(6)
 
-  employee    Profile  @relation("EmployeeAuditLogs", fields: [employee_id], references: [id], onDelete: Cascade)
-
+  @@index([created_at])
+  @@index([employee_id])
+  @@index([entity_type, entity_id])
+  @@index([action])
+  @@index([outcome])
   @@map("audit_logs")
 }
 

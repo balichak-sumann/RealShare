@@ -44,26 +44,33 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       { name: "Audit Logs", path: "/audit-logs", icon: "📝" }, // New audit log page
     ];
 
+    // Superadmin-only destinations. Audit logs record what admins and employees
+    // did, so a plain admin must not see them — the route enforces this too.
+    const SUPERADMIN_ONLY = ['/audit-logs'];
+    const isSuperAdmin = userProfile?.role === 'superadmin';
+    const visible = (items: typeof allItems) =>
+      isSuperAdmin ? items : items.filter((item) => !SUPERADMIN_ONLY.includes(item.path));
+
     if (userProfile?.role === 'admin' || userProfile?.role === 'superadmin') {
-      return allItems;
+      return visible(allItems);
     }
 
     const dept = userProfile?.employee_department;
     if (dept === 'sales') {
-      return allItems.filter(item => ['/', '/properties', '/featured-properties', '/developers', '/buyers', '/agents', '/referrals', '/property-requests'].includes(item.path));
+      return visible(allItems.filter(item => ['/', '/properties', '/featured-properties', '/developers', '/buyers', '/agents', '/referrals', '/property-requests'].includes(item.path)));
     }
     if (dept === 'support') {
-      return allItems.filter(item => ['/', '/buyers', '/tickets', '/messages', '/services-inquiries', '/contact-messages', '/partner-applications', '/notifications'].includes(item.path));
+      return visible(allItems.filter(item => ['/', '/buyers', '/tickets', '/messages', '/services-inquiries', '/contact-messages', '/partner-applications', '/notifications'].includes(item.path)));
     }
     if (dept === 'accounts') {
-      return allItems.filter(item => ['/', '/ledger', '/approvals', '/agents', '/services'].includes(item.path));
+      return visible(allItems.filter(item => ['/', '/ledger', '/approvals', '/agents', '/services'].includes(item.path)));
     }
     if (dept === 'tech' || dept === 'tech_support') {
-      return allItems.filter(item => ['/', '/tickets', '/settings', '/audit-logs', '/deleted-users', '/notifications', '/cms', '/contact-messages'].includes(item.path));
+      return visible(allItems.filter(item => ['/', '/tickets', '/settings', '/deleted-users', '/notifications', '/cms', '/contact-messages'].includes(item.path)));
     }
 
     // Default fallback: just show overview if department is unrecognized
-    return allItems.filter(item => item.path === '/');
+    return visible(allItems.filter(item => item.path === '/'));
   }, [userProfile]);
   return (
     <div className={styles.layout}>

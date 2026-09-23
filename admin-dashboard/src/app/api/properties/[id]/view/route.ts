@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import prisma from '@/lib/prisma';
+import { withoutAudit } from '@/lib/audit-context';
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -8,16 +9,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
       return NextResponse.json({ error: 'Property ID is required' }, { status: 400 });
     }
 
-    const updated = await prisma.property.update({
-      where: { id },
-      data: {
-        views_count: { increment: 1 },
-      },
-      select: {
-        id: true,
-        views_count: true,
-      },
-    });
+    // A view counter fires on every page load. It carries no forensic meaning
+    // and would otherwise bury real activity under millions of rows.
+    const updated = await withoutAudit(() =>
+      prisma.property.update({
+        where: { id },
+        data: {
+          views_count: { increment: 1 },
+        },
+        select: {
+          id: true,
+          views_count: true,
+        },
+      })
+    );
 
     return NextResponse.json({ success: true, views_count: updated.views_count });
   } catch (error) {

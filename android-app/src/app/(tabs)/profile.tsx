@@ -344,6 +344,54 @@ export default function ProfileScreen() {
     }
   };
 
+  const handleDeleteAccount = () => {
+    const confirmMessage = 'Are you sure you want to delete your account? This action cannot be undone and you will lose all your data.';
+    if (Platform.OS === 'web') {
+      if (window.confirm(confirmMessage)) {
+        proceedWithDelete();
+      }
+    } else {
+      Alert.alert(
+        'Delete Account',
+        confirmMessage,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Delete', style: 'destructive', onPress: proceedWithDelete },
+        ]
+      );
+    }
+  };
+
+  const proceedWithDelete = async () => {
+    try {
+      setLoading(true);
+      const currentUser = auth.currentUser;
+      if (!currentUser) return;
+      
+      try {
+        const token = await currentUser.getIdToken();
+        await fetch(`${getApiUrl()}/api/users/me`, {
+          method: 'DELETE',
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+      } catch (e) {
+        console.warn('Backend delete failed', e);
+      }
+      
+      await currentUser.delete();
+      router.replace('/sign-in' as any);
+    } catch (err: any) {
+      console.error('Delete account failed:', err);
+      if (err.code === 'auth/requires-recent-login') {
+        Alert.alert('Authentication Required', 'Please sign out and sign in again before deleting your account.');
+      } else {
+        Alert.alert('Error', 'Failed to delete account. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSendOtp = async () => {
     if (otpType === 'phone') {
       const cleanedPhone = inputValue.replace(/\D/g, '').slice(-10);
@@ -1130,10 +1178,14 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* ─── LOGOUT ─── */}
+        {/* ─── LOGOUT & DELETE ACCOUNT ─── */}
         <View style={styles.sectionWrapper}>
           <TouchableOpacity style={styles.logoutBtn} onPress={handleLogout} activeOpacity={0.8}>
             <Text style={styles.logoutText}>Sign Out</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity style={[styles.logoutBtn, { backgroundColor: '#FEE2E2', marginTop: 12 }]} onPress={handleDeleteAccount} activeOpacity={0.8}>
+            <Text style={[styles.logoutText, { color: '#DC2626' }]}>Delete Account</Text>
           </TouchableOpacity>
         </View>
 

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import AdminLayout from '@/components/AdminLayout';
+import AdminLayout from '@/components/layout/AdminLayout';
 import { auth } from '@/lib/firebase';
 import { useRouter } from 'next/navigation';
 

@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 
 export async function POST(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -23,7 +23,7 @@ export async function POST(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const userId = params.id;
+    const { id: userId } = await params;
 
     // Restore in database
     await prisma.profile.update({

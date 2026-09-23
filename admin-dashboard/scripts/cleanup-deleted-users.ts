@@ -1,5 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import * as admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 import * as dotenv from 'dotenv';
 import * as path from 'path';
 
@@ -9,9 +10,9 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 const prisma = new PrismaClient();
 
 // Initialize Firebase Admin if not already initialized
-if (!admin.apps.length) {
-  admin.initializeApp({
-    credential: admin.credential.cert({
+if (getApps().length === 0) {
+  initializeApp({
+    credential: cert({
       projectId: process.env.FIREBASE_PROJECT_ID,
       clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
       // Replace literal \n with actual newline characters
@@ -20,7 +21,7 @@ if (!admin.apps.length) {
   });
 }
 
-const auth = admin.auth();
+const auth = getAuth();
 
 async function cleanupDeletedUsers() {
   console.log('Starting cleanup of deleted users...');

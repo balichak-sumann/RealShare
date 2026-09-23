@@ -4,7 +4,7 @@ import prisma from '@/lib/prisma';
 
 export async function DELETE(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const authHeader = req.headers.get('Authorization');
@@ -23,7 +23,7 @@ export async function DELETE(
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    const userId = params.id;
+    const { id: userId } = await params;
 
     // Hard delete in database
     await prisma.profile.delete({

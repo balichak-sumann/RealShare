@@ -55,7 +55,7 @@ export default function ProfileScreen() {
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
 
   const handleCallSales = () => {
-    Linking.openURL('tel:+916302662448').catch(() => {
+    Linking.openURL('tel:+918463999099').catch(() => {
       Alert.alert('Sales Contact', 'Call our sales team directly at +91 63026 62448');
     });
   };
@@ -64,7 +64,7 @@ export default function ProfileScreen() {
     const text = encodeURIComponent(
       `Hello Realshare Sales Team, I am interested in ${packageName || 'Premium Listings & Brand Advertising'}. Please share availability and pricing details.`
     );
-    Linking.openURL(`https://wa.me/916302662448?text=${text}`).catch(() => {
+    Linking.openURL(`https://wa.me/918463999099?text=${text}`).catch(() => {
       Alert.alert('Sales Contact', 'WhatsApp our sales team directly at +91 63026 62448');
     });
   };
@@ -728,46 +728,7 @@ export default function ProfileScreen() {
           </View>
         </Animated.View>
 
-        {/* ─── PREMIUM LISTINGS & BRAND ADVERTISING VIP CARD ─── */}
-        <Animated.View style={[
-          styles.sectionWrapper,
-          { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }
-        ]}>
-          <TouchableOpacity 
-            style={styles.premiumBannerCard} 
-            onPress={() => setShowPremiumModal(true)}
-            activeOpacity={0.88}
-          >
-            <View style={styles.premiumBannerHeader}>
-              <View style={styles.premiumCrownBadge}>
-                <Text style={styles.premiumCrownIcon}>👑</Text>
-                <Text style={styles.premiumBadgeText}>VIP PROMOTIONS</Text>
-              </View>
-              <View style={styles.premiumSpotBadge}>
-                <Text style={styles.premiumSpotText}>LIMITED SPOTS</Text>
-              </View>
-            </View>
 
-            <Text style={styles.premiumBannerTitle}>Premium Listings & Brand Advertising</Text>
-            <Text style={styles.premiumBannerSubtitle}>
-              Secure prime placement on Home, Search & Project pages to get maximum brand exposure.
-            </Text>
-
-            <View style={styles.premiumPillsRow}>
-              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>🖼️ Banner Ads</Text></View>
-              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>⭐ Top 5 Listings</Text></View>
-              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>🏗️ Featured Project</Text></View>
-              <View style={styles.premiumPill}><Text style={styles.premiumPillText}>🏢 Featured Builder</Text></View>
-            </View>
-
-            <View style={styles.premiumBannerFooter}>
-              <Text style={styles.premiumBannerCallout}>Explore Packages & Availability</Text>
-              <View style={styles.premiumArrowBtn}>
-                <Ionicons name="arrow-forward" size={18} color={Neutrals.obsidian} />
-              </View>
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
 
         {/* ─── SUBSCRIPTION PLAN ─── */}
         {plansEnabled && (user?.role === 'agent' || user?.role === 'builder') && (
@@ -906,6 +867,7 @@ export default function ProfileScreen() {
         )}
 
         {/* ─── PREMIUM LISTINGS & BRAND ADVERTISING VIP CARD ─── */}
+        {(user?.role === 'builder' || user?.role === 'agent') && (
         <Animated.View style={[
           styles.sectionWrapper,
           { opacity: cardsAnim, transform: [{ translateY: cardsTranslateY }] }
@@ -945,6 +907,7 @@ export default function ProfileScreen() {
             </View>
           </TouchableOpacity>
         </Animated.View>
+        )}
 
         {/* ─── DOCUMENTS ─── */}
         <Animated.View style={[

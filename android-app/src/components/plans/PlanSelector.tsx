@@ -161,7 +161,7 @@ export default function PlanSelector({ role, onSelectPlan, currentPlanId, isUpgr
           const isRecommended = plan.tier === 'PLATINUM'; // Example
           
           return (
-            <View key={plan.id} style={[styles.card, { borderColor: colors.border, width: isDesktopWeb ? '100%' : 280, backgroundColor: colors.bg[0] }]}>
+            <View key={plan.id} style={[styles.card, { borderColor: colors.border, width: isDesktopWeb ? 300 : 280, backgroundColor: colors.bg[0] }]}>
               {isRecommended && (
                  <View style={styles.recommendedBadge}>
                    <Text style={styles.recommendedText}>Most Popular</Text>
@@ -258,6 +258,8 @@ const styles = StyleSheet.create({
   },
   desktopGrid: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'center',
     gap: 20,
     paddingBottom: 20,
   },

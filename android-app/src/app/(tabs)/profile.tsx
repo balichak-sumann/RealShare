@@ -378,7 +378,7 @@ export default function ProfileScreen() {
         console.warn('Backend delete failed', e);
       }
       
-      await currentUser.delete();
+      await auth.signOut();
       router.replace('/sign-in' as any);
     } catch (err: any) {
       console.error('Delete account failed:', err);

@@ -40,6 +40,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       { name: "Content & Banners", path: "/cms", icon: "🎨" },
       { name: "Subscription Plans", path: "/subscription-plans", icon: "💎" },
       { name: "System Settings", path: "/settings", icon: "⚙️" },
+      { name: "Deleted Accounts", path: "/deleted-users", icon: "🗑️" },
       { name: "Audit Logs", path: "/audit-logs", icon: "📝" }, // New audit log page
     ];
 
@@ -58,7 +59,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       return allItems.filter(item => ['/', '/ledger', '/approvals', '/agents', '/services'].includes(item.path));
     }
     if (dept === 'tech' || dept === 'tech_support') {
-      return allItems.filter(item => ['/', '/tickets', '/settings', '/audit-logs', '/notifications', '/cms', '/contact-messages'].includes(item.path));
+      return allItems.filter(item => ['/', '/tickets', '/settings', '/audit-logs', '/deleted-users', '/notifications', '/cms', '/contact-messages'].includes(item.path));
     }
 
     // Default fallback: just show overview if department is unrecognized

@@ -113,6 +113,7 @@ model Property {
   area_sqft           Decimal?  @db.Decimal(10, 2)
   area_sqft_max       Decimal?  @db.Decimal(10, 2)
   area_unit           String?   @default("sqft") @db.VarChar(20) // "sqft" | "sqyards" | "acres"
+  bhk_areas           Json?              // {"1 BHK": 650, "2 BHK": 1200, "3 BHK": 1800}
   rera_number         String?   @db.VarChar(100)
   permission_number   String?   @db.VarChar(100)
   google_maps_url     String?   @db.Text

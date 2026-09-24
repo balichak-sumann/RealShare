@@ -418,6 +418,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 0,
+    paddingTop: 8, // shifts the logo down slightly by ~2mm to clear dynamic islands/notches
   },
   logoImage: {
     width: 220,

@@ -351,7 +351,17 @@ export default function PropertyDetailsScreen() {
                             <Ionicons name="resize-outline" size={20} color="#64748B" />
                             <View>
                               <Text style={{ fontSize: 11, color: '#94A3B8', fontWeight: '600' }}>Area</Text>
-                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')}{property.area_sqft_max ? ` - ${Number(property.area_sqft_max).toLocaleString('en-IN')}` : ''} {property.area_unit || 'Sq.ft'}</Text>
+                              <Text style={{ fontSize: 13, color: '#1E293B', fontWeight: '700' }}>
+                                {property.bhk_areas && Object.keys(property.bhk_areas).length > 0
+                                  ? (() => {
+                                      const vals = Object.values(property.bhk_areas as Record<string, number>).map(Number);
+                                      const min = Math.min(...vals);
+                                      const max = Math.max(...vals);
+                                      return `${min.toLocaleString('en-IN')}${max > min ? ` – ${max.toLocaleString('en-IN')}` : ''} ${property.area_unit || 'Sq.ft'}`;
+                                    })()
+                                  : `${Number(property.area_sqft).toLocaleString('en-IN')}${property.area_sqft_max ? ` - ${Number(property.area_sqft_max).toLocaleString('en-IN')}` : ''} ${property.area_unit || 'Sq.ft'}`
+                                }
+                              </Text>
                             </View>
                           </View>
                           {property.flooring && (
@@ -461,6 +471,15 @@ export default function PropertyDetailsScreen() {
                       </Text>
                       <Text style={{ fontSize: 15, color: '#1E293B', fontWeight: '700', marginTop: 2 }}>
                         {property.profile?.role === 'admin' ? 'Realshare Official' : property.profile?.full_name || property.developer?.name || 'Unknown User'}
+                      </Text>
+                      <Text style={{ fontSize: 11, color: '#94A3B8', marginTop: 3 }}>
+                        Posted at:{' '}
+                        {property.created_at
+                          ? new Date(property.created_at).toLocaleString('en-IN', {
+                              day: '2-digit', month: 'short', year: 'numeric',
+                              hour: '2-digit', minute: '2-digit', hour12: true
+                            })
+                          : '—'}
                       </Text>
                     </View>
                     <Ionicons name="checkmark-circle" size={20} color="#059669" />
@@ -672,10 +691,30 @@ export default function PropertyDetailsScreen() {
                           <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="home-outline" /> Property Type</Text>
                           <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.floor_type || 'Residential'}</Text>
                         </View>
-                        <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
-                          <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="resize-outline" /> Built-up Area</Text>
-                          <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} Sq.ft</Text>
-                        </View>
+                        {/* BHK Configurations Table */}
+                        {property.bhk_areas && Object.keys(property.bhk_areas).length > 0 ? (
+                          <View style={{ width: '100%' }}>
+                            <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 8 }}>
+                              <Ionicons name="resize-outline" /> Available Configurations
+                            </Text>
+                            {Object.entries(property.bhk_areas as Record<string, number>)
+                              .sort(([a], [b]) => a.localeCompare(b))
+                              .map(([type, area]) => (
+                                <View key={type} style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 7, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                                  <Text style={{ fontSize: 14, color: '#64748B', fontWeight: '600' }}>{type}</Text>
+                                  <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>
+                                    {Number(area).toLocaleString('en-IN')} {property.area_unit || 'Sq.ft'}
+                                  </Text>
+                                </View>
+                              ))
+                            }
+                          </View>
+                        ) : (
+                          <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
+                            <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="resize-outline" /> Built-up Area</Text>
+                            <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{Number(property.area_sqft).toLocaleString('en-IN')} Sq.ft</Text>
+                          </View>
+                        )}
                         <View style={{ width: 160, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: '#F1F5F9' }}>
                           <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 4 }}><Ionicons name="bed-outline" /> Bedrooms</Text>
                           <Text style={{ fontSize: 14, color: '#1E293B', fontWeight: '700' }}>{property.bedrooms || 0}</Text>

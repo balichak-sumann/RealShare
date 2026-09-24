@@ -107,15 +107,17 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
         </nav>
         <div className={styles.sidebarFooter}>
           <div className={styles.adminInfo}>
-            <div className={styles.adminAvatar}>{user?.email?.[0].toUpperCase() || "A"}</div>
-            <div>
-              <div className={styles.adminName}>{user?.email?.split('@')[0] || "Admin"}</div>
-              <div className={styles.adminRole}>
-                {userProfile?.role === 'superadmin' ? 'Super Administrator' : 'Administrator'}
+            <Link href="/profile" style={{ display: 'flex', alignItems: 'center', gap: '12px', textDecoration: 'none', color: 'inherit' }}>
+              <div className={styles.adminAvatar}>{user?.email?.[0].toUpperCase() || "A"}</div>
+              <div>
+                <div className={styles.adminName}>{user?.email?.split('@')[0] || "Admin"}</div>
+                <div className={styles.adminRole}>
+                  {userProfile?.role === 'superadmin' ? 'Super Administrator' : 'Administrator'}
+                </div>
               </div>
-            </div>
+            </Link>
           </div>
-          <button onClick={logout} style={{ marginTop: '12px', width: '100%', padding: '8px', background: 'transparent', color: '#EF4444', border: '1px solid #EF4444', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>
+          <button onClick={() => { if (window.confirm('Are you sure you want to log out?')) logout(); }} style={{ marginTop: '12px', width: '100%', padding: '8px', background: 'transparent', color: '#EF4444', border: '1px solid #EF4444', borderRadius: '6px', cursor: 'pointer', fontWeight: 600 }}>
             Logout
           </button>
         </div>
@@ -142,9 +144,9 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
             <Link href="/notifications" className={styles.notifBtn} title="Notifications">
               🔔<span className={styles.notifDot} />
             </Link>
-            <div className={styles.userProfile}>
+            <Link href="/profile" className={styles.userProfile} style={{ textDecoration: 'none' }}>
               <div className={styles.avatar}>{user?.email?.[0].toUpperCase() || "A"}</div>
-            </div>
+            </Link>
           </div>
         </header>
 

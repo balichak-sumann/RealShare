@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
+// Load leaflet CSS dynamically to avoid Metro bundler issues with CSS url() paths
+if (typeof document !== 'undefined') {
+  if (!document.getElementById('leaflet-css')) {
+    const link = document.createElement('link');
+    link.id = 'leaflet-css';
+    link.rel = 'stylesheet';
+    link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
+    document.head.appendChild(link);
+  }
+}
 
 // Fix default marker icon issue
 const defaultIcon = L.icon({

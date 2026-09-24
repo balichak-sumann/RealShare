@@ -71,8 +71,10 @@ export function DesktopNav() {
     checkUnread();
   }, [currentUser]);
 
-  // On tablet, show fewer nav items to prevent overlap
-  const navItems: NavItem[] = isNarrowTablet
+  // Compute tablet nav sizing dynamically based on available space.
+  // Logo spacer ≈ 84px, account area ≈ 90px (avatar + sign-in), notification ≈ 40px, padding ≈ 16px
+  // Remaining width goes to nav items, distributed as gap + padding.
+  const tabletNavItems: NavItem[] = isNarrowTablet
     ? [
         { label: 'Home', route: '/', match: /^\/$|^\/\(tabs\)$/ },
         { label: 'Properties', route: '/search', match: /^\/search/ },
@@ -82,8 +84,8 @@ export function DesktopNav() {
       ]
     : [
         { label: 'Home', route: '/', match: /^\/$|^\/\(tabs\)$/ },
-        { label: 'About Us', route: '/about', match: /^\/about/ },
-        { label: isTablet ? 'How It Works' : 'How It Works', route: '/how-it-works', match: /^\/how-it-works/ },
+        { label: 'About', route: '/about', match: /^\/about/ },
+        { label: 'How It Works', route: '/how-it-works', match: /^\/how-it-works/ },
         { label: 'Properties', route: '/search', match: /^\/search/ },
         { label: 'Portfolio', route: '/portfolio', match: /^\/portfolio/ },
         ...(isAgent
@@ -92,6 +94,31 @@ export function DesktopNav() {
         { label: 'Partners', route: '/partners', match: /^\/partners/ },
         { label: 'Contact', route: '/contact', match: /^\/contact/ },
       ];
+
+  const navItems: NavItem[] = isTablet ? tabletNavItems : [
+    { label: 'Home', route: '/', match: /^\/$|^\/\(tabs\)$/ },
+    { label: 'About Us', route: '/about', match: /^\/about/ },
+    { label: 'How It Works', route: '/how-it-works', match: /^\/how-it-works/ },
+    { label: 'Properties', route: '/search', match: /^\/search/ },
+    { label: 'Portfolio', route: '/portfolio', match: /^\/portfolio/ },
+    ...(isAgent
+      ? [{ label: 'Clients', route: '/clients', match: /^\/clients/ }]
+      : []),
+    { label: 'Partners', route: '/partners', match: /^\/partners/ },
+    { label: 'Contact', route: '/contact', match: /^\/contact/ },
+  ];
+
+  // Dynamic tablet sizing: scale font/gap/padding based on items & width
+  const tabletItemCount = navItems.length;
+  const tabletFontSize = isTablet
+    ? (tabletItemCount <= 5 ? 14 : tabletItemCount <= 7 ? 13 : 12)
+    : 16;
+  const tabletGap = isTablet
+    ? (tabletItemCount <= 5 ? (isNarrowTablet ? 12 : 20) : (isNarrowTablet ? 4 : 8))
+    : 32;
+  const tabletLinkPadding = isTablet
+    ? (tabletItemCount <= 5 ? 8 : 5)
+    : 10;
 
   const displayName =
     profile?.full_name ||
@@ -160,22 +187,22 @@ export function DesktopNav() {
             </TouchableOpacity>
           )}
 
-          <View style={[styles.inner, isTablet && { paddingHorizontal: 8, gap: 2 }]}>
+          <View style={[styles.inner, isTablet && { paddingHorizontal: 10, gap: 6 }]}>
             {/* Brand spacer — must match logo's left + width so nav doesn't sit behind it */}
-            <View style={[styles.brandPlaceholder, isTablet && { width: isNarrowTablet ? 72 : 82, marginRight: 4 }]} />
+            <View style={[styles.brandPlaceholder, isTablet && { width: 82, marginRight: 6 }]} />
 
           {/* Primary nav */}
-          <View style={[styles.navLinks, { gap: isNarrowTablet ? 2 : isTablet ? 6 : 32 }]}>
+          <View style={[styles.navLinks, { gap: isTablet ? tabletGap : 32 }]}>
             {navItems.map((item) => {
               const active = item.match.test(pathname);
               return (
                 <TouchableOpacity
                   key={item.route}
                   onPress={() => router.push(item.route as any)}
-                  style={[styles.navLink, isTablet && { paddingHorizontal: isNarrowTablet ? 4 : 6 }]}
+                  style={[styles.navLink, isTablet && { paddingHorizontal: tabletLinkPadding }]}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.navLabel, isTablet && { fontSize: isNarrowTablet ? 11 : 12 }, active && styles.navLabelActive]} numberOfLines={1}>
+                  <Text style={[styles.navLabel, isTablet && { fontSize: tabletFontSize }, active && styles.navLabelActive]} numberOfLines={1}>
                     {item.label}
                   </Text>
                   {active && <View style={styles.navUnderline} />}
@@ -184,29 +211,34 @@ export function DesktopNav() {
             })}
           </View>
 
-          {/* Account — on tablet, show avatar only (no name) to save space */}
+          {/* Account — avatar only on narrow tablet, avatar+name on wider tablet */}
           {currentUser ? (
             <TouchableOpacity
-              style={[styles.accountSub, isTablet && { paddingRight: 4, maxWidth: 44, gap: 0 }]}
+              style={[styles.accountSub, isTablet && { paddingRight: isNarrowTablet ? 4 : 8, maxWidth: isNarrowTablet ? 44 : 160 }]}
               onPress={() => router.push('/(tabs)/profile' as any)}
               activeOpacity={0.8}
             >
               <LinearGradient
                 colors={GoldSystem.goldGradient}
-                style={[styles.avatar, styles.avatarRing, isTablet && { width: 30, height: 30, borderRadius: 15 }]}
+                style={[styles.avatar, styles.avatarRing, isTablet && { width: 32, height: 32, borderRadius: 16 }]}
               >
-                <Text style={[styles.avatarText, isTablet && { fontSize: 13 }]}>
+                <Text style={[styles.avatarText, isTablet && { fontSize: 14 }]}>
                   {(displayName || 'U').charAt(0).toUpperCase()}
                 </Text>
               </LinearGradient>
+              {!isNarrowTablet && (
+                <Text style={styles.accountNameTop} numberOfLines={1}>
+                  {displayName}
+                </Text>
+              )}
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               onPress={() => router.push('/sign-in' as any)}
               activeOpacity={0.85}
-              style={[styles.signInBtn, isTablet && { paddingHorizontal: 14, paddingVertical: 8 }]}
+              style={[styles.signInBtn, isTablet && { paddingHorizontal: 18, paddingVertical: 8 }]}
             >
-                <Text style={[styles.signInText, isTablet && { fontSize: 12 }]}>Sign In</Text>
+                <Text style={[styles.signInText, isTablet && { fontSize: 13 }]}>Sign In</Text>
             </TouchableOpacity>
           )}
 

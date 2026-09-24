@@ -1,6 +1,7 @@
 import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
-import { getAuth, GoogleAuthProvider, Auth } from 'firebase/auth';
+import { getAuth, initializeAuth, browserLocalPersistence, GoogleAuthProvider, Auth } from 'firebase/auth';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
+import { Platform } from 'react-native';
 
 const firebaseConfig = {
   apiKey: process.env.EXPO_PUBLIC_FIREBASE_API_KEY,
@@ -18,8 +19,24 @@ let auth: Auth;
 let storage: FirebaseStorage;
 
 try {
-  app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-  auth = getAuth(app);
+  const isNewApp = !getApps().length;
+  app = isNewApp ? initializeApp(firebaseConfig) : getApp();
+
+  // On web, use initializeAuth with browserLocalPersistence to avoid
+  // Safari's "Advanced Privacy Protections" warning.  The default
+  // getAuth() uses indexedDB persistence which can trigger cross-origin
+  // storage issues under Safari's Intelligent Tracking Prevention (ITP).
+  if (Platform.OS === 'web' && isNewApp) {
+    // Only call initializeAuth once (when we just called initializeApp).
+    // On subsequent calls (hot-reload), getApp() was used above so we
+    // fall through to getAuth() which retrieves the existing instance.
+    auth = initializeAuth(app, {
+      persistence: browserLocalPersistence,
+    });
+  } else {
+    auth = getAuth(app);
+  }
+
   storage = getStorage(app);
 } catch (e) {
   console.error('Firebase init failed (non-fatal):', e);

@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Neutrals, Typography } from '@/constants/design';
 import { useResponsive } from '@/hooks/useResponsive';
 import { WebFooter } from '@/components/layout/WebFooter';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface LegalSection {
   heading: string;
@@ -20,11 +21,34 @@ interface LegalPageLayoutProps {
 export function LegalPageLayout({ title, lastUpdated, intro, sections }: LegalPageLayoutProps) {
   const router = useRouter();
   const { isDesktop } = useResponsive();
+  const insets = useSafeAreaInsets();
+
+  const handleBack = () => {
+    // On web (especially mobile Safari), Expo Router's canGoBack() can
+    // report true while router.back() silently fails because the in-app
+    // router history and browser history are out of sync.  Using the
+    // browser's native history.back() is more reliable.  If there's no
+    // prior page (e.g. user opened the URL directly), we fall back to
+    // navigating home.
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.history.length > 1) {
+        window.history.back();
+      } else {
+        router.replace('/');
+      }
+    } else {
+      if (router.canGoBack()) {
+        router.back();
+      } else {
+        router.replace('/');
+      }
+    }
+  };
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity onPress={handleBack} style={styles.backBtn} hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>{title}</Text>
@@ -55,7 +79,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: Neutrals.background },
   header: {
     flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-    padding: 16, paddingTop: Platform.OS === 'web' ? 18 : 50,
+    padding: 16,
     backgroundColor: Neutrals.surface, borderBottomWidth: 1, borderBottomColor: Neutrals.border,
   },
   backBtn: { padding: 8, marginLeft: -8 },

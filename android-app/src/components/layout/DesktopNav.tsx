@@ -36,7 +36,7 @@ interface NavItem {
 export function DesktopNav() {
   const router = useRouter();
   const pathname = usePathname();
-  const { isTablet } = useResponsive();
+  const { isTablet, width } = useResponsive();
   const { profile } = useUser();
   const { city } = useLocation();
   const [query, setQuery] = React.useState('');
@@ -45,6 +45,8 @@ export function DesktopNav() {
 
   const currentUser = auth.currentUser;
   const isAgent = profile?.role === 'agent';
+  // On narrow tablets (<900px), use abbreviated labels and hide less-important items
+  const isNarrowTablet = isTablet && width < 900;
 
   React.useEffect(() => {
     if (!currentUser) {
@@ -69,18 +71,27 @@ export function DesktopNav() {
     checkUnread();
   }, [currentUser]);
 
-  const navItems: NavItem[] = [
-    { label: 'Home', route: '/', match: /^\/$|^\/\(tabs\)$/ },
-    { label: 'About Us', route: '/about', match: /^\/about/ },
-    { label: 'How It Works', route: '/how-it-works', match: /^\/how-it-works/ },
-    { label: 'Properties', route: '/search', match: /^\/search/ },
-    { label: 'Portfolio', route: '/portfolio', match: /^\/portfolio/ },
-    ...(isAgent
-      ? [{ label: 'Clients', route: '/clients', match: /^\/clients/ }]
-      : []),
-    { label: 'Partners', route: '/partners', match: /^\/partners/ },
-    { label: 'Contact', route: '/contact', match: /^\/contact/ },
-  ];
+  // On tablet, show fewer nav items to prevent overlap
+  const navItems: NavItem[] = isNarrowTablet
+    ? [
+        { label: 'Home', route: '/', match: /^\/$|^\/\(tabs\)$/ },
+        { label: 'Properties', route: '/search', match: /^\/search/ },
+        { label: 'Portfolio', route: '/portfolio', match: /^\/portfolio/ },
+        { label: 'Partners', route: '/partners', match: /^\/partners/ },
+        { label: 'Contact', route: '/contact', match: /^\/contact/ },
+      ]
+    : [
+        { label: 'Home', route: '/', match: /^\/$|^\/\(tabs\)$/ },
+        { label: 'About Us', route: '/about', match: /^\/about/ },
+        { label: isTablet ? 'How It Works' : 'How It Works', route: '/how-it-works', match: /^\/how-it-works/ },
+        { label: 'Properties', route: '/search', match: /^\/search/ },
+        { label: 'Portfolio', route: '/portfolio', match: /^\/portfolio/ },
+        ...(isAgent
+          ? [{ label: 'Clients', route: '/clients', match: /^\/clients/ }]
+          : []),
+        { label: 'Partners', route: '/partners', match: /^\/partners/ },
+        { label: 'Contact', route: '/contact', match: /^\/contact/ },
+      ];
 
   const displayName =
     profile?.full_name ||
@@ -108,9 +119,9 @@ export function DesktopNav() {
           style={{
             position: 'fixed',
             top: 0,
-            left: isTablet ? 16 : 48,
-            width: isTablet ? 90 : 105,
-            height: isTablet ? 80 : 90,
+            left: isTablet ? 10 : 48,
+            width: isTablet ? 70 : 105,
+            height: isTablet ? 68 : 90,
             backgroundColor: '#fff',
             display: 'flex',
             justifyContent: 'center',
@@ -132,7 +143,7 @@ export function DesktopNav() {
       )}
 
       <View style={[styles.container, isTablet && { overflow: 'hidden' }]}>
-        {/* Top Gold Header - Sticky */}
+        {/* Top Gold Header - Sticky (height adapts on tablet to prevent overlap) */}
         <View style={styles.topHeader}>
           {/* Native-only logo */}
           {Platform.OS !== 'web' && (
@@ -149,22 +160,22 @@ export function DesktopNav() {
             </TouchableOpacity>
           )}
 
-          <View style={styles.inner}>
-            {/* Brand spacer */}
-            <View style={[styles.brandPlaceholder, isTablet && { width: 90, marginRight: 8 }]} />
+          <View style={[styles.inner, isTablet && { paddingHorizontal: 8, gap: 2 }]}>
+            {/* Brand spacer — must match logo's left + width so nav doesn't sit behind it */}
+            <View style={[styles.brandPlaceholder, isTablet && { width: isNarrowTablet ? 72 : 82, marginRight: 4 }]} />
 
           {/* Primary nav */}
-          <View style={[styles.navLinks, { gap: isTablet ? 8 : 32 }]}>
+          <View style={[styles.navLinks, { gap: isNarrowTablet ? 2 : isTablet ? 6 : 32 }]}>
             {navItems.map((item) => {
               const active = item.match.test(pathname);
               return (
                 <TouchableOpacity
                   key={item.route}
                   onPress={() => router.push(item.route as any)}
-                  style={styles.navLink}
+                  style={[styles.navLink, isTablet && { paddingHorizontal: isNarrowTablet ? 4 : 6 }]}
                   activeOpacity={0.7}
                 >
-                  <Text style={[styles.navLabel, isTablet && { fontSize: 12 }, active && styles.navLabelActive]}>
+                  <Text style={[styles.navLabel, isTablet && { fontSize: isNarrowTablet ? 11 : 12 }, active && styles.navLabelActive]} numberOfLines={1}>
                     {item.label}
                   </Text>
                   {active && <View style={styles.navUnderline} />}
@@ -173,32 +184,29 @@ export function DesktopNav() {
             })}
           </View>
 
-          {/* Account */}
+          {/* Account — on tablet, show avatar only (no name) to save space */}
           {currentUser ? (
             <TouchableOpacity
-              style={styles.accountSub}
+              style={[styles.accountSub, isTablet && { paddingRight: 4, maxWidth: 44, gap: 0 }]}
               onPress={() => router.push('/(tabs)/profile' as any)}
               activeOpacity={0.8}
             >
               <LinearGradient
                 colors={GoldSystem.goldGradient}
-                style={[styles.avatar, styles.avatarRing]}
+                style={[styles.avatar, styles.avatarRing, isTablet && { width: 30, height: 30, borderRadius: 15 }]}
               >
-                <Text style={styles.avatarText}>
+                <Text style={[styles.avatarText, isTablet && { fontSize: 13 }]}>
                   {(displayName || 'U').charAt(0).toUpperCase()}
                 </Text>
               </LinearGradient>
-              <Text style={styles.accountNameTop} numberOfLines={1}>
-                {displayName}
-              </Text>
             </TouchableOpacity>
           ) : (
             <TouchableOpacity
               onPress={() => router.push('/sign-in' as any)}
               activeOpacity={0.85}
-              style={styles.signInBtn}
+              style={[styles.signInBtn, isTablet && { paddingHorizontal: 14, paddingVertical: 8 }]}
             >
-                <Text style={styles.signInText}>Sign In</Text>
+                <Text style={[styles.signInText, isTablet && { fontSize: 12 }]}>Sign In</Text>
             </TouchableOpacity>
           )}
 
@@ -288,11 +296,13 @@ const styles = StyleSheet.create({
   },
   navLinks: {
     flex: 1,
+    flexShrink: 1,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 32,
     height: '100%',
+    overflow: 'hidden',
   },
   navLink: {
     paddingHorizontal: 10,

@@ -8,7 +8,9 @@ export function useInactivityTimer(
   onTimeout: () => void,
   timeoutMs: number = INACTIVITY_TIMEOUT
 ): PanResponderInstance | null {
-  const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+  // NodeJS.Timeout is not in the RN/browser lib set; this resolves correctly
+  // on native and web alike.
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const backgroundTimestampRef = useRef<number | null>(null);
   
   // Create PanResponder once

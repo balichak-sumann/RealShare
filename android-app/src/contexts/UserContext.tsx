@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, ReactNode } from 'react';
 
 export type UserProfile = {
   id: string;
-  role: 'buyer' | 'agent' | 'builder' | 'admin' | 'employee';
+  role: 'buyer' | 'agent' | 'builder' | 'admin' | 'superadmin' | 'employee';
   employee_department?: string | null;
   full_name: string;
   expo_push_token?: string | null;

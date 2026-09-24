@@ -69,7 +69,7 @@ function RootLayoutNav() {
   const router = useRouter();
   const [user, setUser] = useState<User | null>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const { setProfile } = useUser();
+  const { profile, setProfile } = useUser();
 
   // Wake up the Render backend immediately on app launch.
   // This runs during the splash screen so that by the time

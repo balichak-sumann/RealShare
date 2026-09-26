@@ -822,7 +822,7 @@ export default function ProfileScreen() {
                          } else {
                             if (Platform.OS === 'web') {
                               const options = {
-                                key: data.keyId,
+                                key: data.keyId || process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TSKXy2WO8gcwyH',
                                 amount: data.amount,
                                 currency: data.currency,
                                 name: 'RealShare',
@@ -870,7 +870,7 @@ export default function ProfileScreen() {
                               rzp.open();
                             } else {
                                const options = {
-                                 key: data.keyId,
+                                 key: data.keyId || process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TSKXy2WO8gcwyH',
                                  amount: data.amount,
                                  currency: data.currency,
                                  name: 'RealShare',

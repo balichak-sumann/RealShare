@@ -1,0 +1,37 @@
+diff --git a/node_modules/react-native-razorpay/ios/RazorpayCheckout.mm b/node_modules/react-native-razorpay/ios/RazorpayCheckout.mm
+index c5b89f0..f6157ba 100644
+--- a/node_modules/react-native-razorpay/ios/RazorpayCheckout.mm
++++ b/node_modules/react-native-razorpay/ios/RazorpayCheckout.mm
+@@ -26,6 +26,12 @@ @implementation RNRazorpayCheckout
+ RCT_EXPORT_METHOD(open : (NSDictionary *)options) {
+ 
+     NSString *keyID = (NSString *)[options objectForKey:@"key"];
++    if (!keyID || keyID.length == 0) {
++        dispatch_async(dispatch_get_main_queue(), ^{
++            [RazorpayEventEmitter onPaymentError:0 description:@"Invalid or missing Razorpay key." andData:nil];
++        });
++        return;
++    }
+     dispatch_sync(dispatch_get_main_queue(), ^{
+         Razorpay *razorpay = [Razorpay initWithKey:keyID
+                                andDelegateWithData:self];
+@@ -37,7 +43,18 @@ @implementation RNRazorpayCheckout
+ 
+         //get root view to present razorpay vc
+         id<UIApplicationDelegate> app = [[UIApplication sharedApplication] delegate];
+-        UINavigationController *rootViewController = ((UINavigationController*) app.window.rootViewController);
++        UIViewController *rootViewController = app.window.rootViewController;
++        if (!rootViewController) {
++            for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
++                if ([scene isKindOfClass:[UIWindowScene class]]) {
++                    UIWindowScene *windowScene = (UIWindowScene *)scene;
++                    if (windowScene.activationState == UISceneActivationStateForegroundActive) {
++                        rootViewController = windowScene.windows.firstObject.rootViewController;
++                        break;
++                    }
++                }
++            }
++        }
+ 
+         if (rootViewController.presentedViewController) {
+             [razorpay open:tempOptions displayController:rootViewController.presentedViewController];

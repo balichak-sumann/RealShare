@@ -30,6 +30,7 @@ import { CategoryGrid } from '@/components/home/CategoryGrid';
 import { QuickActions } from '@/components/home/QuickActions';
 import { RecentActivity } from '@/components/home/RecentActivity';
 import { FeaturedPropertiesSlider } from '@/components/home/FeaturedPropertiesSlider';
+import { FeaturedProjectsSlider } from '@/components/home/FeaturedProjectsSlider';
 import { HotProjects } from '@/components/home/HotProjects';
 import { TopLocalities } from '@/components/home/TopLocalities';
 import { ServicesStrip } from '@/components/home/ServicesStrip';
@@ -138,6 +139,7 @@ export default function HomeScreen() {
   const rentalProperties = filtered.rental;
   const resaleProperties = filtered.resale;
   const featuredProperties = allCityProperties.filter(p => p.featured === true);
+  const featuredProjects = allCityProperties.filter(p => p.is_project === true);
 
   const scrollY = useRef(new Animated.Value(0)).current;
 
@@ -310,6 +312,11 @@ export default function HomeScreen() {
         )}
 
         <QuickActions />
+
+        {/* Featured Projects Slider */}
+        {featuredProjects.length > 0 && (
+          <FeaturedProjectsSlider properties={featuredProjects} />
+        )}
 
         {/* 2. Hot Selling Projects */}
         <View style={styles.featuredSection}>

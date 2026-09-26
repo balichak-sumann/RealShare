@@ -21,7 +21,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
     const allItems = [
       { name: "Overview", path: "/", icon: "📊" },
       { name: "Properties & Shares", path: "/properties", icon: "🏢" },
-      { name: "Featured Properties", path: "/featured-properties", icon: "⭐" },
+      { name: "Home Sections", path: "/home-sections", icon: "📑" },
       { name: "Developers", path: "/developers", icon: "🏗️" },
       { name: "Users & KYC", path: "/buyers", icon: "👥" },
       { name: "Account Approvals", path: "/approvals", icon: "✅" },
@@ -37,7 +37,6 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
       { name: "Support Tickets", path: "/tickets", icon: "🎫" },
       { name: "Messages", path: "/messages", icon: "💬" },
       { name: "Notifications Hub", path: "/notifications", icon: "📢" },
-      { name: "Content & Banners", path: "/cms", icon: "🎨" },
       { name: "Subscription Plans", path: "/subscription-plans", icon: "💎" },
       { name: "System Settings", path: "/settings", icon: "⚙️" },
       { name: "Deleted Accounts", path: "/deleted-users", icon: "🗑️" },
@@ -57,7 +56,7 @@ export default function AdminLayout({ children, title }: AdminLayoutProps) {
 
     const dept = userProfile?.employee_department;
     if (dept === 'sales') {
-      return visible(allItems.filter(item => ['/', '/properties', '/featured-properties', '/developers', '/buyers', '/agents', '/referrals', '/property-requests'].includes(item.path)));
+      return visible(allItems.filter(item => ['/', '/properties', '/developers', '/buyers', '/agents', '/referrals', '/property-requests'].includes(item.path)));
     }
     if (dept === 'support') {
       return visible(allItems.filter(item => ['/', '/buyers', '/tickets', '/messages', '/services-inquiries', '/contact-messages', '/partner-applications', '/notifications'].includes(item.path)));

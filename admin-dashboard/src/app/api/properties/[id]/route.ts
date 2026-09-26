@@ -183,6 +183,9 @@ export async function PUT(request: Request, { params }: { params: Promise<{ id: 
         permission_number: data.permission_number !== undefined ? data.permission_number : undefined,
         google_maps_url: googleMapsUrl,
         featured: data.featured !== undefined ? data.featured : undefined,
+        is_project: data.is_project !== undefined ? data.is_project : undefined,
+        is_hero: data.is_hero !== undefined ? data.is_hero : undefined,
+        is_search_featured: data.is_search_featured !== undefined ? data.is_search_featured : undefined,
         developer_id: data.developer_id !== undefined ? data.developer_id : undefined,
         // Speciality
         speciality: data.speciality !== undefined ? data.speciality : undefined,

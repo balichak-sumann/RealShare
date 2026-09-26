@@ -122,6 +122,9 @@ model Property {
   approval_status     String    @default("pending_approval") @db.VarChar(50)
   rejection_notes     String?   @db.Text
   featured            Boolean   @default(false)
+  is_project          Boolean   @default(false)
+  is_hero             Boolean   @default(false)
+  is_search_featured  Boolean   @default(false)
   views_count         Int       @default(0)
   is_sold_out         Boolean   @default(false)
 

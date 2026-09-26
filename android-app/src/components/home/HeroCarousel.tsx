@@ -86,11 +86,18 @@ export function HeroCarousel() {
     let cancelled = false;
     (async () => {
       try {
-        const res = await resilientFetch(`${getApiUrl()}/api/cms/banners`);
+        const res = await resilientFetch(`${getApiUrl()}/api/properties?is_hero=true`);
         if (res.ok && !cancelled) {
           const data = await res.json();
           if (Array.isArray(data) && data.length > 0) {
-            setSlides(data);
+            const propBanners = data.map((p: any) => ({
+              id: p.id,
+              title: p.title,
+              subtitle: p.short_description || p.locality,
+              image_url: (p.images && p.images[0]?.image_url) || p.image_url,
+              link_url: `/property/${p.id}`,
+            }));
+            setSlides(propBanners);
             return;
           }
         }

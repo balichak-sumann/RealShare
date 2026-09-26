@@ -91,6 +91,9 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const featured = searchParams.get('featured') === 'true';
+    const isProject = searchParams.get('is_project') === 'true';
+    const isHero = searchParams.get('is_hero') === 'true';
+    const isSearchFeatured = searchParams.get('is_search_featured') === 'true';
     const listingType = searchParams.get('listing_type');
     const district = searchParams.get('district');
     const propertyType = searchParams.get('property_type');
@@ -104,6 +107,9 @@ export async function GET(request: Request) {
     const properties = await prisma.property.findMany({
       where: {
         ...(featured ? { featured: true } : {}),
+        ...(isProject ? { is_project: true } : {}),
+        ...(isHero ? { is_hero: true } : {}),
+        ...(isSearchFeatured ? { is_search_featured: true } : {}),
         ...(listingType ? { listing_type: listingType } : {}),
         ...(district ? { district: { contains: district, mode: 'insensitive' } } : {}),
         ...(propertyType ? { property_type: propertyType } : {}),
@@ -315,6 +321,9 @@ export async function POST(request: Request) {
           permission_number: data.permission_number || null,
           google_maps_url: data.google_maps_url || null,
           featured: data.featured || false,
+          is_project: data.is_project || false,
+          is_hero: data.is_hero || false,
+          is_search_featured: data.is_search_featured || false,
           posted_by: userId,
           developer_id: data.developer_id || null,
           approval_status: data.approval_status === 'draft' ? 'draft' : (isAdmin ? 'approved' : 'pending_approval'),

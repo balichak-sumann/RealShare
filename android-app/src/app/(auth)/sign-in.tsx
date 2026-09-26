@@ -138,7 +138,11 @@ export default function SignInScreen() {
         }
       }
     } catch (err: any) {
-      setError('Failed to verify OTP. Please try again.');
+      if (err.code === 'auth/user-disabled') {
+        setError('This account had been requested for deletion. Please contact support to get back access.');
+      } else {
+        setError('Failed to verify OTP. Please try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -220,7 +224,9 @@ export default function SignInScreen() {
                 alert("Google Sign in on native requires Expo AuthSession");
               }
             } catch (err: any) {
-              if (err.code !== 'auth/popup-closed-by-user') {
+              if (err.code === 'auth/user-disabled') {
+                setError('This account had been requested for deletion. Please contact support to get back access.');
+              } else if (err.code !== 'auth/popup-closed-by-user') {
                 setError(err.message || "Google sign in failed");
               }
             } finally {

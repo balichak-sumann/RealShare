@@ -54,7 +54,13 @@ export async function POST(request: Request) {
     if (body?.checkExists) {
       try {
         const { auth } = await import('@/lib/firebase-admin');
-        await auth.getUserByEmail(email);
+        const userRec = await auth.getUserByEmail(email);
+        if (userRec.disabled) {
+          return NextResponse.json(
+            { success: false, error: 'This account had been requested for deletion. Please contact support to get back access.' },
+            { status: 403 }
+          );
+        }
       } catch (err: any) {
         if (err.code === 'auth/user-not-found') {
           return NextResponse.json(
@@ -70,6 +76,12 @@ export async function POST(request: Request) {
       const dbUser = await prisma.profile.findFirst({ where: { email: email } });
 
       if (dbUser) {
+        if (dbUser.deleted_at !== null) {
+          return NextResponse.json(
+            { success: false, error: 'There is already an account in deactivated status for this email. Please contact support to gain back access or wait 30 days to completely delete the account and create a new account.' },
+            { status: 400 }
+          );
+        }
         return NextResponse.json(
           { success: false, error: 'Account already exists with this email address. Please sign in instead.' },
           { status: 400 }

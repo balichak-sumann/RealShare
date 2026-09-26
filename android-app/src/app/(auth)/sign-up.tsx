@@ -912,7 +912,11 @@ export default function SignUpScreen() {
                 alert("Google Sign in on native requires Expo AuthSession");
               }
             } catch (err: any) {
-              setError(err.message || "Google sign in failed");
+              if (err.code === 'auth/user-disabled') {
+                setError('There is already an account in deactivated status for this email. Please contact support to gain back access or wait 30 days to completely delete the account and create a new account.');
+              } else if (err.code !== 'auth/popup-closed-by-user') {
+                setError(err.message || "Google sign in failed");
+              }
             } finally {
               setLoading(false);
             }

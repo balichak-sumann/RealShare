@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, ActivityIndicator, Alert , Alert} from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, ActivityIndicator, Alert } from 'react-native';
 import { useRouter, Redirect } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { useResponsive, FrameWidth } from '@/hooks/useResponsive';

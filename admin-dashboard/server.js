@@ -140,5 +140,43 @@ app.prepare().then(() => {
     })
     .listen(port, () => {
       console.log(`> Realshare server (with real-time chat) ready on http://${hostname}:${port}`);
+      
+      // Start background cron job for auto-deleting accounts
+      const { PrismaClient } = require('@prisma/client');
+      const prisma = new PrismaClient();
+      
+      setInterval(async () => {
+        const now = new Date();
+        // Run once a day at 2 AM
+        if (now.getHours() !== 2) return;
+        
+        console.log('[Cron] Starting cleanup of soft-deleted users (older than 30 days)...');
+        try {
+          const thirtyDaysAgo = new Date();
+          thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+          const usersToDelete = await prisma.profile.findMany({
+            where: { deleted_at: { not: null, lt: thirtyDaysAgo } }
+          });
+
+          if (usersToDelete.length > 0) {
+            console.log(`[Cron] Found ${usersToDelete.length} users to permanently delete.`);
+            for (const user of usersToDelete) {
+              try {
+                await prisma.profile.delete({ where: { id: user.id } });
+                if (firebaseAuth) {
+                  await firebaseAuth.deleteUser(user.id).catch(err => {
+                    if (err.code !== 'auth/user-not-found') console.error(`[Cron] FB Error ${user.id}:`, err);
+                  });
+                }
+              } catch (err) {
+                console.error(`[Cron] Failed to delete ${user.id}:`, err);
+              }
+            }
+          }
+        } catch (err) {
+          console.error('[Cron] Cleanup task failed:', err);
+        }
+      }, 60 * 60 * 1000); // Check every hour
     });
 });

@@ -63,7 +63,7 @@ interface Agent {
   bankName: string | null;
   bankAcc: string | null;
   bankIfsc: string | null;
-  status: "Active" | "Suspended";
+  status: "Active" | "Suspended" | "Pending Approval";
   is_approved: boolean;
   joinedDate: string;
   commissions: CommissionItem[];
@@ -152,7 +152,7 @@ export default function AgentsPage() {
             bankName: d.bank_account_name || null,
             bankAcc: d.bank_account_number || null,
             bankIfsc: d.bank_ifsc || null,
-            status: (d.is_active ? "Active" : "Suspended") as "Active" | "Suspended",
+            status: (!d.is_approved ? "Pending Approval" : (d.is_active ? "Active" : "Suspended")) as "Active" | "Suspended" | "Pending Approval",
             is_approved: d.is_approved ?? true,
             joinedDate: d.created_at
               ? new Date(d.created_at).toLocaleDateString()
@@ -912,9 +912,9 @@ export default function AgentsPage() {
                           fontSize: "0.75rem",
                           fontWeight: 700,
                           background:
-                            agent.status === "Active" ? "#DCFCE7" : "#FEE2E2",
+                            agent.status === "Active" ? "#DCFCE7" : agent.status === "Pending Approval" ? "#FEF3C7" : "#FEE2E2",
                           color:
-                            agent.status === "Active" ? "#15803D" : "#B91C1C",
+                            agent.status === "Active" ? "#15803D" : agent.status === "Pending Approval" ? "#D97706" : "#B91C1C",
                           textAlign: "center"
                         }}
                       >

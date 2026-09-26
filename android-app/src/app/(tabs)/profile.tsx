@@ -55,8 +55,8 @@ export default function ProfileScreen() {
   const [isSubmittingInquiry, setIsSubmittingInquiry] = useState(false);
 
   const handleCallSales = () => {
-    Linking.openURL('tel:+918463999099').catch(() => {
-      Alert.alert('Sales Contact', 'Call our sales team directly at +91 63026 62448');
+    Linking.openURL('tel:+919581728172').catch(() => {
+      Alert.alert('Sales Contact', 'Call our sales team directly at +91 95 8172 8172');
     });
   };
 
@@ -64,8 +64,8 @@ export default function ProfileScreen() {
     const text = encodeURIComponent(
       `Hello Realshare Sales Team, I am interested in ${packageName || 'Premium Listings & Brand Advertising'}. Please share availability and pricing details.`
     );
-    Linking.openURL(`https://wa.me/918463999099?text=${text}`).catch(() => {
-      Alert.alert('Sales Contact', 'WhatsApp our sales team directly at +91 63026 62448');
+    Linking.openURL(`https://wa.me/919581728172?text=${text}`).catch(() => {
+      Alert.alert('Sales Contact', 'WhatsApp our sales team directly at +91 95 8172 8172');
     });
   };
 

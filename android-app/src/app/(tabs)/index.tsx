@@ -396,7 +396,7 @@ const styles = StyleSheet.create({
   },
   header: {
     paddingHorizontal: 16,
-    paddingTop: Platform.OS === 'web' ? 16 : Platform.OS === 'android' ? 40 : 50,
+    paddingTop: Platform.OS === 'web' ? 16 : Platform.OS === 'android' ? 44 : 60,
     paddingBottom: 16,
     backgroundColor: Neutrals.surface,
   },
@@ -424,7 +424,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     zIndex: 0,
-    paddingTop: 8, // shifts the logo down slightly by ~2mm to clear dynamic islands/notches
+    paddingTop: 18, // shifts the logo down sufficiently to clear dynamic islands/notches
   },
   logoImage: {
     width: 220,

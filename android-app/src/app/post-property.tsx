@@ -144,17 +144,51 @@ export default function PostPropertyScreen() {
   const [submittedPropertyId, setSubmittedPropertyId] = useState<string | null>(null);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
 
+  const MAX_IMAGES = 25;
+  const MAX_IMAGE_BYTES = 2 * 1024 * 1024; // 2MB
+  const MIN_DIMENSION = 800; // px
+
   const handlePickImages = async () => {
+    const remainingSlots = MAX_IMAGES - localImageUris.length;
+    if (remainingSlots <= 0) {
+      Alert.alert('Limit Reached', `You can upload a maximum of ${MAX_IMAGES} images.`);
+      return;
+    }
     try {
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
         allowsMultipleSelection: true,
-        quality: 0.8,
+        quality: 0.85,
       });
 
       if (!result.canceled && result.assets && result.assets.length > 0) {
-        const uris = result.assets.map(a => a.uri);
-        setLocalImageUris(prev => [...prev, ...uris]);
+        const validUris: string[] = [];
+        const rejectedReasons: string[] = [];
+
+        for (const asset of result.assets) {
+          if (validUris.length + localImageUris.length >= MAX_IMAGES) {
+            rejectedReasons.push(`Maximum ${MAX_IMAGES} images allowed — remaining skipped.`);
+            break;
+          }
+          // File size check (2MB)
+          if (asset.fileSize && asset.fileSize > MAX_IMAGE_BYTES) {
+            rejectedReasons.push(`"${asset.fileName || 'Image'}" skipped: exceeds 2MB limit (${(asset.fileSize / (1024 * 1024)).toFixed(1)}MB).`);
+            continue;
+          }
+          // Quality / dimension check (min 800px)
+          if (asset.width && asset.height && (asset.width < MIN_DIMENSION || asset.height < MIN_DIMENSION)) {
+            rejectedReasons.push(`"${asset.fileName || 'Image'}" skipped: too small (${asset.width}×${asset.height}px, minimum ${MIN_DIMENSION}×${MIN_DIMENSION}px required).`);
+            continue;
+          }
+          validUris.push(asset.uri);
+        }
+
+        if (rejectedReasons.length > 0) {
+          Alert.alert('Some images were skipped', rejectedReasons.join('\n'));
+        }
+        if (validUris.length > 0) {
+          setLocalImageUris(prev => [...prev, ...validUris]);
+        }
       }
     } catch (e: any) {
       Alert.alert('Error', 'Could not open image picker: ' + e.message);
@@ -286,10 +320,17 @@ export default function PostPropertyScreen() {
     const errors: string[] = [];
     if (!title.trim()) errors.push('Property Title is required.');
     if (!description.trim() || description.trim().length < 5) errors.push('Description must be at least 5 characters.');
+    
+    // Block phone numbers in text fields
+    const phoneRegex = /(?:\+91[\s-]*)?[6789](?:[\s-]*\d){9}/;
+    if (phoneRegex.test(`${title} ${description} ${shortDescription || ''} ${speciality || ''}`)) {
+      errors.push('Direct contact numbers are not allowed in property details.');
+    }
     if (!areaSqft || Number(areaSqft) <= 0) errors.push('A valid built-up area is required.');
     const finalDistrict = district === 'Other' ? customDistrict.trim() : district;
     if (!locality.trim() || !finalDistrict) errors.push('Locality and District are required.');
     if (!price || Number(price) < 0) errors.push('A valid price is required.');
+    if (localImageUris.length < 1) errors.push('At least 1 property image is required.');
     if (!acceptedTerms) errors.push('You must accept the Terms of Service to post this property.');
     if (errors.length > 0) {
       setFormErrors(errors);
@@ -307,6 +348,14 @@ export default function PostPropertyScreen() {
     }
     if (!description.trim() || description.trim().length < 5) {
       Alert.alert('Validation Error', 'Please enter a description (at least 5 characters).');
+      setStep(2);
+      return;
+    }
+    
+    // Block phone numbers in text fields
+    const phoneRegex = /(?:\+91[\s-]*)?[6789](?:[\s-]*\d){9}/;
+    if (phoneRegex.test(`${title} ${description} ${shortDescription || ''} ${speciality || ''}`)) {
+      Alert.alert('Validation Error', 'Direct contact numbers are not allowed in property details.');
       setStep(2);
       return;
     }
@@ -368,7 +417,10 @@ export default function PostPropertyScreen() {
       }
 
       if (uploadedUrls.length === 0) {
-        uploadedUrls.push('https://images.unsplash.com/photo-1512917774080-9991f1c4c750?w=600&h=400&fit=crop');
+        Alert.alert('No Images', 'Please add at least 1 property image before submitting.');
+        setIsSubmitting(false);
+        setStatusMessage('');
+        return;
       }
 
       setStatusMessage('Creating property listing in database...');
@@ -443,6 +495,14 @@ export default function PostPropertyScreen() {
         approach_road: newProp.approachRoad || undefined,
         under_irrigation: newProp.underIrrigation,
         ownership_type: newProp.ownershipType || undefined,
+        // BHK per-type area breakdown for residential/holiday
+        bhk_areas: (['Residential', 'Holiday'].includes(category) && Object.keys(bhkAreas).length > 0)
+          ? Object.fromEntries(
+              Object.entries(bhkAreas)
+                .map(([k, v]) => [k, Number(v)] as [string, number])
+                .filter(([, v]) => v > 0)
+            )
+          : undefined,
       };
 
       const res = await fetch(`${getApiUrl()}/api/properties`, {
@@ -1462,8 +1522,14 @@ export default function PostPropertyScreen() {
             <Text style={styles.stepTitle}>Media & Final Review</Text>
             <Text style={styles.stepSubtitle}>Upload high-resolution property images and video walkthrough.</Text>
 
-            <Text style={styles.inputLabel}>Property Images ({localImageUris.length} selected)</Text>
-            <TouchableOpacity style={styles.uploadBox} onPress={handlePickImages}>
+            <Text style={styles.inputLabel}>Property Images *</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={{ fontSize: 12, color: localImageUris.length === 0 ? '#EF4444' : localImageUris.length >= 25 ? '#059669' : '#64748B', fontWeight: '600' }}>
+                {localImageUris.length} / 25 images {localImageUris.length === 0 ? '(min. 1 required)' : localImageUris.length >= 25 ? '(limit reached)' : ''}
+              </Text>
+              <Text style={{ fontSize: 11, color: '#94A3B8' }}>Max 2MB · Min 800×800px</Text>
+            </View>
+            <TouchableOpacity style={[styles.uploadBox, localImageUris.length >= 25 && { opacity: 0.5 }]} onPress={handlePickImages}>
               <Ionicons name="cloud-upload-outline" size={32} color={GoldSystem.primaryGold} />
               <Text style={styles.uploadBoxTitle}>Tap to select images from gallery</Text>
               <Text style={styles.uploadBoxSub}>First selected image will be used as the primary cover</Text>

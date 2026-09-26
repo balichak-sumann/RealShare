@@ -27,11 +27,28 @@ export default function SubmissionSuccessScreen() {
             Property <Text style={{ fontWeight: '700' }}>"{title || 'Listing'}"</Text> has been submitted successfully.
           </Text>
           
-          <Text style={styles.submessage}>
-            {profile?.role === 'admin' 
-              ? 'Your property is now LIVE and visible to all users.' 
-              : 'The Admin will review and approve it shortly. Once approved, it will be visible on the platform.'}
-          </Text>
+          {profile?.role === 'admin' ? (
+            <View style={{ backgroundColor: '#ECFDF5', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#A7F3D0', marginBottom: 32, width: '100%', maxWidth: 400, alignItems: 'center' }}>
+              <Ionicons name="checkmark-circle" size={32} color="#059669" style={{ marginBottom: 8 }} />
+              <Text style={{ fontSize: 16, fontWeight: '800', color: '#065F46', textAlign: 'center' }}>
+                Your property is now LIVE
+              </Text>
+              <Text style={{ fontSize: 13, color: '#047857', textAlign: 'center', marginTop: 6, lineHeight: 20 }}>
+                It is immediately visible to all users on the platform.
+              </Text>
+            </View>
+          ) : (
+            <View style={{ backgroundColor: '#FFFBEB', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#FDE68A', marginBottom: 32, width: '100%', maxWidth: 400, alignItems: 'center' }}>
+              <Ionicons name="time-outline" size={36} color="#D97706" style={{ marginBottom: 8 }} />
+              <Text style={{ fontSize: 16, fontWeight: '800', color: '#92400E', textAlign: 'center' }}>
+                Pending Admin Review
+              </Text>
+              <Text style={{ fontSize: 13, color: '#78350F', textAlign: 'center', marginTop: 6, lineHeight: 20 }}>
+                Your property is under review and <Text style={{ fontWeight: '700' }}>not visible to buyers yet.</Text>{'\n'}
+                It will go live once an admin approves it — usually within 24 hours.
+              </Text>
+            </View>
+          )}
           
           <View style={styles.actionContainer}>
             <TouchableOpacity

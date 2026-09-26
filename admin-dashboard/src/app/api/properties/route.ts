@@ -190,6 +190,13 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Description is required and must be at least 5 characters.' }, { status: 400 });
     }
 
+    // Block phone numbers in text fields (Title, Description, Short Description)
+    const phoneRegex = /(?:\+91[\s-]*)?[6789](?:[\s-]*\d){9}/;
+    const textToValidate = `${data.title} ${data.description} ${data.short_description || ''} ${data.speciality || ''}`;
+    if (phoneRegex.test(textToValidate)) {
+      return NextResponse.json({ error: 'Direct contact numbers are not allowed in property details. Please remove any phone numbers from the title or description.' }, { status: 400 });
+    }
+
     const pType = data.property_type ? ALLOWED_CATEGORIES.find(c => c.toLowerCase() === String(data.property_type).trim().toLowerCase()) : undefined;
     if (!pType) {
       return NextResponse.json(
@@ -348,6 +355,10 @@ export async function POST(request: Request) {
           approach_road: data.approach_road !== undefined ? data.approach_road : undefined,
           under_irrigation: data.under_irrigation !== undefined ? Boolean(data.under_irrigation) : undefined,
           ownership_type: data.ownership_type !== undefined ? data.ownership_type : undefined,
+          // BHK per-type area breakdown (residential/holiday)
+          bhk_areas: (data.bhk_areas && typeof data.bhk_areas === 'object' && !Array.isArray(data.bhk_areas))
+            ? data.bhk_areas
+            : null,
         },
       });
 

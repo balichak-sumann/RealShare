@@ -42,6 +42,20 @@
       "expo-image",
       "expo-web-browser",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "Realshare needs access to your photos so you can upload profile pictures and property images.",
+          "cameraPermission": "Realshare needs access to your camera so you can take photos of properties."
+        }
+      ],
+      [
+        "expo-document-picker",
+        {
+          "appleTeamId": "433XX9DAR2"
+        }
+      ],
+      "expo-notifications",
+      [
         "expo-build-properties",
         {
           "ios": {

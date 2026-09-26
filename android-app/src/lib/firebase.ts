@@ -26,15 +26,25 @@ try {
   // Safari's "Advanced Privacy Protections" warning.  The default
   // getAuth() uses indexedDB persistence which can trigger cross-origin
   // storage issues under Safari's Intelligent Tracking Prevention (ITP).
-  if (Platform.OS === 'web' && isNewApp) {
-    // Only call initializeAuth once (when we just called initializeApp).
-    // On subsequent calls (hot-reload), getApp() was used above so we
-    // fall through to getAuth() which retrieves the existing instance.
-    auth = initializeAuth(app, {
-      persistence: browserLocalPersistence,
-    });
+  if (Platform.OS === 'web') {
+    if (isNewApp) {
+      auth = initializeAuth(app, {
+        persistence: browserLocalPersistence,
+      });
+    } else {
+      auth = getAuth(app);
+    }
   } else {
-    auth = getAuth(app);
+    // For Native (iOS/Android), use AsyncStorage for persistence
+    if (isNewApp) {
+      const { getReactNativePersistence } = require('firebase/auth');
+      const AsyncStorage = require('@react-native-async-storage/async-storage').default;
+      auth = initializeAuth(app, {
+        persistence: getReactNativePersistence(AsyncStorage),
+      });
+    } else {
+      auth = getAuth(app);
+    }
   }
 
   storage = getStorage(app);

@@ -305,9 +305,58 @@ export default function ProfileScreen() {
         });
         rzp.open();
       } else {
-        Alert.alert('Notice', 'Native payment not configured yet. Opening mock success.');
-        setShowWalletModal(false);
-        setWalletAmount('');
+        const options = {
+          key: orderData.keyId,
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: 'Realshare Wallet',
+          description: `Add ₹${amount} to Wallet`,
+          order_id: orderData.orderId,
+          prefill: {
+            name: auth.currentUser?.displayName || 'User',
+            email: auth.currentUser?.email || '',
+          },
+          theme: { color: GoldSystem.primaryGold }
+        };
+
+        import('react-native-razorpay').then((RazorpayCheckout) => {
+          RazorpayCheckout.default.open(options).then(async (data: any) => {
+            const verifyRes = await fetch(`${getApiUrl()}/api/transactions/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: data.razorpay_order_id,
+                razorpay_payment_id: data.razorpay_payment_id,
+                razorpay_signature: data.razorpay_signature,
+                transactionId: orderData.transactionId
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              Alert.alert('Success', 'Wallet balance added successfully!');
+              setShowWalletModal(false);
+              setWalletAmount('');
+              // Trigger a user fetch to update the UI
+              const userRes = await fetch(`${getApiUrl()}/api/users/me`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+              });
+              if(userRes.ok) {
+                const userData = await userRes.json();
+                if(userData.profile) setProfile(userData.profile);
+              }
+            } else {
+              Alert.alert('Error', 'Payment Verification Failed!');
+            }
+          }).catch((error: any) => {
+            Alert.alert('Payment Failed', `Error: ${error.code} | ${error.description}`);
+          });
+        }).catch(() => {
+           Alert.alert("Error", "Payment module failed to load.");
+        });
       }
     } catch (err: any) {
       Alert.alert('Error', err.message || 'Payment initiation failed');
@@ -820,8 +869,59 @@ export default function ProfileScreen() {
                               });
                               rzp.open();
                             } else {
-                               Alert.alert('Notice', 'Razorpay native not configured. Continuing as success.');
-                               setIsUpgradingPlan(false);
+                               const options = {
+                                 key: data.keyId,
+                                 amount: data.amount,
+                                 currency: data.currency,
+                                 name: 'RealShare',
+                                 description: `Upgrade Plan`,
+                                 order_id: data.order_id,
+                                 prefill: {
+                                   name: auth.currentUser?.displayName || 'User',
+                                   email: auth.currentUser?.email || '',
+                                 },
+                                 theme: { color: GoldSystem.primaryGold }
+                               };
+
+                               import('react-native-razorpay').then((RazorpayCheckout) => {
+                                 RazorpayCheckout.default.open(options).then(async (dataObj: any) => {
+                                   try {
+                                     setLoading(true);
+                                     const verifyRes = await fetch(`${getApiUrl()}/api/plans/verify`, {
+                                       method: 'POST',
+                                       headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                                       body: JSON.stringify({
+                                         razorpay_order_id: dataObj.razorpay_order_id,
+                                         razorpay_payment_id: dataObj.razorpay_payment_id,
+                                         razorpay_signature: dataObj.razorpay_signature,
+                                         planId,
+                                         amount: options.amount,
+                                         couponCode
+                                       })
+                                     });
+                                     const verifyData = await verifyRes.json();
+                                     if (verifyData.success) {
+                                        Alert.alert('Success', 'Plan upgraded successfully.');
+                                        setIsUpgradingPlan(false);
+                                        const userRes = await fetch(`${getApiUrl()}/api/users/me`, { headers: { 'Authorization': `Bearer ${token}` } });
+                                        if (userRes.ok) {
+                                          const userData = await userRes.json();
+                                          setProfile(userData.profile);
+                                        }
+                                     } else {
+                                        Alert.alert('Error', 'Payment verification failed.');
+                                     }
+                                   } catch (e) {
+                                     Alert.alert('Error', 'Error verifying payment.');
+                                   } finally {
+                                     setLoading(false);
+                                   }
+                                 }).catch((error: any) => {
+                                   Alert.alert('Payment Failed', `Error: ${error.code} | ${error.description}`);
+                                 });
+                               }).catch(() => {
+                                  Alert.alert("Error", "Payment module failed to load.");
+                               });
                             }
                          }
                        } catch (e) {

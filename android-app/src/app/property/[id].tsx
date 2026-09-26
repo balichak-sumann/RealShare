@@ -237,11 +237,49 @@ export default function PropertyDetailsScreen() {
         });
         rzp.open();
       } else {
-        // Fallback for native testing 
-        alert('Native payment not configured yet. Opening mock success.');
-        const generatedCert = `RS-CERT-2026-${Math.floor(1000 + Math.random() * 9000)}`;
-        setCertificateId(generatedCert);
-        setInvestmentSuccess(true);
+        const options = {
+          key: orderData.keyId || process.env.EXPO_PUBLIC_RAZORPAY_KEY_ID || 'rzp_test_TSKXy2WO8gcwyH', 
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: 'Realshare',
+          description: `Booking for ${property.title}`,
+          order_id: orderData.orderId,
+          prefill: {
+            name: auth.currentUser?.displayName || 'Buyer',
+            email: auth.currentUser?.email || '',
+          },
+          theme: { color: GoldSystem.primaryGold }
+        };
+
+        import('react-native-razorpay').then((RazorpayCheckout) => {
+          RazorpayCheckout.default.open(options).then(async (data: any) => {
+            const verifyRes = await fetch(`${getApiUrl()}/api/transactions/verify-payment`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify({
+                razorpay_order_id: data.razorpay_order_id,
+                razorpay_payment_id: data.razorpay_payment_id,
+                razorpay_signature: data.razorpay_signature,
+                transactionId: orderData.transactionId
+              })
+            });
+
+            const verifyData = await verifyRes.json();
+            if (verifyData.success) {
+              setCertificateId(verifyData.certificateId);
+              setInvestmentSuccess(true);
+            } else {
+              Alert.alert('Error', 'Payment Verification Failed!');
+            }
+          }).catch((error: any) => {
+            Alert.alert('Payment Failed', `Error: ${error.code} | ${error.description}`);
+          });
+        }).catch(() => {
+           Alert.alert("Error", "Payment module failed to load.");
+        });
       }
     } catch (err: any) {
       alert(err.message || 'Payment initiation failed');

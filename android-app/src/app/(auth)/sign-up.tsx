@@ -479,8 +479,54 @@ export default function SignUpScreen() {
            });
            rzp.open();
         } else {
-           alert("Razorpay native not configured. Continuing as success.");
-           await finishSignup();
+           const options = {
+             key: data.keyId,
+             amount: data.amount,
+             currency: data.currency,
+             name: 'RealShare',
+             description: 'Plan Subscription',
+             order_id: data.order_id,
+             prefill: {
+               name: fullName,
+               contact: identifier.includes('@') ? '' : identifier,
+               email: identifier.includes('@') ? identifier : ''
+             },
+             theme: { color: GoldSystem.primaryGold }
+           };
+           
+           import('react-native-razorpay').then((RazorpayCheckout) => {
+             RazorpayCheckout.default.open(options).then(async (data: any) => {
+               try {
+                 setLoading(true);
+                 const verifyRes = await fetch(`${getApiUrl()}/api/plans/verify`, {
+                   method: 'POST',
+                   headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${createdUserToken}` },
+                   body: JSON.stringify({
+                     razorpay_order_id: data.razorpay_order_id,
+                     razorpay_payment_id: data.razorpay_payment_id,
+                     razorpay_signature: data.razorpay_signature,
+                     planId,
+                     amount: options.amount,
+                     couponCode
+                   })
+                 });
+                 const verifyData = await verifyRes.json();
+                 if (verifyData.success) {
+                    await finishSignup();
+                 } else {
+                    setError('Payment verification failed.');
+                 }
+               } catch (e) {
+                 setError('Error verifying payment.');
+               } finally {
+                 setLoading(false);
+               }
+             }).catch((error: any) => {
+               setError(`Error: ${error.code} | ${error.description}`);
+             });
+           }).catch(() => {
+             setError("Payment module failed to load.");
+           });
         }
       }
     } catch (e) {

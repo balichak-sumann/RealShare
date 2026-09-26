@@ -55,7 +55,7 @@ async function registerForPushNotificationsAsync() {
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 
-import { onAuthStateChanged, User } from 'firebase/auth';
+import { onAuthStateChanged, User, signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
 import { UserProvider, useUser } from '@/contexts/UserContext';
 import { useInactivityTimer } from '@/hooks/useInactivityTimer';
@@ -131,14 +131,12 @@ function RootLayoutNav() {
           if (data?.success && data?.profile) {
             // Admin Approval Check
             if (data.profile.is_approved === false && data.profile.role !== 'admin' && data.profile.role !== 'employee') {
-              import('firebase/auth').then(({ signOut }) => signOut(auth));
+              signOut(auth);
               setProfile(null);
               if (Platform.OS === 'web') {
                 window.alert("Your account is pending admin approval. Please try again later.");
               } else {
-                import('react-native').then(({ Alert }) => {
-                  Alert.alert("Pending Approval", "Your account is pending admin approval. Please try again later.");
-                });
+                Alert.alert("Pending Approval", "Your account is pending admin approval. Please try again later.");
               }
               if (inAuthGroup && (segments[1] as string) !== 'sign-up') router.replace('/sign-in');
               return;
@@ -172,14 +170,12 @@ function RootLayoutNav() {
     isRelevantRole,
     () => {
       console.log('Logging out due to inactivity');
-      import('firebase/auth').then(({ signOut }) => signOut(auth));
+      signOut(auth);
       setProfile(null);
       if (Platform.OS === 'web') {
         window.alert("You have been logged out due to inactivity.");
       } else {
-        import('react-native').then(({ Alert }) => {
-          Alert.alert("Session Expired", "You have been logged out due to inactivity.");
-        });
+        Alert.alert("Session Expired", "You have been logged out due to inactivity.");
       }
       router.replace('/sign-in');
     },

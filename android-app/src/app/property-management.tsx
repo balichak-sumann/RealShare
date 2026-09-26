@@ -2,17 +2,19 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Rent collection, tenants and maintenance require new domain models (Tenant,
 // RentPayment, MaintenanceRequest) that don't exist yet -- tracked as future
 // work. Showing an honest empty state instead of fabricated tenants/rent figures.
 export default function PropertyManagementScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
           <Text style={styles.backIcon}>\u2190</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Property Management</Text>

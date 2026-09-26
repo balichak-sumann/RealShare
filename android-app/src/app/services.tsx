@@ -7,6 +7,7 @@ import { useUser } from '@/contexts/UserContext';
 import { getApiUrl } from '@/lib/api';
 
 import { useResponsive } from '@/hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const HERO_IMAGE = 'https://images.unsplash.com/photo-1556912172-45b7abe8b7e1?q=80&w=1600&auto=format&fit=crop';
 
@@ -17,6 +18,7 @@ const DEFAULT_SERVICES = [
 ];
 
 export default function ServicesScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile } = useUser();
   const { isDesktop } = useResponsive();
@@ -62,7 +64,7 @@ export default function ServicesScreen() {
   return (
     <View style={styles.container}>
       {!isDesktop && (
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
           <TouchableOpacity 
             onPress={() => router.canGoBack() ? router.back() : router.push('/')} 
             style={styles.backBtn}

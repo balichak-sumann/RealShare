@@ -4,12 +4,14 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { propertyToProjectCardProps } from '@/lib/formatters';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Construction-stage and progress tracking isn't captured anywhere in the
 // schema yet (no ConstructionUpdate model, no admin flow to post one), so
 // this screen shows the real project header and an honest "not available
 // yet" state instead of fabricated milestone dates and a made-up % complete.
 export default function ConstructionTrackingScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { id } = useLocalSearchParams();
   const [project, setProject] = useState<any>(null);
@@ -39,8 +41,8 @@ export default function ConstructionTrackingScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Construction Tracker</Text>

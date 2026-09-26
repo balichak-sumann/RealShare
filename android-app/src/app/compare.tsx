@@ -5,8 +5,10 @@ import { Neutrals, Typography, GoldSystem } from '@/constants/design';
 import { propertyToCardProps } from '@/lib/formatters';
 import { ComparisonTable } from '@/components/ui/ComparisonTable';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function CompareScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { ids } = useLocalSearchParams<{ ids?: string }>();
   const [propertiesToCompare, setPropertiesToCompare] = useState<any[]>([]);
@@ -40,9 +42,9 @@ export default function CompareScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Compare Properties</Text>

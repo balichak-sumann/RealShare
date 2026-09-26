@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, ActivityIndicator, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, ActivityIndicator, Alert , Alert} from 'react-native';
 import { useRouter, Redirect } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { useResponsive, FrameWidth } from '@/hooks/useResponsive';
 import { WebFooter } from '@/components/layout/WebFooter';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Intent = 'Buyer' | 'Seller' | 'Agent or Broker';
 const INTENTS: Intent[] = ['Buyer', 'Seller', 'Agent or Broker'];
@@ -15,6 +16,7 @@ const INTENTS: Intent[] = ['Buyer', 'Seller', 'Agent or Broker'];
 // the admin dashboard's Services queue rather than disappearing into a fake
 // success alert.
 export default function ContactScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isDesktop, isFramed } = useResponsive();
 
@@ -85,8 +87,8 @@ export default function ContactScreen() {
       {/* Phone chrome only: from 768px up WebShell already renders DesktopNav,
           and showing both stacked a redundant back bar under the real nav. */}
       {!isFramed && (
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+          <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Contact Us</Text>

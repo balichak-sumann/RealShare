@@ -12,7 +12,7 @@ import {
   Modal,
   Platform,
   useWindowDimensions,
-} from 'react-native';
+, Alert} from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
@@ -91,6 +91,12 @@ export default function AgentPortalScreen({ isEmbedded = false }: { isEmbedded?:
   const handleDeleteProperty = async (id: string) => {
     if (Platform.OS === 'web') {
       if (!window.confirm("Are you sure you want to delete this listing?")) return;
+    } else {
+      Alert.alert("Confirm", "Are you sure you want to delete this listing?", [
+        { text: "Cancel", style: "cancel" },
+        { text: "Delete", onPress: () => handleDeleteProperty(id), style: "destructive" }
+      ]);
+      return;
     }
     try {
       const user = auth.currentUser;

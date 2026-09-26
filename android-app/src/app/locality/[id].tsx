@@ -65,7 +65,7 @@ export default function LocalityDetailsScreen() {
         <Text style={{ ...Typography.bodyLarge, color: Neutrals.gray600, textAlign: 'center' }}>
           No listed properties found in {localityName || 'this locality'} yet.
         </Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={{ marginTop: 16 }}>
           <Text style={{ color: GoldSystem.primaryGold, fontWeight: '600' }}>Go back</Text>
         </TouchableOpacity>
       </View>
@@ -78,7 +78,7 @@ export default function LocalityDetailsScreen() {
       <View style={styles.heroContainer}>
         <Image source={{ uri: locality.image }} style={styles.heroImage} />
         <View style={styles.heroGradient} />
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}>
           <Text style={styles.iconBtnText}>←</Text>
         </TouchableOpacity>
         

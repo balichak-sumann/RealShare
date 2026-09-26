@@ -8,8 +8,10 @@ import { uploadImageToFirebase } from '@/lib/uploadImage';
 import { Ionicons } from '@expo/vector-icons';
 import { getApiUrl } from '@/lib/api';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function SellScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [mainTab, setMainTab] = useState<'sell' | 'rent' | null>(null);
@@ -179,7 +181,7 @@ export default function SellScreen() {
           Alert.alert(
             'Property Submitted!', 
             'Your property has been successfully submitted and is pending admin approval.',
-            [{ text: 'OK', onPress: () => router.back() }]
+            [{ text: 'OK', onPress: () => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } } }]
           );
         }
       } else {
@@ -201,8 +203,8 @@ export default function SellScreen() {
   if (!currentUser) {
     return (
       <View style={styles.container}>
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+          <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitleBig}>List Property</Text>
@@ -233,7 +235,7 @@ export default function SellScreen() {
                 <Text style={styles.authGateBtnText}>Sign In / Sign Up</Text>
               </LinearGradient>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.back()} activeOpacity={0.7}>
+            <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} activeOpacity={0.7}>
               <Text style={styles.authGateBackLink}>← Go Back</Text>
             </TouchableOpacity>
           </View>
@@ -244,8 +246,8 @@ export default function SellScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitleBig}>List Property</Text>

@@ -18,7 +18,7 @@ export default function RecentlyViewedScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={Neutrals.obsidian} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Recent History</Text>

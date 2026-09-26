@@ -5,8 +5,10 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { auth } from '@/lib/firebase';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function MyAssetsScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [assets, setAssets] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,8 +55,8 @@ export default function MyAssetsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>My Assets</Text>

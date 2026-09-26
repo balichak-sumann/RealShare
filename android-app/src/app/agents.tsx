@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 type Agent = { id: string; type: 'agent'; name: string; locality: string | null; listings: number };
 type Developer = {
@@ -16,6 +17,7 @@ type Developer = {
 };
 
 export default function AgentsScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [filter, setFilter] = useState('All');
   const [agents, setAgents] = useState<Agent[]>([]);
@@ -52,8 +54,8 @@ export default function AgentsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
           <Text style={styles.backIcon}>\u2190</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Find Professionals</Text>

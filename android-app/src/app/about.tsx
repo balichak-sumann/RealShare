@@ -4,11 +4,13 @@ import { useRouter, Redirect } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { useResponsive, FrameWidth } from '@/hooks/useResponsive';
 import { WebFooter } from '@/components/layout/WebFooter';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // Web-only marketing page (ported from the realshare.in "About" page). Native
 // never renders this — the mobile app has no route to it, and this redirect
 // is a second guard in case a deep link ever points here on device.
 export default function AboutScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isDesktop, isTablet } = useResponsive();
   const isWide = isDesktop || isTablet;
@@ -19,8 +21,8 @@ export default function AboutScreen() {
       {/* Phone chrome only: on wide web WebShell already renders DesktopNav,
           and showing both stacked a redundant back bar under the real nav. */}
       {!isWide && (
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+          <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>About Us</Text>

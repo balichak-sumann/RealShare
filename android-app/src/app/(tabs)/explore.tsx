@@ -8,8 +8,10 @@ import { TabAnimationWrapper } from '@/components/ui/TabAnimationWrapper';
 import { ResponsiveGrid } from '@/components/layout/ResponsiveGrid';
 import { getApiUrl, resilientFetch } from '@/lib/api';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function ExploreScreen() {
+  const insets = useSafeAreaInsets();
   const { isDesktop, isTablet } = useResponsive();
   const isWide = isDesktop || isTablet;
   const { profile } = useUser();
@@ -180,7 +182,7 @@ export default function ExploreScreen() {
   return (
     <TabAnimationWrapper>
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
         <Text style={styles.headerTitle}>{isAgent ? 'Browse Properties for Clients' : isEmployee ? 'Internal Property Directory' : 'Explore Properties'}</Text>
       </View>
 

@@ -133,7 +133,7 @@ export default function SupportScreen() {
     <View style={styles.container}>
       {/* Header — safe-area aware so it's never covered by the status bar / notch */}
       <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : insets.top + 12 }]}>
-        <TouchableOpacity style={styles.headerIconBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.headerIconBtn} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}>
           <Ionicons name="arrow-back" size={22} color={Neutrals.white} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Help &amp; Support</Text>

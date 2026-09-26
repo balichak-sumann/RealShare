@@ -5,8 +5,10 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { auth } from '@/lib/firebase';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LedgerScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [transactions, setTransactions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,8 +66,8 @@ export default function LedgerScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>A/C Ledger</Text>

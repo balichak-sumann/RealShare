@@ -1,6 +1,6 @@
 import { DarkTheme, DefaultTheme, ThemeProvider, Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme, View, Text, Platform } from 'react-native';
+import { useColorScheme, View, Text, Platform , Alert} from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { useEffect, useState } from 'react';
 import * as Notifications from 'expo-notifications';

@@ -73,7 +73,7 @@ export default function MapSearchScreen() {
 
       {/* Top Overlay Actions */}
       <View style={styles.topOverlay}>
-        <TouchableOpacity style={styles.iconBtn} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.iconBtn} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}>
           <Text style={styles.iconText}>←</Text>
         </TouchableOpacity>
         <View style={styles.searchBar}>

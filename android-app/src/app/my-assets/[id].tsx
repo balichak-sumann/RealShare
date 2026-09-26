@@ -5,8 +5,10 @@ import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/d
 import { auth } from '@/lib/firebase';
 import { EmptyState } from '@/components/ui/EmptyState';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function AssetDetailScreen() {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const [asset, setAsset] = useState<any>(null);
@@ -107,7 +109,7 @@ export default function AssetDetailScreen() {
     return (
       <View style={styles.centerContainer}>
         <Text style={styles.errorText}>Asset not found</Text>
-        <TouchableOpacity style={styles.backBtnSolid} onPress={() => router.back()}>
+        <TouchableOpacity style={styles.backBtnSolid} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}>
           <Text style={styles.backBtnText}>Go Back</Text>
         </TouchableOpacity>
       </View>
@@ -116,8 +118,8 @@ export default function AssetDetailScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
           <Text style={styles.backIcon}>←</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle} numberOfLines={1}>{asset.title}</Text>

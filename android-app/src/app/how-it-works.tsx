@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
 import { useResponsive, FrameWidth } from '@/hooks/useResponsive';
 import { WebFooter } from '@/components/layout/WebFooter';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const STEPS = [
   { icon: 'people-outline', title: 'Buyer Pool', desc: 'A group of buyers joins to form a pool and invest in the project together.' },
@@ -30,6 +31,7 @@ const HOLIDAY_FEATURES = [
 ] as const;
 
 export default function HowItWorksScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { isDesktop, isFramed } = useResponsive();
 
@@ -39,8 +41,8 @@ export default function HowItWorksScreen() {
       {/* Phone chrome only: from 768px up WebShell already renders DesktopNav,
           and showing both stacked a redundant back bar under the real nav. */}
       {!isFramed && (
-        <View style={styles.header}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+          <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>How It Works</Text>

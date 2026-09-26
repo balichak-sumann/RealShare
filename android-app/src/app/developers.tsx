@@ -5,6 +5,7 @@ import { Neutrals, Typography, GoldSystem } from '@/constants/design';
 import { SearchBar } from '@/components/ui/SearchBar';
 import { DeveloperCard } from '@/components/ui/DeveloperCard';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const mapDeveloper = (d: any) => ({
   id: d.id,
@@ -17,6 +18,7 @@ const mapDeveloper = (d: any) => ({
 });
 
 export default function DevelopersScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const [query, setQuery] = useState('');
   const [developers, setDevelopers] = useState<any[]>([]);
@@ -36,9 +38,9 @@ export default function DevelopersScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Top Developers</Text>

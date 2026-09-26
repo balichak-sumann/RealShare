@@ -6,10 +6,12 @@ import { SearchBar } from '@/components/ui/SearchBar';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { propertyToProjectCardProps } from '@/lib/formatters';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const TABS = ['All Projects', 'New Launch', 'Under Construction', 'Ready to Move', 'Luxury'];
 
 export default function ProjectsScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { agent: agentId, agentName } = useLocalSearchParams<{ agent?: string; agentName?: string }>();
   const [query, setQuery] = useState('');
@@ -44,9 +46,9 @@ export default function ProjectsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
         <View style={styles.headerTop}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+          <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>
           <Text style={styles.headerTitle}>{agentName ? String(agentName) : 'New Projects'}</Text>

@@ -8,6 +8,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/contexts/UserContext';
 import { getApiUrl } from '@/lib/api';
 import { useResponsive } from '@/hooks/useResponsive';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const HERO_IMAGE = require('../../../assets/images/indian_home_loan.jpg');
 
@@ -21,6 +22,7 @@ const BANK_PARTNERS = [
   { name: 'IndusInd Bank', source: require('../../../assets/images/banks/indusind.png') },
 ];
 export default function HomeLoansScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile } = useUser();
   const { isDesktop, isTablet } = useResponsive();
@@ -75,7 +77,7 @@ export default function HomeLoansScreen() {
   return (
     <View style={styles.container}>
       {!isWide && (
-        <View style={styles.header}>
+        <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
           <TouchableOpacity onPress={() => router.canGoBack() ? router.back() : router.push('/')} style={styles.backBtn}>
             <Text style={styles.backIcon}>←</Text>
           </TouchableOpacity>

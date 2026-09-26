@@ -7,12 +7,14 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useUser } from '@/contexts/UserContext';
 import { auth } from '@/lib/firebase';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function formatCurrency(n: number) {
   return `\u20b9${n.toLocaleString('en-IN')}`;
 }
 
 export default function RewardsScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
   const { profile } = useUser();
   const [loading, setLoading] = useState(true);
@@ -58,8 +60,8 @@ export default function RewardsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
           <Text style={styles.backIcon}>\u2190</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Rewards & Referrals</Text>

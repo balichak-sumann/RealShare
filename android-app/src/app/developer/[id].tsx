@@ -7,8 +7,10 @@ import { SectionHeader } from '@/components/ui/SectionHeader';
 import { ProjectCard } from '@/components/ui/ProjectCard';
 import { propertyToProjectCardProps } from '@/lib/formatters';
 import { getApiUrl } from '@/lib/api';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function DeveloperDetailsScreen() {
+  const insets = useSafeAreaInsets();
   const { id } = useLocalSearchParams();
   const router = useRouter();
   const [developer, setDeveloper] = useState<any>(null);
@@ -59,7 +61,7 @@ export default function DeveloperDetailsScreen() {
         <Text style={{ ...Typography.bodyLarge, color: Neutrals.gray600, textAlign: 'center' }}>
           This developer couldn't be found.
         </Text>
-        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 16 }}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={{ marginTop: 16 }}>
           <Text style={{ color: GoldSystem.primaryGold, fontWeight: '600' }}>Go back</Text>
         </TouchableOpacity>
       </View>
@@ -68,8 +70,8 @@ export default function DeveloperDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity style={styles.backBtn} onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }}>
           <Text style={styles.iconBtnText}>←</Text>
         </TouchableOpacity>
         <TouchableOpacity style={styles.iconBtn}><Text style={styles.iconBtnText}>🔗</Text></TouchableOpacity>

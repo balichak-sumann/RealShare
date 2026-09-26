@@ -557,7 +557,7 @@ export default function ProfileScreen() {
 
           {/* Back + Settings row */}
           <View style={styles.heroTopRow}>
-            <TouchableOpacity onPress={() => router.back()} style={styles.heroBackBtn}>
+            <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.heroBackBtn}>
               <Text style={styles.heroBackText}>‹</Text>
             </TouchableOpacity>
             <Text style={styles.heroPageTitle}>My Profile</Text>

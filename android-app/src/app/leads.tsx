@@ -2,18 +2,20 @@ import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Neutrals, GoldSystem, Typography, Radius, Shadows } from '@/constants/design';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 // No lead-capture pipeline exists yet for property owners (that requires a new
 // domain model + a public "enquire about this listing" flow -- tracked as
 // future work alongside the rest of the Owner Dashboard/Property Management
 // suite). This screen is honest about that instead of showing fabricated leads.
 export default function LeadsScreen() {
+  const insets = useSafeAreaInsets();
   const router = useRouter();
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}>
+      <View style={[styles.header, { paddingTop: Platform.OS === 'web' ? 18 : Math.max(insets.top, 50) }]}>
+        <TouchableOpacity onPress={() => { if (router.canGoBack()) { router.back(); } else { router.replace('/'); } }} style={styles.backBtn}>
           <Text style={styles.backIcon}>\u2190</Text>
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Lead Management</Text>

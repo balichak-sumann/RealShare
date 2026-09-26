@@ -142,7 +142,7 @@ export default function PlanSelector({ role, onSelectPlan, currentPlanId, isUpgr
     }
   };
 
-  const isDesktopWeb = Platform.OS === 'web' && window.innerWidth >= 768;
+  const isDesktopWeb = Platform.OS === 'web' && (typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
 
   return (
     <View style={styles.container}>
@@ -151,7 +151,7 @@ export default function PlanSelector({ role, onSelectPlan, currentPlanId, isUpgr
 
       <ScrollView 
         horizontal={!isDesktopWeb} 
-        showsHorizontalScrollIndicator={false}
+        showsHorizontalScrollIndicator={!isDesktopWeb}
         contentContainerStyle={isDesktopWeb ? styles.desktopGrid : styles.mobileScroll}
         style={{ marginHorizontal: -20, paddingHorizontal: 20 }}
       >
@@ -264,6 +264,7 @@ const styles = StyleSheet.create({
     paddingBottom: 20,
   },
   mobileScroll: {
+    flexDirection: 'row',
     gap: 16,
     paddingRight: 40, // extra padding at end
     paddingBottom: 20,

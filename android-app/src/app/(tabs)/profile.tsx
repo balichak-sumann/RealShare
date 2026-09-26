@@ -1624,13 +1624,18 @@ export default function ProfileScreen() {
                     </TouchableOpacity>
 
                     <TouchableOpacity style={styles.salesCallbackBtn} onPress={() => {
-                      setShowPremiumModal(false);
-                      setCallbackName(user?.full_name || '');
-                      setCallbackPhone(user?.phone_number ? user.phone_number.replace('+91', '').trim() : '');
-                      setShowCallbackModal(true);
+                      const subject = encodeURIComponent(`Premium Listing Inquiry: ${
+                        premiumTab === 'banner' ? 'Banner Advertising' :
+                        premiumTab === 'listing' ? 'Featured Listing' :
+                        premiumTab === 'project' ? 'Featured Project' :
+                        'Featured Builder / Developer'
+                      }`);
+                      Linking.openURL(`mailto:sales@realshare.in?subject=${subject}`).catch(() => {
+                        Alert.alert('Email Contact', 'Please email our sales team directly at sales@realshare.in');
+                      });
                     }}>
                       <Ionicons name="mail" size={16} color={Neutrals.obsidian} />
-                      <Text style={[styles.salesBtnText, { color: Neutrals.obsidian }]}>Inquire</Text>
+                      <Text style={[styles.salesBtnText, { color: Neutrals.obsidian }]}>Email Us</Text>
                     </TouchableOpacity>
                   </View>
                 </View>

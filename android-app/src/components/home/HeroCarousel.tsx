@@ -94,7 +94,7 @@ export function HeroCarousel() {
               id: p.id,
               title: p.title,
               subtitle: p.short_description || p.locality,
-              image_url: (p.images && p.images[0]?.image_url) || p.image_url,
+              image_url: (p.images && p.images[0]?.image_url) || p.image_url || 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=400&q=80',
               link_url: `/property/${p.id}`,
             }));
             setSlides(propBanners);

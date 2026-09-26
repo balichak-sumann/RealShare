@@ -98,160 +98,146 @@ export function FeaturedProjectsSlider({ properties }: FeaturedProjectsSliderPro
     const activeSlide = slides[activeIndex];
 
     return (
-      <View style={desktopStyles.container}>
-        {/* Background shape */}
-        <View style={desktopStyles.bgShape} />
-
-        <View style={desktopStyles.layoutRow}>
+      <View style={[desktopStyles.container]}>
+        <View style={desktopStyles.sliderWrapper}>
+          {/* Main Background Image */}
+          <Image source={{ uri: getImg(activeSlide) }} style={StyleSheet.absoluteFill} contentFit="cover" />
           
-          {/* LEFT COLUMN */}
-          <View style={desktopStyles.leftCol}>
-            <View style={desktopStyles.headerTopRow}>
-              <Text style={desktopStyles.superTitle}>FEATURED PROJECTS</Text>
-              <View style={desktopStyles.superTitleLine} />
-            </View>
-            
-            <Text style={desktopStyles.mainTitle}>
-              Extraordinary{'\n'}Spaces,{'\n'}
-              <Text style={{ color: GoldSystem.primaryGold }}>Real Possibilities.</Text>
-            </Text>
-            
-            <Text style={desktopStyles.subtitle}>
-              Handpicked properties that combine lifestyle, location and long-term value.
-            </Text>
+          {/* Gradient Overlay for Text Readability - Only over the left content */}
+          <LinearGradient 
+            colors={['rgba(255, 255, 255, 1)', 'rgba(255, 255, 255, 0.85)', 'rgba(255, 255, 255, 0)']} 
+            locations={[0, 0.45, 0.6]}
+            start={{ x: 0, y: 0 }} 
+            end={{ x: 1, y: 0 }} 
+            style={StyleSheet.absoluteFill} 
+          />
+          {/* Subtle dark gradient at the very bottom right for thumbnail/video button contrast */}
+          <LinearGradient 
+            colors={['rgba(0, 0, 0, 0)', 'rgba(0, 0, 0, 0.4)']} 
+            locations={[0.7, 1]}
+            start={{ x: 0, y: 0 }} 
+            end={{ x: 0, y: 1 }} 
+            style={StyleSheet.absoluteFill} 
+          />
 
-            <View style={desktopStyles.controlsRow}>
-              <TouchableOpacity onPress={handlePrev} style={desktopStyles.controlBtn}>
-                <Ionicons name="chevron-back" size={20} color={Neutrals.white} />
-              </TouchableOpacity>
-              <TouchableOpacity onPress={handleNext} style={desktopStyles.controlBtnWhite}>
-                <Ionicons name="chevron-forward" size={20} color={Neutrals.obsidian} />
-              </TouchableOpacity>
-              <Text style={desktopStyles.paginationText}>
-                <Text style={{ color: GoldSystem.primaryGold, fontWeight: '700' }}>
-                  {String(activeIndex + 1).padStart(2, '0')}
-                </Text>
-                {' '}/ {String(slides.length).padStart(2, '0')}
+          <View style={desktopStyles.contentContainer}>
+            {/* Left Content */}
+            <View style={desktopStyles.leftContent}>
+              <View style={desktopStyles.badge}>
+                <Ionicons name="star" size={14} color={Neutrals.white} style={{ marginRight: 6 }} />
+                <Text style={desktopStyles.badgeText}>FEATURED PROPERTY</Text>
+              </View>
+              
+              <Text style={desktopStyles.propertyType}>
+                {(activeSlide.property_type || activeSlide.sub_type || 'LUXURY VILLA').toUpperCase()}
               </Text>
+              
+              <Text style={desktopStyles.mainTitle}>
+                {activeSlide.title}
+              </Text>
+
+              <View style={desktopStyles.locationRow}>
+                <Ionicons name="location" size={20} color="#E11D48" />
+                <Text style={desktopStyles.locationText}>{activeSlide.locality}, {activeSlide.district}</Text>
+              </View>
+
+              <Text style={desktopStyles.description} numberOfLines={3}>
+                {activeSlide.description || "A perfect blend of modern architecture, premium amenities and serene surroundings for an elevated lifestyle."}
+              </Text>
+
+              <View style={desktopStyles.amenitiesPanel}>
+                <View style={desktopStyles.amenityItem}>
+                  <View style={desktopStyles.amenityTopRow}>
+                    <Ionicons name="bed-outline" size={20} color={Neutrals.obsidian} />
+                    <Text style={desktopStyles.amenityValue}>{activeSlide.bedrooms || 4}</Text>
+                  </View>
+                  <Text style={desktopStyles.amenityLabel}>Bedrooms</Text>
+                </View>
+                <View style={desktopStyles.amenityItem}>
+                  <View style={desktopStyles.amenityTopRow}>
+                    <Ionicons name="water-outline" size={20} color={Neutrals.obsidian} />
+                    <Text style={desktopStyles.amenityValue}>{activeSlide.bathrooms || 4}</Text>
+                  </View>
+                  <Text style={desktopStyles.amenityLabel}>Bathrooms</Text>
+                </View>
+                <View style={desktopStyles.amenityItem}>
+                  <View style={desktopStyles.amenityTopRow}>
+                    <Ionicons name="car-outline" size={20} color={Neutrals.obsidian} />
+                    <Text style={desktopStyles.amenityValue}>2</Text>
+                  </View>
+                  <Text style={desktopStyles.amenityLabel}>Parking</Text>
+                </View>
+                <View style={desktopStyles.amenityItem}>
+                  <View style={desktopStyles.amenityTopRow}>
+                    <Ionicons name="business-outline" size={20} color={Neutrals.obsidian} />
+                    <Text style={desktopStyles.amenityValue}>2</Text>
+                  </View>
+                  <Text style={desktopStyles.amenityLabel}>Floors</Text>
+                </View>
+                <View style={[desktopStyles.amenityItem, { borderRightWidth: 0 }]}>
+                  <View style={desktopStyles.amenityTopRow}>
+                    <Ionicons name="expand-outline" size={20} color={Neutrals.obsidian} />
+                    <Text style={desktopStyles.amenityValue}>{activeSlide.area_sqft || '3,200'}</Text>
+                  </View>
+                  <Text style={desktopStyles.amenityLabel}>Sq.Ft.</Text>
+                </View>
+              </View>
+
+              <View style={desktopStyles.pricePanel}>
+                <View style={desktopStyles.priceInfo}>
+                  <Text style={desktopStyles.priceAmount}>{getPriceDisplay(activeSlide)}</Text>
+                  <Text style={desktopStyles.priceSub}>
+                    {activeSlide.price_per_sqft ? `₹${activeSlide.price_per_sqft.toLocaleString('en-IN')} per Sq.Ft.` : 'Premium Segment'}
+                  </Text>
+                </View>
+                <TouchableOpacity style={desktopStyles.contactBtn} onPress={() => router.push(`/property/${activeSlide.id}` as any)}>
+                  <Text style={desktopStyles.contactBtnText}>Contact Agent</Text>
+                  <Ionicons name="arrow-forward" size={18} color={Neutrals.obsidian} />
+                </TouchableOpacity>
+              </View>
             </View>
 
-            <View style={desktopStyles.premiumLineRow}>
-              <View style={desktopStyles.verticalLine} />
-              <Text style={desktopStyles.premiumText}>
-                Premium Homes{'\n'}in Prime Locations
-              </Text>
+            {/* Right Thumbnails */}
+            <View style={desktopStyles.rightThumbnails}>
+              {activeSlide.images?.slice(0, 4).map((img: any, i: number) => {
+                const raw = typeof img === 'string' ? img : (img?.image_url || '');
+                const isLast = i === 3;
+                const remaining = (activeSlide.images?.length || 0) - 4;
+                return (
+                  <View key={i} style={desktopStyles.thumbnailWrapper}>
+                    <Image source={{ uri: getFullImageUrl(raw) }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                    {isLast && remaining > 0 && (
+                      <View style={desktopStyles.thumbnailOverlay}>
+                        <Text style={desktopStyles.thumbnailOverlayText}>+{remaining}</Text>
+                      </View>
+                    )}
+                  </View>
+                );
+              })}
             </View>
           </View>
 
-          {/* CENTER COLUMN (ACTIVE CARD STACK) */}
-          <View style={desktopStyles.centerCol}>
-            {[3, 2, 1, 0, -1].map((offset) => {
-              if (slides.length <= offset && offset !== -1) return null;
-              const idx = (activeIndex + offset + slides.length) % slides.length;
-              const prop = slides[idx];
+          {/* Video Tour Button */}
+          <TouchableOpacity style={desktopStyles.videoTourBtn}>
+            <Ionicons name="play-circle" size={22} color={Neutrals.white} style={{ marginRight: 8 }} />
+            <Text style={desktopStyles.videoTourText}>Video Tour</Text>
+          </TouchableOpacity>
 
-              let translateX, translateY, scale, opacity, contentOpacity;
-              if (offset === -1) {
-                translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0] });
-                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, -500, -500] });
-                scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [1, 1, 1] });
-                opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [1, 0, 0] });
-                contentOpacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [1, 0, 0] });
-              } else if (offset === 0) {
-                translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [24, 0, 0] });
-                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, -500] });
-                scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.95, 1, 1] });
-                opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.85, 1, 0] });
-                contentOpacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 1, 0] });
-              } else if (offset === 1) {
-                translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 24, 0] });
-                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0] });
-                scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.90, 0.95, 1] });
-                opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.70, 0.85, 1] });
-                contentOpacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 1] });
-              } else if (offset === 2) {
-                translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 48, 24] });
-                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0] });
-                scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.90, 0.90, 0.95] });
-                opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0.70, 0.85] });
-                contentOpacity = 0;
-              } else {
-                translateX = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [48, 48, 48] });
-                translateY = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0] });
-                scale = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0.90, 0.90, 0.90] });
-                opacity = slideAnim.interpolate({ inputRange: [-1, 0, 1], outputRange: [0, 0, 0.70] });
-                contentOpacity = 0;
-              }
+          {/* Left / Right Chevron Controls */}
+          <TouchableOpacity onPress={handlePrev} style={[desktopStyles.floatingControlBtn, desktopStyles.floatingControlLeft]}>
+            <Ionicons name="chevron-back" size={28} color={Neutrals.gray600} />
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleNext} style={[desktopStyles.floatingControlBtn, desktopStyles.floatingControlRight]}>
+            <Ionicons name="chevron-forward" size={28} color={Neutrals.gray600} />
+          </TouchableOpacity>
 
-              return (
-                <Animated.View 
-                  key={`${prop.id}-${offset}`} 
-                  style={[
-                    desktopStyles.mainCard,
-                    {
-                      position: 'absolute',
-                      width: '100%',
-                      height: '100%',
-                      zIndex: 10 - offset,
-                      transform: [{ translateX }, { translateY }, { scale }],
-                      opacity
-                    }
-                  ]}
-                >
-                  <Image source={{ uri: getImg(prop) }} style={[StyleSheet.absoluteFill, { borderRadius: 32 }]} contentFit="cover" />
-                  <LinearGradient colors={['transparent', 'rgba(0,0,0,0.4)', 'rgba(0,0,0,0.9)']} style={[StyleSheet.absoluteFill, { borderRadius: 32 }]} />
-                  
-                  <Animated.View style={[StyleSheet.absoluteFill, { opacity: contentOpacity }]}>
-                    <View style={desktopStyles.mainBadge}>
-                        <Ionicons name="star" size={12} color={GoldSystem.primaryGold} style={{ marginRight: 4 }} />
-                        <Text style={desktopStyles.mainBadgeText}>FEATURED</Text>
-                      </View>
-
-                      <View style={desktopStyles.mainCardBottom}>
-                        <View style={desktopStyles.mainCardInfo}>
-                          <View style={desktopStyles.locationRow}>
-                            <Ionicons name="location" size={14} color={Neutrals.white} />
-                            <Text style={desktopStyles.locationText}>{prop.locality}, {prop.district}</Text>
-                          </View>
-                          <Text style={desktopStyles.cardTitle}>{prop.title}</Text>
-                          {!!prop.description && (
-                            <Text style={desktopStyles.cardDesc} numberOfLines={2}>
-                              {prop.description}
-                            </Text>
-                          )}
-                          
-                          <View style={desktopStyles.amenitiesRow}>
-                            {!!prop.bedrooms && <View style={desktopStyles.amenityItem}><Ionicons name="bed-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{prop.bedrooms} Beds</Text></View>}
-                            {!!prop.bathrooms && <View style={desktopStyles.amenityItem}><Ionicons name="water-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{prop.bathrooms} Baths</Text></View>}
-                            {!!prop.area_sqft && <View style={desktopStyles.amenityItem}><Ionicons name="expand-outline" size={16} color={Neutrals.white}/><Text style={desktopStyles.amenityText}>{prop.area_sqft} Sq.Ft</Text></View>}
-                          </View>
-                        </View>
-
-                        <View style={desktopStyles.mainCardAction}>
-                          <View style={desktopStyles.thumbRowInside}>
-                            {prop.images?.slice(0, 3).map((img: any, i: number) => {
-                              const raw = typeof img === 'string' ? img : (img?.image_url || '');
-                              return (
-                                <View key={i} style={desktopStyles.thumbWrapperInside}>
-                                  <Image source={{ uri: getFullImageUrl(raw) }} style={desktopStyles.thumbImage} contentFit="cover" />
-                                </View>
-                              );
-                            })}
-                          </View>
-                          <Text style={desktopStyles.priceText}>{getPriceDisplay(prop)}</Text>
-                          <TouchableOpacity style={desktopStyles.viewBtn} onPress={() => router.push(`/property/${prop.id}` as any)}>
-                            <Text style={desktopStyles.viewBtnText}>View Property</Text>
-                            <Ionicons name="arrow-forward" size={16} color={Neutrals.obsidian} />
-                          </TouchableOpacity>
-                        </View>
-                      </View>
-                    </Animated.View>
-                </Animated.View>
-              );
-            })}
+          {/* Pagination Dots */}
+          <View style={desktopStyles.paginationDotsContainer}>
+            {slides.map((_, i) => (
+              <View key={i} style={[desktopStyles.paginationDot, activeIndex === i && desktopStyles.paginationDotActive]} />
+            ))}
           </View>
         </View>
-
       </View>
     );
   }
@@ -284,25 +270,25 @@ export function FeaturedProjectsSlider({ properties }: FeaturedProjectsSliderPro
           </Text>
           <Text style={styles.priceTextMobile}>{getPriceDisplay(activeMobileSlide)}</Text>
           <TouchableOpacity 
-            style={desktopStyles.viewBtn} 
+            style={styles.mobileViewBtn} 
             onPress={() => router.push(`/property/${activeMobileSlide.id}` as any)}>
-            <Text style={desktopStyles.viewBtnText}>View Property</Text>
+            <Text style={styles.mobileViewBtnText}>View Property</Text>
             <Ionicons name="arrow-forward" size={16} color={Neutrals.obsidian} />
           </TouchableOpacity>
         </View>
       </View>
 
-      <View style={[desktopStyles.controlsRow, { justifyContent: 'center', marginTop: 24 }]}>
-        <TouchableOpacity onPress={handlePrev} style={desktopStyles.controlBtn}>
+      <View style={[styles.mobileControlsRow, { justifyContent: 'center', marginTop: 24 }]}>
+        <TouchableOpacity onPress={handlePrev} style={styles.mobileControlBtn}>
           <Ionicons name="chevron-back" size={20} color={Neutrals.white} />
         </TouchableOpacity>
-        <Text style={[desktopStyles.paginationText, { marginHorizontal: 16 }]}>
+        <Text style={[styles.mobilePaginationText, { marginHorizontal: 16 }]}>
           <Text style={{ color: GoldSystem.primaryGold, fontWeight: '700' }}>
             {String(activeIndex + 1).padStart(2, '0')}
           </Text>
           {' '}/ {String(slides.length).padStart(2, '0')}
         </Text>
-        <TouchableOpacity onPress={handleNext} style={[desktopStyles.controlBtn, { backgroundColor: Neutrals.gray200 }]}>
+        <TouchableOpacity onPress={handleNext} style={[styles.mobileControlBtn, { backgroundColor: Neutrals.gray200 }]}>
           <Ionicons name="chevron-forward" size={20} color={Neutrals.obsidian} />
         </TouchableOpacity>
       </View>
@@ -386,90 +372,27 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
   },
-});
-
-const desktopStyles = StyleSheet.create({
-  container: {
-    width: '100%',
-    paddingVertical: 24,
-    paddingHorizontal: '4%',
-    position: 'relative',
-    overflow: 'hidden',
-    backgroundColor: '#FAF8F5',
-  },
-  bgShape: {
-    position: 'absolute',
-    top: 24,
-    bottom: 24,
-    left: -200,
-    right: '40%',
-    backgroundColor: Neutrals.white,
-    borderTopRightRadius: 400,
-    borderBottomRightRadius: 500,
-    zIndex: 0,
-    ...(Platform.OS === 'web' ? { boxShadow: '20px 20px 60px rgba(0,0,0,0.03)' } as any : { elevation: 1 }),
-  },
-  scriptFloatingText: {
-    position: 'absolute',
-    top: 40,
-    right: '28%',
-    fontFamily: Platform.OS === 'web' ? 'cursive, "Brush Script MT", "Comic Sans MS"' : undefined,
-    fontStyle: 'italic',
-    fontSize: 36,
-    color: GoldSystem.darkGold,
-    transform: [{ rotate: '-5deg' }],
-    zIndex: 1,
-  },
-  layoutRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 2,
-    minHeight: 180,
-  },
-  leftCol: {
-    width: '35%',
-    paddingRight: 24,
-    justifyContent: 'center',
-    paddingVertical: 0,
-  },
-  superTitle: {
-    ...Typography.labelMedium,
-    color: GoldSystem.darkGold,
-    letterSpacing: 2,
-    marginRight: 16,
-  },
-  headerTopRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  superTitleLine: {
-    height: 1,
+  mobileViewBtn: {
     backgroundColor: GoldSystem.primaryGold,
-    flex: 1,
-    opacity: 0.5,
-  },
-  mainTitle: {
-    fontSize: 28,
-    lineHeight: 34,
-    fontWeight: '700',
-    color: Neutrals.obsidian,
-    marginBottom: 12,
-    fontFamily: Platform.OS === 'web' ? 'Georgia, "Times New Roman", serif' : undefined,
-  },
-  subtitle: {
-    ...Typography.bodyMedium,
-    color: Neutrals.gray600,
-    marginBottom: 16,
-    lineHeight: 22,
-  },
-  controlsRow: {
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 12,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 16,
+    gap: 8,
+    alignSelf: 'flex-start',
+    marginTop: 8,
   },
-  controlBtn: {
+  mobileViewBtnText: {
+    ...Typography.labelLarge,
+    color: Neutrals.obsidian,
+    fontWeight: '700',
+  },
+  mobileControlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  mobileControlBtn: {
     width: 44,
     height: 44,
     borderRadius: 22,
@@ -478,261 +401,240 @@ const desktopStyles = StyleSheet.create({
     justifyContent: 'center',
     marginRight: 12,
   },
-  controlBtnWhite: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Neutrals.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 24,
-    ...(Platform.OS === 'web' ? { boxShadow: '0 4px 12px rgba(0,0,0,0.08)' } as any : { elevation: 2 }),
-  },
-  paginationText: {
+  mobilePaginationText: {
     ...Typography.labelLarge,
     color: Neutrals.gray400,
   },
-  premiumLineRow: {
-    flexDirection: 'row',
+});
+
+const desktopStyles = StyleSheet.create({
+  container: {
+    width: '100%',
+    paddingVertical: 24,
+    paddingHorizontal: '4%',
     alignItems: 'center',
-    marginBottom: 16,
+    backgroundColor: '#FAF8F5',
   },
-  verticalLine: {
-    width: 2,
-    height: 40,
-    backgroundColor: GoldSystem.primaryGold,
-    marginRight: 16,
-  },
-  premiumText: {
-    ...Typography.bodyMedium,
-    color: Neutrals.gray600,
-    fontWeight: '500',
-  },
-  thumbRowInside: {
-    flexDirection: 'row',
-    gap: 8,
-    marginBottom: 16,
-    alignSelf: 'flex-end',
-  },
-  thumbWrapperInside: {
-    width: 60,
-    height: 48,
-    borderRadius: 8,
-    overflow: 'hidden',
-    borderWidth: 1.5,
-    borderColor: Neutrals.white,
-    ...(Platform.OS === 'web' ? { boxShadow: '0 4px 8px rgba(0,0,0,0.2)' } as any : { elevation: 3 }),
-  },
-  thumbImage: {
+  sliderWrapper: {
     width: '100%',
-    height: '100%',
-  },
-  
-  centerCol: {
-    width: '62%',
-    height: 180,
-    justifyContent: 'center',
-  },
-  mainCard: {
-    width: '100%',
-    height: '100%',
-    borderRadius: 32,
+    maxWidth: 1400,
+    height: 384,
+    borderRadius: 24,
     overflow: 'hidden',
     position: 'relative',
-    ...(Platform.OS === 'web' ? { boxShadow: '0 24px 48px rgba(0,0,0,0.25)' } as any : { elevation: 10 }),
+    ...(Platform.OS === 'web' ? { boxShadow: '0 20px 40px rgba(0,0,0,0.1)' } as any : { elevation: 8 }),
   },
-  mainBadge: {
-    position: 'absolute',
-    top: 24,
-    left: 24,
-    backgroundColor: 'rgba(0,0,0,0.6)',
+  contentContainer: {
+    flex: 1,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 32,
+    zIndex: 2,
+  },
+  leftContent: {
+    width: '55%',
+    maxWidth: 600,
+    justifyContent: 'center',
+  },
+  badge: {
+    backgroundColor: '#C59A5C',
+    alignSelf: 'flex-start',
     paddingHorizontal: 12,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.2)',
+    marginBottom: 16,
   },
-  mainBadgeText: {
+  badgeText: {
     ...Typography.caption,
     color: Neutrals.white,
     fontWeight: '700',
-    letterSpacing: 1,
+    letterSpacing: 1.2,
+    fontSize: 10,
   },
-  playBtn: {
-    position: 'absolute',
-    right: 32,
-    top: '50%',
-    transform: [{ translateY: -40 }],
-    alignItems: 'center',
+  propertyType: {
+    ...Typography.labelSmall,
+    color: Neutrals.obsidian,
+    letterSpacing: 3,
+    marginBottom: 4,
   },
-  playBtnCircle: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(4px)' } as any : {}),
-  },
-  playText: {
-    ...Typography.caption,
-    color: Neutrals.white,
-    marginTop: 8,
-    fontWeight: '600',
-  },
-  mainCardBottom: {
-    position: 'absolute',
-    bottom: 32,
-    left: 32,
-    right: 32,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-  },
-  mainCardInfo: {
-    flex: 1,
-    paddingRight: 16,
+  mainTitle: {
+    fontSize: 32,
+    lineHeight: 40,
+    fontWeight: '700',
+    color: '#112233',
+    fontFamily: Platform.OS === 'web' ? 'Georgia, "Times New Roman", serif' : undefined,
+    marginBottom: 12,
   },
   locationRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 16,
   },
   locationText: {
-    ...Typography.labelMedium,
-    color: Neutrals.gray200,
-    marginLeft: 4,
-  },
-  cardTitle: {
-    fontSize: 32,
-    fontWeight: '700',
-    color: Neutrals.white,
-    marginBottom: 8,
-  },
-  cardDesc: {
     ...Typography.bodyMedium,
-    color: Neutrals.gray300,
-    marginBottom: 20,
+    color: Neutrals.obsidian,
+    fontWeight: '600',
+    marginLeft: 6,
   },
-  amenitiesRow: {
+  description: {
+    ...Typography.bodySmall,
+    color: Neutrals.gray600,
+    lineHeight: 20,
+    marginBottom: 20,
+    maxWidth: '90%',
+  },
+  amenitiesPanel: {
+    backgroundColor: Neutrals.white,
+    borderRadius: 12,
+    paddingVertical: 12,
+    paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 20,
+    justifyContent: 'space-between',
+    marginBottom: 16,
+    ...(Platform.OS === 'web' ? { boxShadow: '0 10px 20px rgba(0,0,0,0.05)' } as any : { elevation: 2 }),
   },
   amenityItem: {
+    alignItems: 'center',
+    flex: 1,
+    borderRightWidth: 1,
+    borderRightColor: Neutrals.gray200,
+  },
+  amenityTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 2,
+    gap: 4,
+  },
+  amenityValue: {
+    fontSize: 14,
+    fontWeight: '700',
+    color: Neutrals.obsidian,
+  },
+  amenityLabel: {
+    fontSize: 10,
+    color: Neutrals.gray500,
+  },
+  pricePanel: {
+    backgroundColor: 'rgba(30, 30, 30, 0.85)',
+    borderRadius: 12,
+    padding: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(10px)' } as any : {}),
+  },
+  priceInfo: {
+    flex: 1,
+  },
+  priceAmount: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#E8D4A2',
+    marginBottom: 2,
+  },
+  priceSub: {
+    fontSize: 12,
+    color: '#A0A0A0',
+  },
+  contactBtn: {
+    backgroundColor: '#D4AF37',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  amenityText: {
+  contactBtnText: {
     ...Typography.labelMedium,
-    color: Neutrals.white,
-  },
-  mainCardAction: {
-    alignItems: 'flex-end',
-  },
-  priceText: {
-    fontSize: 28,
-    fontWeight: '700',
-    color: Neutrals.white,
-    marginBottom: 16,
-  },
-  viewBtn: {
-    backgroundColor: GoldSystem.primaryGold,
-    paddingHorizontal: 24,
-    paddingVertical: 14,
-    borderRadius: 12,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  viewBtnText: {
-    ...Typography.labelLarge,
     color: Neutrals.obsidian,
     fontWeight: '700',
   },
-  
-  rightCol: {
-    width: '23%',
-    height: '100%',
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+  rightThumbnails: {
+    width: 100,
     justifyContent: 'space-between',
+    paddingVertical: 0,
   },
-  cascadeCard: {
-    width: '30%',
-    borderRadius: 24,
+  thumbnailWrapper: {
+    width: '100%',
+    height: 70,
+    borderRadius: 10,
     overflow: 'hidden',
-    position: 'relative',
-    ...(Platform.OS === 'web' ? { boxShadow: '0 12px 24px rgba(0,0,0,0.2)' } as any : { elevation: 6 }),
+    borderWidth: 2,
+    borderColor: 'rgba(255,255,255,0.6)',
+    marginBottom: 8,
   },
-  cascadeContent: {
+  thumbnailOverlay: {
+    ...(StyleSheet.absoluteFill as any),
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  thumbnailOverlayText: {
+    fontSize: 18,
+    fontWeight: '700',
+    color: Neutrals.white,
+  },
+  videoTourBtn: {
     position: 'absolute',
-    top: 24,
-    left: 12,
-    right: 12,
+    bottom: 32,
+    right: 150, // Just to the left of the thumbnails
+    backgroundColor: 'rgba(255,255,255,0.2)',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 24,
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.4)',
+    ...(Platform.OS === 'web' ? { backdropFilter: 'blur(8px)' } as any : {}),
+    zIndex: 10,
   },
-  cascadeTitle: {
+  videoTourText: {
     ...Typography.labelMedium,
     color: Neutrals.white,
-    marginBottom: 4,
   },
-  cascadeLocation: {
-    ...Typography.caption,
-    color: Neutrals.gray300,
-  },
-  cascadeArrowBtn: {
+  floatingControlBtn: {
     position: 'absolute',
-    bottom: 24,
-    alignSelf: 'center',
+    top: '50%',
+    transform: [{ translateY: -20 }],
     width: 40,
     height: 40,
     borderRadius: 20,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.4)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-
-  statsBar: {
-    flexDirection: 'row',
     backgroundColor: Neutrals.white,
-    borderRadius: 24,
-    padding: 32,
-    marginTop: 64,
-    justifyContent: 'space-between',
     alignItems: 'center',
-    zIndex: 2,
-    ...(Platform.OS === 'web' ? { boxShadow: '0 12px 30px rgba(0,0,0,0.05)' } as any : { elevation: 4 }),
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flex: 1,
     justifyContent: 'center',
+    zIndex: 10,
+    ...(Platform.OS === 'web' ? { boxShadow: '0 4px 16px rgba(0,0,0,0.2)' } as any : { elevation: 6 }),
   },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: Neutrals.gray200,
+  floatingControlLeft: {
+    left: 16,
   },
-  statVal: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Neutrals.obsidian,
+  floatingControlRight: {
+    right: 16,
   },
-  statLabel: {
-    ...Typography.caption,
-    color: Neutrals.gray500,
-    marginTop: 2,
+  paginationDotsContainer: {
+    position: 'absolute',
+    bottom: 16,
+    left: 0,
+    right: 0,
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    gap: 6,
+    zIndex: 10,
   },
-  statFooterDesc: {
-    ...Typography.labelMedium,
-    color: Neutrals.gray600,
-    lineHeight: 20,
+  paginationDot: {
+    width: 12,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: 'rgba(255,255,255,0.4)',
   },
+  paginationDotActive: {
+    width: 24,
+    backgroundColor: '#D4AF37',
+  }
 });

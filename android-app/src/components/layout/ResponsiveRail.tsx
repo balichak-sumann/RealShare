@@ -42,9 +42,10 @@ export function ResponsiveRail({
 
   // isDesktop is web-only and false on every native device, so the native app
   // keeps the horizontal rail it has always had.
-  if (isDesktop && !alwaysScroll) {
-    return <View style={[styles.grid, gridStyle]}>{children}</View>;
-  }
+  // The user requested to KEEP the horizontal scroll even on desktop.
+  // if (isDesktop && !alwaysScroll) {
+  //   return <View style={[styles.grid, gridStyle]}>{children}</View>;
+  // }
 
   return (
     <ScrollView

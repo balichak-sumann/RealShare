@@ -297,9 +297,7 @@ export default function HomeScreen() {
 
         {auth.currentUser && (
           <View style={styles.welcomeSection}>
-            <Text style={styles.welcomeTitle}>
-              {profile?.role === 'investor' ? 'Investor Portal' : `Welcome back, ${userName}`}
-            </Text>
+            <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
           </View>
         )}
 

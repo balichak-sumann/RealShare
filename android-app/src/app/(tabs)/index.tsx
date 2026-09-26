@@ -220,6 +220,12 @@ export default function HomeScreen() {
           </TouchableOpacity>
         </View>
 
+        {profile?.role === 'investor' && (
+          <View style={styles.subHeaderBar}>
+            <Text style={styles.portalTagText}>REALSHARE • INVESTOR PORTAL</Text>
+          </View>
+        )}
+
         <Animated.View style={{ height: headerBottomHeight, opacity: headerBottomOpacity, marginTop: headerBottomMargin, overflow: 'hidden' }}>
           <View style={styles.headerBottom}>
             <TouchableOpacity style={styles.locationSelector} onPress={() => setShowLocationPicker(true)}>
@@ -291,7 +297,9 @@ export default function HomeScreen() {
 
         {auth.currentUser && (
           <View style={styles.welcomeSection}>
-            <Text style={styles.welcomeTitle}>Welcome back, {userName}</Text>
+            <Text style={styles.welcomeTitle}>
+              {profile?.role === 'investor' ? 'Investor Portal' : `Welcome back, ${userName}`}
+            </Text>
           </View>
         )}
 
@@ -423,6 +431,23 @@ const styles = StyleSheet.create({
   logoImage: {
     width: 220,
     height: 60,
+  },
+  subHeaderBar: {
+    marginTop: 10,
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    paddingVertical: 5,
+    paddingHorizontal: 12,
+    borderRadius: Radius.full,
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(212, 175, 55, 0.4)',
+  },
+  portalTagText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#B45309',
+    letterSpacing: 1,
   },
   headerBottom: {
     flexDirection: 'row',

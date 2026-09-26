@@ -15,6 +15,7 @@ export default function SellScreen() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [mainTab, setMainTab] = useState<'sell' | 'rent' | null>(null);
+  const [listingSource, setListingSource] = useState<'portfolio' | 'custom'>('portfolio');
   const currentUser = auth.currentUser;
   
   const [properties, setProperties] = useState<any[]>([]);
@@ -79,6 +80,7 @@ export default function SellScreen() {
   const handleTabChange = (tab: 'sell' | 'rent') => {
     setMainTab(tab);
     setSelectedPropertyId(null);
+    setListingSource('portfolio');
     setFormData({
       title: '',
       description: '',
@@ -286,42 +288,80 @@ export default function SellScreen() {
         {mainTab !== null && (
           <View style={{ marginTop: 24 }}>
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Select Property from Portfolio</Text>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16, borderBottomWidth: 1, borderBottomColor: Neutrals.border, paddingBottom: 8 }}>
+                <Text style={{ ...Typography.headlineMedium, color: Neutrals.obsidian }}>Property Source</Text>
+                <View style={{ flexDirection: 'row', backgroundColor: Neutrals.gray100, borderRadius: Radius.full, padding: 4 }}>
+                  <TouchableOpacity 
+                    onPress={() => { setListingSource('portfolio'); setSelectedPropertyId(null); }}
+                    style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.full, backgroundColor: listingSource === 'portfolio' ? Neutrals.white : 'transparent', shadowColor: listingSource === 'portfolio' ? '#000' : 'transparent', shadowOpacity: 0.1, shadowRadius: 4, elevation: listingSource === 'portfolio' ? 2 : 0 }}
+                  >
+                    <Text style={{ ...Typography.labelMedium, color: listingSource === 'portfolio' ? Neutrals.obsidian : Neutrals.gray500 }}>From Portfolio</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    onPress={() => { setListingSource('custom'); setSelectedPropertyId('custom'); setFormData({...formData, title: '', description: '', image_url: '', video_url: ''}); }}
+                    style={{ paddingVertical: 6, paddingHorizontal: 12, borderRadius: Radius.full, backgroundColor: listingSource === 'custom' ? Neutrals.white : 'transparent', shadowColor: listingSource === 'custom' ? '#000' : 'transparent', shadowOpacity: 0.1, shadowRadius: 4, elevation: listingSource === 'custom' ? 2 : 0 }}
+                  >
+                    <Text style={{ ...Typography.labelMedium, color: listingSource === 'custom' ? Neutrals.obsidian : Neutrals.gray500 }}>Custom New</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
               
-              {properties.length === 0 ? (
-                <Text style={styles.label}>You don't have any properties in your portfolio to list.</Text>
+              {listingSource === 'portfolio' ? (
+                <>
+                  {properties.length === 0 ? (
+                    <Text style={styles.label}>You don't have any properties in your portfolio to list.</Text>
+                  ) : (
+                    <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
+                      {properties.map((prop) => (
+                        <TouchableOpacity 
+                          key={prop.id}
+                          style={[styles.propertyCard, selectedPropertyId === prop.id && styles.propertyCardActive]}
+                          onPress={() => {
+                            setSelectedPropertyId(prop.id);
+                            setFormData({
+                              ...formData,
+                              title: prop.title,
+                              description: prop.description || '',
+                              property_type: prop.property_type || formData.property_type,
+                              state: prop.state || '',
+                              district: prop.district || '',
+                              locality: prop.locality || '',
+                              image_url: prop.image_url || prop.images?.[0]?.image_url || '',
+                              video_url: prop.video_url || '',
+                            });
+                          }}
+                        >
+                          <Image 
+                            source={{ uri: prop.image_url || prop.images?.[0]?.image_url || 'https://via.placeholder.com/150' }} 
+                            style={styles.propertyCardImage} 
+                          />
+                          <View style={styles.propertyCardInfo}>
+                            <Text style={styles.propertyCardTitle} numberOfLines={1}>{prop.title}</Text>
+                            <Text style={styles.propertyCardLocality} numberOfLines={1}>{prop.locality || prop.district}</Text>
+                          </View>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  )}
+                </>
               ) : (
-                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.pillScroll}>
-                  {properties.map((prop) => (
-                    <TouchableOpacity 
-                      key={prop.id}
-                      style={[styles.propertyCard, selectedPropertyId === prop.id && styles.propertyCardActive]}
-                      onPress={() => {
-                        setSelectedPropertyId(prop.id);
-                        setFormData({
-                          ...formData,
-                          title: prop.title,
-                          description: prop.description || '',
-                          property_type: prop.property_type || formData.property_type,
-                          state: prop.state || '',
-                          district: prop.district || '',
-                          locality: prop.locality || '',
-                          image_url: prop.image_url || prop.images?.[0]?.image_url || '',
-                          video_url: prop.video_url || '',
-                        });
-                      }}
-                    >
-                      <Image 
-                        source={{ uri: prop.image_url || prop.images?.[0]?.image_url || 'https://via.placeholder.com/150' }} 
-                        style={styles.propertyCardImage} 
-                      />
-                      <View style={styles.propertyCardInfo}>
-                        <Text style={styles.propertyCardTitle} numberOfLines={1}>{prop.title}</Text>
-                        <Text style={styles.propertyCardLocality} numberOfLines={1}>{prop.locality || prop.district}</Text>
-                      </View>
-                    </TouchableOpacity>
-                  ))}
-                </ScrollView>
+                <View>
+                  <Text style={styles.label}>Property Title *</Text>
+                  <TextInput
+                    style={styles.input}
+                    placeholder="e.g. 3 BHK Luxury Apartment in Makuta"
+                    value={formData.title}
+                    onChangeText={(val) => setFormData({ ...formData, title: val })}
+                  />
+                  <Text style={styles.label}>Description (Optional)</Text>
+                  <TextInput
+                    style={[styles.input, { height: 100, textAlignVertical: 'top' }]}
+                    placeholder="Enter details about the property..."
+                    multiline
+                    value={formData.description}
+                    onChangeText={(val) => setFormData({ ...formData, description: val })}
+                  />
+                </View>
               )}
             </View>
 

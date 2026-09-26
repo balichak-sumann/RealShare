@@ -1215,6 +1215,7 @@ export default function ProfileScreen() {
               : [
                   { icon: 'star-outline' as const, label: 'Premium Listings', isPremiumAction: true, color: '#F59E0B' },
                   { icon: 'home-outline' as const, label: 'My Assets', route: '/my-assets', color: '#14B8A6' },
+                  { icon: 'list-outline' as const, label: 'My Listings', route: '/my-listings', color: '#EF4444' },
                   { icon: 'receipt-outline' as const, label: 'A/C Ledger', route: '/ledger', color: '#3B82F6' },
                   { icon: 'trending-up-outline' as const, label: 'Investments', route: '/portfolio?from=profile', color: '#10B981' },
                   { icon: 'help-circle-outline' as const, label: 'Support Tickets', route: '/my-tickets', color: '#8B5CF6' },

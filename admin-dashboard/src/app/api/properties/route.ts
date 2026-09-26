@@ -170,10 +170,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
     }
 
-    // Role-based authorization: only admin, superadmin, agent, and builder can create properties
-    if (!['admin', 'superadmin', 'agent', 'builder'].includes(userRole)) {
+    // Role-based authorization: allow buyers/investors to also post properties
+    if (!['admin', 'superadmin', 'agent', 'builder', 'buyer', 'investor'].includes(userRole)) {
       return NextResponse.json(
-        { error: 'Forbidden: Only admins, agents, and builders can list properties.' },
+        { error: 'Forbidden: You do not have permission to list properties.' },
         { status: 403 }
       );
     }

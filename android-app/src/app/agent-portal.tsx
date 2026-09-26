@@ -12,7 +12,8 @@ import {
   Modal,
   Platform,
   useWindowDimensions,
-, Alert} from 'react-native';
+  Alert
+} from 'react-native';
 import { useRouter } from 'expo-router';
 import { auth } from '@/lib/firebase';
 import { useUser } from '@/contexts/UserContext';
